@@ -1,0 +1,95 @@
+main_theme,subtheme,criterion,criterion_type,display_order
+Coup droit,Coup droit,Accélération de la tête de raquette,positive,1
+Coup droit,Coup droit,Adaptation de la distance à la balle,positive,2
+Coup droit,Coup droit,Amplitude gestuelle,positive,3
+Coup droit,Coup droit,Orientation des épaules,positive,4
+Coup droit,Coup droit,Préparation de la raquette,positive,5
+Coup droit,Coup droit,Qualité de centrage,positive,6
+Coup droit,Coup droit,Régularité dans les différentes zones du court,positive,7
+Coup droit,Coup droit,Stabilité à l’impact,positive,8
+Coup droit,Coup droit,Transfert du poids du corps,positive,9
+Coup droit,Coup droit,Variation des effets,positive,10
+Coup droit,Coup droit,Variation des trajectoires et des hauteurs,positive,11
+Coup droit,Coup droit,Accompagnement insuffisant après l’impact,improvement,1
+Coup droit,Coup droit,Distance balle-corps mal ajustée,improvement,2
+Coup droit,Coup droit,Manque d’accélération à l’impact,improvement,3
+Coup droit,Coup droit,Plan de frappe trop tardif,improvement,4
+Coup droit,Coup droit,Préparation de raquette tardive,improvement,5
+Coup droit,Coup droit,Prise de balle trop basse,improvement,6
+Coup droit,Coup droit,Transfert du poids du corps insuffisant,improvement,7
+Revers,Critères communs,Accompagnement après l’impact,positive,1
+Revers,Critères communs,Adaptation de la prise de raquette,positive,2
+Revers,Critères communs,Amplitude gestuelle,positive,3
+Revers,Critères communs,Anticipation de la trajectoire,positive,4
+Revers,Critères communs,Équilibre pendant la frappe,positive,5
+Revers,Critères communs,Finition du geste,positive,6
+Revers,Critères communs,Gestion de la hauteur de balle,positive,7
+Revers,Critères communs,Orientation des épaules,positive,8
+Revers,Critères communs,Plan de frappe devant le corps,positive,9
+Revers,Critères communs,Préparation précoce de la raquette,positive,10
+Revers,Critères communs,Prise de balle montante,positive,11
+Revers,Critères communs,Prise de balle tôt,positive,12
+Revers,Critères communs,Qualité de centrage,positive,13
+Revers,Critères communs,Régularité,positive,14
+Revers,Critères communs,Stabilité des appuis,positive,15
+Revers,Critères communs,Transfert du poids du corps,positive,16
+Revers,Revers à deux mains,Coordination des deux bras,positive,1
+Revers,Revers à deux mains,Dominance du bras non directeur,positive,2
+Revers,Revers à deux mains,Maintien de la structure des deux bras,positive,3
+Revers,Revers à une main,Extension du bras directeur,positive,1
+Revers,Revers à une main,Maintien du bras non directeur en accompagnement,positive,2
+Revers,Revers à une main,Stabilité du poignet à l’impact,positive,3
+Revers,Variations lift / balle à plat / slice,"Variation des effets : lift, balle à plat, slice",positive,1
+Revers,Variations lift / balle à plat / slice,Variation des trajectoires et des hauteurs,positive,2
+Tactique,Tactique,Adaptation du jeu au profil de l’adversaire,positive,1
+Tactique,Tactique,Anticipation des intentions adverses,positive,2
+Tactique,Tactique,Construction du point,positive,3
+Tactique,Tactique,Exploitation des espaces libres,positive,4
+Tactique,Tactique,Gestion des changements de rythme,positive,5
+Tactique,Tactique,Identification des points faibles adverses,positive,6
+Tactique,Tactique,Prise d’initiative,positive,7
+Tactique,Tactique,Utilisation des angles,positive,8
+Tactique,Tactique,Utilisation des zones de sécurité,positive,9
+Tactique,Tactique,Variation des directions,positive,10
+Tactique,Tactique,Variation des longueurs,positive,11
+Tactique,Tactique,Variation des trajectoires,positive,12
+Tactique,Tactique,Variation des effets,positive,13
+Tactique,Tactique,Choix de zone inadapté,improvement,1
+Tactique,Tactique,Difficulté à construire le point,improvement,2
+Tactique,Tactique,Difficulté à exploiter les espaces libres,improvement,3
+Tactique,Tactique,Difficulté à identifier les points faibles adverses,improvement,4
+Tactique,Tactique,Manque d’adaptation au profil adverse,improvement,5
+Tactique,Tactique,Manque de variation dans le jeu,improvement,6
+Tactique,Tactique,Prise d’initiative insuffisante,improvement,7
+Tactique,Tactique,Prise de risque excessive,improvement,8
+Tactique,Tactique,Prise de risque insuffisante,improvement,9
+Tactique,Tactique,Mauvaise gestion des changements de rythme,improvement,10
+Tactique,Tactique,Mauvaise utilisation des angles,improvement,11
+Tactique,Tactique,Recul excessif derrière la ligne de fond,improvement,12
+Tactique,Tactique,Précipitation dans la construction du point,improvement,13
+Physique,Physique,Accélération sur les premiers appuis,positive,1
+Physique,Physique,Rapidité dans les changements de direction,positive,2
+Physique,Physique,Capacité à répéter les efforts intenses,positive,3
+Physique,Physique,Coordination générale,positive,4
+Physique,Physique,Coordination œil-main,positive,5
+Physique,Physique,Endurance sur la durée du match,positive,6
+Physique,Physique,Explosivité des jambes,positive,7
+Physique,Physique,Maintien de l’intensité physique,positive,8
+Physique,Physique,Mobilité articulaire,positive,9
+Physique,Physique,Puissance des frappes,positive,10
+Physique,Physique,Réactivité,positive,11
+Physique,Physique,Résistance à la fatigue,positive,12
+Physique,Physique,Vitesse de déplacement,positive,13
+Physique,Physique,Vitesse de réaction,positive,14
+Physique,Physique,Accélération insuffisante,improvement,1
+Physique,Physique,Rapidité insuffisante dans les changements de direction,improvement,2
+Physique,Physique,Baisse d’intensité au fil du match,improvement,3
+Physique,Physique,Capacité limitée à répéter les efforts intenses,improvement,4
+Physique,Physique,Coordination générale insuffisante,improvement,5
+Physique,Physique,Coordination œil-main à améliorer,improvement,6
+Physique,Physique,Endurance insuffisante,improvement,7
+Physique,Physique,Explosivité des jambes limitée,improvement,8
+Physique,Physique,Mobilité articulaire limitée,improvement,9
+Physique,Physique,Puissance physique insuffisante,improvement,10
+Physique,Physique,Réactivité insuffisante,improvement,11
+Physique,Physique,Récupération trop lente entre les efforts,improvement,12

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#081426">
+  <meta name="description" content="Coach In — espace de suivi tennis coach et joueurs">
+  <title>Coach In</title>
+  <link rel="stylesheet" href="./src/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <section id="auth-view" class="auth-wrap">
+    <div class="auth-card">
+      <div class="brand">COACH <span>IN</span></div>
+      <p class="eyebrow">TON TENNIS, TON ÉVOLUTION</p>
+      <h1 id="auth-title">Connexion</h1>
+      <p class="muted">Retrouve ton espace tennis, où que tu sois.</p>
+      <form id="auth-form" class="stack">
+        <div id="signup-fields" class="hidden">
+          <label>Prénom<input name="first_name" autocomplete="given-name"></label>
+          <label>Nom<input name="last_name" autocomplete="family-name"></label>
+        </div>
+        <label>Adresse e-mail<input name="email" type="email" required autocomplete="email"></label>
+        <label>Mot de passe<input name="password" type="password" required minlength="8" autocomplete="current-password"></label>
+        <button class="btn primary full" id="auth-submit">Se connecter</button>
+      </form>
+      <button class="btn link full" id="auth-toggle" type="button">Créer un compte joueur</button>
+      <p class="tiny muted">L’inscription crée un compte joueur. Le rôle coach est attribué depuis l’administration Supabase.</p>
+      <p id="auth-error" class="feedback hidden"></p>
+    </div>
+  </section>
+
+  <div id="app-view" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">COACH <span>IN</span></div>
+      <div class="side-caption">ESPACE TENNIS</div>
+      <nav id="navigation" class="navigation" aria-label="Navigation principale"></nav>
+      <div class="sidebar-bottom"><div id="account-label" class="account-label"></div><button id="logout" class="btn ghost full">Déconnexion</button></div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar"><div><p id="page-kicker" class="eyebrow">COACH IN</p><h1 id="page-title">Bonjour</h1><p id="page-description" class="muted"></p></div><div id="page-actions"></div></header>
+      <div id="page-content" class="page-content"></div>
+    </main>
+  </div>
+  <dialog id="app-dialog" class="dialog"><div id="dialog-content"></div></dialog>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>

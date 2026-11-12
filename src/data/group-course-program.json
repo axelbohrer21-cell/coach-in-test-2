@@ -1,0 +1,275 @@
+{
+  "source": "Cours de l'année.xlsx",
+  "weeks": [
+    {
+      "week": 1,
+      "theme": "SEMAINE 1 : MATCH",
+      "courts": [
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "week": 2,
+      "theme": "SEMAINE 2 : CONSTRUCTION CD",
+      "courts": [
+        "Un joueur frappe une fois au milieu, une fois sur le côté en dehors des carré de service puis le point se joue avec une attaque",
+        "Panier CD/ REVERS",
+        "Le joueur doit toucher 2 fois la zone de fond de court pour pouvoir faire démarrer le point"
+      ]
+    },
+    {
+      "week": 3,
+      "theme": "SEMAINE 3 : ATTAQUE CD (REPERAGE DE BALLE)",
+      "courts": [
+        "Deux zones de chaque côté 3/4 terrain lorsque la balle atterit daans cette zone obligation d'attaquer",
+        "Panier d'attaque : pastille sur la ligne de FDC, le joueur fait une attaque, recule le plus vite possible toucher la pastille, refis une balle d'attaque et une volée puis sort par l'extérieur fais l'échelle 5 squats et refais l'exo",
+        "Bras de fer dans la diago dès qu'ils ont la balle courte ils attaquent long de ligne"
+      ]
+    },
+    {
+      "week": 4,
+      "theme": "SEMAINE 4 : VOLEE DE FINITION",
+      "courts": [
+        "Deux personnes à la volée qui ont 10 vies les autres en fond de court qui doivent leur faire perdre le plus rapidement leurs vies (système de chrono)",
+        "Panier de volée : 3 joueurs 2 balles en même temps contre un volleyeur qui dois être précis",
+        "Match service volée obligatoire"
+      ]
+    },
+    {
+      "week": 5,
+      "theme": "SEMAINE 5 : MATCH",
+      "courts": [
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "week": 6,
+      "theme": "SEMAINE 6 : CONSTRUCTION REVERS",
+      "courts": [
+        "Fil rouge atteindre 2 fois la zone longue croisée au dessus pour pouvoir commencer le point",
+        "Panier de revers : le joueur frappe fait le tour du plot placé sur le côté revers du joueur et reviens pour en frpper une deuxième balle. Il doit ensuite faire des pas chassé bien bas sur un atelier ou ballon lesté",
+        "Point où le joueur doit faireque des revers et il peut jouer où il veut et les adversaires doivent jouer que dans la zone revers de l'adversaire."
+      ]
+    },
+    {
+      "week": 7,
+      "theme": "SEMAINE 7 : DEFENSE  COUVERTURE DE TERRAIN",
+      "courts": [
+        "Formule mixte : le joueur part de dos dès que je dis le signal hop il peut se retourner et jouer son point",
+        "Panier de défense -> 9 balles",
+        "Le joueur doit toucher un plot à chaque frappe le mettant en situation de défense permanente"
+      ]
+    },
+    {
+      "week": 8,
+      "theme": "SEMAINE 8 : SERVICE / RETOUR SLICE",
+      "courts": [
+        "Retour slicé en coupant la trajectoire délimité par des pointillés soit retour court croisé soit long de ligne puis on joue",
+        "Panier de service",
+        "Le joueur doit toucher la zone slicé au service délimité par une zone pour avoir un point bonus s'il gagne le point"
+      ]
+    },
+    {
+      "week": 9,
+      "theme": "SEMAINE 9 : JEU AU FILET MONTEE A LA VOLEE",
+      "courts": [
+        "Le joueur doit engager soit sur le CD soit sur le revers, l'autre frappe soit fort CD soit shopper puis monte à la volée",
+        "Panier de montée en revers shoppé : je frappe en faisant le tour du plot placé vers l'avant en appui en ligne puis je refais une frappe et sort pour faire de la haie",
+        "Le joueur joue sur la diago revers l'autre doit tenir l'achnge lorsque la balle est courte il shop et monte à la volée"
+      ]
+    },
+    {
+      "week": 10,
+      "theme": "SEMAINE 10 : SERVICE 1ere",
+      "courts": [
+        "Retour croisé long ou au centre, l'adversaire peut s'avancer pour fire des 1ères balles",
+        "Panier de 1ère balle",
+        "Le joueur a 3 balles de services pour jouer son match"
+      ]
+    },
+    {
+      "week": 11,
+      "theme": "SEMAINE 11 : ATTAQUE DECALAGE",
+      "courts": [
+        "Envoie sur le revers de l'adversaire délimité par des pointillés, le joueur doit décaler et frapper long de ligne ou court croisé selon l'envoie du joueur s'il est plus ou mois court (délimitation avec de pointillés dans la longueur aussi )",
+        "Panier de décalage : je fais un décalage en passant derrière un plot puis vais faire le tour du plot à l'avant avant de me replac er à ma pastille. Les plots sont placés en triangle",
+        "Bras de fer dans la diago dès qu'ils ont la balle pour décaler ils décalent et le jeu s'ouvre"
+      ]
+    },
+    {
+      "week": 12,
+      "theme": "SEMAINE 12 : MATCH",
+      "courts": [
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "week": 13,
+      "theme": "SEMAINE 13 : CONSTRUCTION FAIRE BOUGER L'ADVERSAIRE",
+      "courts": [
+        "Toucher zone longue et profonde droite et gauche le plus de fois possible en alternant a chaque fois",
+        "Panier de CD / REVERS sous forme d'atelier",
+        "Papillon"
+      ]
+    },
+    {
+      "week": 14,
+      "theme": "SEMAINE 14 : JEU AU FILET VOLEE D'APPROCHE",
+      "courts": [
+        "Le joueur part du 3/4 terrain, le prof envoie la balle dans les pieds le joueur doit fire sa volée d'approche puis sa volée de finition",
+        "Panier volée d'approche + volée de finition + je touche le filet et fais un smatch",
+        "Match avec retour volée obligatoire"
+      ]
+    },
+    {
+      "week": 15,
+      "theme": "SEMAINE 15 : SERVICE 1ERE SECONDE",
+      "courts": [
+        "3 zones delimitées dans les carrées de service, le serveur doit annoncer la zone qui touche et joueur le point, s'il touche la zone annocé il gagne un bonus",
+        "Panier de service 1ère seconde avec cul rouge",
+        "Match avec double fait repartir le joueur à zéro"
+      ]
+    },
+    {
+      "week": 16,
+      "theme": "SEMAINE 16 : ATTAQUE + MONTEE",
+      "courts": [
+        "Formule mixte : envoie d'une balle favorable le joueur doit attaquer montée et faire sa volée de fintion il n'a que 2 volées pour finir le point",
+        "Panier d'attaque + montée à la volée approche + finition ou smatch",
+        "Le joueur a 3 frappes de balels pour montée et finir le point à la volée"
+      ]
+    },
+    {
+      "week": 17,
+      "theme": "SEMAINE 17 : DEFENSE LATERAUX",
+      "courts": [
+        "le joueur part dans le couloir l'autre engage à l'opposé, le point démarre",
+        "Panier de défense droite gauche. 5 balles a defendre en partant a droite du centre. Chaque frappe je dois me remettre sur la pastille de départ en essayant de defendre la balle en atteignant une zone centrale. Lorsque le joueur a frappé il doit faire 5 squats",
+        "Lorsque le joueur frppe il est gelé et doit attendre le rebond de l'autre côté pour être degelé"
+      ]
+    },
+    {
+      "week": 18,
+      "theme": "SEMAINE 18 : CONSTRUCTION AVANT ARRIERE",
+      "courts": [
+        "Le joueur doit atteidnre une fois la zone avant / une fois la zone arrière d'affilé et lober quand le joueur est au filet",
+        "Panier de lob, panier d'amortie",
+        "Point en amortie + 2, point amortie + lob + 10"
+      ]
+    },
+    {
+      "week": 19,
+      "theme": "SEMAINE 19 : MATCH",
+      "courts": [
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "week": 20,
+      "theme": "SEMAINE 20 : ATTAQUE CD",
+      "courts": [
+        "Forme mixte envoie de balle favorable l'autre frappe dans une zone précise alors que le défenseur et toujours placé",
+        "Panier d'attaque balle montante et balle lifté",
+        "Jeu du contrat"
+      ]
+    },
+    {
+      "week": 21,
+      "theme": "SEMAINE 21 : JEU AU FILET VOLEE A CONTRE TEMPS",
+      "courts": [
+        "Tient le point en faisant droite gauche dès que le joueur est à la rue il doit montée et finir (le joueur ne regaarde plus l'adversaire)",
+        "Panier volée smatch. Quand j'ai fait mon smatch je change de file",
+        "Frappe dans la zone haute revers obligation de montée (pas le droit au lob)"
+      ]
+    },
+    {
+      "week": 22,
+      "theme": "SEMAINE 22 : DEFENSE COUVERTURE DE TERRAIN",
+      "courts": [
+        "Le joueur a chaque frappe faire le tour d'une pastille et perdre le moins de point possible",
+        "Panier touche un plot de plus en plus loin lorsuq'il le rate il tourne dans un atelier physique",
+        "Le joueur doit annoncer la pastille sur laquel l'adversaire doit toucher avec le pied a chaque frappe (l'autre doit tenir)"
+      ]
+    },
+    {
+      "week": 23,
+      "theme": "SEMAINE 23 : CONSTRUCTION LONGUEUR",
+      "courts": [
+        "Obligation de varier pour le joueur toute les deux frappes en shop et en lift",
+        "Panier de variation en longueur",
+        "Fil rouge en repoussant le joueur dans la longueur lorsqu'elle touche 2 fois la zone obigation d'amortir"
+      ]
+    },
+    {
+      "week": 24,
+      "theme": "SEMAINE 24 : SERVICE SLICE",
+      "courts": [
+        "Service slicé + 1 coup de l'autre côté ou en contre pied",
+        "Panier de slicé",
+        "Retour shopé sur slicé long de ligne ou au centre"
+      ]
+    },
+    {
+      "week": 25,
+      "theme": "SEMAINE 25 : MATCH",
+      "courts": [
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "week": 26,
+      "theme": "SEMAINE 26 : JEU AU FILET VOLEE DE FINITION",
+      "courts": [
+        "Jeu du tiroir",
+        "Winner",
+        "Matche avec volée + 5"
+      ]
+    },
+    {
+      "week": 27,
+      "theme": "SEMAINE 27 : SERVICE 1ère",
+      "courts": [
+        "Service 1ère proche + coup de finition (l'autre ne doit aps toucher la balle sur la 2ème frappe)",
+        "Panier service 1ère",
+        "Service au corps + 5"
+      ]
+    },
+    {
+      "week": 28,
+      "theme": "SEMAINE 28 : DEFENSE AVANT ARRIERE",
+      "courts": [
+        "Partir du filet le prof fait un lob puis le point se joue",
+        "Panier de lob amortie (le prof qui le fait)",
+        "Defense doite gauche, l'autre doit alterner pour lui faire faire l'essuie glace"
+      ]
+    },
+    {
+      "week": 29,
+      "theme": "SEMAINE 29 : JEU AU FILET DOUBLE",
+      "courts": [
+        "Jeu du double",
+        "Double avec volleyeur de plus en plus loin pour intercepter",
+        "Double avec les 4 joueurs en fond de court, à la deuxième frappe  un des deux joueurs montent à la volée"
+      ]
+    },
+    {
+      "week": 30,
+      "theme": "SEMAINE 30 : MATCH",
+      "courts": [
+        "",
+        "",
+        ""
+      ]
+    }
+  ]
+}

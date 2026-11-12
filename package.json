@@ -1,0 +1,7 @@
+{
+  "name": "coach-in",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": { "test": "node --test src/domain/*.test.js" }
+}
