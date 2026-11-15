@@ -64,3 +64,5 @@ Migration 012 : `012_coach_weekly_availability.sql` crée les disponibilités he
 Migration 013 : `013_coach_player_messaging.sql` crée les conversations privées coach-joueur et le bucket privé `coach-in-attachments`. Les fichiers sont limités à 50 Mo et aux formats image, vidéo, PDF et documents bureautiques. Les règles RLS limitent chaque conversation au coach et au joueur qui y sont associés.
 
 Migration 014 : `014_messages_realtime_publication.sql` ajoute la table des messages à la publication `supabase_realtime` pour actualiser les conversations à la réception d'un nouveau message.
+
+Migration 015 : `015_seed_confirmed_partial_criteria.sql` importe les 94 critères dont les libellés exacts ont été retrouvés dans les validations précédentes, séparément pour Coach A et Coach B. Le catalogue reste explicitement partiel : Service, Retour de service, Volée, Jeu de jambes/déplacements, Mental et les critères à améliorer du Revers attendent les listes exactes validées. Aucun critère manquant n'est inventé. Les doublons sont conservés lorsqu'ils appartiennent à des sous-thèmes différents.
