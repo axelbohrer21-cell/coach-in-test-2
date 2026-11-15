@@ -53,3 +53,6 @@ Migration complémentaire 008 : exécuter `008_private_session_notes_and_invoker
 
 
 Migration 009 : `009_booking_reminders_24h.sql` ajoute le traitement planifié des rappels internes 24 h avant les réservations acceptées. Elle installe un job `pg_cron` toutes les 15 minutes et respecte les préférences `reminders_24h` du joueur et du coach. Les horaires sont interprétés en Europe/Paris. Vérifier le job dans `cron.job` après installation.
+
+
+Migration 010 : `010_primary_admin_account.sql` configure l'attribution du rôle administrateur principal à `axel.bohrer21@gmail.com` lors de la création de son compte Auth. Le rôle n'est pas attribué à un compte inexistant : l'administrateur doit d'abord créer son compte avec cette adresse et confirmer son e-mail. La migration ajoute aussi l'accès en lecture à la liste des coachs pour l'administrateur.
