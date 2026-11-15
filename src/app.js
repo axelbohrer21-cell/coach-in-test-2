@@ -73,6 +73,12 @@ $('#auth-form').addEventListener('submit', async event => {
 
 $('#logout').addEventListener('click', async()=>{try{await authService.signOut();resetState();showAuth();}catch(e){toast(e.message,'error');}});
 $('#navigation').addEventListener('click',event=>{const button=event.target.closest('[data-page]');if(button)render(button.dataset.page);});
+
+$('#page-actions').addEventListener('click', event => {
+  const button = event.target.closest('[data-action="add-player"]');
+  if (button) addPlayerDialog();
+});
+
 $('#page-content').addEventListener('click', async event=>{
   const go=event.target.closest('[data-go]'); if(go){render(go.dataset.go);return;}
   const share=event.target.closest('[data-share-player]'); if(share) return sharePlayerDialog(share.dataset.sharePlayer);
