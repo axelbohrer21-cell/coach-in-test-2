@@ -12,6 +12,7 @@ import { buildSeriesOccurrences } from './domain/group-series.js';
 import { progressionService } from './services/progression.js';
 
 let signupMode = false;
+let weatherRequest = 0;
 const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'] ];
 const adminNav = [ ['dashboard','Administration','⌂'], ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'] ];
@@ -46,6 +47,7 @@ function render(page) {
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
   $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
   $('#page-content').innerHTML=renderPage(page);
+  if(page==='planning') loadWeatherForecast();
 }
 
 $('#auth-toggle').addEventListener('click', () => {
@@ -418,3 +420,23 @@ async function refreshAndRender(){if(state.profile.role==='admin')await dataServ
 
 supabase.auth.onAuthStateChange((_event,session)=>{if(session?.user){window.setTimeout(()=>loadWorkspace().catch(error=>showAuth(`Erreur de chargement : ${error.message}`)),0);}else{resetState();showAuth();}});
 supabase.auth.getSession().then(({data,error})=>{if(error)return showAuth(error.message);if(data.session)loadWorkspace().catch(e=>showAuth(`Erreur de chargement : ${e.message}`));else showAuth();});
+
+
+async function loadWeatherForecast(){
+ const panel=$('#weather-panel'); if(!panel)return;
+ const request=++weatherRequest;
+ const summary=$('#weather-summary'); if(summary)summary.textContent='Chargement des prévisions de pluie…';
+ try{
+  const url='https://api.open-meteo.com/v1/forecast?latitude=43.282&longitude=5.516&current=temperature_2m,weather_code&hourly=precipitation_probability,precipitation,weather_code&forecast_days=2&timezone=Europe%2FParis';
+  const response=await fetch(url); if(!response.ok)throw new Error('Prévisions indisponibles');
+  const data=await response.json(); if(request!==weatherRequest||state.currentPage!=='planning')return;
+  const now=Date.now(); const times=data.hourly.time||[];
+  const next=times.map((time,index)=>({time,index,stamp:new Date(time).getTime(),prob:Number(data.hourly.precipitation_probability?.[index]||0),rain:Number(data.hourly.precipitation?.[index]||0)})).filter(row=>row.stamp>=now&&row.stamp<=now+8*3600000);
+  const max=next.reduce((best,row)=>row.prob>best.prob?row:best,{prob:0,rain:0,time:''});
+  const fmt=time=>new Date(time).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const current=data.current||{};
+  const title=$('#weather-title'); if(title)title.textContent=(current.temperature_2m??'—')+' °C · '+weatherDescription(current.weather_code);
+  if(summary)summary.textContent=next.length?('Sur les 8 prochaines heures : risque maximal de pluie '+max.prob+' %'+(max.time?' vers '+fmt(max.time):'')+'. '+(max.rain>0?'Précipitations prévues : '+max.rain.toFixed(1)+' mm sur l’heure la plus arrosée.':'Pas de pluie horaire significative indiquée.')):'Prévisions horaires indisponibles pour les prochaines heures.';
+ }catch(error){if(request===weatherRequest&&state.currentPage==='planning'&&summary)summary.textContent='La météo ne peut pas être chargée pour le moment. Le planning reste disponible.';}
+}
+function weatherDescription(code){const c=Number(code);if(c===0)return'ciel dégagé';if([1,2,3].includes(c))return'nuageux';if([45,48].includes(c))return'brouillard';if([51,53,55,56,57].includes(c))return'bruine';if([61,63,65,66,67,80,81,82].includes(c))return'pluie';if([71,73,75,77,85,86].includes(c))return'neige';if([95,96,99].includes(c))return'orage';return'conditions météo';}
