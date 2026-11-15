@@ -132,7 +132,22 @@ function playerSheetDialog(playerId){
   const reports=state.evaluations.filter(r=>r.player_id===playerId).sort((a,b)=>String(b.evaluated_at||b.created_at).localeCompare(String(a.evaluated_at||a.created_at)));
   const sessions=state.sessions.filter(x=>x.player_id===playerId).sort((a,b)=>String(b.session_date).localeCompare(String(a.session_date)));
   const ids=new Set(reports.map(r=>r.id));const criteria=state.evaluationCriteria.filter(x=>ids.has(x.evaluation_id));
-  const achievements=state.achievements.filter(x=>x.player_id===playerId);const challenge=state.challenges.find(x=>x.player_id===playerId&&x.status==='active');
+  const achievements=state.achievements.filter(x=>x.player_id===playerId);
+const birthDate = player.birth_date ? new Date(`${player.birth_date}T12:00:00`) : null;
+const today = new Date();
+let playerAge = 'Non renseigné';
+
+if (birthDate && !Number.isNaN(birthDate.getTime())) {
+  playerAge = today.getFullYear() - birthDate.getFullYear();
+  const birthdayNotReached =
+    today.getMonth() < birthDate.getMonth() ||
+    (today.getMonth() === birthDate.getMonth() &&
+     today.getDate() < birthDate.getDate());
+
+  if (birthdayNotReached) playerAge--;
+  playerAge += ' ans';
+}
+const challenge=state.challenges.find(x=>x.player_id===playerId&&x.status==='active');
   const grouped=new Map();for(const c of criteria){const k=c.main_theme||'Autres';grouped.set(k,[...(grouped.get(k)||[]),c]);}
   const themeSummary=[...grouped].map(([theme,rows])=>`<div class="theme-progress-row"><span>${escapeHtml(theme)}</span><div class="theme-progress-track"><i style="width:${Math.min(100,rows.length*8)}%"></i></div><b>${rows.length}</b></div>`).join('');
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">FICHE DE PROGRESSION</p><h2>${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}</h2><p class="muted">${escapeHtml(player.fft_ranking||'Classement non renseigné')} · ${escapeHtml(player.player_type||'Loisir')}</p></div><button class="btn icon-btn" data-close>✕</button></div>
