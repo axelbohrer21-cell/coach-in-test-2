@@ -112,3 +112,9 @@
 - Les vues joueur exposent le nom du coach auteur pour chaque séance et bilan.
 - Chargement coach et moteur de progression filtrés sur le coach connecté.
 - Migration appliquée au projet Supabase de test ; recette fonctionnelle multi-comptes et déploiement encore à effectuer.
+
+
+## 16 novembre 2026 — Durcissement notifications
+
+- Ajout de `supabase/007_notification_rpc_permissions.sql` pour réserver l'appel de notification de nouveau bilan aux utilisateurs authentifiés.
+- Migration appliquée au projet Supabase de test.
