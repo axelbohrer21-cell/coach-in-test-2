@@ -126,6 +126,11 @@ export const dataService = {
   },
   async createAvailability(payload) { const {data,error}=await supabase.from('coach_weekly_availability').insert(payload).select().single(); if(error)throw error; return data; },
   async deleteAvailability(id,coachId) { const {error}=await supabase.from('coach_weekly_availability').delete().eq('id',id).eq('coach_id',coachId); if(error)throw error; },
+  async updateGroupSeries(id,changes,coachId) {
+    const {error}=await supabase.from('group_course_series').update(changes).eq('id',id).eq('coach_id',coachId);if(error)throw error;
+    const {error:futureError}=await supabase.from('group_sessions').update({title:changes.title,theme:changes.theme,start_time:changes.start_time,end_time:changes.end_time,court_number:changes.court_number}).eq('series_id',id).eq('coach_id',coachId).eq('status','scheduled').gte('session_date',new Date().toISOString().slice(0,10));if(futureError)throw futureError;
+  },
+  async updateGroupSession(id,changes,coachId) { const {error}=await supabase.from('group_sessions').update(changes).eq('id',id).eq('coach_id',coachId);if(error)throw error; },
   async createGroupSession(payload) {
     const { data, error } = await supabase.from('group_sessions').insert(payload).select().single();
     if (error) throw error;
