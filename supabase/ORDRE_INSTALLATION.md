@@ -44,3 +44,6 @@ Les scripts sont préparés pour ce projet et relus statiquement, mais n'ont pas
 ## Migration corrective — suivis séparés par coach
 
 Après les migrations initiales 001 à 005, exécuter `006_separate_coach_followups.sql` sur l'environnement cible après sauvegarde. Cette migration remplace les politiques RLS du partage pédagogique global par des politiques limitées au coach auteur. Les vues joueur continuent d'exposer uniquement les informations publiables. Vérifier ensuite les accès avec deux comptes coach associés au même joueur et un compte joueur.
+
+
+Migration complémentaire 007 : exécuter `007_notification_rpc_permissions.sql` après 006 afin de retirer l'exécution anonyme de la fonction de notification d'un nouveau bilan.
