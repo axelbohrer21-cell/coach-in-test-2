@@ -3,7 +3,7 @@ import { escapeHtml, formatDate, formatTime } from '../core/dom.js';
 import { emptyState, playerName, sessionCard, statCard } from './shared.js';
 import { toLocalISO, countDistinctValidations } from '../domain/tennis.js';
 import { recommendChallenge, radarPoints } from '../domain/progression.js';
-import { buildDaySeriesOverview, getWeekProgram, GROUP_SEASON } from '../domain/group-calendar.js';
+import { buildDaySeriesOverview, getWeekProgram, GROUP_SEASON, isSchoolHoliday, isPublicHoliday, ZONE_B_HOLIDAYS_2026_2027 } from '../domain/group-calendar.js';
 import { buildSeriesCounters } from '../domain/group-series.js';
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
 
@@ -123,11 +123,28 @@ function playersPage() {
 
 function planningPage() {
   const start = new Date(); start.setHours(12,0,0,0); start.setDate(start.getDate() - ((start.getDay()+6)%7) + (state.planningWeekOffset||0)*7);
-  const days = Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=toLocalISO(d);const events=state.sessions.filter(s=>s.session_date===iso);const groups=state.groupSessions.filter(s=>s.session_date===iso);return `<div class="calendar-day"><div class="calendar-day-head"><strong>${['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'][i]}</strong><span>${d.getDate()}</span></div>${events.map(e=>`<div class="calendar-event"><b>${formatTime(e.session_time)}</b><br>${escapeHtml(playerName(e.player_id))}<small>${escapeHtml(e.theme)}</small></div>`).join('')}${groups.map(g=>`<div class="calendar-event group-event"><b>${formatTime(g.start_time)}</b><br>${escapeHtml(g.title)}<small>${g.status==='cancelled'?'ANNULÉ':'Cours collectif'}</small>${state.profile.role==='coach'&&g.status!=='cancelled'?`<button class="btn danger" data-cancel-group="${g.id}">Annuler</button>`:''}</div>`).join('')}</div>`}).join('');
-  const label = `${formatDate(start,{day:'2-digit',month:'short'})} – ${formatDate(new Date(start.getTime()+6*86400000),{day:'2-digit',month:'short',year:'numeric'})}`;
-  return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">PLANNING HEBDOMADAIRE</p><h2>${label}</h2></div><div class="toolbar"><button class="btn subtle" data-week="-1">←</button><button class="btn subtle" data-week="0">Aujourd’hui</button><button class="btn subtle" data-week="1">→</button><button class="btn primary" data-action="new-session">＋ Cours particulier</button><button class="btn subtle" data-action="new-group-session">＋ Cours collectif</button></div></div><div class="calendar-week">${days}</div><p class="tiny muted">Les cours collectifs annulés restent visibles et ne bloquent plus le court. Les conflits de réservation sont contrôlés côté base de données.</p></section>`;
+  const days = Array.from({length:7},(_,i)=>{
+    const d=new Date(start);d.setDate(start.getDate()+i);const iso=toLocalISO(d);
+    const schoolBreak=ZONE_B_HOLIDAYS_2026_2027.find(period=>iso>=period.start&&iso<=period.end);
+    const publicHoliday=isPublicHoliday(iso)&&iso!=='2027-05-08';
+    const disabled=d.getDay()===0||Boolean(schoolBreak)||publicHoliday;
+    const reason=d.getDay()===0?'Dimanche':schoolBreak?('Vacances de '+schoolBreak.label):publicHoliday?'Jour férié':'';
+    const events=[
+      ...state.sessions.filter(s=>s.session_date===iso).map(s=>({time:s.session_time||'08:00',kind:'session',title:playerName(s.player_id),detail:s.theme||'Cours particulier'})),
+      ...state.groupSessions.filter(s=>s.session_date===iso).map(s=>({time:s.start_time||'08:00',kind:'group',title:s.title,detail:s.status==='cancelled'?'ANNULÉ':'Cours collectif',id:s.id,status:s.status}))
+    ];
+    const slots=Array.from({length:14},(_,hourIndex)=>{
+      const hour=hourIndex+8;const time=String(hour).padStart(2,'0')+':00';
+      const inSlot=events.filter(event=>Number(String(event.time).slice(0,2))===hour);
+      const cards=inSlot.map(event=>'<div class="calendar-event '+(event.kind==='group'?'group-event':'')+'"><b>'+formatTime(event.time)+'</b> · '+escapeHtml(event.title)+'<small>'+escapeHtml(event.detail)+'</small>'+(event.kind==='group'&&event.status!=='cancelled'?'<button class="btn danger" data-cancel-group="'+event.id+'">Annuler</button>':'')+'</div>').join('');
+      const addButton=!disabled&&!inSlot.length?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'">＋ Ajouter</button>':'';
+      return '<div class="calendar-hour-row"><span class="calendar-hour-label">'+time+'</span><div class="calendar-hour-content">'+cards+addButton+'</div></div>';
+    }).join('');
+    return '<div class="calendar-day '+(disabled?'calendar-day-disabled':'')+'"><div class="calendar-day-head"><strong>'+['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()]+'</strong><span>'+d.getDate()+'</span></div>'+(reason?'<p class="calendar-day-reason">'+escapeHtml(reason)+'</p>':'')+'<div class="calendar-hours">'+slots+'</div></div>';
+  }).join('');
+  const label = formatDate(start,{day:'2-digit',month:'short'})+' – '+formatDate(new Date(start.getTime()+6*86400000),{day:'2-digit',month:'short',year:'numeric'});
+  return '<section class="panel"><div class="section-heading"><div><p class="eyebrow">PLANNING HEBDOMADAIRE · 8 H–22 H</p><h2>'+label+'</h2></div><div class="toolbar"><button class="btn subtle" data-week="-1">←</button><button class="btn subtle" data-week="0">Aujourd’hui</button><button class="btn subtle" data-week="1">→</button><button class="btn primary" data-action="new-session">＋ Cours particulier</button><button class="btn subtle" data-action="new-group-session">＋ Cours collectif</button></div></div><div class="calendar-week">'+days+'</div><p class="tiny muted">Les dimanches, vacances scolaires Zone B et jours fériés sont grisés. Le 8 mai reste disponible. Clique sur « Ajouter » pour créer un cours particulier à l’heure choisie.</p></section>';
 }
-
 
 function groupCalendarPage() {
   const overview = buildDaySeriesOverview({ groupSessions: state.groupSessions, now: new Date().toISOString().slice(0,10) });
