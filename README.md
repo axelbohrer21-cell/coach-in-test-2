@@ -168,3 +168,10 @@ La migration corrective historique `004_adoc_schedule_alignment.sql` est obsolè
 - Le carnet joueur affiche les notes, radars et critères rattachés à chaque bilan.
 - Les règles de réussites et défis sont couvertes par des tests métier (trois évaluations distinctes pour une réussite ; fréquence des critères d'amélioration par bilan distinct ; comparaison numérique du défi).
 - **Important :** les règles métier locales sont testées, mais l'exécution des automatisations et la sécurité des données doivent encore être vérifiées sur une base Supabase de préproduction après application des migrations. Le catalogue fourni reste `partial_confirmed` et n'est pas exhaustif.
+
+
+## Multi-coachs — règle retenue le 16/11/2026
+
+Un joueur possède une fiche d'identité unique et peut être rattaché à plusieurs coachs après acceptation d'une invitation. Les suivis restent séparés : chaque coach ne voit et ne modifie que ses propres séances, bilans, notes privées, défis et réussites. Le joueur voit ses historiques personnels avec le nom du coach auteur. Les plannings, bibliothèques, critères et réglages sont privés à chaque coach. La migration corrective est `supabase/006_separate_coach_followups.sql` ; elle doit être appliquée après les migrations 001 à 005 sur un nouvel environnement.
+
+Le projet Supabase de test a reçu cette migration le 16/11/2026. La branche `feat/separate-coach-followups` contient les changements de code correspondants. La recette multi-comptes et le déploiement ne sont pas encore validés.
