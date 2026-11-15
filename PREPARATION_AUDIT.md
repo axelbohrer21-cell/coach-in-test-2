@@ -57,8 +57,9 @@ Avant toute migration : sauvegarde de la base, environnement de préproduction, 
 ## Décisions fonctionnelles ajoutées le 12 novembre 2026
 
 - Adultes : vendredi confirmé et réintégré.
-- Multi-coachs : suivi entièrement partagé après acceptation d’une invitation ; toutes les séances, évaluations, réussites et défis sont communs, avec conservation de l’identité du coach auteur. Les plannings et ressources privées des coachs restent séparés.
-- La spécification complète est dans `docs/architecture_multi_coach.md`.
+- Le joueur dispose d’une fiche d’identité unique et peut être associé à plusieurs coachs après acceptation d’une invitation.
+- Décision actualisée le 16 novembre 2026 : les suivis pédagogiques sont séparés par coach. Chaque coach voit uniquement ses propres séances, bilans, notes privées, défis et réussites. Le joueur voit ses suivis à lui, avec le nom du coach auteur. Les plannings, bibliothèques, catalogues de critères et réglages restent propres à chaque coach.
+- La migration corrective `006_separate_coach_followups.sql` remplace les anciennes politiques de suivi partagé et rend les défis/réussites uniques par couple joueur-coach.
 
 ## Ordre de développement
 
@@ -71,9 +72,15 @@ Avant toute migration : sauvegarde de la base, environnement de préproduction, 
 7. Messagerie et notifications, dont rappels 24 h.
 8. Espace joueur, PDF, paramètres, sauvegardes et recette complète.
 
-## Limites de cette préparation
+## État de la branche de développement — 16 novembre 2026
 
-Aucun changement n'a été envoyé à GitHub, Vercel ou Supabase. Aucune migration n'a été exécutée. Cette copie est une base de développement locale et doit encore être développée, revue et testée avant publication.
+- Branche `feat/separate-coach-followups` créée depuis `main`.
+- Migration `006_separate_coach_followups.sql` ajoutée au dépôt et appliquée au projet Supabase de test `Coach In test`.
+- RLS vérifiée : les coachs sont limités à leurs propres séances, bilans, critères, défis et réussites ; les joueurs conservent la lecture de leur propre historique.
+- Colonne `coach_private_notes` ajoutée à `training_sessions`; les vues joueur ne l'exposent pas.
+- Chargement coach filtré par auteur ; parcours joueur enrichi avec le nom du coach pour les bilans et séances.
+- Non réalisé à ce stade : recette réelle avec les deux comptes coach et le joueur, tests automatisés exécutés sur cette branche, administrateur principal, disponibilités complètes, récurrences, rappels planifiés et catalogue exhaustif.
+- Aucun déploiement Vercel ni fusion vers `main` n'a été effectué.
 
 ## Avancement technique du 12 novembre 2026 — partage multi-coachs
 
