@@ -56,3 +56,5 @@ Migration 009 : `009_booking_reminders_24h.sql` ajoute le traitement planifié d
 
 
 Migration 010 : `010_primary_admin_account.sql` configure l'attribution du rôle administrateur principal à `axel.bohrer21@gmail.com` lors de la création de son compte Auth. Le rôle n'est pas attribué à un compte inexistant : l'administrateur doit d'abord créer son compte avec cette adresse et confirmer son e-mail. La migration ajoute aussi l'accès en lecture à la liste des coachs pour l'administrateur.
+
+Migration 011 : `011_admin_helper_permissions.sql` retire explicitement l'exécution anonyme de `is_admin()` et conserve l'exécution pour les utilisateurs authentifiés, nécessaire à la politique RLS de l'espace administrateur.
