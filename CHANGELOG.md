@@ -102,3 +102,13 @@
 - Mise à jour du README.
 - Vérifications locales : 31 tests JavaScript réussis et syntaxe des fichiers JS vérifiée.
 - Aucun SQL exécuté sur Supabase ; aucune validation PostgreSQL distante, aucun déploiement.
+
+
+## 16 novembre 2026 — Suivis séparés par coach
+
+- Décision actualisée : une fiche joueur commune, mais un historique pédagogique distinct pour chaque coach.
+- Ajout de `supabase/006_separate_coach_followups.sql` : RLS par auteur pour séances, bilans, critères, défis et réussites ; notes privées stockées dans `training_sessions` mais absentes des vues joueur.
+- Les défis actifs et les réussites sont désormais uniques par couple joueur / coach.
+- Les vues joueur exposent le nom du coach auteur pour chaque séance et bilan.
+- Chargement coach et moteur de progression filtrés sur le coach connecté.
+- Migration appliquée au projet Supabase de test ; recette fonctionnelle multi-comptes et déploiement encore à effectuer.
