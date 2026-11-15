@@ -172,6 +172,9 @@ La migration corrective historique `004_adoc_schedule_alignment.sql` est obsolè
 
 ## Multi-coachs — règle retenue le 16/11/2026
 
-Un joueur possède une fiche d'identité unique et peut être rattaché à plusieurs coachs après acceptation d'une invitation. Les suivis restent séparés : chaque coach ne voit et ne modifie que ses propres séances, bilans, notes privées, défis et réussites. Le joueur voit ses historiques personnels avec le nom du coach auteur. Les plannings, bibliothèques, critères et réglages sont privés à chaque coach. La migration corrective est `supabase/006_separate_coach_followups.sql` ; elle doit être appliquée après les migrations 001 à 005 sur un nouvel environnement.
+Un joueur possède une fiche d'identité unique et peut être rattaché à plusieurs coachs après acceptation d'une invitation. Les suivis restent séparés : chaque coach ne voit et ne modifie que ses propres séances, bilans, notes privées, défis et réussites. Le joueur voit ses historiques personnels avec le nom du coach auteur. Les plannings, bibliothèques, critères et réglages sont privés à chaque coach. La migration corrective est `supabase/006_separate_coach_followups.sql` ; elle doit être appliquée après les migrations 001 à 005 sur un nouvel environnement. La migration `supabase/007_notification_rpc_permissions.sql` durcit ensuite les droits d'exécution de la notification de nouveau bilan.
 
 Le projet Supabase de test a reçu cette migration le 16/11/2026. La branche `feat/separate-coach-followups` contient les changements de code correspondants. La recette multi-comptes et le déploiement ne sont pas encore validés.
+
+
+Migration de sécurité supplémentaire : `supabase/007_notification_rpc_permissions.sql` retire l'exécution anonyme du RPC de notification d'un nouveau bilan. Elle a été appliquée au projet Supabase de test.
