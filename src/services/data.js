@@ -88,6 +88,16 @@ export const dataService = {
     if (error) throw error;
     return data;
   },
+  async createLibraryItem(payload) {
+    const { data, error } = await supabase.from('session_library').insert(payload).select().single();
+    if (error) throw error;
+    return data;
+  },
+  async updateLibraryItem(id, changes, coachId) {
+    const { data, error } = await supabase.from('session_library').update({ ...changes, updated_at: new Date().toISOString() }).eq('id', id).eq('coach_id', coachId).select().single();
+    if (error) throw error;
+    return data;
+  },
   async createGroupSession(payload) {
     const { data, error } = await supabase.from('group_sessions').insert(payload).select().single();
     if (error) throw error;
