@@ -8,6 +8,14 @@ async function unwrap(query) {
   return data ?? [];
 }
 
+async function hydrateMessages(rows) {
+  return Promise.all((rows||[]).map(async row=>{
+    if(!row.attachment_path)return row;
+    const {data,error}=await supabase.storage.from('coach-in-attachments').createSignedUrl(row.attachment_path,3600);
+    return {...row,attachment_url:error?null:data?.signedUrl||null};
+  }));
+}
+
 export const dataService = {
   async loadAdminWorkspace() {
     const { data, error } = await supabase.from('profiles').select('id,email,first_name,last_name,created_at,archived_at').eq('role','coach').order('last_name');
@@ -44,7 +52,8 @@ export const dataService = {
     ]);
     const notesBySession = new Map(privateNotes.map(row => [row.session_id, row.note]));
     const sessions = sessionRows.map(row => ({ ...row, coach_private_notes: notesBySession.get(row.id) || '' }));
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations, weeklyAvailability, messages });
+    const hydratedMessages=await hydrateMessages(messages);
+    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations, weeklyAvailability, messages:hydratedMessages });
   },
 
   async loadPlayerWorkspace() {
@@ -63,7 +72,8 @@ export const dataService = {
     const messages = await unwrap(supabase.from('coach_player_messages').select('*').eq('player_id',state.user.id).order('created_at'));
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const evaluationCriteria = evaluationIds.length ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : [];
-    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, challenges, achievements, evaluationCriteria, playerCoaches, weeklyAvailability, messages });
+    const hydratedMessages=await hydrateMessages(messages);
+    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, challenges, achievements, evaluationCriteria, playerCoaches, weeklyAvailability, messages:hydratedMessages });
   },
 
   async respondToCoachInvitation(invitationId, accept) {
