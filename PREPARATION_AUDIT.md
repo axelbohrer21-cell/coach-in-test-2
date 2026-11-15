@@ -57,8 +57,9 @@ Avant toute migration : sauvegarde de la base, environnement de préproduction, 
 ## Décisions fonctionnelles ajoutées le 12 novembre 2026
 
 - Adultes : vendredi confirmé et réintégré.
-- Multi-coachs : suivi entièrement partagé après acceptation d’une invitation ; toutes les séances, évaluations, réussites et défis sont communs, avec conservation de l’identité du coach auteur. Les plannings et ressources privées des coachs restent séparés.
-- La spécification complète est dans `docs/architecture_multi_coach.md`.
+- Le joueur dispose d’une fiche d’identité unique et peut être associé à plusieurs coachs après acceptation d’une invitation.
+- Décision actualisée le 16 novembre 2026 : les suivis pédagogiques sont séparés par coach. Chaque coach voit uniquement ses propres séances, bilans, notes privées, défis et réussites. Le joueur voit ses suivis à lui, avec le nom du coach auteur. Les plannings, bibliothèques, catalogues de critères et réglages restent propres à chaque coach.
+- La migration corrective `006_separate_coach_followups.sql` remplace les anciennes politiques de suivi partagé et rend les défis/réussites uniques par couple joueur-coach.
 
 ## Ordre de développement
 
@@ -71,9 +72,15 @@ Avant toute migration : sauvegarde de la base, environnement de préproduction, 
 7. Messagerie et notifications, dont rappels 24 h.
 8. Espace joueur, PDF, paramètres, sauvegardes et recette complète.
 
-## Limites de cette préparation
+## État de la branche de développement — 16 novembre 2026
 
-Aucun changement n'a été envoyé à GitHub, Vercel ou Supabase. Aucune migration n'a été exécutée. Cette copie est une base de développement locale et doit encore être développée, revue et testée avant publication.
+- Branche `feat/separate-coach-followups` créée depuis `main`.
+- Migration `006_separate_coach_followups.sql` ajoutée au dépôt et appliquée au projet Supabase de test `Coach In test`.
+- RLS vérifiée : les coachs sont limités à leurs propres séances, bilans, critères, défis et réussites ; les joueurs conservent la lecture de leur propre historique.
+- Colonne `coach_private_notes` ajoutée à `training_sessions`; les vues joueur ne l'exposent pas.
+- Chargement coach filtré par auteur ; parcours joueur enrichi avec le nom du coach pour les bilans et séances.
+- Non réalisé à ce stade : recette réelle avec les deux comptes coach et le joueur, tests automatisés exécutés sur cette branche, administrateur principal, disponibilités complètes, récurrences, rappels planifiés et catalogue exhaustif.
+- Aucun déploiement Vercel ni fusion vers `main` n'a été effectué.
 
 ## Avancement technique du 12 novembre 2026 — partage multi-coachs
 
@@ -84,3 +91,22 @@ Aucun changement n'a été envoyé à GitHub, Vercel ou Supabase. Aucune migrati
 - Contrôles locaux : 31 tests automatisés réussis ; vérifications de syntaxe JavaScript réussies.
 - Non réalisé : exécution SQL, tests RLS réels, tests de bout en bout avec deux comptes coach, interface de révocation, affichage du nom de l'auteur sur chaque carte, déploiement.
 - Attention : la migration suppose les tables et colonnes issues des scripts d'initialisation présents dans le dossier du projet. Elle doit être confrontée au schéma réel avant toute exécution. Ne pas la lancer sur la base de production.
+
+
+## Avancement du 16 novembre 2026 — séparation et confidentialité des suivis
+
+- Décision fonctionnelle appliquée : fiche joueur commune, suivis pédagogiques séparés par coach.
+- Migration 006 appliquée au projet Supabase de test : RLS par auteur pour séances, bilans et critères ; défis et réussites indépendants par coach ; vues joueur avec auteur.
+- Migration 007 appliquée : exécution anonyme du RPC de notification de nouveau bilan révoquée. Vérification SQL : `anon_can_notify = false`, `signed_in_can_notify = true`.
+- Migration 008 appliquée : notes privées déplacées dans `coach_session_notes`, réservées au coach auteur ; vues joueur passées en `security_invoker=true`.
+- Tests RLS exécutés sous les identités de Coach A, Coach B et Joueur A : Coach A voit les deux bilans existants ; Coach B ne voit aucun bilan de Coach A ; Joueur A voit ses deux bilans. Un insert d'une séance attribuée à Coach A par Coach B est rejeté par RLS.
+- Le code de chargement, le moteur de progression et le parcours joueur sont mis à jour sur la branche `feat/separate-coach-followups`.
+- Recette navigateur complète, tests automatiques du dépôt, administrateur principal, disponibilités/récurrences, rappels, messagerie, bibliothèque complète et import exhaustif des critères restent à réaliser.
+
+
+## Avancement complémentaire du 16 novembre 2026
+
+- Bibliothèque : formulaire d'ajout/modification des séances pédagogiques ajouté, avec format collectif/particulier, thème, sous-thème, niveau, mots-clés, objectif, matériel, mise en place, consignes, rotations, variantes, durée, terrain, semaine source et illustration HTTPS. Recherche étendue au contenu pédagogique.
+- Planning : vue hebdomadaire horaire 8 h–22 h, navigation semaine, création d'une séance depuis un créneau, jours fériés, vacances Zone B et dimanches grisés ; le 8 mai reste disponible.
+- Rappels : migration 009 appliquée ; job pg_cron toutes les 15 minutes vérifié ; notifications internes 24 h avant un cours accepté.
+- Ces ajouts sont sur la branche de développement ; recette navigateur et déploiement non effectués.

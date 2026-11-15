@@ -29,7 +29,7 @@ export const progressionService = {
 
 
 await this.refreshAchievements(playerId, coachId);
-await this.updateActiveChallenge(playerId, detailRows);
+await this.updateActiveChallenge(playerId, coachId, detailRows);
 
 const { error: notificationError } = await supabase.rpc(
   'notify_player_new_evaluation',
@@ -45,8 +45,8 @@ return evaluation;
   async refreshAchievements(playerId, coachId) {
     const history = await rows(supabase.from('evaluation_criteria').select('evaluation_id,criterion_id,criterion_type').eq('criterion_type','positive').not('criterion_id','is',null));
     const [playerEvaluations, existing] = await Promise.all([
-      rows(supabase.from('evaluations').select('id').eq('player_id', playerId)),
-      rows(supabase.from('player_achievements').select('criterion_id').eq('player_id', playerId))
+      rows(supabase.from('evaluations').select('id').eq('player_id', playerId).eq('created_by', coachId)),
+      rows(supabase.from('player_achievements').select('criterion_id').eq('player_id', playerId).eq('coach_id', coachId))
     ]);
     const ids = new Set(playerEvaluations.map(x => x.id));
     const playerRows = history.filter(x => ids.has(x.evaluation_id));
@@ -56,15 +56,15 @@ return evaluation;
     const catalog = await rows(supabase.from('criteria_catalog').select('id,criterion').in('id',catalogIds));
     const names = new Map(catalog.map(x => [x.id,x.criterion]));
     const inserts = earned.map(x => ({ coach_id:coachId, player_id:playerId, criterion_id:x.criterion_id, criterion:names.get(x.criterion_id)||'Compétence validée', validation_count:x.validation_count }));
-    const { data: existingAfterCheck, error: checkError } = await supabase.from('player_achievements').select('criterion_id').eq('player_id',playerId);
+    const { data: existingAfterCheck, error: checkError } = await supabase.from('player_achievements').select('criterion_id').eq('player_id',playerId).eq('coach_id',coachId).eq('coach_id',coachId);
     if (checkError) throw checkError;
     const known = new Set((existingAfterCheck||[]).map(x=>x.criterion_id));
     const missing = inserts.filter(x=>!known.has(x.criterion_id));
     if (missing.length) { const { error } = await supabase.from('player_achievements').insert(missing); if (error && error.code !== '23505') throw error; }
   },
 
-  async updateActiveChallenge(playerId, selectedRows) {
-    const { data: challenge, error } = await supabase.from('player_challenges').select('*').eq('player_id',playerId).eq('status','active').maybeSingle();
+  async updateActiveChallenge(playerId, coachId, selectedRows) {
+    const { data: challenge, error } = await supabase.from('player_challenges').select('*').eq('player_id',playerId).eq('coach_id',coachId).eq('status','active').maybeSingle();
     if (error) throw error;
     if (!challenge) return;
     const match = selectedRows.find(x => x.criterion_id === challenge.criterion_id && x.criterion_type === 'improvement');
@@ -78,12 +78,12 @@ return evaluation;
 
   async createNextChallenge(playerId, coachId) {
     const [{data:active,error:activeError},{data:allRows,error:rowsError},{data:unlocked,error:unlockedError}] = await Promise.all([
-      supabase.from('player_challenges').select('id').eq('player_id',playerId).eq('status','active').maybeSingle(),
+      supabase.from('player_challenges').select('id').eq('player_id',playerId).eq('coach_id',coachId).eq('status','active').maybeSingle(),
       supabase.from('evaluation_criteria').select('evaluation_id,criterion_id,criterion,criterion_type').eq('criterion_type','improvement').not('criterion_id','is',null),
       supabase.from('player_achievements').select('criterion_id').eq('player_id',playerId)
     ]);
     if(activeError)throw activeError;if(rowsError)throw rowsError;if(unlockedError)throw unlockedError;if(active)return null;
-    const {data:evaluations,error:evaluationError}=await supabase.from('evaluations').select('id').eq('player_id',playerId);
+    const {data:evaluations,error:evaluationError}=await supabase.from('evaluations').select('id').eq('player_id',playerId).eq('created_by',coachId);
     if(evaluationError)throw evaluationError;
     const ids=new Set((evaluations||[]).map(x=>x.id));
     if(ids.size<3)return null;

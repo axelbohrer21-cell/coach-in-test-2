@@ -102,3 +102,37 @@
 - Mise à jour du README.
 - Vérifications locales : 31 tests JavaScript réussis et syntaxe des fichiers JS vérifiée.
 - Aucun SQL exécuté sur Supabase ; aucune validation PostgreSQL distante, aucun déploiement.
+
+
+## 16 novembre 2026 — Suivis séparés par coach
+
+- Décision actualisée : une fiche joueur commune, mais un historique pédagogique distinct pour chaque coach.
+- Ajout de `supabase/006_separate_coach_followups.sql` : RLS par auteur pour séances, bilans, critères, défis et réussites ; notes privées stockées dans `training_sessions` mais absentes des vues joueur.
+- Les défis actifs et les réussites sont désormais uniques par couple joueur / coach.
+- Les vues joueur exposent le nom du coach auteur pour chaque séance et bilan.
+- Chargement coach et moteur de progression filtrés sur le coach connecté.
+- Migration appliquée au projet Supabase de test ; recette fonctionnelle multi-comptes et déploiement encore à effectuer.
+
+
+## 16 novembre 2026 — Durcissement notifications
+
+- Ajout de `supabase/007_notification_rpc_permissions.sql` pour réserver l'appel de notification de nouveau bilan aux utilisateurs authentifiés.
+- Migration appliquée au projet Supabase de test.
+
+
+## 16 novembre 2026 — Cloisonnement des notes privées
+
+- Ajout de `coach_session_notes`, table réservée au coach auteur de la séance.
+- Les notes privées ne résident plus dans `training_sessions` et ne sont pas exposées par les vues joueur.
+- Les vues `player_sessions`, `player_evaluations` et `player_evaluation_criteria` utilisent `security_invoker=true` pour respecter les RLS de l'utilisateur.
+- La couche data charge et enregistre les notes privées séparément.
+- Migration 008 appliquée au projet Supabase de test ; vérification RLS à trois identités en cours.
+
+
+## 16 novembre 2026 — Rappels automatiques de réservation
+
+- Ajout du champ `booking_requests.reminder_sent_at` et du trigger de remise à zéro en cas de modification.
+- Ajout de `process_booking_reminders()` pour notifier le joueur et son coach environ 24 h avant un cours accepté, selon les préférences de chacun.
+- Horaires interprétés en Europe/Paris ; job `pg_cron` programmé toutes les 15 minutes.
+- Migration 009 appliquée au projet Supabase de test ; job vérifié ; aucun rappel en attente à l'instant du contrôle.
+- Notifications internes uniquement : aucun SMS ou WhatsApp n'est envoyé.

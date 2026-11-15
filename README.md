@@ -168,3 +168,24 @@ La migration corrective historique `004_adoc_schedule_alignment.sql` est obsolè
 - Le carnet joueur affiche les notes, radars et critères rattachés à chaque bilan.
 - Les règles de réussites et défis sont couvertes par des tests métier (trois évaluations distinctes pour une réussite ; fréquence des critères d'amélioration par bilan distinct ; comparaison numérique du défi).
 - **Important :** les règles métier locales sont testées, mais l'exécution des automatisations et la sécurité des données doivent encore être vérifiées sur une base Supabase de préproduction après application des migrations. Le catalogue fourni reste `partial_confirmed` et n'est pas exhaustif.
+
+
+## Multi-coachs — règle retenue le 16/11/2026
+
+Un joueur possède une fiche d'identité unique et peut être rattaché à plusieurs coachs après acceptation d'une invitation. Les suivis restent séparés : chaque coach ne voit et ne modifie que ses propres séances, bilans, notes privées, défis et réussites. Le joueur voit ses historiques personnels avec le nom du coach auteur. Les plannings, bibliothèques, critères et réglages sont privés à chaque coach. La migration corrective est `supabase/006_separate_coach_followups.sql` ; elle doit être appliquée après les migrations 001 à 005 sur un nouvel environnement. La migration `supabase/007_notification_rpc_permissions.sql` durcit ensuite les droits d'exécution de la notification de nouveau bilan.
+
+Le projet Supabase de test a reçu cette migration le 16/11/2026. La branche `feat/separate-coach-followups` contient les changements de code correspondants. La recette multi-comptes et le déploiement ne sont pas encore validés.
+
+
+Migration de sécurité supplémentaire : `supabase/007_notification_rpc_permissions.sql` retire l'exécution anonyme du RPC de notification d'un nouveau bilan. Elle a été appliquée au projet Supabase de test.
+
+
+La migration `supabase/008_private_session_notes_and_invoker_views.sql` sépare les notes privées des séances publiées et convertit les vues joueur en vues `security_invoker`, afin que les politiques RLS du compte appelant restent appliquées. Elle doit être exécutée après les migrations 006 et 007.
+
+
+La migration `supabase/009_booking_reminders_24h.sql` active les rappels internes automatiques 24 h avant les cours particuliers acceptés, avec exécution `pg_cron` toutes les 15 minutes et respect des préférences individuelles. Les rappels sont affichés dans le centre de notifications Coach In ; aucun SMS ou message WhatsApp n'est envoyé par cette migration.
+
+
+## Administration principale — étape ajoutée le 16/11/2026
+
+La branche de développement prépare un espace administrateur distinct des espaces coach et joueur. L'adresse `axel.bohrer21@gmail.com` est autorisée à recevoir le rôle `admin` lors de la création de son compte Supabase Auth ; les autres inscriptions restent des comptes joueurs par défaut. L'espace administrateur présente les comptes coachs en lecture seule à ce stade. La création, suspension et réactivation des comptes nécessitent une fonction serveur sécurisée et restent à réaliser. Si le compte n'existe pas encore, il faut le créer avec cette adresse et confirmer l'e-mail avant de pouvoir ouvrir l'espace administrateur.

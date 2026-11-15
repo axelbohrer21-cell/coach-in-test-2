@@ -39,3 +39,30 @@ Cette opération est réservée à la préparation du test. Ne pas promouvoir un
 
 ## Limite importante
 Les scripts sont préparés pour ce projet et relus statiquement, mais n'ont pas encore été exécutés contre le serveur PostgreSQL Supabase. La recette RLS et les tests de bout en bout restent obligatoires avant d'utiliser la base pour de vraies données.
+
+
+## Migration corrective — suivis séparés par coach
+
+Après les migrations initiales 001 à 005, exécuter `006_separate_coach_followups.sql` sur l'environnement cible après sauvegarde. Cette migration remplace les politiques RLS du partage pédagogique global par des politiques limitées au coach auteur. Les vues joueur continuent d'exposer uniquement les informations publiables. Vérifier ensuite les accès avec deux comptes coach associés au même joueur et un compte joueur.
+
+
+Migration complémentaire 007 : exécuter `007_notification_rpc_permissions.sql` après 006 afin de retirer l'exécution anonyme de la fonction de notification d'un nouveau bilan.
+
+
+Migration complémentaire 008 : exécuter `008_private_session_notes_and_invoker_views.sql` après 006 et 007. Elle déplace les notes privées dans une table séparée réservée au coach auteur et rend les vues joueur compatibles avec les RLS du compte appelant.
+
+
+Migration 009 : `009_booking_reminders_24h.sql` ajoute le traitement planifié des rappels internes 24 h avant les réservations acceptées. Elle installe un job `pg_cron` toutes les 15 minutes et respecte les préférences `reminders_24h` du joueur et du coach. Les horaires sont interprétés en Europe/Paris. Vérifier le job dans `cron.job` après installation.
+
+
+Migration 010 : `010_primary_admin_account.sql` configure l'attribution du rôle administrateur principal à `axel.bohrer21@gmail.com` lors de la création de son compte Auth. Le rôle n'est pas attribué à un compte inexistant : l'administrateur doit d'abord créer son compte avec cette adresse et confirmer son e-mail. La migration ajoute aussi l'accès en lecture à la liste des coachs pour l'administrateur.
+
+Migration 011 : `011_admin_helper_permissions.sql` retire explicitement l'exécution anonyme de `is_admin()` et conserve l'exécution pour les utilisateurs authentifiés, nécessaire à la politique RLS de l'espace administrateur.
+
+Migration 012 : `012_coach_weekly_availability.sql` crée les disponibilités hebdomadaires propres à chaque coach. Les coachs gèrent leurs plages ; leurs joueurs associés ne lisent que les plages actives. La RPC de demande de réservation refuse les créneaux qui ne couvrent pas la durée complète demandée.
+
+Migration 013 : `013_coach_player_messaging.sql` crée les conversations privées coach-joueur et le bucket privé `coach-in-attachments`. Les fichiers sont limités à 50 Mo et aux formats image, vidéo, PDF et documents bureautiques. Les règles RLS limitent chaque conversation au coach et au joueur qui y sont associés.
+
+Migration 014 : `014_messages_realtime_publication.sql` ajoute la table des messages à la publication `supabase_realtime` pour actualiser les conversations à la réception d'un nouveau message.
+
+Migration 015 : `015_seed_confirmed_partial_criteria.sql` importe les 94 critères dont les libellés exacts ont été retrouvés dans les validations précédentes, séparément pour Coach A et Coach B. Le catalogue reste explicitement partiel : Service, Retour de service, Volée, Jeu de jambes/déplacements, Mental et les critères à améliorer du Revers attendent les listes exactes validées. Aucun critère manquant n'est inventé. Les doublons sont conservés lorsqu'ils appartiennent à des sous-thèmes différents.

@@ -12,8 +12,11 @@ import { buildSeriesOccurrences } from './domain/group-series.js';
 import { progressionService } from './services/progression.js';
 
 let signupMode = false;
-const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'] ];
-const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'] ];
+let weatherRequest = 0;
+let messageChannel = null;
+const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
+const adminNav = [ ['dashboard','Administration','⌂'], ['coaches','Gestion des coachs','♙'] ];
+const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'] ];
 
 function showAuth(message='') {
   $('#auth-view').classList.remove('hidden'); $('#app-view').classList.add('hidden');
@@ -26,16 +29,18 @@ async function loadWorkspace() {
   if (!user) return showAuth();
   state.user = user;
   state.profile = await dataService.loadProfile(user.id);
-  if (state.profile.role === 'coach') await dataService.loadCoachWorkspace(user.id);
+  if (state.profile.role === 'admin') await dataService.loadAdminWorkspace();
+  else if (state.profile.role === 'coach') await dataService.loadCoachWorkspace(user.id);
   else await dataService.loadPlayerWorkspace();
   showApp();
-  $('#account-label').textContent = `${state.profile.first_name || ''} ${state.profile.last_name || ''} · ${state.profile.role === 'coach' ? 'Coach' : 'Joueur'}`;
+  $('#account-label').textContent = `${state.profile.first_name || ''} ${state.profile.last_name || ''} · ${{admin:'Administrateur',coach:'Coach',player:'Joueur'}[state.profile.role] || 'Compte'}`;
   render('dashboard');
 }
 
 function render(page) {
   const isCoach = state.profile?.role === 'coach';
-  const navItems = isCoach ? coachNav : playerNav;
+  const isAdmin = state.profile?.role === 'admin';
+  const navItems = isAdmin ? adminNav : isCoach ? coachNav : playerNav;
   if (!navItems.some(item => item[0] === page)) page = 'dashboard';
   state.currentPage = page;
   $('#navigation').innerHTML = navItems.map(([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}</button>`).join('');
@@ -43,6 +48,9 @@ function render(page) {
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
   $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
   $('#page-content').innerHTML=renderPage(page);
+  if(page==='planning') loadWeatherForecast();
+  if(page==='messages') subscribeToMessages();
+  else if(messageChannel){supabase.removeChannel(messageChannel);messageChannel=null;}
 }
 
 $('#auth-toggle').addEventListener('click', () => {
@@ -81,14 +89,21 @@ $('#page-actions').addEventListener('click', event => {
 
 $('#page-content').addEventListener('click', async event=>{
   const go=event.target.closest('[data-go]'); if(go){render(go.dataset.go);return;}
+  const planSlot=event.target.closest('[data-plan-slot]'); if(planSlot)return sessionDialog(planSlot.dataset.slotDate,planSlot.dataset.slotTime);
   const share=event.target.closest('[data-share-player]'); if(share) return sharePlayerDialog(share.dataset.sharePlayer);
   const invitation=event.target.closest('[data-coach-invitation]'); if(invitation) return respondCoachInvitation(invitation.dataset.coachInvitation, invitation.dataset.accept==='true');
   const action=event.target.closest('[data-action]')?.dataset.action;
   if(action==='new-session') return sessionDialog();
+  if(action==='add-availability') return availabilityDialog();
+  if(action==='invite-coach') return inviteCoachDialog();
   if(action==='new-group-session') return groupSessionDialog();
+  const editGroup=event.target.closest('[data-edit-group]'); if(editGroup) return groupSessionDialog(editGroup.dataset.editGroup);
+  const editSeries=event.target.closest('[data-edit-series]'); if(editSeries) return groupSeriesDialog(editSeries.dataset.editSeries);
   if(action==='add-group-series') return groupSeriesDialog();
   if(action==='request-booking') return bookingDialog();
   if(action==='new-evaluation') return evaluationDialog();
+  if(action==='new-library-item') return libraryDialog();
+  const editLibrary=event.target.closest('[data-edit-library]'); if(editLibrary) return libraryDialog(editLibrary.dataset.editLibrary);
   if(action==='add-player') return addPlayerDialog();
   const challenge=event.target.closest('[data-create-challenge]'); if(challenge) return challengeDialog(challenge.dataset.createChallenge, challenge.dataset.criterion, challenge.dataset.criterionId);
   const sheet=event.target.closest('[data-player-sheet]'); if(sheet) return playerSheetDialog(sheet.dataset.playerSheet);
@@ -96,6 +111,8 @@ $('#page-content').addEventListener('click', async event=>{
   const booking=event.target.closest('[data-booking]'); if(booking) return updateBooking(booking.dataset.booking,booking.dataset.status);
   const cancel=event.target.closest('[data-cancel-booking]'); if(cancel) return cancelBooking(cancel.dataset.cancelBooking);
   const cancelGroup=event.target.closest('[data-cancel-group]'); if(cancelGroup) return cancelGroupSession(cancelGroup.dataset.cancelGroup);
+  const removeAvailability=event.target.closest('[data-delete-availability]'); if(removeAvailability) return deleteAvailability(removeAvailability.dataset.deleteAvailability);
+  const coachState=event.target.closest('[data-coach-state]'); if(coachState) return setCoachState(coachState.dataset.coachState,coachState.dataset.coachId);
   const generateSeries=event.target.closest('[data-generate-series]'); if(generateSeries) return generateGroupSeries(generateSeries.dataset.generateSeries);
   const openNotification=event.target.closest('[data-open-notification]');
   if(openNotification){
@@ -138,13 +155,40 @@ $('#page-content').addEventListener('input',event=>{
   if(event.target.id==='library-search'||event.target.id==='library-category')filterLibrary();
 });
 $('#page-content').addEventListener('change',event=>{
+  if(event.target.id==='message-partner'){state.messagePartnerId=event.target.value;render('messages');}
   if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;render('players');}
   if(event.target.id==='library-category')filterLibrary();
 });
 
-function sessionDialog(){
+function libraryDialog(itemId=''){
+  const item=state.library.find(row=>row.id===itemId)||{};
+  const editing=Boolean(itemId);
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">BIBLIOTHÈQUE</p><h2>${editing?'Modifier une séance':'Ajouter une séance'}</h2></div><button class="btn icon-btn" data-close>✕</button></div>
+  <form id="library-form" class="form-grid">
+    <input type="hidden" name="id" value="${escapeHtml(item.id||'')}">
+    <label>Format<select name="category"><option value="particulier" ${item.category==='particulier'?'selected':''}>Cours particulier</option><option value="collectif" ${item.category==='collectif'?'selected':''}>Cours collectif</option></select></label>
+    <label>Niveau<input name="level" value="${escapeHtml(item.level||'Tous niveaux')}" placeholder="Tous niveaux, débutant, confirmé…"></label>
+    <label class="span-2">Titre<input name="title" required value="${escapeHtml(item.title||'')}"></label>
+    <label>Thème<input name="theme" required value="${escapeHtml(item.theme||'')}"></label>
+    <label>Sous-thème<input name="subtheme" value="${escapeHtml(item.subtheme||'')}"></label>
+    <label class="span-2">Mots-clés (séparés par des virgules)<input name="keywords" value="${escapeHtml((item.keywords||[]).join(', '))}"></label>
+    <label class="span-2">Objectif<textarea name="objective" rows="2">${escapeHtml(item.objective||'')}</textarea></label>
+    <label class="span-2">Matériel<textarea name="equipment" rows="2">${escapeHtml(item.equipment||'')}</textarea></label>
+    <label class="span-2">Mise en place<textarea name="setup" rows="2">${escapeHtml(item.setup||'')}</textarea></label>
+    <label class="span-2">Consignes<textarea name="instructions" rows="3">${escapeHtml(item.instructions||'')}</textarea></label>
+    <label class="span-2">Rotations<textarea name="rotations" rows="2">${escapeHtml(item.rotations||'')}</textarea></label>
+    <label class="span-2">Variantes<textarea name="variations" rows="2">${escapeHtml(item.variations||'')}</textarea></label>
+    <label>Durée (minutes)<input type="number" name="duration_minutes" min="1" value="${item.duration_minutes||''}"></label>
+    <label>Terrain (optionnel)<select name="court_number"><option value="">Non défini</option>${[1,2,3,4].map(n=>`<option value="${n}" ${Number(item.court_number)===n?'selected':''}>Terrain ${n}</option>`).join('')}</select></label>
+    <label>Semaine source<input type="number" name="source_week" min="1" max="52" value="${item.source_week||''}"></label>
+    <label class="span-2">Illustration (URL https)<input type="url" name="illustration_url" value="${escapeHtml(item.illustration_url||'')}" placeholder="https://…"></label>
+    <div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">${editing?'Enregistrer les modifications':'Ajouter à la bibliothèque'}</button></div>
+  </form>`);
+}
+
+function sessionDialog(date=toLocalISO(new Date()), time='17:00'){
   if(!state.players.length){toast('Associe d’abord un compte joueur à ton effectif.','error');return;}
-  showDialog(`<div class="dialog-head"><div><p class="eyebrow">TERRAIN</p><h2>Planifier une séance</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="session-form" class="form-grid"><label class="span-2">Joueur<select name="player_id" required>${state.players.map(p=>`<option value="${p.id}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label><label>Date<input name="session_date" type="date" required value="${toLocalISO(new Date())}"></label><label>Heure<input name="session_time" type="time" required value="17:00"></label><label>Durée<select name="duration_minutes"><option value="60">1 heure</option><option value="90">1 h 30</option><option value="120">2 heures</option></select></label><label>Court<select name="court_number"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><label>Thème<input name="theme" required placeholder="Ex. Construction du point"></label><label class="span-2">Exercice 1<textarea name="exercise_1" rows="2"></textarea></label><label class="span-2">Exercice 2<textarea name="exercise_2" rows="2"></textarea></label><label class="span-2">Synthèse visible joueur<textarea name="player_visible_summary" rows="2"></textarea></label><label class="span-2">Notes privées coach<textarea name="coach_private_notes" rows="2"></textarea></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer la séance</button></div></form>`);
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">TERRAIN</p><h2>Planifier une séance</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="session-form" class="form-grid"><label class="span-2">Joueur<select name="player_id" required>${state.players.map(p=>`<option value="${p.id}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label><label>Date<input name="session_date" type="date" required value="${date}"></label><label>Heure<input name="session_time" type="time" required value="${time}"></label><label>Durée<select name="duration_minutes"><option value="60">1 heure</option><option value="90">1 h 30</option><option value="120">2 heures</option></select></label><label>Court<select name="court_number"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><label>Thème<input name="theme" required placeholder="Ex. Construction du point"></label><label class="span-2">Exercice 1<textarea name="exercise_1" rows="2"></textarea></label><label class="span-2">Exercice 2<textarea name="exercise_2" rows="2"></textarea></label><label class="span-2">Synthèse visible joueur<textarea name="player_visible_summary" rows="2"></textarea></label><label class="span-2">Notes privées coach<textarea name="coach_private_notes" rows="2"></textarea></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer la séance</button></div></form>`);
 }
 function evaluationDialog(){
   if(!state.players.length){toast('Aucun joueur dans ton effectif.','error');return;}
@@ -236,19 +280,31 @@ function challengeDialog(playerId, criterion, criterionId){
   const player=state.players.find(row=>row.id===playerId); if(!player)return;
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">DÉFI PERSONNALISÉ</p><h2>${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="challenge-form" class="form-grid"><input type="hidden" name="player_id" value="${playerId}"><input type="hidden" name="criterion" value="${escapeHtml(criterion)}"><input type="hidden" name="criterion_id" value="${escapeHtml(criterionId||'')}"><label class="span-2">Critère prioritaire<input value="${escapeHtml(criterion)}" disabled></label><label class="span-2">Objectif concret et mesurable<textarea name="objective" rows="3" required placeholder="Ex. Réussir 8 retours sur 10 dans la zone ciblée"></textarea></label><label>Opérateur<select name="comparison_operator"><option value="gte">Atteindre ou dépasser</option><option value="lte">Être inférieur ou égal</option><option value="eq">Atteindre exactement</option></select></label><label>Valeur cible numérique<input type="number" name="target_value" step="0.1" required placeholder="Ex. 8"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Créer le défi</button></div></form>`);
 }
-function groupSeriesDialog(){
-  showDialog(`<div class="dialog-head"><div><p class="eyebrow">PARAMÉTRAGE ANNUEL</p><h2>Ajouter un créneau collectif</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Crée un compteur indépendant pour chaque bloc orange. Renseigne les horaires et le court du créneau collectif.</p><form id="group-series-form" class="form-grid"><label class="span-2">Nom du créneau<input name="title" required placeholder="Ex. Cours adultes débutants"></label><label>Public<select name="audience"><option value="adultes">Adultes · objectif 28</option><option value="enfants">Enfants · objectif 30</option></select></label><label>Jour<select name="weekday"><option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option></select></label><label>Début<input name="start_time" type="time" required></label><label>Fin<input name="end_time" type="time" required></label><label>Court<select name="court_number"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><label>Objectif annuel<input name="target_sessions" type="number" min="1" value="28" required></label><label class="span-2">Thème / précision<input name="theme" placeholder="Facultatif"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Créer le compteur</button></div></form>`);
+function inviteCoachDialog(){
+ showDialog(`<div class="dialog-head"><div><p class="eyebrow">ADMINISTRATION</p><h2>Inviter un coach</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Le coach recevra un e-mail d’invitation pour créer son accès.</p><form id="invite-coach-form" class="form-grid"><label>Prénom<input name="first_name" required></label><label>Nom<input name="last_name" required></label><label class="span-2">Adresse e-mail<input type="email" name="email" required></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Envoyer l’invitation</button></div></form>`);
+}
+async function setCoachState(action,id){try{const {error}=await supabase.functions.invoke('manage-coaches',{body:{action,coach_id:id}});if(error)throw error;toast(action==='archive'?'Compte coach suspendu.':'Compte coach réactivé.');await refreshAndRender();}catch(e){toast(e.message||'Action impossible.','error');}}
+
+function availabilityDialog(){
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">DISPONIBILITÉS</p><h2>Ajouter une plage réservable</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Les joueurs associés pourront demander un cours uniquement dans ces horaires.</p><form id="availability-form" class="form-grid"><label>Jour<select name="weekday" required><option value="" selected disabled>Choisir un jour</option><option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option></select></label><label>Terrain<select name="court_number"><option value="">Tous les terrains</option><option value="1">Terrain 1</option><option value="2">Terrain 2</option><option value="3">Terrain 3</option><option value="4">Terrain 4</option></select></label><label>Début<input type="time" name="start_time" required value="08:00"></label><label>Fin<input type="time" name="end_time" required value="16:00"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Publier la disponibilité</button></div></form>`);
+}
+async function deleteAvailability(id){try{await dataService.deleteAvailability(id,state.user.id);toast('Disponibilité supprimée.');await refreshAndRender();}catch(e){toast(e.message||'Suppression impossible.','error');}}
+
+function groupSeriesDialog(seriesId=''){
+  const series=state.groupSeries.find(x=>x.id===seriesId)||{}; const editing=Boolean(seriesId);
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">PARAMÉTRAGE ANNUEL</p><h2>${editing?'Modifier le créneau annuel':'Ajouter un créneau collectif'}</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Crée un compteur indépendant pour chaque bloc orange. Renseigne les horaires et le court du créneau collectif.</p><form id="group-series-form" class="form-grid"><input type="hidden" name="id" value="${seriesId}"><label class="span-2">Nom du créneau<input name="title" required value="${escapeHtml(series.title||'')}" placeholder="Ex. Cours adultes débutants"></label><input type="hidden" name="audience" value="${series.audience||'adultes'}" ${editing?'':'disabled'}><label>Public<select name="${editing?'audience_display':'audience'}" ${editing?'disabled':''}><option value="adultes" ${series.audience==='adultes'?'selected':''}>Adultes · objectif 28</option><option value="enfants" ${series.audience==='enfants'?'selected':''}>Enfants · objectif 30</option></select></label><input type="hidden" name="weekday" value="${series.weekday||1}" ${editing?'':'disabled'}><label>Jour<select name="${editing?'weekday_display':'weekday'}" ${editing?'disabled':''}><option value="1" ${Number(series.weekday)===1?'selected':''}>Lundi</option><option value="2" ${Number(series.weekday)===2?'selected':''}>Mardi</option><option value="3" ${Number(series.weekday)===3?'selected':''}>Mercredi</option><option value="4" ${Number(series.weekday)===4?'selected':''}>Jeudi</option><option value="5" ${Number(series.weekday)===5?'selected':''}>Vendredi</option><option value="6" ${Number(series.weekday)===6?'selected':''}>Samedi</option></select></label><label>Début<input name="start_time" type="time" required value="${series.start_time||''}"></label><label>Fin<input name="end_time" type="time" required value="${series.end_time||''}"></label><label>Court<select name="court_number"><option value="1" ${Number(series.court_number)===1?'selected':''}>Court 1</option><option value="2" ${Number(series.court_number)===2?'selected':''}>Court 2</option><option value="3" ${Number(series.court_number)===3?'selected':''}>Court 3</option><option value="4" ${Number(series.court_number)===4?'selected':''}>Court 4</option></select></label><label>Objectif annuel<input name="target_sessions" type="number" min="1" value="${series.target_sessions||28}" required></label><label class="span-2">Thème / précision<input name="theme" value="${escapeHtml(series.theme||'')}" placeholder="Facultatif"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">${editing?'Enregistrer le créneau':'Créer le compteur'}</button></div></form>`);
 }
 
-function groupSessionDialog(){
-  showDialog(`<div class="dialog-head"><div><p class="eyebrow">COURS COLLECTIF</p><h2>Ajouter un cours collectif</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="group-session-form" class="form-grid"><label class="span-2">Intitulé<input name="title" required placeholder="Ex. Entraînement adultes"></label><label>Date<input name="session_date" type="date" required value="${toLocalISO(new Date())}"></label><label>Public<select name="audience"><option value="adultes">Adultes</option><option value="enfants">Enfants</option></select></label><label>Début<input name="start_time" type="time" required value="18:00"></label><label>Fin<input name="end_time" type="time" required value="19:30"></label><label>Court<select name="court_number"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><label>Thème<input name="theme"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer</button></div></form>`);
+function groupSessionDialog(sessionId=''){
+  const session=state.groupSessions.find(x=>x.id===sessionId)||{}; const editing=Boolean(sessionId);
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">COURS COLLECTIF</p><h2>${editing?'Modifier ce cours':'Ajouter un cours collectif'}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="group-session-form" class="form-grid"><input type="hidden" name="id" value="${sessionId}"><label class="span-2">Intitulé<input name="title" required value="${escapeHtml(session.title||'')}" placeholder="Ex. Entraînement adultes"></label><label>Date<input name="session_date" type="date" required value="${session.session_date||toLocalISO(new Date())}"></label><label>Public<select name="audience"><option value="adultes" ${session.audience==='adultes'?'selected':''}>Adultes</option><option value="enfants" ${session.audience==='enfants'?'selected':''}>Enfants</option></select></label><label>Début<input name="start_time" type="time" required value="${session.start_time||'18:00'}"></label><label>Fin<input name="end_time" type="time" required value="${session.end_time||'19:30'}"></label><label>Court<select name="court_number"><option value="1" ${Number(session.court_number)===1?'selected':''}>Court 1</option><option value="2" ${Number(session.court_number)===2?'selected':''}>Court 2</option><option value="3" ${Number(session.court_number)===3?'selected':''}>Court 3</option><option value="4" ${Number(session.court_number)===4?'selected':''}>Court 4</option></select></label><label>Thème<input name="theme" value="${escapeHtml(session.theme||'')}"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">${editing?'Enregistrer les modifications':'Enregistrer'}</button></div></form>`);
 }
 function bookingDialog(){
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">COURS PARTICULIER</p><h2>Demander un créneau</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Choisis une date, une heure, une durée et un court. Le créneau sera soumis au contrôle des conflits puis restera en attente de validation.</p><form id="booking-form" class="form-grid"><label class="span-2">Coach<select name="coach_id" required>${(state.playerCoaches||[]).map(c=>`<option value="${c.id}">${escapeHtml(c.first_name)} ${escapeHtml(c.last_name)}</option>`).join('')}</select></label><label>Date<input name="date" type="date" required min="${toLocalISO(new Date())}"></label><label>Heure<input name="time" type="time" required></label><label>Durée<select name="duration"><option value="60">1 heure</option><option value="90">1 h 30</option><option value="120">2 heures</option></select></label><label>Court<select name="court"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Envoyer la demande</button></div></form>`);
 }
 function sharePlayerDialog(playerId){
   const player=state.players.find(item=>item.id===playerId); if(!player)return;
-  showDialog(`<div class="dialog-head"><div><p class="eyebrow">DOSSIER PARTAGÉ</p><h2>Partager ${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Le coach invité devra accepter. Après acceptation, il pourra consulter et enrichir tout l’historique du joueur.</p><form id="share-player-form" class="stack"><input type="hidden" name="player_id" value="${player.id}"><label>E-mail du coach<input type="email" name="coach_email" required placeholder="coach@email.fr"></label><div class="dialog-actions"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Envoyer l’invitation</button></div></form>`);
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">DOSSIER PARTAGÉ</p><h2>Partager ${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Le coach invité devra accepter. Après acceptation, il accédera à la fiche d’identité du joueur et créera son propre suivi. Tes séances, bilans et notes privées resteront visibles uniquement par toi.</p><form id="share-player-form" class="stack"><input type="hidden" name="player_id" value="${player.id}"><label>E-mail du coach<input type="email" name="coach_email" required placeholder="coach@email.fr"></label><div class="dialog-actions"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Envoyer l’invitation</button></div></form>`);
 }
 function addPlayerDialog(){
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">EFFECTIF</p><h2>Associer un joueur</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Le joueur doit avoir créé et confirmé son compte avec cette adresse e-mail. Pour créer un compte à sa place, il faudra une fonction d’invitation sécurisée côté serveur.</p><form id="associate-form" class="stack"><label>E-mail du joueur<input type="email" name="email" required placeholder="joueur@email.fr"></label><div class="dialog-actions"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Rechercher et associer</button></div></form>`);
@@ -263,7 +319,17 @@ $('#dialog-content').addEventListener('change',event=>{if(event.target.name==='a
 $('#dialog-content').addEventListener('submit',async event=>{
   event.preventDefault();const form=event.target;const values=Object.fromEntries(new FormData(form));
   try{
-    if(form.id==='booking-form'){
+    if(form.id==='message-form'){
+      const file=form.elements.attachment.files[0]||null;
+      await dataService.sendMessage({coachId:state.profile.role==='coach'?state.user.id:values.coach_id,playerId:state.profile.role==='coach'?values.player_id:state.user.id,senderId:state.user.id,body:values.body.trim(),file});
+      toast('Message envoyé.');
+    } else if(form.id==='invite-coach-form'){
+      const {error}=await supabase.functions.invoke('manage-coaches',{body:{action:'invite',email:values.email,first_name:values.first_name,last_name:values.last_name}});if(error)throw error;toast('Invitation envoyée au coach.');
+    } else if(form.id==='availability-form'){
+      if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
+      await dataService.createAvailability({coach_id:state.user.id,weekday:Number(values.weekday),start_time:values.start_time,end_time:values.end_time,court_number:values.court_number?Number(values.court_number):null,active:true});
+      toast('Disponibilité ajoutée. Les joueurs associés pourront demander ces créneaux.');
+    } else if(form.id==='booking-form'){
       await bookingService.request({coachId:values.coach_id,date:values.date,time:values.time,duration:values.duration,court:values.court});toast('Demande envoyée. Elle est en attente de validation.');
     } else if(form.id==='share-player-form'){
       await dataService.inviteCoachToPlayer(values.player_id,values.coach_email.trim().toLowerCase());toast('Invitation envoyée au coach. Le partage sera actif après son acceptation.');
@@ -271,11 +337,14 @@ $('#dialog-content').addEventListener('submit',async event=>{
       const weekday=Number(values.weekday), audience=values.audience;
       const allowed=audience==='adultes'?[1,2,4,5]:[3,6]; if(!allowed.includes(weekday)) throw new Error('Ce jour ne correspond pas au public choisi.');
       if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
-      await dataService.createGroupSeries({coach_id:state.user.id,title:values.title.trim(),audience,weekday,start_time:values.start_time,end_time:values.end_time,court_number:Number(values.court_number),target_sessions:Number(values.target_sessions),theme:values.theme||''});
-      toast('Créneau annuel créé. Tu peux maintenant générer ses dates.');
+      const seriesPayload={title:values.title.trim(),audience,weekday,start_time:values.start_time,end_time:values.end_time,court_number:Number(values.court_number),target_sessions:Number(values.target_sessions),theme:values.theme||''};
+      if(values.id){await dataService.updateGroupSeries(values.id,seriesPayload,state.user.id);toast('Créneau annuel et séances futures actualisés.');}
+      else{await dataService.createGroupSeries({coach_id:state.user.id,...seriesPayload});toast('Créneau annuel créé. Tu peux maintenant générer ses dates.');}
     } else if(form.id==='group-session-form'){
       if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
-      await dataService.createGroupSession({coach_id:state.user.id,title:values.title.trim(),theme:values.theme||'',session_date:values.session_date,start_time:values.start_time,end_time:values.end_time,court_number:Number(values.court_number),audience:values.audience,status:'scheduled'});toast('Cours collectif ajouté au planning.');
+      const groupPayload={title:values.title.trim(),theme:values.theme||'',session_date:values.session_date,start_time:values.start_time,end_time:values.end_time,court_number:Number(values.court_number),audience:values.audience};
+      if(values.id){await dataService.updateGroupSession(values.id,groupPayload,state.user.id);toast('Cours collectif modifié.');}
+      else{await dataService.createGroupSession({coach_id:state.user.id,...groupPayload,status:'scheduled'});toast('Cours collectif ajouté au planning.');}
     } else if(form.id==='session-form'){
       const payload={...values,player_id:values.player_id,created_by:state.user.id,duration_minutes:Number(values.duration_minutes),court_number:Number(values.court_number),status:'Prévue'};
       await dataService.createSession(payload);toast('Séance enregistrée.');
@@ -290,6 +359,22 @@ $('#dialog-content').addEventListener('submit',async event=>{
       if(!hasEvaluationContent(scores,selected)) throw new Error('Renseigne au moins une note ou sélectionne un critère observé.');
       await progressionService.saveEvaluation({playerId:values.player_id,coachId:state.user.id,scores,selectedCriteria:selected});
       toast('Bilan enregistré. Les réussites et le défi actif ont été actualisés.');
+    } else if(form.id==='library-form'){
+      if(values.illustration_url && !/^https:\/\//i.test(values.illustration_url)) throw new Error('L’illustration doit utiliser une adresse HTTPS.');
+      const payload={
+        coach_id:state.user.id, category:values.category, title:values.title.trim(),
+        theme:values.theme.trim(), subtheme:values.subtheme.trim(), level:values.level.trim()||'Tous niveaux',
+        keywords:values.keywords.split(',').map(x=>x.trim()).filter(Boolean),
+        objective:values.objective.trim(), equipment:values.equipment.trim(), setup:values.setup.trim(),
+        instructions:values.instructions.trim(), rotations:values.rotations.trim(), variations:values.variations.trim(),
+        duration_minutes:values.duration_minutes?Number(values.duration_minutes):null,
+        court_number:values.court_number?Number(values.court_number):null,
+        source_week:values.source_week?Number(values.source_week):null,
+        illustration_url:values.illustration_url.trim()||null
+      };
+      if(values.id) await dataService.updateLibraryItem(values.id,payload,state.user.id);
+      else await dataService.createLibraryItem(payload);
+      toast(values.id?'Séance mise à jour.':'Séance ajoutée à la bibliothèque.');
     } else if(form.id==='challenge-form'){
       const playerId=values.player_id;
       const reportIds=new Set(state.evaluations.filter(row=>row.player_id===playerId).map(row=>row.id));
@@ -342,11 +427,41 @@ async function cancelBooking(id){
 async function markNotificationRead(id){
   try{if(state.profile.role==='coach')await notificationService.markCoachRead(id);else await notificationService.markPlayerRead(id);await refreshAndRender();render('notifications');}catch(e){toast(e.message,'error');}
 }
-function filterLibrary(){const q=($('#library-search')?.value||'').toLowerCase();const category=$('#library-category')?.value||'all';const list=state.library.filter(x=>(category==='all'||x.category===category)&&`${x.title} ${x.theme} ${x.objective} ${(x.keywords||[]).join(' ')}`.toLowerCase().includes(q));$('#library-results').innerHTML=list.map(x=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml(x.title)}</strong><span>${escapeHtml(x.theme)} · ${escapeHtml(x.category)}</span><small>${escapeHtml(x.objective||'')}</small></div></article>`).join('')||'<p class="muted">Aucun exercice correspondant.</p>';}
+function filterLibrary(){const q=($('#library-search')?.value||'').toLowerCase();const category=$('#library-category')?.value||'all';const list=state.library.filter(x=>(category==='all'||x.category===category)&&`${x.title} ${x.theme} ${x.subtheme} ${x.level} ${x.objective} ${x.setup} ${x.instructions} ${(x.keywords||[]).join(' ')}`.toLowerCase().includes(q));$('#library-results').innerHTML=list.map(x=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml(x.title)}</strong><span>${escapeHtml(x.theme)} · ${escapeHtml(x.category)}</span><small>${escapeHtml(x.objective||'')}</small></div></article>`).join('')||'<p class="muted">Aucun exercice correspondant.</p>';}
 async function respondCoachInvitation(id, accept){
   try{await dataService.respondToCoachInvitation(id,accept);toast(accept?'Partage accepté : le dossier joueur est maintenant accessible.':'Invitation refusée.');await refreshAndRender();}catch(error){toast(error.message||'Impossible de traiter cette invitation.','error');}
 }
-async function refreshAndRender(){if(state.profile.role==='coach')await dataService.loadCoachWorkspace(state.user.id);else await dataService.loadPlayerWorkspace();render(state.currentPage);}
+async function refreshAndRender(){if(state.profile.role==='admin')await dataService.loadAdminWorkspace();else if(state.profile.role==='coach')await dataService.loadCoachWorkspace(state.user.id);else await dataService.loadPlayerWorkspace();render(state.currentPage);}
 
 supabase.auth.onAuthStateChange((_event,session)=>{if(session?.user){window.setTimeout(()=>loadWorkspace().catch(error=>showAuth(`Erreur de chargement : ${error.message}`)),0);}else{resetState();showAuth();}});
 supabase.auth.getSession().then(({data,error})=>{if(error)return showAuth(error.message);if(data.session)loadWorkspace().catch(e=>showAuth(`Erreur de chargement : ${e.message}`));else showAuth();});
+
+
+async function loadWeatherForecast(){
+ const panel=$('#weather-panel'); if(!panel)return;
+ const request=++weatherRequest;
+ const summary=$('#weather-summary'); if(summary)summary.textContent='Chargement des prévisions de pluie…';
+ try{
+  const url='https://api.open-meteo.com/v1/forecast?latitude=43.282&longitude=5.516&current=temperature_2m,weather_code&hourly=precipitation_probability,precipitation,weather_code&forecast_days=2&timezone=Europe%2FParis';
+  const response=await fetch(url); if(!response.ok)throw new Error('Prévisions indisponibles');
+  const data=await response.json(); if(request!==weatherRequest||state.currentPage!=='planning')return;
+  const now=Date.now(); const times=data.hourly.time||[];
+  const next=times.map((time,index)=>({time,index,stamp:new Date(time).getTime(),prob:Number(data.hourly.precipitation_probability?.[index]||0),rain:Number(data.hourly.precipitation?.[index]||0)})).filter(row=>row.stamp>=now&&row.stamp<=now+8*3600000);
+  const max=next.reduce((best,row)=>row.prob>best.prob?row:best,{prob:0,rain:0,time:''});
+  const fmt=time=>new Date(time).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const current=data.current||{};
+  const title=$('#weather-title'); if(title)title.textContent=(current.temperature_2m??'—')+' °C · '+weatherDescription(current.weather_code);
+  if(summary)summary.textContent=next.length?('Sur les 8 prochaines heures : risque maximal de pluie '+max.prob+' %'+(max.time?' vers '+fmt(max.time):'')+'. '+(max.rain>0?'Précipitations prévues : '+max.rain.toFixed(1)+' mm sur l’heure la plus arrosée.':'Pas de pluie horaire significative indiquée.')):'Prévisions horaires indisponibles pour les prochaines heures.';
+ }catch(error){if(request===weatherRequest&&state.currentPage==='planning'&&summary)summary.textContent='La météo ne peut pas être chargée pour le moment. Le planning reste disponible.';}
+}
+function weatherDescription(code){const c=Number(code);if(c===0)return'ciel dégagé';if([1,2,3].includes(c))return'nuageux';if([45,48].includes(c))return'brouillard';if([51,53,55,56,57].includes(c))return'bruine';if([61,63,65,66,67,80,81,82].includes(c))return'pluie';if([71,73,75,77,85,86].includes(c))return'neige';if([95,96,99].includes(c))return'orage';return'conditions météo';}
+
+
+function subscribeToMessages(){
+ if(messageChannel||!state.user)return;
+ const field=state.profile.role==='coach'?'coach_id':'player_id';
+ messageChannel=supabase.channel('coach-in-messages-'+state.user.id)
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'coach_player_messages',filter:field+'=eq.'+state.user.id},()=>{
+   if(state.currentPage==='messages')refreshAndRender().catch(error=>toast(error.message||'Actualisation des messages impossible.','error'));
+  }).subscribe();
+}
