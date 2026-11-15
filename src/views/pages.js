@@ -3,7 +3,7 @@ import { escapeHtml, formatDate, formatTime } from '../core/dom.js';
 import { emptyState, playerName, sessionCard, statCard } from './shared.js';
 import { toLocalISO, countDistinctValidations } from '../domain/tennis.js';
 import { recommendChallenge, radarPoints } from '../domain/progression.js';
-import { buildDaySeriesOverview, getWeekProgram, GROUP_SEASON, isSchoolHoliday, isPublicHoliday, ZONE_B_HOLIDAYS_2026_2027 } from '../domain/group-calendar.js';
+import { buildDaySeriesOverview, getWeekProgram, GROUP_SEASON, isPublicHoliday, ZONE_B_HOLIDAYS_2026_2027 } from '../domain/group-calendar.js';
 import { buildSeriesCounters } from '../domain/group-series.js';
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
 
