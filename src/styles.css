@@ -159,3 +159,17 @@
 
 /* Availability management */
 .availability-note{color:var(--muted);font-size:12px}
+
+/* Coach In private messaging */
+.message-thread{display:flex;flex-direction:column;gap:10px;max-height:480px;overflow:auto;padding:12px;border:1px solid var(--line);border-radius:16px;background:#08172a}
+.message-bubble{max-width:min(78%,620px);padding:12px 14px;border-radius:15px;background:#19314d;overflow-wrap:anywhere}
+.message-bubble p{margin:0 0 7px;white-space:pre-wrap}
+.message-bubble small{display:block;color:var(--muted);font-size:10px;margin-top:8px}
+.message-own{align-self:flex-end;background:#16445b}
+.message-other{align-self:flex-start}
+.message-attachment{color:var(--cyan);font-size:13px}
+.message-compose{display:grid;gap:10px;margin-top:14px}
+.message-compose textarea{width:100%;padding:12px;border:1px solid #344c6c;border-radius:12px;background:#09182c;color:var(--text)}
+.message-file-label,.message-partner-label{display:grid;gap:7px;color:#c7d4e8;font-size:12px;font-weight:750}
+.message-file-label input{color:var(--muted)}
+.message-partner-label{margin-bottom:14px}
