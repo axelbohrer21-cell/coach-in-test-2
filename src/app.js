@@ -151,6 +151,37 @@ const challenge=state.challenges.find(x=>x.player_id===playerId&&x.status==='act
   const grouped=new Map();for(const c of criteria){const k=c.main_theme||'Autres';grouped.set(k,[...(grouped.get(k)||[]),c]);}
   const themeSummary=[...grouped].map(([theme,rows])=>`<div class="theme-progress-row"><span>${escapeHtml(theme)}</span><div class="theme-progress-track"><i style="width:${Math.min(100,rows.length*8)}%"></i></div><b>${rows.length}</b></div>`).join('');
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">FICHE DE PROGRESSION</p><h2>${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}</h2><p class="muted">${escapeHtml(player.fft_ranking||'Classement non renseigné')} · ${escapeHtml(player.player_type||'Loisir')}</p></div><button class="btn icon-btn" data-close>✕</button></div>
+  
+<section class="sheet-section player-personal-info">
+  <h3>Informations du joueur</h3>
+  <div class="stats-grid">
+    <div class="stat-card blue">
+      <span>DATE DE NAISSANCE</span>
+      <strong>${player.birth_date ? formatDate(player.birth_date) : 'Non renseignée'}</strong>
+    </div>
+    <div class="stat-card purple">
+      <span>ÂGE</span>
+      <strong>${playerAge}</strong>
+    </div>
+    <div class="stat-card green">
+      <span>CLASSEMENT FFT</span>
+      <strong>${escapeHtml(player.fft_ranking || 'Non renseigné')}</strong>
+    </div>
+    <div class="stat-card orange">
+      <span>CATÉGORIE</span>
+      <strong>${escapeHtml(player.age_category || 'Non renseignée')}</strong>
+    </div>
+    <div class="stat-card blue">
+      <span>E-MAIL</span>
+      <strong>${escapeHtml(player.email || 'Non renseigné')}</strong>
+    </div>
+    <div class="stat-card purple">
+      <span>PROFIL</span>
+      <strong>${escapeHtml(player.player_type || 'Loisir')}</strong>
+    </div>
+  </div>
+</section>
+
   <div class="stats-grid"><div class="stat-card blue"><span>SÉANCES</span><strong>${sessions.length}</strong></div><div class="stat-card purple"><span>BILANS</span><strong>${reports.length}</strong></div><div class="stat-card green"><span>RÉUSSITES</span><strong>${achievements.length}</strong></div><div class="stat-card orange"><span>À TRAVAILLER</span><strong>${criteria.filter(x=>x.criterion_type==='improvement').length}</strong></div></div>
   <section class="sheet-section"><h3>Défi prioritaire</h3>${challenge?`<div class="challenge-strip"><b>${escapeHtml(challenge.criterion)}</b><span>${escapeHtml(challenge.objective)}</span><small>${challenge.current_value??'—'} / ${challenge.target_value??'—'} · ${challenge.consecutive_successes||0}/2 validations consécutives</small></div>`:'<p class="muted">Aucun défi actif.</p>'}</section>
   <section class="sheet-section"><h3>Réussites débloquées</h3><div class="achievement-grid">${achievements.map(a=>`<div class="achievement-card"><span>✦</span><strong>${escapeHtml(a.criterion)}</strong></div>`).join('')||'<p class="muted">Aucune réussite débloquée pour le moment.</p>'}</div></section>
