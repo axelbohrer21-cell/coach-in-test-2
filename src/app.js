@@ -206,9 +206,18 @@ $('#dialog-content').addEventListener('submit',async event=>{
       const target=Number(values.target_value); if(!Number.isFinite(target)) throw new Error('Saisis un objectif numérique.');
       const {error}=await supabase.from('player_challenges').insert({coach_id:state.user.id,player_id:playerId,criterion_id:values.criterion_id||null,criterion:values.criterion,objective:values.objective.trim(),comparison_operator:values.comparison_operator,target_value:target,current_value:null,status:'active'}); if(error)throw error; toast('Défi créé.');
     } else if(form.id==='associate-form'){
-      const email=String(values.email).trim().toLowerCase();const {data:player,error}=await supabase.from('profiles').select('id,first_name,last_name,email,role').eq('email',email).eq('role','player').maybeSingle();if(error)throw error;if(!player)throw new Error('Aucun compte joueur confirmé trouvé avec cette adresse.');
-      const {data:existing,error:checkError}=await supabase.from('coach_players').select('player_id').eq('coach_id',state.user.id).eq('player_id',player.id).maybeSingle();if(checkError)throw checkError;if(existing)throw new Error('Ce joueur est déjà dans ton effectif.');
-      const {error:insertError}=await supabase.from('coach_players').insert({coach_id:state.user.id,player_id:player.id});if(insertError)throw insertError;toast(`${player.first_name} ${player.last_name} ajouté à l’effectif.`);
+    
+const email = String(values.email).trim().toLowerCase();
+
+const { data: playerId, error } = await supabase.rpc(
+  'add_existing_player_to_coach',
+  { p_player_email: email }
+);
+
+if (error) throw error;
+
+toast('Joueur ajouté à ton effectif.');
+
     } else if(form.id==='player-form'){
       const {id,...changes}=values;await dataService.updatePlayer(id,{...changes,first_name:changes.first_name.trim(),last_name:changes.last_name.trim()});toast('Fiche joueur mise à jour.');
     }
