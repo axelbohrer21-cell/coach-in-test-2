@@ -16,11 +16,14 @@ export const pageMeta = {
   reports: ['Progression', 'Évaluations', 'Observe les compétences travaillées et les progrès.'],
   library: ['Bibliothèque', 'Mes séances', 'Retrouve tes exercices et tes contenus pédagogiques.'],
   bookings: ['Réservations', 'Demandes de cours', 'Consulte les demandes et les cours réservés.'],
-  notifications: ['Actualités', 'Notifications', 'Retrouve les informations liées à ton activité.']
+  notifications: ['Actualités', 'Notifications', 'Retrouve les informations liées à ton activité.'],
+  coaches: ['Administration', 'Gestion des coachs', 'Consulte les comptes coachs et leur statut.']
 };
 
 export function renderPage(page) {
   const isCoach = state.profile.role === 'coach';
+  if (state.profile.role === 'admin' && page === 'coaches') return adminCoachesPage();
+  if (state.profile.role === 'admin' && page === 'dashboard') return adminDashboard();
   if (page === 'dashboard') return dashboard(isCoach);
   if (page === 'players') return playersPage();
   if (page === 'planning') return planningPage();
@@ -239,4 +242,16 @@ function bookingsPage(isCoach) {
 
 function notificationsPage(isCoach) {
   return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">CENTRE DE NOTIFICATIONS</p><h2>Mes notifications</h2></div></div>${state.notifications.map(n=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml(n.title)}</strong><span>${escapeHtml(n.body||'')}</span><small>${formatDate(n.created_at,{day:'2-digit',month:'short',year:'numeric'})} ${formatTime(n.created_at?.slice(11,16))}</small></div>${n.target_path==='reports'&&!isCoach?`<button class="btn primary" data-open-notification="${n.id}" data-target-path="reports">Voir mon bilan</button>`:''}${!n.read_at?`<button class="btn subtle" data-read-notification="${n.id}">Marquer comme lu</button>`:'<span class="tag">Lu</span>'}</article>`).join('')||emptyState('Tout est calme','Tes notifications apparaîtront ici.')}</section>`;
+}
+
+
+function adminDashboard() {
+  const active = (state.adminCoaches || []).filter(c => !c.archived_at).length;
+  const archived = (state.adminCoaches || []).length - active;
+  return `<div class="welcome-panel"><div><p class="eyebrow">ESPACE ADMINISTRATEUR</p><h2>Pilotage de Coach In</h2><p>Vue d’ensemble des comptes coachs de la plateforme.</p></div><div class="welcome-mark">CI<span>+</span></div></div><div class="stats-grid">${statCard('Comptes coachs', (state.adminCoaches||[]).length, 'blue')}${statCard('Actifs', active, 'green')}${statCard('Archivés', archived, 'orange')}</div><section class="panel"><div class="section-heading"><div><p class="eyebrow">GESTION</p><h2>Comptes coachs</h2></div><button class="btn primary" data-go="coaches">Voir les comptes</button></div><p class="muted">Les comptes et les suivis pédagogiques restent cloisonnés par coach.</p></section>`;
+}
+
+function adminCoachesPage() {
+  const rows = state.adminCoaches || [];
+  return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">ADMINISTRATION</p><h2>Comptes coachs</h2></div></div><div class="list-stack">${rows.map(c=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml((c.first_name+' '+c.last_name).trim() || 'Coach sans nom')}</strong><span>${escapeHtml(c.email || '')}</span><small>${c.archived_at ? 'Compte archivé' : 'Compte actif'}</small></div></article>`).join('') || emptyState('Aucun compte coach','Les comptes coachs apparaîtront ici après leur création.')}</div><p class="tiny muted">Cette première version est en lecture seule. La création, suspension et réactivation seront ajoutées avec une fonction serveur sécurisée, sans exposer de clé d’administration dans le navigateur.</p></section>`;
 }
