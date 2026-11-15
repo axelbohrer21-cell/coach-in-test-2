@@ -13,9 +13,9 @@ import { progressionService } from './services/progression.js';
 
 let signupMode = false;
 let weatherRequest = 0;
-const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'] ];
+const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
 const adminNav = [ ['dashboard','Administration','⌂'], ['coaches','Gestion des coachs','♙'] ];
-const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'] ];
+const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'] ];
 
 function showAuth(message='') {
   $('#auth-view').classList.remove('hidden'); $('#app-view').classList.add('hidden');
@@ -150,6 +150,7 @@ $('#page-content').addEventListener('input',event=>{
   if(event.target.id==='library-search'||event.target.id==='library-category')filterLibrary();
 });
 $('#page-content').addEventListener('change',event=>{
+  if(event.target.id==='message-partner'){state.messagePartnerId=event.target.value;render('messages');}
   if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;render('players');}
   if(event.target.id==='library-category')filterLibrary();
 });
@@ -311,7 +312,11 @@ $('#dialog-content').addEventListener('change',event=>{if(event.target.name==='a
 $('#dialog-content').addEventListener('submit',async event=>{
   event.preventDefault();const form=event.target;const values=Object.fromEntries(new FormData(form));
   try{
-    if(form.id==='invite-coach-form'){
+    if(form.id==='message-form'){
+      const file=form.elements.attachment.files[0]||null;
+      await dataService.sendMessage({coachId:state.profile.role==='coach'?state.user.id:values.coach_id,playerId:state.profile.role==='coach'?values.player_id:state.user.id,senderId:state.user.id,body:values.body.trim(),file});
+      toast('Message envoyé.');
+    } else if(form.id==='invite-coach-form'){
       const {error}=await supabase.functions.invoke('manage-coaches',{body:{action:'invite',email:values.email,first_name:values.first_name,last_name:values.last_name}});if(error)throw error;toast('Invitation envoyée au coach.');
     } else if(form.id==='availability-form'){
       if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
