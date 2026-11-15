@@ -184,3 +184,8 @@ La migration `supabase/008_private_session_notes_and_invoker_views.sql` sépare 
 
 
 La migration `supabase/009_booking_reminders_24h.sql` active les rappels internes automatiques 24 h avant les cours particuliers acceptés, avec exécution `pg_cron` toutes les 15 minutes et respect des préférences individuelles. Les rappels sont affichés dans le centre de notifications Coach In ; aucun SMS ou message WhatsApp n'est envoyé par cette migration.
+
+
+## Administration principale — étape ajoutée le 16/11/2026
+
+La branche de développement prépare un espace administrateur distinct des espaces coach et joueur. L'adresse `axel.bohrer21@gmail.com` est autorisée à recevoir le rôle `admin` lors de la création de son compte Supabase Auth ; les autres inscriptions restent des comptes joueurs par défaut. L'espace administrateur présente les comptes coachs en lecture seule à ce stade. La création, suspension et réactivation des comptes nécessitent une fonction serveur sécurisée et restent à réaliser. Si le compte n'existe pas encore, il faut le créer avec cette adresse et confirmer l'e-mail avant de pouvoir ouvrir l'espace administrateur.
