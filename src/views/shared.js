@@ -17,7 +17,8 @@ export function statCard(label, value, color, detail = '') {
 export function sessionCard(session, isCoach) {
   const name = isCoach ? playerName(session.player_id) : 'Entraînement';
   const status = session.status || 'Prévue';
-  const coachName = [session.coach_first_name, session.coach_last_name].filter(Boolean).join(' ');
+  const linkedCoach = state.playerCoaches.find(row => row.id === session.created_by);
+  const coachName = [session.coach_first_name, session.coach_last_name].filter(Boolean).join(' ') || linkedCoach?.email || '';
   const detail = `${escapeHtml(session.theme || 'Séance')} · ${Number(session.duration_minutes || 60)} min${!isCoach && coachName ? ` · Coach : ${escapeHtml(coachName)}` : ''}`;
   return `<article class="list-card"><div class="list-date"><strong>${formatDate(session.session_date, { day: '2-digit', month: 'short' })}</strong><small>${formatTime(session.session_time)}</small></div><div class="list-main"><strong>${escapeHtml(name)}</strong><span>${detail}</span></div><span class="tag">${escapeHtml(status)}</span></article>`;
 }
