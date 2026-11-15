@@ -27,9 +27,19 @@ export const progressionService = {
       if (detailError) throw detailError;
     }
 
-    await this.refreshAchievements(playerId, coachId);
-    await this.updateActiveChallenge(playerId, detailRows);
-    return evaluation;
+
+await this.refreshAchievements(playerId, coachId);
+await this.updateActiveChallenge(playerId, detailRows);
+
+const { error: notificationError } = await supabase.rpc(
+  'notify_player_new_evaluation',
+  { p_player_id: playerId }
+);
+
+if (notificationError) throw notificationError;
+
+return evaluation;
+
   },
 
   async refreshAchievements(playerId, coachId) {
