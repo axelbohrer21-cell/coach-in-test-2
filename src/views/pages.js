@@ -132,6 +132,81 @@ function playerProgressPage() {
   <section class="panel"><div class="section-heading"><div><p class="eyebrow">MON PARCOURS TENNIS</p><h2>Mes bilans et séances</h2></div></div>${[...state.evaluations].sort((a,b)=>String(b.evaluated_at||b.created_at).localeCompare(String(a.evaluated_at||a.created_at))).map(report=>{const rows=criteria.filter(c=>c.evaluation_id===report.id);const themes=[...new Set(rows.map(c=>c.main_theme).filter(Boolean))];const earned=achievements.filter(a=>rows.some(c=>c.criterion_id===a.criterion_id));return `<article class="journal-card"><div class="journal-date">${formatDate(report.evaluated_at||report.created_at,{day:'2-digit',month:'long',year:'numeric'})}</div><h3>Bilan de progression</h3><p>${themes.length?`Thèmes travaillés : ${themes.map(escapeHtml).join(' · ')}`:'Bilan enregistré'}</p>${radarChart(report)}<div class="journal-criteria">${rows.map(c=>`<span class="journal-tag ${c.criterion_type==='positive'?'positive':'improvement'}">${c.criterion_type==='positive'?'✓':'↗'} ${escapeHtml(c.criterion)}</span>`).join('')||'<small class="muted">Aucun critère détaillé associé à ce bilan.</small>'}</div>${earned.length?`<div class="journal-criteria">${earned.map(a=>`<span class="journal-tag positive">✦ Réussite : ${escapeHtml(a.criterion)}</span>`).join('')}</div>`:''}</article>`}).join('')||emptyState('Aucun bilan pour le moment','Tes bilans apparaîtront ici au fil de ta progression.')}<h3 class="sheet-subtitle">Mes séances</h3>${timeline.map(row=>`<article class="list-card"><div class="list-date"><strong>${formatDate(row.session_date,{day:'2-digit',month:'short'})}</strong><small>${formatTime(row.session_time)}</small></div><div class="list-main"><strong>${escapeHtml(row.theme||'Séance de tennis')}</strong><span>${escapeHtml(row.player_visible_summary||'Séance enregistrée')}</span></div></article>`).join('')||'<p class="muted">Aucune séance enregistrée.</p>'}</section>`;
 }
 
+function playersPage() {
+  const q = (state.filters.search || '').toLowerCase();
+
+  const filtered = state.players.filter(p =>
+    `${p.first_name} ${p.last_name} ${p.email}`.toLowerCase().includes(q) &&
+    (state.filters.playerType === 'all' ||
+    (p.player_type || 'Loisir') === state.filters.playerType)
+  );
+
+  const colors = [
+    '#42c7f5', '#a78bfa', '#54d6a0', '#ffad66',
+    '#fb7185', '#facc15', '#2dd4bf', '#c084fc'
+  ];
+
+  const colorForPlayer = id => {
+    let hash = 0;
+    for (const char of String(id || '')) {
+      hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+    }
+    return colors[hash % colors.length];
+  };
+
+  return `<section class="panel">
+    <div class="toolbar">
+      <input id="player-search" class="search-input"
+        placeholder="Rechercher un joueur…"
+        value="${escapeHtml(state.filters.search)}">
+
+      <select id="player-type-filter" class="select-input">
+        <option value="all">Tous les profils</option>
+        <option value="Loisir">Loisir</option>
+        <option value="Compétition">Compétition</option>
+      </select>
+    </div>
+
+    <div class="player-grid">
+      ${filtered.map(p => {
+        const color = colorForPlayer(p.id);
+        const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+
+        return `<article class="player-card"
+          style="--player-accent:${color}">
+
+          <div class="player-avatar">
+            ${escapeHtml((p.first_name || '?').slice(0,1))}
+            ${escapeHtml((p.last_name || '').slice(0,1))}
+          </div>
+
+          <div class="player-card-info">
+            <h3>${escapeHtml(name || 'Joueur')}</h3>
+            <p>${escapeHtml(p.fft_ranking || 'Classement à renseigner')}
+            · ${escapeHtml(p.age_category || 'Catégorie à renseigner')}</p>
+
+            <p>${escapeHtml(p.birth_date ? formatDate(p.birth_date) : 'Date de naissance à renseigner')}
+            · ${escapeHtml(p.email || 'E-mail non renseigné')}</p>
+
+            <span class="tag ${p.player_type === 'Compétition' ? 'tag-purple' : 'tag-blue'}">
+              ${escapeHtml(p.player_type || 'Loisir')}
+            </span>
+          </div>
+
+          <button class="btn icon-btn"
+            data-edit-player="${p.id}">⋯</button>
+
+          <button class="btn subtle"
+            data-share-player="${p.id}">Partager</button>
+
+        </article>`;
+      }).join('') ||
+      emptyState('Aucun joueur trouvé',
+      'Modifie ta recherche ou associe un compte joueur.')}
+    </div>
+  </section>`;
+}
+
 function libraryPage() {
   return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">RESSOURCES PÉDAGOGIQUES</p><h2>Bibliothèque de séances</h2></div></div><div class="toolbar"><input class="search-input" id="library-search" placeholder="Rechercher un exercice…"><select class="select-input" id="library-category"><option value="all">Tous les formats</option><option value="collectif">Cours collectifs</option><option value="particulier">Cours particuliers</option></select></div><div id="library-results">${state.library.map(item=>libraryCard(item)).join('') || emptyState('Bibliothèque à construire','Les séances enregistrées apparaîtront ici.')}</div></section>`;
 }
