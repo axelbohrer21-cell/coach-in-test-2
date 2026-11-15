@@ -118,3 +118,12 @@
 
 - Ajout de `supabase/007_notification_rpc_permissions.sql` pour réserver l'appel de notification de nouveau bilan aux utilisateurs authentifiés.
 - Migration appliquée au projet Supabase de test.
+
+
+## 16 novembre 2026 — Cloisonnement des notes privées
+
+- Ajout de `coach_session_notes`, table réservée au coach auteur de la séance.
+- Les notes privées ne résident plus dans `training_sessions` et ne sont pas exposées par les vues joueur.
+- Les vues `player_sessions`, `player_evaluations` et `player_evaluation_criteria` utilisent `security_invoker=true` pour respecter les RLS de l'utilisateur.
+- La couche data charge et enregistre les notes privées séparément.
+- Migration 008 appliquée au projet Supabase de test ; vérification RLS à trois identités en cours.
