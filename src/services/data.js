@@ -9,6 +9,11 @@ async function unwrap(query) {
 }
 
 export const dataService = {
+  async loadAdminWorkspace() {
+    const { data, error } = await supabase.from('profiles').select('id,email,first_name,last_name,created_at,archived_at').eq('role','coach').order('last_name');
+    if (error) throw error;
+    state.adminCoaches = data || [];
+  },
   async loadProfile(userId) {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
     if (error) throw error;
