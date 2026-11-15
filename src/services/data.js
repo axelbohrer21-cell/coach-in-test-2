@@ -14,6 +14,7 @@ export const dataService = {
     if (error) throw error;
     state.adminCoaches = data || [];
   },
+  async manageCoach(action,payload={}) { const {data,error}=await supabase.functions.invoke('manage-coaches',{body:{action,...payload}}); if(error)throw error; return data; },
   async loadProfile(userId) {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
     if (error) throw error;
