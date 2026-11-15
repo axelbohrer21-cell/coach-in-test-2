@@ -16,6 +16,7 @@ export const state = {
   playerCoaches: [],
   coachInvitations: [],
   adminCoaches: [],
+  weeklyAvailability: [],
   currentPage: 'dashboard',
   planningWeekOffset: 0,
   filters: { playerType: 'all', search: '', libraryCategory: 'all', librarySearch: '' }
@@ -25,7 +26,7 @@ export function resetState() {
   Object.assign(state, {
     user: null, profile: null, players: [], sessions: [], evaluations: [], groupSessions: [], groupSeries: [],
     bookingRequests: [], library: [], notifications: [], criteria: [], evaluationCriteria: [],
-    challenges: [], achievements: [], playerCoaches: [], coachInvitations: [], adminCoaches: [], currentPage: 'dashboard', planningWeekOffset: 0,
+    challenges: [], achievements: [], playerCoaches: [], coachInvitations: [], adminCoaches: [], weeklyAvailability: [], currentPage: 'dashboard', planningWeekOffset: 0,
     filters: { playerType: 'all', search: '', libraryCategory: 'all', librarySearch: '' }
   });
 }
