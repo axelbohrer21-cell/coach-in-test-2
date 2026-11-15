@@ -20,17 +20,17 @@ export const dataService = {
     const playerIds = links.map(link => link.player_id);
     const [players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations] = await Promise.all([
       playerIds.length ? unwrap(supabase.from('profiles').select('*').in('id', playerIds).eq('role', 'player').order('last_name')) : Promise.resolve([]),
-      playerIds.length ? unwrap(supabase.from('training_sessions').select('*').in('player_id', playerIds).order('session_date', { ascending: false })) : Promise.resolve([]),
-      playerIds.length ? unwrap(supabase.from('evaluations').select('*').in('player_id', playerIds).order('evaluated_at', { ascending: false })) : Promise.resolve([]),
+      playerIds.length ? unwrap(supabase.from('training_sessions').select('*').in('player_id', playerIds).eq('created_by', userId).order('session_date', { ascending: false })) : Promise.resolve([]),
+      playerIds.length ? unwrap(supabase.from('evaluations').select('*').in('player_id', playerIds).eq('created_by', userId).order('evaluated_at', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('group_sessions').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('group_course_series').select('*').eq('coach_id', userId).order('weekday').order('start_time')),
       unwrap(supabase.from('booking_requests').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('session_library').select('*').eq('coach_id', userId).order('title')),
       notificationService.listCoach(),
       unwrap(supabase.from('criteria_catalog').select('*').eq('coach_id', userId).order('display_order')),
-      playerIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', (await unwrap(supabase.from('evaluations').select('id').in('player_id', playerIds))).map(x => x.id))) : Promise.resolve([]),
-      playerIds.length ? unwrap(supabase.from('player_challenges').select('*').in('player_id', playerIds).order('created_at', { ascending: false })) : Promise.resolve([]),
-      playerIds.length ? unwrap(supabase.from('player_achievements').select('*').in('player_id', playerIds).order('unlocked_at', { ascending: false })) : Promise.resolve([]),
+      playerIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', (await unwrap(supabase.from('evaluations').select('id').in('player_id', playerIds).eq('created_by', userId))).map(x => x.id))) : Promise.resolve([]),
+      playerIds.length ? unwrap(supabase.from('player_challenges').select('*').in('player_id', playerIds).eq('coach_id', userId).order('created_at', { ascending: false })) : Promise.resolve([]),
+      playerIds.length ? unwrap(supabase.from('player_achievements').select('*').in('player_id', playerIds).eq('coach_id', userId).order('unlocked_at', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('coach_player_invitation_inbox').select('*').order('created_at', { ascending: false }))
     ]);
     Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations });
