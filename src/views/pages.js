@@ -18,7 +18,8 @@ export const pageMeta = {
   bookings: ['Réservations', 'Demandes de cours', 'Consulte les demandes et les cours réservés.'],
   notifications: ['Actualités', 'Notifications', 'Retrouve les informations liées à ton activité.'],
   coaches: ['Administration', 'Gestion des coachs', 'Consulte les comptes coachs et leur statut.'],
-  availability: ['Organisation', 'Mes disponibilités', 'Définis les plages pendant lesquelles les joueurs peuvent demander un cours.']
+  availability: ['Organisation', 'Mes disponibilités', 'Définis les plages pendant lesquelles les joueurs peuvent demander un cours.'],
+  messages: ['Communication', 'Messages', 'Échange des messages, photos, vidéos et documents avec tes coachs ou tes joueurs.']
 };
 
 export function renderPage(page) {
@@ -29,6 +30,7 @@ export function renderPage(page) {
   if (page === 'players') return playersPage();
   if (page === 'planning') return planningPage();
   if (page === 'availability') return availabilityPage();
+  if (page === 'messages') return messagesPage(isCoach);
   if (page === 'group-calendar') return groupCalendarPage();
   if (page === 'sessions') return sessionsPage(isCoach);
   if (page === 'reports') return reportsPage(isCoach);
@@ -264,4 +266,16 @@ function availabilityPage() {
  const rows=[...(state.weeklyAvailability||[])].sort((a,b)=>a.weekday-b.weekday||a.start_time.localeCompare(b.start_time));
  const cards=rows.map(row=>'<article class="list-card"><div class="list-date"><strong>'+names[row.weekday]+'</strong><small>'+(row.active?'Active':'Inactive')+'</small></div><div class="list-main"><strong>'+row.start_time.slice(0,5)+' – '+row.end_time.slice(0,5)+'</strong><span>'+(row.court_number?'Terrain '+row.court_number:'Tous les terrains')+'</span></div><button class="btn danger" data-delete-availability="'+row.id+'">Supprimer</button></article>').join('');
  return '<section class="panel"><div class="section-heading"><div><p class="eyebrow">CRÉNEAUX RÉSERVABLES</p><h2>Mes disponibilités hebdomadaires</h2></div><button class="btn primary" data-action="add-availability">＋ Ajouter une plage</button></div><p class="muted">Les joueurs associés peuvent demander un cours uniquement si la durée complète tient dans une plage active.</p>'+(cards||emptyState('Aucune disponibilité publiée','Ajoute les jours et horaires pendant lesquels les joueurs pourront te demander un cours particulier.'))+'</section><section class="panel"><p class="eyebrow">RÈGLES DE RÉSERVATION</p><h2>Contrôles automatiques</h2><ul><li>Durées proposées : 1 h, 1 h 30 ou 2 h.</li><li>Le créneau doit être entièrement compris dans une disponibilité.</li><li>Les séances, cours collectifs et demandes en attente bloquent les conflits.</li><li>Le coach conserve la validation finale.</li></ul></section>';
+}
+
+
+function messagesPage(isCoach) {
+ const partners=isCoach?(state.players||[]):(state.playerCoaches||[]);
+ const partnerId=state.messagePartnerId&&partners.some(p=>p.id===state.messagePartnerId)?state.messagePartnerId:(partners[0]?.id||'');
+ const rows=(state.messages||[]).filter(m=>isCoach?m.player_id===partnerId:m.coach_id===partnerId).sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));
+ const options=partners.map(p=>'<option value="'+p.id+'" '+(p.id===partnerId?'selected':'')+'>'+escapeHtml([p.first_name,p.last_name].filter(Boolean).join(' ')||p.email||'Contact')+'</option>').join('');
+ const thread=rows.map(m=>'<article class="message-bubble '+(m.sender_id===state.user.id?'message-own':'message-other')+'"><p>'+escapeHtml(m.body||'')+'</p>'+(m.attachment_url?'<a class="message-attachment" href="'+escapeHtml(m.attachment_url)+'" target="_blank" rel="noopener">'+escapeHtml(m.attachment_name||'Pièce jointe')+'</a>':'')+'<small>'+new Date(m.created_at).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})+'</small></article>').join('');
+ const coachField=isCoach?'':'<input type="hidden" name="coach_id" value="'+partnerId+'">';
+ const playerField=isCoach?'<input type="hidden" name="player_id" value="'+partnerId+'">':'';
+ return '<section class="panel"><div class="section-heading"><div><p class="eyebrow">MESSAGERIE PRIVÉE</p><h2>Conversation</h2></div></div>'+(partners.length?'<label class="message-partner-label">Contact<select id="message-partner" class="select-input">'+options+'</select></label><div class="message-thread">'+(thread||'<p class="muted">Aucun message dans cette conversation. Envoie le premier message.</p>')+'</div><form id="message-form" class="message-compose">'+coachField+playerField+'<textarea name="body" rows="3" placeholder="Écrire un message…"></textarea><label class="message-file-label">Joindre une photo, vidéo ou document<input type="file" name="attachment" accept="image/jpeg,image/png,image/webp,image/heic,video/mp4,video/quicktime,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"></label><small class="tiny muted">Fichiers privés · 50 Mo maximum.</small><button class="btn primary">Envoyer</button></form>':'<p class="muted">'+(isCoach?'Associe un joueur à ton effectif pour démarrer une conversation.':'Aucun coach associé à ton compte pour le moment.')+'</p>')+'</section>';
 }
