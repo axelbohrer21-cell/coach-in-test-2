@@ -201,7 +201,6 @@ const challenge=state.challenges.find(x=>x.player_id===playerId&&x.status==='act
       </article>
     `).join('') || '<p class="muted">Aucune note privée enregistrée.</p>'}
   </section>
-  
  ${sessions.map(s=>`<article class="list-card"><div class="list-date"><strong>${formatDate(s.session_date,{day:'2-digit',month:'short'})}</strong><small>${s.duration_minutes||60} min</small></div><div class="list-main"><strong>${escapeHtml(s.theme||'Séance de tennis')}</strong><span>${escapeHtml(s.player_visible_summary||'Séance enregistrée')}</span></div></article>`).join('')||'<p class="muted">Aucune séance.</p>'}</section>`);
 }
 
