@@ -23,7 +23,7 @@ export const dataService = {
   async loadCoachWorkspace(userId) {
     const links = await unwrap(supabase.from('coach_players').select('player_id').eq('coach_id', userId));
     const playerIds = links.map(link => link.player_id);
-    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations] = await Promise.all([
+    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations, weeklyAvailability] = await Promise.all([
       playerIds.length ? unwrap(supabase.from('profiles').select('*').in('id', playerIds).eq('role', 'player').order('last_name')) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('training_sessions').select('*').in('player_id', playerIds).eq('created_by', userId).order('session_date', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('coach_session_notes').select('session_id,note').eq('coach_id', userId)),
@@ -37,11 +37,12 @@ export const dataService = {
       playerIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', (await unwrap(supabase.from('evaluations').select('id').in('player_id', playerIds).eq('created_by', userId))).map(x => x.id))) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('player_challenges').select('*').in('player_id', playerIds).eq('coach_id', userId).order('created_at', { ascending: false })) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('player_achievements').select('*').in('player_id', playerIds).eq('coach_id', userId).order('unlocked_at', { ascending: false })) : Promise.resolve([]),
-      unwrap(supabase.from('coach_player_invitation_inbox').select('*').order('created_at', { ascending: false }))
+      unwrap(supabase.from('coach_player_invitation_inbox').select('*').order('created_at', { ascending: false })),
+      unwrap(supabase.from('coach_weekly_availability').select('*').eq('coach_id',userId).order('weekday').order('start_time'))
     ]);
     const notesBySession = new Map(privateNotes.map(row => [row.session_id, row.note]));
     const sessions = sessionRows.map(row => ({ ...row, coach_private_notes: notesBySession.get(row.id) || '' }));
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations });
+    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations, weeklyAvailability });
   },
 
   async loadPlayerWorkspace() {
@@ -56,9 +57,10 @@ export const dataService = {
     ]);
     const coachIds = coachLinks.map(row => row.coach_id);
     const playerCoaches = coachIds.length ? await unwrap(supabase.from('profiles').select('id,first_name,last_name,email').in('id', coachIds).order('last_name')) : [];
+    const weeklyAvailability = coachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',coachIds).eq('active',true).order('weekday').order('start_time')) : [];
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const evaluationCriteria = evaluationIds.length ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : [];
-    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, challenges, achievements, evaluationCriteria, playerCoaches });
+    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, challenges, achievements, evaluationCriteria, playerCoaches, weeklyAvailability });
   },
 
   async respondToCoachInvitation(invitationId, accept) {
@@ -103,6 +105,8 @@ export const dataService = {
     if (error) throw error;
     return data;
   },
+  async createAvailability(payload) { const {data,error}=await supabase.from('coach_weekly_availability').insert(payload).select().single(); if(error)throw error; return data; },
+  async deleteAvailability(id,coachId) { const {error}=await supabase.from('coach_weekly_availability').delete().eq('id',id).eq('coach_id',coachId); if(error)throw error; },
   async createGroupSession(payload) {
     const { data, error } = await supabase.from('group_sessions').insert(payload).select().single();
     if (error) throw error;
