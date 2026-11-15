@@ -56,7 +56,7 @@ return evaluation;
     const catalog = await rows(supabase.from('criteria_catalog').select('id,criterion').in('id',catalogIds));
     const names = new Map(catalog.map(x => [x.id,x.criterion]));
     const inserts = earned.map(x => ({ coach_id:coachId, player_id:playerId, criterion_id:x.criterion_id, criterion:names.get(x.criterion_id)||'Compétence validée', validation_count:x.validation_count }));
-    const { data: existingAfterCheck, error: checkError } = await supabase.from('player_achievements').select('criterion_id').eq('player_id',playerId).eq('coach_id',coachId);
+    const { data: existingAfterCheck, error: checkError } = await supabase.from('player_achievements').select('criterion_id').eq('player_id',playerId).eq('coach_id',coachId).eq('coach_id',coachId);
     if (checkError) throw checkError;
     const known = new Set((existingAfterCheck||[]).map(x=>x.criterion_id));
     const missing = inserts.filter(x=>!known.has(x.criterion_id));
