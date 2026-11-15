@@ -47,3 +47,6 @@ Après les migrations initiales 001 à 005, exécuter `006_separate_coach_follow
 
 
 Migration complémentaire 007 : exécuter `007_notification_rpc_permissions.sql` après 006 afin de retirer l'exécution anonyme de la fonction de notification d'un nouveau bilan.
+
+
+Migration complémentaire 008 : exécuter `008_private_session_notes_and_invoker_views.sql` après 006 et 007. Elle déplace les notes privées dans une table séparée réservée au coach auteur et rend les vues joueur compatibles avec les RLS du compte appelant.
