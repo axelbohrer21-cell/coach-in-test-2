@@ -17,7 +17,8 @@ export const pageMeta = {
   library: ['Bibliothèque', 'Mes séances', 'Retrouve tes exercices et tes contenus pédagogiques.'],
   bookings: ['Réservations', 'Demandes de cours', 'Consulte les demandes et les cours réservés.'],
   notifications: ['Actualités', 'Notifications', 'Retrouve les informations liées à ton activité.'],
-  coaches: ['Administration', 'Gestion des coachs', 'Consulte les comptes coachs et leur statut.']
+  coaches: ['Administration', 'Gestion des coachs', 'Consulte les comptes coachs et leur statut.'],
+  availability: ['Organisation', 'Mes disponibilités', 'Définis les plages pendant lesquelles les joueurs peuvent demander un cours.']
 };
 
 export function renderPage(page) {
@@ -27,6 +28,7 @@ export function renderPage(page) {
   if (page === 'dashboard') return dashboard(isCoach);
   if (page === 'players') return playersPage();
   if (page === 'planning') return planningPage();
+  if (page === 'availability') return availabilityPage();
   if (page === 'group-calendar') return groupCalendarPage();
   if (page === 'sessions') return sessionsPage(isCoach);
   if (page === 'reports') return reportsPage(isCoach);
@@ -254,4 +256,12 @@ function adminDashboard() {
 function adminCoachesPage() {
   const rows = state.adminCoaches || [];
   return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">ADMINISTRATION</p><h2>Comptes coachs</h2></div></div><div class="list-stack">${rows.map(c=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml((c.first_name+' '+c.last_name).trim() || 'Coach sans nom')}</strong><span>${escapeHtml(c.email || '')}</span><small>${c.archived_at ? 'Compte archivé' : 'Compte actif'}</small></div></article>`).join('') || emptyState('Aucun compte coach','Les comptes coachs apparaîtront ici après leur création.')}</div><p class="tiny muted">Cette première version est en lecture seule. La création, suspension et réactivation seront ajoutées avec une fonction serveur sécurisée, sans exposer de clé d’administration dans le navigateur.</p></section>`;
+}
+
+
+function availabilityPage() {
+ const names=['','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+ const rows=[...(state.weeklyAvailability||[])].sort((a,b)=>a.weekday-b.weekday||a.start_time.localeCompare(b.start_time));
+ const cards=rows.map(row=>'<article class="list-card"><div class="list-date"><strong>'+names[row.weekday]+'</strong><small>'+(row.active?'Active':'Inactive')+'</small></div><div class="list-main"><strong>'+row.start_time.slice(0,5)+' – '+row.end_time.slice(0,5)+'</strong><span>'+(row.court_number?'Terrain '+row.court_number:'Tous les terrains')+'</span></div><button class="btn danger" data-delete-availability="'+row.id+'">Supprimer</button></article>').join('');
+ return '<section class="panel"><div class="section-heading"><div><p class="eyebrow">CRÉNEAUX RÉSERVABLES</p><h2>Mes disponibilités hebdomadaires</h2></div><button class="btn primary" data-action="add-availability">＋ Ajouter une plage</button></div><p class="muted">Les joueurs associés peuvent demander un cours uniquement si la durée complète tient dans une plage active.</p>'+(cards||emptyState('Aucune disponibilité publiée','Ajoute les jours et horaires pendant lesquels les joueurs pourront te demander un cours particulier.'))+'</section><section class="panel"><p class="eyebrow">RÈGLES DE RÉSERVATION</p><h2>Contrôles automatiques</h2><ul><li>Durées proposées : 1 h, 1 h 30 ou 2 h.</li><li>Le créneau doit être entièrement compris dans une disponibilité.</li><li>Les séances, cours collectifs et demandes en attente bloquent les conflits.</li><li>Le coach conserve la validation finale.</li></ul></section>';
 }
