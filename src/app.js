@@ -203,7 +203,7 @@ const challenge=state.challenges.find(x=>x.player_id===playerId&&x.status==='act
       <p>${escapeHtml(s.coach_private_notes)}</p>
     </article>
   `).join('') || '<p class="muted">Aucune note privée enregistrée.</p>'}
-</section>
+</section>');
 }
 
 function challengeDialog(playerId, criterion, criterionId){
