@@ -91,3 +91,14 @@ Avant toute migration : sauvegarde de la base, environnement de préproduction, 
 - Contrôles locaux : 31 tests automatisés réussis ; vérifications de syntaxe JavaScript réussies.
 - Non réalisé : exécution SQL, tests RLS réels, tests de bout en bout avec deux comptes coach, interface de révocation, affichage du nom de l'auteur sur chaque carte, déploiement.
 - Attention : la migration suppose les tables et colonnes issues des scripts d'initialisation présents dans le dossier du projet. Elle doit être confrontée au schéma réel avant toute exécution. Ne pas la lancer sur la base de production.
+
+
+## Avancement du 16 novembre 2026 — séparation et confidentialité des suivis
+
+- Décision fonctionnelle appliquée : fiche joueur commune, suivis pédagogiques séparés par coach.
+- Migration 006 appliquée au projet Supabase de test : RLS par auteur pour séances, bilans et critères ; défis et réussites indépendants par coach ; vues joueur avec auteur.
+- Migration 007 appliquée : exécution anonyme du RPC de notification de nouveau bilan révoquée. Vérification SQL : `anon_can_notify = false`, `signed_in_can_notify = true`.
+- Migration 008 appliquée : notes privées déplacées dans `coach_session_notes`, réservées au coach auteur ; vues joueur passées en `security_invoker=true`.
+- Tests RLS exécutés sous les identités de Coach A, Coach B et Joueur A : Coach A voit les deux bilans existants ; Coach B ne voit aucun bilan de Coach A ; Joueur A voit ses deux bilans. Un insert d'une séance attribuée à Coach A par Coach B est rejeté par RLS.
+- Le code de chargement, le moteur de progression et le parcours joueur sont mis à jour sur la branche `feat/separate-coach-followups`.
+- Recette navigateur complète, tests automatiques du dépôt, administrateur principal, disponibilités/récurrences, rappels, messagerie, bibliothèque complète et import exhaustif des critères restent à réaliser.
