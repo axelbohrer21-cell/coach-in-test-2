@@ -18,9 +18,10 @@ export const dataService = {
   async loadCoachWorkspace(userId) {
     const links = await unwrap(supabase.from('coach_players').select('player_id').eq('coach_id', userId));
     const playerIds = links.map(link => link.player_id);
-    const [players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations] = await Promise.all([
+    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations] = await Promise.all([
       playerIds.length ? unwrap(supabase.from('profiles').select('*').in('id', playerIds).eq('role', 'player').order('last_name')) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('training_sessions').select('*').in('player_id', playerIds).eq('created_by', userId).order('session_date', { ascending: false })) : Promise.resolve([]),
+      unwrap(supabase.from('coach_session_notes').select('session_id,note').eq('coach_id', userId)),
       playerIds.length ? unwrap(supabase.from('evaluations').select('*').in('player_id', playerIds).eq('created_by', userId).order('evaluated_at', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('group_sessions').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('group_course_series').select('*').eq('coach_id', userId).order('weekday').order('start_time')),
@@ -33,6 +34,8 @@ export const dataService = {
       playerIds.length ? unwrap(supabase.from('player_achievements').select('*').in('player_id', playerIds).eq('coach_id', userId).order('unlocked_at', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('coach_player_invitation_inbox').select('*').order('created_at', { ascending: false }))
     ]);
+    const notesBySession = new Map(privateNotes.map(row => [row.session_id, row.note]));
+    const sessions = sessionRows.map(row => ({ ...row, coach_private_notes: notesBySession.get(row.id) || '' }));
     Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations });
   },
 
@@ -63,8 +66,16 @@ export const dataService = {
     return data;
   },
   async createSession(payload) {
-    const { data, error } = await supabase.from('training_sessions').insert(payload).select().single();
+    const { coach_private_notes = '', ...sessionPayload } = payload;
+    const { data, error } = await supabase.from('training_sessions').insert(sessionPayload).select().single();
     if (error) throw error;
+    if (coach_private_notes.trim()) {
+      const { error: noteError } = await supabase.from('coach_session_notes').insert({ session_id: data.id, coach_id: payload.created_by, note: coach_private_notes.trim() });
+      if (noteError) {
+        await supabase.from('training_sessions').delete().eq('id', data.id);
+        throw noteError;
+      }
+    }
     return data;
   },
   async createEvaluation(payload) {
