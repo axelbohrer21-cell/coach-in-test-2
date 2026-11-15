@@ -12,7 +12,7 @@ import { buildSeriesOccurrences } from './domain/group-series.js';
 import { progressionService } from './services/progression.js';
 
 let signupMode = false;
-const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'] ];
+const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'] ];
 const adminNav = [ ['dashboard','Administration','⌂'], ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'] ];
 
@@ -89,6 +89,7 @@ $('#page-content').addEventListener('click', async event=>{
   const invitation=event.target.closest('[data-coach-invitation]'); if(invitation) return respondCoachInvitation(invitation.dataset.coachInvitation, invitation.dataset.accept==='true');
   const action=event.target.closest('[data-action]')?.dataset.action;
   if(action==='new-session') return sessionDialog();
+  if(action==='add-availability') return availabilityDialog();
   if(action==='new-group-session') return groupSessionDialog();
   if(action==='add-group-series') return groupSeriesDialog();
   if(action==='request-booking') return bookingDialog();
@@ -102,6 +103,7 @@ $('#page-content').addEventListener('click', async event=>{
   const booking=event.target.closest('[data-booking]'); if(booking) return updateBooking(booking.dataset.booking,booking.dataset.status);
   const cancel=event.target.closest('[data-cancel-booking]'); if(cancel) return cancelBooking(cancel.dataset.cancelBooking);
   const cancelGroup=event.target.closest('[data-cancel-group]'); if(cancelGroup) return cancelGroupSession(cancelGroup.dataset.cancelGroup);
+  const removeAvailability=event.target.closest('[data-delete-availability]'); if(removeAvailability) return deleteAvailability(removeAvailability.dataset.deleteAvailability);
   const generateSeries=event.target.closest('[data-generate-series]'); if(generateSeries) return generateGroupSeries(generateSeries.dataset.generateSeries);
   const openNotification=event.target.closest('[data-open-notification]');
   if(openNotification){
@@ -268,6 +270,11 @@ function challengeDialog(playerId, criterion, criterionId){
   const player=state.players.find(row=>row.id===playerId); if(!player)return;
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">DÉFI PERSONNALISÉ</p><h2>${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="challenge-form" class="form-grid"><input type="hidden" name="player_id" value="${playerId}"><input type="hidden" name="criterion" value="${escapeHtml(criterion)}"><input type="hidden" name="criterion_id" value="${escapeHtml(criterionId||'')}"><label class="span-2">Critère prioritaire<input value="${escapeHtml(criterion)}" disabled></label><label class="span-2">Objectif concret et mesurable<textarea name="objective" rows="3" required placeholder="Ex. Réussir 8 retours sur 10 dans la zone ciblée"></textarea></label><label>Opérateur<select name="comparison_operator"><option value="gte">Atteindre ou dépasser</option><option value="lte">Être inférieur ou égal</option><option value="eq">Atteindre exactement</option></select></label><label>Valeur cible numérique<input type="number" name="target_value" step="0.1" required placeholder="Ex. 8"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Créer le défi</button></div></form>`);
 }
+function availabilityDialog(){
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">DISPONIBILITÉS</p><h2>Ajouter une plage réservable</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Les joueurs associés pourront demander un cours uniquement dans ces horaires.</p><form id="availability-form" class="form-grid"><label>Jour<select name="weekday"><option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="7">Dimanche</option></select></label><label>Terrain<select name="court_number"><option value="">Tous les terrains</option><option value="1">Terrain 1</option><option value="2">Terrain 2</option><option value="3">Terrain 3</option><option value="4">Terrain 4</option></select></label><label>Début<input type="time" name="start_time" required value="08:00"></label><label>Fin<input type="time" name="end_time" required value="16:00"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Publier la disponibilité</button></div></form>`);
+}
+async function deleteAvailability(id){try{await dataService.deleteAvailability(id,state.user.id);toast('Disponibilité supprimée.');await refreshAndRender();}catch(e){toast(e.message||'Suppression impossible.','error');}}
+
 function groupSeriesDialog(){
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">PARAMÉTRAGE ANNUEL</p><h2>Ajouter un créneau collectif</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Crée un compteur indépendant pour chaque bloc orange. Renseigne les horaires et le court du créneau collectif.</p><form id="group-series-form" class="form-grid"><label class="span-2">Nom du créneau<input name="title" required placeholder="Ex. Cours adultes débutants"></label><label>Public<select name="audience"><option value="adultes">Adultes · objectif 28</option><option value="enfants">Enfants · objectif 30</option></select></label><label>Jour<select name="weekday"><option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option></select></label><label>Début<input name="start_time" type="time" required></label><label>Fin<input name="end_time" type="time" required></label><label>Court<select name="court_number"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><label>Objectif annuel<input name="target_sessions" type="number" min="1" value="28" required></label><label class="span-2">Thème / précision<input name="theme" placeholder="Facultatif"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Créer le compteur</button></div></form>`);
 }
@@ -295,7 +302,11 @@ $('#dialog-content').addEventListener('change',event=>{if(event.target.name==='a
 $('#dialog-content').addEventListener('submit',async event=>{
   event.preventDefault();const form=event.target;const values=Object.fromEntries(new FormData(form));
   try{
-    if(form.id==='booking-form'){
+    if(form.id==='availability-form'){
+      if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
+      await dataService.createAvailability({coach_id:state.user.id,weekday:Number(values.weekday),start_time:values.start_time,end_time:values.end_time,court_number:values.court_number?Number(values.court_number):null,active:true});
+      toast('Disponibilité ajoutée. Les joueurs associés pourront demander ces créneaux.');
+    } else if(form.id==='booking-form'){
       await bookingService.request({coachId:values.coach_id,date:values.date,time:values.time,duration:values.duration,court:values.court});toast('Demande envoyée. Elle est en attente de validation.');
     } else if(form.id==='share-player-form'){
       await dataService.inviteCoachToPlayer(values.player_id,values.coach_email.trim().toLowerCase());toast('Invitation envoyée au coach. Le partage sera actif après son acceptation.');
@@ -394,7 +405,7 @@ function filterLibrary(){const q=($('#library-search')?.value||'').toLowerCase()
 async function respondCoachInvitation(id, accept){
   try{await dataService.respondToCoachInvitation(id,accept);toast(accept?'Partage accepté : le dossier joueur est maintenant accessible.':'Invitation refusée.');await refreshAndRender();}catch(error){toast(error.message||'Impossible de traiter cette invitation.','error');}
 }
-async function refreshAndRender(){if(state.profile.role==='coach')await dataService.loadCoachWorkspace(state.user.id);else await dataService.loadPlayerWorkspace();render(state.currentPage);}
+async function refreshAndRender(){if(state.profile.role==='admin')await dataService.loadAdminWorkspace();else if(state.profile.role==='coach')await dataService.loadCoachWorkspace(state.user.id);else await dataService.loadPlayerWorkspace();render(state.currentPage);}
 
 supabase.auth.onAuthStateChange((_event,session)=>{if(session?.user){window.setTimeout(()=>loadWorkspace().catch(error=>showAuth(`Erreur de chargement : ${error.message}`)),0);}else{resetState();showAuth();}});
 supabase.auth.getSession().then(({data,error})=>{if(error)return showAuth(error.message);if(data.session)loadWorkspace().catch(e=>showAuth(`Erreur de chargement : ${e.message}`));else showAuth();});
