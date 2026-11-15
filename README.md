@@ -181,3 +181,6 @@ Migration de sécurité supplémentaire : `supabase/007_notification_rpc_permiss
 
 
 La migration `supabase/008_private_session_notes_and_invoker_views.sql` sépare les notes privées des séances publiées et convertit les vues joueur en vues `security_invoker`, afin que les politiques RLS du compte appelant restent appliquées. Elle doit être exécutée après les migrations 006 et 007.
+
+
+La migration `supabase/009_booking_reminders_24h.sql` active les rappels internes automatiques 24 h avant les cours particuliers acceptés, avec exécution `pg_cron` toutes les 15 minutes et respect des préférences individuelles. Les rappels sont affichés dans le centre de notifications Coach In ; aucun SMS ou message WhatsApp n'est envoyé par cette migration.
