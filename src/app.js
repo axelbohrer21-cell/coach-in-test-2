@@ -97,8 +97,34 @@ $('#page-content').addEventListener('click', async event=>{
   const cancel=event.target.closest('[data-cancel-booking]'); if(cancel) return cancelBooking(cancel.dataset.cancelBooking);
   const cancelGroup=event.target.closest('[data-cancel-group]'); if(cancelGroup) return cancelGroupSession(cancelGroup.dataset.cancelGroup);
   const generateSeries=event.target.closest('[data-generate-series]'); if(generateSeries) return generateGroupSeries(generateSeries.dataset.generateSeries);
+  const openNotification=event.target.closest('[data-open-notification]');
+  if(openNotification){
+    try{
+      await notificationService.markPlayerRead(openNotification.dataset.openNotification);
+      await refreshAndRender();
+      render(openNotification.dataset.targetPath==='reports'?'reports':'dashboard');
+    }catch(error){toast(error.message||'Impossible d’ouvrir cette notification.','error');}
+    return;
+  }
   const read=event.target.closest('[data-read-notification]'); if(read) return markNotificationRead(read.dataset.readNotification);
   const week=event.target.closest('[data-week]'); if(week){state.planningWeekOffset=Number(week.dataset.week)===0?0:(state.planningWeekOffset||0)+Number(week.dataset.week);render('planning');}
+});
+$('#dialog-content').addEventListener('click',async event=>{
+  const send=event.target.closest('[data-send-evaluation]');
+  if(send){
+    send.disabled=true;
+    try{
+      const {error}=await supabase.rpc('notify_player_existing_evaluation',{p_evaluation_id:send.dataset.sendEvaluation});
+      if(error)throw error;
+      send.textContent='Bilan envoyé';
+      toast('Notification envoyée au joueur.');
+    }catch(error){
+      send.disabled=false;
+      toast(error.message||'Impossible d’envoyer le bilan.','error');
+    }
+    return;
+  }
+  if(event.target.closest('[data-close]'))closeDialog();
 });
 $('#dialog-content').addEventListener('change',event=>{
   if(event.target.matches('input[name=criterion]')){
@@ -186,7 +212,7 @@ const challenge=state.challenges.find(x=>x.player_id===playerId&&x.status==='act
   <section class="sheet-section"><h3>Défi prioritaire</h3>${challenge?`<div class="challenge-strip"><b>${escapeHtml(challenge.criterion)}</b><span>${escapeHtml(challenge.objective)}</span><small>${challenge.current_value??'—'} / ${challenge.target_value??'—'} · ${challenge.consecutive_successes||0}/2 validations consécutives</small></div>`:'<p class="muted">Aucun défi actif.</p>'}</section>
   <section class="sheet-section"><h3>Réussites débloquées</h3><div class="achievement-grid">${achievements.map(a=>`<div class="achievement-card"><span>✦</span><strong>${escapeHtml(a.criterion)}</strong></div>`).join('')||'<p class="muted">Aucune réussite débloquée pour le moment.</p>'}</div></section>
   <section class="sheet-section"><h3>Thèmes travaillés</h3>${themeSummary||'<p class="muted">Aucun critère détaillé enregistré.</p>'}</section>
-  <section class="sheet-section"><h3>Historique des bilans</h3>${reports.map(r=>{const rows=criteria.filter(c=>c.evaluation_id===r.id);return `<article class="journal-card"><div class="journal-date">${formatDate(r.evaluated_at||r.created_at,{day:'2-digit',month:'long',year:'numeric'})}</div><div class="radar-mini">${[['Technique',r.technical_score],['Tactique',r.tactical_score],['Physique',r.physical_score],['Mental',r.mental_score]].filter(x=>x[1]!==null&&x[1]!==undefined).map(x=>`<span>${x[0]} : ${x[1]}/20</span>`).join(' · ')}</div><div class="journal-criteria">${rows.map(c=>`<span class="journal-tag ${c.criterion_type==='positive'?'positive':'improvement'}">${c.criterion_type==='positive'?'✓':'↗'} ${escapeHtml(c.criterion)}</span>`).join('')||'<small class="muted">Aucun critère associé à ce bilan.</small>'}</div></article>`}).join('')||'<p class="muted">Aucun bilan enregistré.</p>'}</section>
+  <section class="sheet-section"><h3>Historique des bilans</h3>${reports.map(r=>{const rows=criteria.filter(c=>c.evaluation_id===r.id);return `<article class="journal-card"><div class="journal-date">${formatDate(r.evaluated_at||r.created_at,{day:'2-digit',month:'long',year:'numeric'})}</div><div class="radar-mini">${[['Technique',r.technical_score],['Tactique',r.tactical_score],['Physique',r.physical_score],['Mental',r.mental_score]].filter(x=>x[1]!==null&&x[1]!==undefined).map(x=>`<span>${x[0]} : ${x[1]}/20</span>`).join(' · ')}</div><div class="journal-criteria">${rows.map(c=>`<span class="journal-tag ${c.criterion_type==='positive'?'positive':'improvement'}">${c.criterion_type==='positive'?'✓':'↗'} ${escapeHtml(c.criterion)}</span>`).join('')||'<small class="muted">Aucun critère associé à ce bilan.</small>'}</div><button class="btn subtle" data-send-evaluation="${r.id}">Envoyer le bilan au joueur</button></article>`}).join('')||'<p class="muted">Aucun bilan enregistré.</p>'}</section>
 <section class="sheet-section">
   <h3>Historique des séances</h3>
   ${sessions.map(s=>`<article class="list-card"><div class="list-date"><strong>${formatDate(s.session_date,{day:'2-digit',month:'short'})}</strong><small>${s.duration_minutes||60} min</small></div><div class="list-main"><strong>${escapeHtml(s.theme||'Séance de tennis')}</strong><span>${escapeHtml(s.player_visible_summary||'Séance enregistrée')}</span></div></article>`).join('')||'<p class="muted">Aucune séance.</p>'}
