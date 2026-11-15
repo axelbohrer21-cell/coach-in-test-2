@@ -156,3 +156,6 @@
 .calendar-hour-content .calendar-event small{font-size:9px}
 .calendar-hour-content .calendar-event .btn{margin-top:4px;padding:3px 6px;font-size:9px}
 @media(max-width:850px){.calendar-week{grid-template-columns:repeat(7,minmax(190px,1fr))}}
+
+/* Availability management */
+.availability-note{color:var(--muted);font-size:12px}
