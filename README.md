@@ -178,3 +178,6 @@ Le projet Supabase de test a reçu cette migration le 16/11/2026. La branche `fe
 
 
 Migration de sécurité supplémentaire : `supabase/007_notification_rpc_permissions.sql` retire l'exécution anonyme du RPC de notification d'un nouveau bilan. Elle a été appliquée au projet Supabase de test.
+
+
+La migration `supabase/008_private_session_notes_and_invoker_views.sql` sépare les notes privées des séances publiées et convertit les vues joueur en vues `security_invoker`, afin que les politiques RLS du compte appelant restent appliquées. Elle doit être exécutée après les migrations 006 et 007.
