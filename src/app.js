@@ -89,6 +89,8 @@ $('#page-content').addEventListener('click', async event=>{
   if(action==='add-group-series') return groupSeriesDialog();
   if(action==='request-booking') return bookingDialog();
   if(action==='new-evaluation') return evaluationDialog();
+  if(action==='new-library-item') return libraryDialog();
+  const editLibrary=event.target.closest('[data-edit-library]'); if(editLibrary) return libraryDialog(editLibrary.dataset.editLibrary);
   if(action==='add-player') return addPlayerDialog();
   const challenge=event.target.closest('[data-create-challenge]'); if(challenge) return challengeDialog(challenge.dataset.createChallenge, challenge.dataset.criterion, challenge.dataset.criterionId);
   const sheet=event.target.closest('[data-player-sheet]'); if(sheet) return playerSheetDialog(sheet.dataset.playerSheet);
@@ -141,6 +143,32 @@ $('#page-content').addEventListener('change',event=>{
   if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;render('players');}
   if(event.target.id==='library-category')filterLibrary();
 });
+
+function libraryDialog(itemId=''){
+  const item=state.library.find(row=>row.id===itemId)||{};
+  const editing=Boolean(itemId);
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">BIBLIOTHÈQUE</p><h2>${editing?'Modifier une séance':'Ajouter une séance'}</h2></div><button class="btn icon-btn" data-close>✕</button></div>
+  <form id="library-form" class="form-grid">
+    <input type="hidden" name="id" value="${escapeHtml(item.id||'')}">
+    <label>Format<select name="category"><option value="particulier" ${item.category==='particulier'?'selected':''}>Cours particulier</option><option value="collectif" ${item.category==='collectif'?'selected':''}>Cours collectif</option></select></label>
+    <label>Niveau<input name="level" value="${escapeHtml(item.level||'Tous niveaux')}" placeholder="Tous niveaux, débutant, confirmé…"></label>
+    <label class="span-2">Titre<input name="title" required value="${escapeHtml(item.title||'')}"></label>
+    <label>Thème<input name="theme" required value="${escapeHtml(item.theme||'')}"></label>
+    <label>Sous-thème<input name="subtheme" value="${escapeHtml(item.subtheme||'')}"></label>
+    <label class="span-2">Mots-clés (séparés par des virgules)<input name="keywords" value="${escapeHtml((item.keywords||[]).join(', '))}"></label>
+    <label class="span-2">Objectif<textarea name="objective" rows="2">${escapeHtml(item.objective||'')}</textarea></label>
+    <label class="span-2">Matériel<textarea name="equipment" rows="2">${escapeHtml(item.equipment||'')}</textarea></label>
+    <label class="span-2">Mise en place<textarea name="setup" rows="2">${escapeHtml(item.setup||'')}</textarea></label>
+    <label class="span-2">Consignes<textarea name="instructions" rows="3">${escapeHtml(item.instructions||'')}</textarea></label>
+    <label class="span-2">Rotations<textarea name="rotations" rows="2">${escapeHtml(item.rotations||'')}</textarea></label>
+    <label class="span-2">Variantes<textarea name="variations" rows="2">${escapeHtml(item.variations||'')}</textarea></label>
+    <label>Durée (minutes)<input type="number" name="duration_minutes" min="1" value="${item.duration_minutes||''}"></label>
+    <label>Terrain (optionnel)<select name="court_number"><option value="">Non défini</option>${[1,2,3,4].map(n=>`<option value="${n}" ${Number(item.court_number)===n?'selected':''}>Terrain ${n}</option>`).join('')}</select></label>
+    <label>Semaine source<input type="number" name="source_week" min="1" max="52" value="${item.source_week||''}"></label>
+    <label class="span-2">Illustration (URL https)<input type="url" name="illustration_url" value="${escapeHtml(item.illustration_url||'')}" placeholder="https://…"></label>
+    <div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">${editing?'Enregistrer les modifications':'Ajouter à la bibliothèque'}</button></div>
+  </form>`);
+}
 
 function sessionDialog(){
   if(!state.players.length){toast('Associe d’abord un compte joueur à ton effectif.','error');return;}
@@ -290,6 +318,22 @@ $('#dialog-content').addEventListener('submit',async event=>{
       if(!hasEvaluationContent(scores,selected)) throw new Error('Renseigne au moins une note ou sélectionne un critère observé.');
       await progressionService.saveEvaluation({playerId:values.player_id,coachId:state.user.id,scores,selectedCriteria:selected});
       toast('Bilan enregistré. Les réussites et le défi actif ont été actualisés.');
+    } else if(form.id==='library-form'){
+      if(values.illustration_url && !/^https:\/\//i.test(values.illustration_url)) throw new Error('L’illustration doit utiliser une adresse HTTPS.');
+      const payload={
+        coach_id:state.user.id, category:values.category, title:values.title.trim(),
+        theme:values.theme.trim(), subtheme:values.subtheme.trim(), level:values.level.trim()||'Tous niveaux',
+        keywords:values.keywords.split(',').map(x=>x.trim()).filter(Boolean),
+        objective:values.objective.trim(), equipment:values.equipment.trim(), setup:values.setup.trim(),
+        instructions:values.instructions.trim(), rotations:values.rotations.trim(), variations:values.variations.trim(),
+        duration_minutes:values.duration_minutes?Number(values.duration_minutes):null,
+        court_number:values.court_number?Number(values.court_number):null,
+        source_week:values.source_week?Number(values.source_week):null,
+        illustration_url:values.illustration_url.trim()||null
+      };
+      if(values.id) await dataService.updateLibraryItem(values.id,payload,state.user.id);
+      else await dataService.createLibraryItem(payload);
+      toast(values.id?'Séance mise à jour.':'Séance ajoutée à la bibliothèque.');
     } else if(form.id==='challenge-form'){
       const playerId=values.player_id;
       const reportIds=new Set(state.evaluations.filter(row=>row.player_id===playerId).map(row=>row.id));
