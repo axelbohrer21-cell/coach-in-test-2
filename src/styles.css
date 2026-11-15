@@ -7,34 +7,35 @@
   gap: 16px;
 }
 
+
 .player-card {
-  position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "avatar info sheet"
+    "avatar info edit"
+    "avatar info share";
   align-items: center;
-  gap: 15px;
+  gap: 12px 16px;
   padding: 18px;
   min-width: 0;
   border: 1px solid color-mix(in srgb, var(--player-accent) 35%, var(--line));
   border-left: 5px solid var(--player-accent);
   border-radius: 18px;
-  background: linear-gradient(
-    120deg,
+  background: linear-gradient(120deg,
     color-mix(in srgb, var(--player-accent) 12%, #0b1b30),
-    #0b1b30 75%
-  );
-  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.16);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+    #0b1b30 75%);
+  box-shadow: 0 5px 18px rgba(0,0,0,.16);
 }
 
 .player-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 9px 24px rgba(0, 0, 0, 0.25);
 }
 
 .player-avatar {
+  grid-area: avatar;
   width: 58px;
   height: 58px;
-  flex: 0 0 58px;
   display: grid;
   place-items: center;
   border-radius: 17px;
@@ -43,27 +44,27 @@
   color: white;
   font-size: 19px;
   font-weight: 900;
-  letter-spacing: 1px;
 }
 
 .player-card-info {
-  flex: 1;
+  grid-area: info;
   min-width: 0;
 }
 
 .player-card-info h3 {
   margin: 0 0 8px;
   color: #f2f7ff;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
 }
 
 .player-card-info p {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   color: #b8c8dc;
-  font-size: 12px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .player-card-info .tag {
@@ -71,18 +72,25 @@
   margin-top: 5px;
   padding: 5px 10px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
 }
 
+.player-card [data-player-sheet] {
+  grid-area: sheet;
+  white-space: nowrap;
+}
+
 .player-card .icon-btn {
-  align-self: flex-start;
+  grid-area: edit;
+  justify-self: center;
   padding: 7px 10px;
   border-radius: 10px;
 }
 
 .player-card [data-share-player] {
-  align-self: flex-end;
+  grid-area: share;
+  justify-self: end;
   white-space: nowrap;
 }
 
@@ -93,6 +101,32 @@
 }
 
 @media (max-width: 520px) {
+  .player-card {
+    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-areas:
+      "avatar info"
+      ". sheet"
+      ". edit"
+      ". share";
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .player-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .player-card [data-player-sheet],
+  .player-card [data-share-player] {
+    justify-self: start;
+  }
+
+  .player-card .icon-btn {
+    justify-self: start;
+  }
+}
+
   .player-card {
     flex-wrap: wrap;
     gap: 11px;
