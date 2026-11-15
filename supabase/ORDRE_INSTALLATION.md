@@ -62,3 +62,5 @@ Migration 011 : `011_admin_helper_permissions.sql` retire explicitement l'exécu
 Migration 012 : `012_coach_weekly_availability.sql` crée les disponibilités hebdomadaires propres à chaque coach. Les coachs gèrent leurs plages ; leurs joueurs associés ne lisent que les plages actives. La RPC de demande de réservation refuse les créneaux qui ne couvrent pas la durée complète demandée.
 
 Migration 013 : `013_coach_player_messaging.sql` crée les conversations privées coach-joueur et le bucket privé `coach-in-attachments`. Les fichiers sont limités à 50 Mo et aux formats image, vidéo, PDF et documents bureautiques. Les règles RLS limitent chaque conversation au coach et au joueur qui y sont associés.
+
+Migration 014 : `014_messages_realtime_publication.sql` ajoute la table des messages à la publication `supabase_realtime` pour actualiser les conversations à la réception d'un nouveau message.
