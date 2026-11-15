@@ -188,6 +188,7 @@ const challenge=state.challenges.find(x=>x.player_id===playerId&&x.status==='act
   <section class="sheet-section"><h3>Thèmes travaillés</h3>${themeSummary||'<p class="muted">Aucun critère détaillé enregistré.</p>'}</section>
   <section class="sheet-section"><h3>Historique des bilans</h3>${reports.map(r=>{const rows=criteria.filter(c=>c.evaluation_id===r.id);return `<article class="journal-card"><div class="journal-date">${formatDate(r.evaluated_at||r.created_at,{day:'2-digit',month:'long',year:'numeric'})}</div><div class="radar-mini">${[['Technique',r.technical_score],['Tactique',r.tactical_score],['Physique',r.physical_score],['Mental',r.mental_score]].filter(x=>x[1]!==null&&x[1]!==undefined).map(x=>`<span>${x[0]} : ${x[1]}/20</span>`).join(' · ')}</div><div class="journal-criteria">${rows.map(c=>`<span class="journal-tag ${c.criterion_type==='positive'?'positive':'improvement'}">${c.criterion_type==='positive'?'✓':'↗'} ${escapeHtml(c.criterion)}</span>`).join('')||'<small class="muted">Aucun critère associé à ce bilan.</small>'}</div></article>`}).join('')||'<p class="muted">Aucun bilan enregistré.</p>'}</section>
   <section class="sheet-section"><h3>Historique des séances</h3>
+  
   <section class="sheet-section">
     <h3>Notes privées du coach</h3>
     ${sessions.filter(s => s.coach_private_notes?.trim()).map(s => `
@@ -200,6 +201,7 @@ const challenge=state.challenges.find(x=>x.player_id===playerId&&x.status==='act
       </article>
     `).join('') || '<p class="muted">Aucune note privée enregistrée.</p>'}
   </section>
+  
  ${sessions.map(s=>`<article class="list-card"><div class="list-date"><strong>${formatDate(s.session_date,{day:'2-digit',month:'short'})}</strong><small>${s.duration_minutes||60} min</small></div><div class="list-main"><strong>${escapeHtml(s.theme||'Séance de tennis')}</strong><span>${escapeHtml(s.player_visible_summary||'Séance enregistrée')}</span></div></article>`).join('')||'<p class="muted">Aucune séance.</p>'}</section>`);
 }
 
