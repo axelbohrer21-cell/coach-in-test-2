@@ -50,7 +50,7 @@ export const dataService = {
       unwrap(supabase.from('coach_players').select('coach_id').eq('player_id', state.user.id))
     ]);
     const coachIds = coachLinks.map(row => row.coach_id);
-    const playerCoaches = coachIds.length ? await unwrap(supabase.from('profiles').select('id,first_name,last_name').in('id', coachIds).order('last_name')) : [];
+    const playerCoaches = coachIds.length ? await unwrap(supabase.from('profiles').select('id,first_name,last_name,email').in('id', coachIds).order('last_name')) : [];
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const evaluationCriteria = evaluationIds.length ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : [];
     Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, challenges, achievements, evaluationCriteria, playerCoaches });
