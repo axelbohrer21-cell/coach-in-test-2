@@ -45,7 +45,7 @@ export const dataService = {
       unwrap(supabase.from('player_evaluations').select('*').order('evaluated_at', { ascending: false })),
       unwrap(supabase.from('booking_requests').select('*').order('session_date')),
       notificationService.listPlayer(),
-      unwrap(supabase.from('player_challenges').select('*').eq('player_id', state.user.id).eq('status', 'active')),
+      unwrap(supabase.from('player_challenges').select('*').eq('player_id', state.user.id).order('created_at', { ascending: false })),
       unwrap(supabase.from('player_achievements').select('*').eq('player_id', state.user.id).order('unlocked_at', { ascending: false })),
       unwrap(supabase.from('coach_players').select('coach_id').eq('player_id', state.user.id))
     ]);
