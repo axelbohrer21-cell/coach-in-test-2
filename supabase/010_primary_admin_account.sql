@@ -41,7 +41,7 @@ as $
     where p.id = (select auth.uid()) and p.role = 'admin'
   );
 $;
-revoke all on function public.is_admin() from public;
+revoke all on function public.is_admin() from public, anon;
 grant execute on function public.is_admin() to authenticated;
 
 drop policy if exists profiles_admin_select_coaches on public.profiles;
