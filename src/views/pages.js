@@ -102,7 +102,10 @@ function playersPage() {
               ${escapeHtml(p.player_type || 'Loisir')}
             </span>
           </div>
-
+<button class="btn primary"
+  data-player-sheet="${p.id}">
+  Voir la fiche
+</button>
           <button class="btn icon-btn"
             data-edit-player="${p.id}">⋯</button>
 
