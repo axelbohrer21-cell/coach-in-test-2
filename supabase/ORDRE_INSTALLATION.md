@@ -50,3 +50,6 @@ Migration complémentaire 007 : exécuter `007_notification_rpc_permissions.sql`
 
 
 Migration complémentaire 008 : exécuter `008_private_session_notes_and_invoker_views.sql` après 006 et 007. Elle déplace les notes privées dans une table séparée réservée au coach auteur et rend les vues joueur compatibles avec les RLS du compte appelant.
+
+
+Migration 009 : `009_booking_reminders_24h.sql` ajoute le traitement planifié des rappels internes 24 h avant les réservations acceptées. Elle installe un job `pg_cron` toutes les 15 minutes et respecte les préférences `reminders_24h` du joueur et du coach. Les horaires sont interprétés en Europe/Paris. Vérifier le job dans `cron.job` après installation.
