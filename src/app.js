@@ -15,7 +15,7 @@ let signupMode = false;
 let weatherRequest = 0;
 let messageChannel = null;
 const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
-const adminNav = [ ['dashboard','Administration','⌂'], ['coaches','Gestion des coachs','♙'] ];
+const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'] ];
 
 function showAuth(message='') {
@@ -29,18 +29,20 @@ async function loadWorkspace() {
   if (!user) return showAuth();
   state.user = user;
   state.profile = await dataService.loadProfile(user.id);
-  if (state.profile.role === 'admin') await dataService.loadAdminWorkspace();
-  else if (state.profile.role === 'coach') await dataService.loadCoachWorkspace(user.id);
-  else await dataService.loadPlayerWorkspace();
+  const isAdmin = state.profile.is_admin === true || state.profile.role === 'admin';
+  if (state.profile.role === 'coach') await dataService.loadCoachWorkspace(user.id);
+  else if (!isAdmin) await dataService.loadPlayerWorkspace();
+  if (isAdmin) await dataService.loadAdminWorkspace();
   showApp();
-  $('#account-label').textContent = `${state.profile.first_name || ''} ${state.profile.last_name || ''} · ${{admin:'Administrateur',coach:'Coach',player:'Joueur'}[state.profile.role] || 'Compte'}`;
+  const roleLabel = state.profile.role === 'coach' && isAdmin ? 'Coach · Administrateur' : state.profile.role === 'admin' ? 'Administrateur' : state.profile.role === 'coach' ? 'Coach' : 'Joueur';
+  $('#account-label').textContent = `${state.profile.first_name || ''} ${state.profile.last_name || ''} · ${roleLabel}`;
   render('dashboard');
 }
 
 function render(page) {
   const isCoach = state.profile?.role === 'coach';
-  const isAdmin = state.profile?.role === 'admin';
-  const navItems = isAdmin ? adminNav : isCoach ? coachNav : playerNav;
+  const isAdmin = state.profile?.is_admin === true || state.profile?.role === 'admin';
+  const navItems = isCoach ? [...coachNav, ...(isAdmin ? adminNav : [])] : isAdmin ? [['coaches','Gestion des coachs','♙']] : playerNav;
   if (!navItems.some(item => item[0] === page)) page = 'dashboard';
   state.currentPage = page;
   $('#navigation').innerHTML = navItems.map(([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}</button>`).join('');
@@ -431,7 +433,7 @@ function filterLibrary(){const q=($('#library-search')?.value||'').toLowerCase()
 async function respondCoachInvitation(id, accept){
   try{await dataService.respondToCoachInvitation(id,accept);toast(accept?'Partage accepté : le dossier joueur est maintenant accessible.':'Invitation refusée.');await refreshAndRender();}catch(error){toast(error.message||'Impossible de traiter cette invitation.','error');}
 }
-async function refreshAndRender(){if(state.profile.role==='admin')await dataService.loadAdminWorkspace();else if(state.profile.role==='coach')await dataService.loadCoachWorkspace(state.user.id);else await dataService.loadPlayerWorkspace();render(state.currentPage);}
+async function refreshAndRender(){const isAdmin=state.profile.is_admin===true||state.profile.role==='admin';if(state.profile.role==='coach')await dataService.loadCoachWorkspace(state.user.id);else if(!isAdmin)await dataService.loadPlayerWorkspace();if(isAdmin)await dataService.loadAdminWorkspace();render(state.currentPage);}
 
 supabase.auth.onAuthStateChange((_event,session)=>{if(session?.user){window.setTimeout(()=>loadWorkspace().catch(error=>showAuth(`Erreur de chargement : ${error.message}`)),0);}else{resetState();showAuth();}});
 supabase.auth.getSession().then(({data,error})=>{if(error)return showAuth(error.message);if(data.session)loadWorkspace().catch(e=>showAuth(`Erreur de chargement : ${e.message}`));else showAuth();});

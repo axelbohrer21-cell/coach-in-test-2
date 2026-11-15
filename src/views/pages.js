@@ -24,8 +24,8 @@ export const pageMeta = {
 
 export function renderPage(page) {
   const isCoach = state.profile.role === 'coach';
-  if (state.profile.role === 'admin' && page === 'coaches') return adminCoachesPage();
-  if (state.profile.role === 'admin' && page === 'dashboard') return adminDashboard();
+  const isAdmin = state.profile.is_admin === true || state.profile.role === 'admin';
+  if (isAdmin && page === 'coaches') return adminCoachesPage();
   if (page === 'dashboard') return dashboard(isCoach);
   if (page === 'players') return playersPage();
   if (page === 'planning') return planningPage();
@@ -257,7 +257,7 @@ function adminDashboard() {
 
 function adminCoachesPage() {
   const rows = state.adminCoaches || [];
-  return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">ADMINISTRATION</p><h2>Comptes coachs</h2></div><button class="btn primary" data-action="invite-coach">＋ Inviter un coach</button></div><div class="list-stack">${rows.map(c=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml((c.first_name+' '+c.last_name).trim() || 'Coach sans nom')}</strong><span>${escapeHtml(c.email || '')}</span><small>${c.archived_at ? 'Compte suspendu' : 'Compte actif'}</small></div>${c.archived_at?`<button class="btn subtle" data-coach-state="restore" data-coach-id="${c.id}">Réactiver</button>`:`<button class="btn danger" data-coach-state="archive" data-coach-id="${c.id}">Suspendre</button>`}</article>`).join('') || emptyState('Aucun compte coach','Les comptes coachs apparaîtront ici après leur création.')}</div><p class="tiny muted">La suspension bloque la connexion du coach sans supprimer son historique pédagogique. La réactivation restaure son accès.</p></section>`;
+  return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">ADMINISTRATION</p><h2>Comptes coachs</h2></div><button class="btn primary" data-action="invite-coach">＋ Inviter un coach</button></div><div class="list-stack">${rows.map(c=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml((c.first_name+' '+c.last_name).trim() || 'Coach sans nom')}</strong><span>${escapeHtml(c.email || '')}</span><small>${c.archived_at ? 'Compte suspendu' : 'Compte actif'}</small></div>${c.is_admin?'<span class="tag tag-purple">Administrateur principal</span>':c.archived_at?`<button class="btn subtle" data-coach-state="restore" data-coach-id="${c.id}">Réactiver</button>`:`<button class="btn danger" data-coach-state="archive" data-coach-id="${c.id}">Suspendre</button>`}</article>`).join('') || emptyState('Aucun compte coach','Les comptes coachs apparaîtront ici après leur création.')}</div><p class="tiny muted">La suspension bloque la connexion du coach sans supprimer son historique pédagogique. La réactivation restaure son accès.</p></section>`;
 }
 
 
