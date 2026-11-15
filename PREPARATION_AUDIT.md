@@ -102,3 +102,11 @@ Avant toute migration : sauvegarde de la base, environnement de préproduction, 
 - Tests RLS exécutés sous les identités de Coach A, Coach B et Joueur A : Coach A voit les deux bilans existants ; Coach B ne voit aucun bilan de Coach A ; Joueur A voit ses deux bilans. Un insert d'une séance attribuée à Coach A par Coach B est rejeté par RLS.
 - Le code de chargement, le moteur de progression et le parcours joueur sont mis à jour sur la branche `feat/separate-coach-followups`.
 - Recette navigateur complète, tests automatiques du dépôt, administrateur principal, disponibilités/récurrences, rappels, messagerie, bibliothèque complète et import exhaustif des critères restent à réaliser.
+
+
+## Avancement complémentaire du 16 novembre 2026
+
+- Bibliothèque : formulaire d'ajout/modification des séances pédagogiques ajouté, avec format collectif/particulier, thème, sous-thème, niveau, mots-clés, objectif, matériel, mise en place, consignes, rotations, variantes, durée, terrain, semaine source et illustration HTTPS. Recherche étendue au contenu pédagogique.
+- Planning : vue hebdomadaire horaire 8 h–22 h, navigation semaine, création d'une séance depuis un créneau, jours fériés, vacances Zone B et dimanches grisés ; le 8 mai reste disponible.
+- Rappels : migration 009 appliquée ; job pg_cron toutes les 15 minutes vérifié ; notifications internes 24 h avant un cours accepté.
+- Ces ajouts sont sur la branche de développement ; recette navigateur et déploiement non effectués.
