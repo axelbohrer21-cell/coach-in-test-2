@@ -29,7 +29,7 @@ export const progressionService = {
 
 
 await this.refreshAchievements(playerId, coachId);
-const hadActiveChallenge = await this.updateActiveChallenge(playerId, coachId);
+const hadActiveChallenge = await this.updateActiveChallenge(playerId, coachId, detailRows);
 if (!hadActiveChallenge) await this.createNextChallenge(playerId, coachId);
 
 const { error: notificationError } = await supabase.rpc(
@@ -113,7 +113,7 @@ return evaluation;
     }
   },
 
-  async updateActiveChallenge(playerId, coachId) {
+  async updateActiveChallenge(playerId, coachId, selectedRows = []) {
     const { data: challenge, error } = await supabase
       .from('player_challenges').select('*')
       .eq('player_id', playerId).eq('coach_id', coachId)
@@ -121,26 +121,36 @@ return evaluation;
     if (error) throw error;
     if (!challenge) return false;
 
-    // Le défi suit la fréquence du point à améliorer sur les trois derniers bilans.
-    const evaluations = await rows(
-      supabase.from('evaluations').select('id')
-        .eq('player_id', playerId).eq('created_by', coachId)
-        .order('evaluated_at', { ascending: false }).limit(3)
-    );
-    if (evaluations.length < 3) return true;
-    const ids = evaluations.map(row => row.id);
-    const history = await rows(
-      supabase.from('evaluation_criteria')
-        .select('evaluation_id,criterion_type')
-        .in('evaluation_id', ids).eq('criterion_id', challenge.criterion_id)
-        .eq('criterion_type', 'improvement')
-    );
-    const currentValue = new Set(history.map(row => row.evaluation_id)).size;
-    const success = challengeEvaluationResult({
-      measuredValue: currentValue,
-      targetValue: challenge.target_value,
-      operator: challenge.comparison_operator || 'lte'
-    });
+    let currentValue = challenge.current_value;
+    let success = false;
+    if (challenge.tracking_mode === 'frequency_3') {
+      // Défi automatique : compter le critère dans les trois derniers bilans du coach.
+      const evaluations = await rows(
+        supabase.from('evaluations').select('id')
+          .eq('player_id', playerId).eq('created_by', coachId)
+          .order('evaluated_at', { ascending: false }).limit(3)
+      );
+      if (evaluations.length < 3) return true;
+      const ids = evaluations.map(row => row.id);
+      const history = await rows(
+        supabase.from('evaluation_criteria').select('evaluation_id')
+          .in('evaluation_id', ids).eq('criterion_id', challenge.criterion_id)
+          .eq('criterion_type', 'improvement')
+      );
+      currentValue = new Set(history.map(row => row.evaluation_id)).size;
+      success = challengeEvaluationResult({
+        measuredValue: currentValue, targetValue: challenge.target_value, operator: 'lte'
+      });
+    } else {
+      // Conserver le fonctionnement des défis manuels fondés sur une mesure saisie.
+      const match = selectedRows.find(row => row.criterion_id === challenge.criterion_id && row.criterion_type === 'improvement');
+      success = Boolean(match) && challengeEvaluationResult({
+        measuredValue: match.measured_value, targetValue: challenge.target_value,
+        operator: challenge.comparison_operator || 'gte'
+      });
+      currentValue = match?.measured_value ?? challenge.current_value;
+    }
+
     const nextCount = success ? Number(challenge.consecutive_successes || 0) + 1 : 0;
     const changes = { current_value: currentValue, consecutive_successes: nextCount };
     if (nextCount >= 2) Object.assign(changes, { status: 'completed', completed_at: new Date().toISOString() });
@@ -191,7 +201,7 @@ return evaluation;
       .insert({
         coach_id: coachId, player_id: playerId, criterion_id: suggestion.criterion_id,
         criterion: suggestion.criterion, objective, target_value: target,
-        current_value: baseline, comparison_operator: 'lte', status: 'active'
+        current_value: baseline, comparison_operator: 'lte', tracking_mode: 'frequency_3', status: 'active'
       })
       .select().single();
     if (insertError) throw insertError;
