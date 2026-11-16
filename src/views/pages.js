@@ -258,9 +258,43 @@ function playerProgressPage() {
   for (const row of criteria) themeCounts.set(row.main_theme || row.subtheme || 'Autres', (themeCounts.get(row.main_theme || row.subtheme || 'Autres') || 0) + 1);
   const themeRows = [...themeCounts.entries()].sort((a,b)=>b[1]-a[1]);
   const reports = [...state.evaluations].sort((a,b)=>String(a.evaluated_at||a.created_at).localeCompare(String(b.evaluated_at||b.created_at)));
-  const scorePoints = reports.map(report => { const values = radarPoints(report).axes.map(([,value]) => value === null || value === undefined || value === '' ? null : Number(value)).filter(value => Number.isFinite(value) && value >= 0 && value <= 20); return { report, score: values.length ? values.reduce((sum,value)=>sum+value,0)/values.length : null }; }).filter(point => point.score !== null);
-  const chartPoints = scorePoints.map((point,index) => ({...point,x:scorePoints.length===1?320:38+index*564/(scorePoints.length-1),y:142-point.score*5.8}));
-  const scoreChart = scorePoints.length ? `<div class="player-evolution-chart"><div class="evolution-chart-heading"><strong>Score moyen des secteurs</strong><span>${scorePoints.length} bilan(s) noté(s)</span></div><svg viewBox="0 0 640 178" role="img" aria-label="Évolution du score moyen sur 20"><line x1="38" y1="26" x2="602" y2="26" class="evolution-gridline"/><line x1="38" y1="84" x2="602" y2="84" class="evolution-gridline"/><line x1="38" y1="142" x2="602" y2="142" class="evolution-gridline"/><text x="7" y="30">20</text><text x="13" y="88">10</text><text x="20" y="146">0</text>${chartPoints.length>1?`<polyline class="evolution-line" points="${chartPoints.map(point=>`${point.x},${point.y}`).join(' ')}"/>`:''}${chartPoints.map(point=>`<circle class="evolution-point" cx="${point.x}" cy="${point.y}" r="5"><title>${point.score.toFixed(1).replace('.',',')}/20 · ${formatDate(point.report.evaluated_at||point.report.created_at)}</title></circle>`).join('')}</svg><div class="evolution-chart-foot"><span>${formatDate(scorePoints[0].report.evaluated_at||scorePoints[0].report.created_at,{day:'2-digit',month:'short',year:'numeric'})}</span><strong>Moyenne : ${(scorePoints.reduce((sum,point)=>sum+point.score,0)/scorePoints.length).toFixed(1).replace('.',',')}/20</strong><span>${formatDate(scorePoints.at(-1).report.evaluated_at||scorePoints.at(-1).report.created_at,{day:'2-digit',month:'short',year:'numeric'})}</span></div></div>` : '<p class="chart-empty">La courbe apparaîtra dès qu’un bilan contiendra au moins une note sur 20.</p>';
+  const sectorDefinitions = [
+    { label: 'Technique', key: 'technical_score', color: '#43d4f2' },
+    { label: 'Tactique', key: 'tactical_score', color: '#a78bfa' },
+    { label: 'Physique', key: 'physical_score', color: '#66e0ad' },
+    { label: 'Mental', key: 'mental_score', color: '#ffb36e' }
+  ];
+  const reportsByCoach = new Map();
+  reports.forEach(report => {
+    const coachId = report.coach_id || report.created_by || report.coach_user_id || 'coach-inconnu';
+    if (!reportsByCoach.has(coachId)) reportsByCoach.set(coachId, []);
+    reportsByCoach.get(coachId).push(report);
+  });
+  const sectorCards = [...reportsByCoach.entries()].map(([coachId, coachReports]) => {
+    const cards = sectorDefinitions.map(sector => {
+      const values = coachReports.map(report => ({
+        report,
+        value: report[sector.key] === null || report[sector.key] === undefined || report[sector.key] === '' ? null : Number(report[sector.key])
+      })).filter(point => Number.isFinite(point.value) && point.value >= 0 && point.value <= 20);
+      const first = values[0]?.value;
+      const latest = values.at(-1)?.value;
+      const delta = values.length > 1 ? latest - first : null;
+      const points = values.map((point,index) => {
+        const x = values.length === 1 ? 120 : 9 + index * 222 / (values.length - 1);
+        const y = 65 - point.value * 2.8;
+        return { x, y, point };
+      });
+      const line = points.length > 1 ? `<polyline points="${points.map(p=>`${p.x},${p.y}`).join(' ')}" fill="none" stroke="${sector.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>` : '';
+      const dots = points.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="${sector.color}" stroke="#eaf8ff" stroke-width="1.5"><title>${p.point.value.toFixed(1).replace('.',',')}/20 · ${formatDate(p.point.report.evaluated_at||p.point.report.created_at)}</title></circle>`).join('');
+      const deltaMarkup = delta === null ? '<span class="sector-delta neutral">Un seul bilan</span>' : `<span class="sector-delta ${delta>0?'up':delta<0?'down':'neutral'}">${delta>0?'↗':delta<0?'↘':'→'} ${delta>0?'+':''}${delta.toFixed(1).replace('.',',')} pts</span>`;
+      return `<article class="sector-evolution-card">
+        <div class="sector-evolution-top"><div><span class="sector-color-dot" style="--sector-color:${sector.color}"></span><strong>${sector.label}</strong></div>${deltaMarkup}</div>
+        ${values.length ? `<svg viewBox="0 0 240 76" role="img" aria-label="Évolution ${sector.label.toLowerCase()} : ${values.length} bilan(s)"><line x1="8" y1="9" x2="232" y2="9" class="sector-evolution-grid"/><line x1="8" y1="37" x2="232" y2="37" class="sector-evolution-grid"/><line x1="8" y1="65" x2="232" y2="65" class="sector-evolution-grid"/>${line}${dots}</svg><div class="sector-evolution-values"><span>Départ <b>${first.toFixed(1).replace('.',',')}/20</b></span><span>Dernier <b>${latest.toFixed(1).replace('.',',')}/20</b></span></div><small>${values.length} bilan(s) noté(s)</small>` : '<p class="sector-evolution-empty">Pas encore de note</p>'}
+      </article>`;
+    }).join('');
+    return `<section class="coach-evolution-block"><div class="coach-evolution-heading"><div><p class="eyebrow">SUIVI INDIVIDUEL</p><h3>${escapeHtml(coachName(coachId))}</h3></div><span class="tag">${coachReports.length} bilan(s)</span></div><div class="sector-evolution-grid">${cards}</div></section>`;
+  }).join('');
+  const scoreChart = sectorCards ? `<div class="player-sector-evolution"><p class="evolution-intro">Chaque courbe suit un secteur, bilan après bilan. Les résultats restent séparés par coach pour conserver une lecture fidèle de chaque accompagnement.</p>${sectorCards}</div>` : '<p class="chart-empty">Les courbes apparaîtront dès que tes bilans contiendront des notes sur 20.</p>';
   const historyEvents = [
     ...reports.map(report=>({type:'evaluation',date:report.evaluated_at||report.created_at,report})),
     ...state.sessions.map(session=>({type:'session',date:session.session_date,session})),
@@ -276,7 +310,7 @@ function playerProgressPage() {
   <section class="panel"><div class="section-heading"><div><p class="eyebrow">MES OBJECTIFS DU MOMENT</p><h2>Mes défis tennis</h2></div></div>${state.challenges.length?state.challenges.map(challenge=>`<div class="challenge-strip"><b>${escapeHtml(challenge.criterion)}</b><span>${escapeHtml(challenge.objective)}</span><small>${challenge.status==='completed'?'Défi validé':'En cours'} · Coach : ${escapeHtml(coachName(challenge.coach_id))} · ${challenge.current_value??'—'} / ${challenge.target_value??'—'} · ${challenge.consecutive_successes||0}/2 validations</small></div>`).join('') : emptyState('Pas de défi actif','Tes coachs pourront te proposer des objectifs individualisés.')}</section>
   <section class="panel"><div class="section-heading"><div><p class="eyebrow">COMPÉTENCES DÉBLOQUÉES</p><h2>Mes réussites</h2></div></div><div class="achievement-grid">${achievements.map(item=>`<div class="achievement-card"><span class="achievement-symbol">✦</span><strong>${escapeHtml(item.criterion)}</strong><small>Coach : ${escapeHtml(coachName(item.coach_id))}</small><small class="achievement-meta">Débloquée le ${formatDate(item.unlocked_at,{day:'2-digit',month:'long',year:'numeric'})} · ${Number(item.validation_count||3)} validations</small></div>`).join('')||emptyState('Les premières réussites arrivent bientôt','Un critère positif validé sur trois bilans distincts peut devenir une réussite pour le coach qui te suit.')}</div></section>
   <section class="panel"><div class="section-heading"><div><p class="eyebrow">MES THÈMES DE TRAVAIL</p><h2>Les thèmes abordés</h2></div></div>${themeRows.map(([name,count])=>`<div class="theme-progress-row"><span>${escapeHtml(name)}</span><div class="theme-progress-track"><i style="width:${Math.max(4,Math.round(count/Math.max(1,...themeRows.map(x=>x[1]))*100))}%"></i></div><b>${count}</b></div>`).join('')||'<p class="muted">Les thèmes apparaîtront après les premiers bilans détaillés.</p>'}<p class="tiny muted">${improvementCount} points à travailler recensés dans tes bilans.</p></section>
-  <section class="panel"><div class="section-heading"><div><p class="eyebrow">ÉVOLUTION DANS LE TEMPS</p><h2>Ma progression</h2></div></div>${scoreChart}<div class="journey-timeline">${historyMarkup||emptyState('Ton parcours commence ici','Tes bilans, séances et réussites apparaîtront dans cette chronologie.')}</div></section>`;
+  <section class="panel"><div class="section-heading"><div><p class="eyebrow">ÉVOLUTION DANS LE TEMPS</p><h2>Ma progression par secteur</h2></div></div>${scoreChart}<div class="journey-timeline">${historyMarkup||emptyState('Ton parcours commence ici','Tes bilans, séances et réussites apparaîtront dans cette chronologie.')}</div></section>`;
 }
 
 function libraryPage() {
