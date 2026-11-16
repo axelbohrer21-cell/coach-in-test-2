@@ -92,8 +92,24 @@ return evaluation;
     const missing = inserts.filter(row => !known.has(row.criterion_id));
     if (!missing.length) return;
 
-    const { error: insertError } = await supabase.from('player_achievements').insert(missing);
-    if (insertError && insertError.code !== '23505') throw insertError;
+    // Notifier uniquement les réussites réellement créées, sans doublon concurrent.
+    for (const achievement of missing) {
+      const { data: created, error: insertError } = await supabase
+        .from('player_achievements')
+        .insert(achievement)
+        .select('id')
+        .single();
+      if (insertError) {
+        if (insertError.code === '23505') continue;
+        throw insertError;
+      }
+
+      const { error: notificationError } = await supabase.rpc(
+        'notify_player_achievement_unlocked',
+        { p_achievement_id: created.id }
+      );
+      if (notificationError) throw notificationError;
+    }
   },
 
   async updateActiveChallenge(playerId, coachId, selectedRows) {
