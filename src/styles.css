@@ -436,3 +436,41 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .player-average-score span{font-size:17px;color:var(--muted)}
 .criterion-donut-row{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap;margin-top:14px;padding:14px;border:1px solid rgba(92,139,180,.18);border-radius:14px;background:rgba(7,23,41,.45)}
 @media(max-width:680px){.player-sheet-analytics{grid-template-columns:1fr}.player-sheet-radar{min-height:190px}.player-average-score strong{font-size:46px}}
+
+/* Évaluation guidée : thèmes, sous-thèmes et confirmation de sélection */
+.evaluation-stepper{display:flex;align-items:center;gap:8px;padding:11px 13px;border:1px solid rgba(92,139,180,.22);border-radius:13px;background:rgba(7,23,41,.55);font-size:11px;font-weight:800;color:var(--muted);overflow-x:auto;white-space:nowrap}
+.evaluation-stepper i{height:2px;min-width:14px;flex:1;background:linear-gradient(90deg,#43d4f2,#9c8cff);opacity:.45}
+.evaluation-stepper .step-current{color:#78e6ba}
+.evaluation-section-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.selection-total{flex:none;padding:7px 10px;border-radius:20px;background:rgba(67,212,242,.12);color:#8ce5ff;font-size:11px;font-weight:850}
+.criterion-theme.coach-theme{margin:9px 0;border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.criterion-theme.coach-theme.has-selection{border-color:rgba(102,224,173,.48);box-shadow:0 0 0 1px rgba(102,224,173,.08)}
+.criterion-theme.coach-theme>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:54px;padding:12px 15px;list-style:none;cursor:pointer}
+.criterion-theme.coach-theme>summary::-webkit-details-marker,.criterion-subtheme-card>summary::-webkit-details-marker{display:none}
+.theme-summary-main,.theme-summary-meta,.subtheme-summary-meta{display:flex;align-items:center;gap:9px}
+.theme-summary-main{font-weight:850;color:var(--text)}
+.theme-summary-dot{color:#42c7f5;font-size:12px;transition:transform .2s}
+.coach-theme[open] .theme-summary-dot{transform:scale(1.35);color:#66e0ad}
+.theme-summary-meta{color:var(--muted);font-size:11px}
+.theme-chevron,.subtheme-summary-meta b{display:inline-block;transition:transform .22s ease;font-size:17px}
+.coach-theme[open] .theme-chevron,.criterion-subtheme-card[open] .subtheme-summary-meta b{transform:rotate(180deg)}
+.criterion-theme-content{padding:0 12px 12px;animation:criteriaReveal .24s ease both}
+.criterion-subtheme-card{margin:8px 0;border:1px solid rgba(92,139,180,.2);border-radius:11px;background:rgba(6,19,35,.52);overflow:hidden}
+.criterion-subtheme-card>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 13px;cursor:pointer;list-style:none;font-size:13px;font-weight:800}
+.subtheme-summary-meta{font-size:10px;color:var(--muted);font-weight:600}
+.criterion-subtheme-body{padding:0 12px 12px;animation:criteriaReveal .2s ease both}
+.criterion-subtheme-body .criterion-columns{gap:12px}
+.criterion-option{min-height:40px;padding:8px 9px;border-radius:9px;align-items:flex-start}
+.criterion-option input{width:17px;height:17px;flex:none;margin-top:1px;accent-color:#66e0ad}
+.criterion-option.improvement input{accent-color:#ffb36e}
+.criterion-measure-row{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:7px;align-items:center}
+.criterion-measure{min-width:0;padding:8px!important;font-size:11px!important}
+.criteria-validation{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding:13px;border:1px solid rgba(92,139,180,.24);border-radius:13px;background:linear-gradient(110deg,rgba(17,51,73,.75),rgba(24,38,67,.72))}
+.criteria-validation>div{display:grid;gap:4px}
+.criteria-validation strong{font-size:12px}
+.criteria-validation small{font-size:10px;color:var(--muted)}
+.criteria-validation .btn{flex:none;font-size:11px}
+.criteria-validation .criteria-confirmed{background:linear-gradient(110deg,#18794e,#2bb879);color:#fff;box-shadow:0 0 0 3px rgba(72,210,145,.12)}
+@keyframes criteriaReveal{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:560px){.evaluation-stepper{gap:6px;font-size:10px}.criteria-validation{align-items:stretch;flex-direction:column}.criteria-validation .btn{width:100%}.criterion-columns{grid-template-columns:1fr}.criterion-measure-row{grid-template-columns:minmax(0,1fr) 76px}}
+@media(prefers-reduced-motion:reduce){.criterion-theme-content,.criterion-subtheme-body{animation:none}}
