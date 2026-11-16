@@ -27,8 +27,8 @@ Deno.serve(async (req: Request) => {
 
     const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
     const { data: caller, error: callerError } = await admin
-      .from("profiles").select("id,role,is_admin").eq("id", authData.user.id).single();
-    if (callerError || !(caller?.is_admin === true || caller?.role === "admin")) return json({ error: "Accès administrateur requis." }, 403);
+      .from("profiles").select("id,role,is_admin,archived_at").eq("id", authData.user.id).single();
+    if (callerError || !caller || caller.archived_at !== null || !(caller.is_admin === true || caller.role === "admin")) return json({ error: "Accès administrateur requis." }, 403);
 
     const body = await req.json();
     const action = String(body.action || "");
@@ -54,8 +54,8 @@ Deno.serve(async (req: Request) => {
       const coachId = String(body.coach_id || "");
       if (!coachId) return json({ error: "Identifiant coach manquant." }, 400);
       const { data: coach, error: coachError } = await admin.from("profiles")
-        .select("id,email,role").eq("id", coachId).single();
-      if (coachError || !coach || coach.role !== "coach" || coach.id === authData.user.id) return json({ error: "Compte coach introuvable." }, 404);
+        .select("id,email,role,is_admin").eq("id", coachId).single();
+      if (coachError || !coach || coach.role !== "coach" || coach.is_admin === true || coach.id === authData.user.id) return json({ error: "Compte coach introuvable ou protégé." }, 404);
       const { error: authUpdateError } = await admin.auth.admin.updateUserById(coachId, {
         ban_duration: action === "archive" ? "876000h" : "none",
       });
