@@ -513,3 +513,26 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .journey-event-body h3{margin:5px 0;font-size:14px}.journey-event-body p{margin:5px 0;color:var(--muted);font-size:12px;line-height:1.5}
 .journey-event-body .radar-wrap{margin-top:10px}
 @media(max-width:560px){.player-evolution-chart{padding:11px}.evolution-chart-foot{align-items:flex-start}.journey-event{grid-template-columns:26px minmax(0,1fr);gap:9px}.journey-marker{width:26px;height:26px}.journey-event:not(:last-child):before{left:12px;top:26px}}
+
+/* Coach In — évolution sectorielle premium, isolée par coach */
+.player-sector-evolution{display:grid;gap:20px;margin:4px 0 24px}
+.evolution-intro{max-width:760px;margin:0;color:var(--muted);font-size:12px;line-height:1.6}
+.coach-evolution-block{padding:16px;border:1px solid rgba(92,139,180,.24);border-radius:17px;background:linear-gradient(145deg,rgba(12,34,55,.72),rgba(7,20,36,.62));box-shadow:inset 0 1px rgba(255,255,255,.035)}
+.coach-evolution-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
+.coach-evolution-heading h3{margin:3px 0 0;font-size:16px;letter-spacing:-.3px}
+.sector-evolution-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.sector-evolution-card{min-width:0;padding:13px;border:1px solid rgba(113,158,192,.19);border-radius:13px;background:rgba(4,17,31,.58)}
+.sector-evolution-top,.sector-evolution-top>div,.sector-evolution-values{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sector-evolution-top strong{font-size:12px}
+.sector-color-dot{display:inline-block;width:8px;height:8px;margin-right:7px;border-radius:50%;background:var(--sector-color);box-shadow:0 0 12px color-mix(in srgb,var(--sector-color),transparent 35%)}
+.sector-delta{padding:4px 7px;border-radius:20px;font-size:10px;font-weight:850;white-space:nowrap}
+.sector-delta.up{background:rgba(102,224,173,.12);color:#8cf0c0}
+.sector-delta.down{background:rgba(255,179,110,.12);color:#ffc58f}
+.sector-delta.neutral{background:rgba(130,170,205,.1);color:var(--muted)}
+.sector-evolution-card svg{display:block;width:100%;height:auto;margin:10px 0 5px;overflow:visible}
+.sector-evolution-grid{stroke:rgba(130,170,205,.16);stroke-width:1;stroke-dasharray:3 5}
+.sector-evolution-values{font-size:10px;color:var(--muted)}
+.sector-evolution-values b{display:block;margin-top:3px;color:var(--text);font-size:12px}
+.sector-evolution-card>small{display:block;margin-top:8px;color:var(--muted);font-size:9px}
+.sector-evolution-empty{margin:16px 0 7px;color:var(--muted);font-size:11px}
+@media(max-width:560px){.coach-evolution-block{padding:12px}.sector-evolution-grid{grid-template-columns:1fr}.sector-evolution-card{padding:12px}.coach-evolution-heading h3{font-size:14px}}
