@@ -6,8 +6,9 @@ export function buildSeriesCounters(series, sessions, today = new Date().toISOSt
     const completed = rows.filter(row => row.status === 'completed').length;
     const planned = rows.filter(row => row.status === 'scheduled' && row.session_date >= today).length;
     const cancelled = rows.filter(row => row.status === 'cancelled').length;
+    const pastUnrecorded = rows.filter(row => row.status === 'scheduled' && row.session_date < today).length;
     const target = Number(item.target_sessions || (item.audience === 'adultes' ? GROUP_SEASON.adultTarget : GROUP_SEASON.childTarget));
-    return { ...item, completed, planned, cancelled, target, remaining: Math.max(0,target-completed), toSchedule: Math.max(0,target-completed-planned), reached: completed >= target };
+    return { ...item, completed, planned, pastUnrecorded, cancelled, target, remaining: Math.max(0,target-completed), toSchedule: Math.max(0,target-completed-planned), reached: completed >= target };
   });
 }
 
