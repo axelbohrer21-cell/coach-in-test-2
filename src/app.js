@@ -197,6 +197,8 @@ $('#page-content').addEventListener('submit',async event=>{
   if(videoForm){event.preventDefault();await submitVideoAnalysis(videoForm);return;}
   const reviewForm=event.target.closest('#video-review-form');
   if(reviewForm){event.preventDefault();await saveVideoReview(reviewForm);return;}
+  const followupForm=event.target.closest('.video-followup-form');
+  if(followupForm){event.preventDefault();await saveVideoCorrectionFollowup(followupForm);return;}
   const form=event.target.closest('#notification-preferences-form'); if(!form)return;
   event.preventDefault();
   const preferences=Object.fromEntries(['booking_requests','booking_decisions','booking_changes','reminders_24h','messages','progress','session_changes'].map(key=>[key,form.elements[key].checked]));
@@ -302,6 +304,30 @@ async function saveVideoReview(form){
   const id=form.elements.analysis_id.value,review=String(form.elements.coach_review.value||'').trim();
   try{const {error}=await supabase.from('coach_video_analyses').update({coach_review:review,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id);if(error)throw error;await dataService.loadCoachWorkspace(state.user.id);render('videos');toast('Commentaire coach enregistré.');}
   catch(error){toast(error.message||'Impossible d’enregistrer le commentaire.','error');}
+}
+
+async function saveVideoCorrectionFollowup(form){
+  const analysisId=form.elements.analysis_id.value;
+  const correctionIndex=Number(form.elements.correction_index.value);
+  const analysis=(state.videoAnalyses||[]).find(row=>row.id===analysisId);
+  const correction=analysis?.analysis_result?.corrections?.[correctionIndex];
+  if(!analysis||!correction||!Number.isInteger(correctionIndex)){toast('Cette fiche de correction est introuvable.','error');return;}
+  const evaluationId=form.elements.evaluation_id.value||null;
+  const evaluation=evaluationId?(state.evaluations||[]).find(row=>row.id===evaluationId):null;
+  if(evaluationId&&!evaluation){toast('Le bilan sélectionné est introuvable.','error');return;}
+  const status=form.elements.status.value;
+  const payload={
+    coach_id:state.user.id,player_id:analysis.player_id,analysis_id:analysisId,correction_index:correctionIndex,
+    evaluation_id:evaluationId,session_id:evaluation?.session_id||null,status,
+    coach_observation:String(form.elements.coach_observation.value||'').trim(),
+    correction_data:correction,checked_at:['verified','not_achieved'].includes(status)?new Date().toISOString():null,updated_at:new Date().toISOString()
+  };
+  try{
+    const {error}=await supabase.from('coach_video_correction_followups').upsert(payload,{onConflict:'analysis_id,correction_index'});
+    if(error)throw error;
+    await dataService.loadCoachWorkspace(state.user.id);render('videos');
+    toast('Correction reliée au suivi pédagogique.');
+  }catch(error){toast(error.message||'Impossible d’enregistrer le suivi de cette correction.','error');}
 }
 
 function libraryDialog(itemId='', seedItem=null){
