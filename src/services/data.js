@@ -65,7 +65,8 @@ export const dataService = {
     const sessions = sessionRows.map(row => ({ ...row, coach_private_notes: notesBySession.get(row.id) || '' }));
     const hydratedMessages=await hydrateMessages(messages);
     const videoAnalyses=await hydrateVideoAnalyses(videoRows);
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses });
+    const videoCorrectionFollowups=playerIds.length?await unwrap(supabase.from('coach_video_correction_followups').select('*').eq('coach_id',userId).order('created_at',{ascending:false})):[];
+    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups });
   },
 
   async loadPlayerWorkspace() {
