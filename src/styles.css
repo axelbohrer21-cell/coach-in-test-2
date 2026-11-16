@@ -852,3 +852,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{box-shadow:var(-
 .video-followup-form textarea{resize:vertical;line-height:1.5}
 .video-followup-form .btn{justify-self:start}
 @media(max-width:600px){.video-followup-form .btn{width:100%}}
+
+
+/* Chronologie unifiée du dossier joueur */
+.profile-journey-timeline{margin-top:16px}.profile-journey-timeline .journey-event{padding-bottom:17px}.journey-video .journey-marker{background:rgba(67,212,242,.15);color:#8feaff}.journey-correction .journey-marker{background:rgba(255,179,110,.14);color:#ffc18c}.journey-video .journey-event-body,.journey-correction .journey-event-body{min-width:0}.profile-journey-timeline .journey-event-body p{overflow-wrap:anywhere}
