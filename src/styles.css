@@ -581,3 +581,40 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .profile-history-top{align-items:flex-start}
   .profile-history-top .tag{flex:none}
 }
+
+
+/* ===== TABLEAU DE BORD ENTRAINEUR ===== */
+.coach-dashboard-hero{min-height:220px;background:radial-gradient(circle at 88% 25%,#4ccff326,transparent 26%),linear-gradient(115deg,#123958,#202b5c 72%,#3a2867)}
+.coach-quick-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+.coach-dashboard-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px}
+.coach-dashboard-grid-bottom{grid-template-columns:repeat(2,minmax(0,1fr))}
+.coach-dashboard-panel{min-width:0}
+.coach-attention-list,.coach-goals-list,.coach-agenda-list,.coach-reports-list{display:grid;gap:3px}
+.coach-attention-row,.coach-report-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #203651;min-width:0}
+.coach-player-avatar{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:13px;background:#173d59;border:1px solid #32617f;color:#9ce6ff;font-weight:900}
+.coach-attention-main,.coach-report-main,.coach-agenda-main{display:grid;gap:4px;flex:1;min-width:0}
+.coach-attention-main strong,.coach-report-main strong,.coach-agenda-main strong{font-size:13px}
+.coach-attention-main span,.coach-report-main span,.coach-agenda-main span{font-size:11px;color:#a8bad1}
+.coach-attention-main small{font-size:10px;color:#718ba9}
+.coach-attention-row .btn,.coach-report-row .btn{flex:0 0 auto;padding:8px 10px;font-size:11px}
+.coach-goal-row{padding:12px 0;border-top:1px solid #203651}
+.coach-goal-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.coach-goal-head>div{display:grid;gap:4px;min-width:0}
+.coach-goal-head strong{font-size:13px}
+.coach-goal-head span,.coach-goal-row>small{font-size:11px;color:#9aacc5}
+.coach-goal-head>b{font-size:19px;color:#dff7ff;white-space:nowrap}
+.coach-goal-head>b small{font-size:12px;color:#8fa7c3}
+.coach-goal-track{height:8px;margin:10px 0 7px;overflow:hidden;border-radius:99px;background:#1c3551}
+.coach-goal-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#36c8e9,#65dfa8)}
+.coach-agenda-row{display:flex;align-items:center;gap:13px;padding:11px 0;border-top:1px solid #203651}
+.coach-agenda-date{width:43px;height:45px;flex:0 0 43px;display:grid;align-content:center;justify-items:center;border-radius:12px;background:#153550;color:#8de3ff}
+.coach-agenda-date strong{font-size:17px;line-height:1}
+.coach-agenda-date span{font-size:10px;text-transform:uppercase}
+.coach-agenda-row time{font-size:13px;font-weight:850;color:#dceaff}
+.coach-report-mark{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:#173c36;color:#6de1ae;font-size:20px}
+.coach-empty-state{display:grid;gap:7px;padding:18px 8px;color:#9aacc5;font-size:12px}
+.coach-empty-state strong{color:#e8f2ff;font-size:14px}
+.coach-empty-state .btn{justify-self:start;margin-top:4px}
+.coach-dashboard-footnote{padding:0 4px}
+@media(max-width:1050px){.coach-dashboard-grid{grid-template-columns:1fr}.coach-dashboard-grid-bottom{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.coach-dashboard-hero{padding:23px 20px}.coach-dashboard-hero .welcome-mark{font-size:42px}.coach-quick-actions{display:grid;grid-template-columns:1fr}.coach-quick-actions .btn{width:100%}.coach-dashboard-grid-bottom{grid-template-columns:1fr}.coach-dashboard-panel{padding:17px}.coach-attention-row{gap:9px}.coach-player-avatar{width:36px;height:36px;flex-basis:36px}.coach-attention-main span{line-height:1.4}.coach-attention-row .btn{padding:7px 8px}}
