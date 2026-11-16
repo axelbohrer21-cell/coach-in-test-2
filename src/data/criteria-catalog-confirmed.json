@@ -349,6 +349,216 @@
       "display_order": 2
     },
     {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Appuis trop statiques",
+      "criterion_type": "improvement",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Déséquilibre à la frappe",
+      "criterion_type": "improvement",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Difficulté à changer de direction",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Difficulté à se déplacer vers l’avant",
+      "criterion_type": "improvement",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Difficulté à se déplacer vers l’arrière",
+      "criterion_type": "improvement",
+      "display_order": 5
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Déplacements latéraux inefficaces",
+      "criterion_type": "improvement",
+      "display_order": 6
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Enchaînement des appuis irrégulier",
+      "criterion_type": "improvement",
+      "display_order": 7
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Mauvais placement par rapport à la balle",
+      "criterion_type": "improvement",
+      "display_order": 8
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Pas de reprise d’appui",
+      "criterion_type": "improvement",
+      "display_order": 9
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Reprise d’appuis trop tardive",
+      "criterion_type": "improvement",
+      "display_order": 10
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Replacement trop lent",
+      "criterion_type": "improvement",
+      "display_order": 11
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Utilisation insuffisante des petits pas d’ajustement",
+      "criterion_type": "improvement",
+      "display_order": 12
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Ajustement des appuis avant la frappe",
+      "criterion_type": "positive",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Anticipation des déplacements",
+      "criterion_type": "positive",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Coordination des déplacements et de la frappe",
+      "criterion_type": "positive",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Déplacement efficace vers l’avant",
+      "criterion_type": "positive",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Déplacement latéral efficace",
+      "criterion_type": "positive",
+      "display_order": 5
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Déplacement vers l’arrière maîtrisé",
+      "criterion_type": "positive",
+      "display_order": 6
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Équilibre dynamique",
+      "criterion_type": "positive",
+      "display_order": 7
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Explosivité au démarrage",
+      "criterion_type": "positive",
+      "display_order": 8
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Fluidité des déplacements",
+      "criterion_type": "positive",
+      "display_order": 9
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Gestion des petits pas d’ajustement",
+      "criterion_type": "positive",
+      "display_order": 10
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Placement par rapport à la balle",
+      "criterion_type": "positive",
+      "display_order": 11
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Qualité de la reprise d’appuis",
+      "criterion_type": "positive",
+      "display_order": 12
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Réactivité au démarrage",
+      "criterion_type": "positive",
+      "display_order": 13
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Repositionnement après la frappe",
+      "criterion_type": "positive",
+      "display_order": 14
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Stabilité des appuis",
+      "criterion_type": "positive",
+      "display_order": 15
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Utilisation des appuis en déplacement",
+      "criterion_type": "positive",
+      "display_order": 16
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Appui semi-ouvert",
+      "criterion_type": "positive",
+      "display_order": 17
+    },
+    {
+      "main_theme": "Jeu de jambes/déplacements",
+      "subtheme": "Jeu de jambes et déplacements",
+      "criterion": "Replacement rapide",
+      "criterion_type": "positive",
+      "display_order": 18
+    },
+    {
       "main_theme": "Tactique",
       "subtheme": "Tactique",
       "criterion": "Choix de zone inadapté",
