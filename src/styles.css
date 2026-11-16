@@ -485,3 +485,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .player-profile-head>.icon-btn{flex:0 0 auto}
 @media(max-width:460px){.player-profile-head{align-items:flex-start}.player-profile-identity{gap:10px}.player-profile-avatar{width:48px;height:48px;flex-basis:48px;border-radius:15px;font-size:17px}.player-profile-copy h2{font-size:19px}}
 
+
+/* Réussites débloquées — badges et repères de progression */
+.achievement-card{position:relative;display:grid;align-content:start;gap:8px;min-width:0;padding:16px;border:1px solid rgba(102,224,173,.24);border-radius:15px;background:linear-gradient(145deg,rgba(19,61,58,.46),rgba(10,29,45,.92))}
+.achievement-card .achievement-symbol{display:grid;place-items:center;width:34px;height:34px;border:1px solid rgba(102,224,173,.38);border-radius:11px;background:rgba(102,224,173,.12);color:#8cf0c0;font-size:19px}
+.achievement-card strong{line-height:1.4}
+.achievement-card small{color:var(--muted);font-size:10px;line-height:1.45}
+.achievement-card .achievement-meta{padding-top:7px;border-top:1px solid rgba(102,224,173,.13);color:#9adfc0}
