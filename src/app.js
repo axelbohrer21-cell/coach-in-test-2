@@ -205,77 +205,42 @@ function playerSheetDialog(playerId){
   const sessions=state.sessions.filter(x=>x.player_id===playerId).sort((a,b)=>String(b.session_date).localeCompare(String(a.session_date)));
   const ids=new Set(reports.map(r=>r.id));const criteria=state.evaluationCriteria.filter(x=>ids.has(x.evaluation_id));
   const achievements=state.achievements.filter(x=>x.player_id===playerId);
-const birthDate = player.birth_date ? new Date(`${player.birth_date}T12:00:00`) : null;
-const today = new Date();
-let playerAge = 'Non renseigné';
-
-if (birthDate && !Number.isNaN(birthDate.getTime())) {
-  playerAge = today.getFullYear() - birthDate.getFullYear();
-  const birthdayNotReached =
-    today.getMonth() < birthDate.getMonth() ||
-    (today.getMonth() === birthDate.getMonth() &&
-     today.getDate() < birthDate.getDate());
-
-  if (birthdayNotReached) playerAge--;
-  playerAge += ' ans';
-}
-const challenge=state.challenges.find(x=>x.player_id===playerId&&x.status==='active');
-  const grouped=new Map();for(const c of criteria){const k=c.main_theme||'Autres';grouped.set(k,[...(grouped.get(k)||[]),c]);}
-  const themeSummary=[...grouped].map(([theme,rows])=>`<div class="theme-progress-row"><span>${escapeHtml(theme)}</span><div class="theme-progress-track"><i style="width:${Math.min(100,rows.length*8)}%"></i></div><b>${rows.length}</b></div>`).join('');
+  const birthDate=player.birth_date?new Date(`${player.birth_date}T12:00:00`):null;
+  const today=new Date();let playerAge='Non renseigné';
+  if(birthDate&&!Number.isNaN(birthDate.getTime())){playerAge=today.getFullYear()-birthDate.getFullYear();if(today.getMonth()<birthDate.getMonth()||(today.getMonth()===birthDate.getMonth()&&today.getDate()<birthDate.getDate()))playerAge--;playerAge+=' ans';}
+  const challenge=state.challenges.find(x=>x.player_id===playerId&&x.status==='active');
+  const grouped=new Map();for(const row of criteria){const key=row.main_theme||'Autres';grouped.set(key,[...(grouped.get(key)||[]),row]);}
+  const themeSummary=[...grouped].sort((a,b)=>b[1].length-a[1].length).map(([theme,rows])=>`<div class="theme-progress-row"><span>${escapeHtml(theme)}</span><div class="theme-progress-track"><i style="width:${Math.min(100,rows.length/Math.max(1,...[...grouped.values()].map(x=>x.length))*100)}%"></i></div><b>${rows.length}</b></div>`).join('');
+  const positive=criteria.filter(x=>x.criterion_type==='positive').length;
+  const improvement=criteria.filter(x=>x.criterion_type==='improvement').length;
+  const totalCriteria=positive+improvement;
+  const positiveAngle=totalCriteria?positive/totalCriteria*360:0;
+  const latest=reports[0];
+  const scoreAxes=[['Technique','technical_score'],['Tactique','tactical_score'],['Physique','physical_score'],['Mental','mental_score']];
+  const values=latest?scoreAxes.map(([label,key])=>[label,latest[key]===null||latest[key]===undefined||latest[key]===''?null:Math.max(0,Math.min(20,Number(latest[key])))]):[];
+  const validValues=values.filter(x=>x[1]!==null&&Number.isFinite(x[1]));
+  const radar=validValues.length===4?(()=>{const center=110,radius=76;const point=(value,index)=>{const angle=-Math.PI/2+index*Math.PI/2;const distance=value/20*radius;return `${center+Math.cos(angle)*distance},${center+Math.sin(angle)*distance}`;};const rings=[.25,.5,.75,1].map(f=>{const pts=Array.from({length:4},(_,i)=>{const angle=-Math.PI/2+i*Math.PI/2;return `${center+Math.cos(angle)*radius*f},${center+Math.sin(angle)*radius*f}`;}).join(' ');return `<polygon class="radar-grid" points="${pts}"/>`;}).join('');const polygon=values.map((x,i)=>point(x[1],i)).join(' ');const labels=scoreAxes.map(([label],i)=>{const angle=-Math.PI/2+i*Math.PI/2;return `<text class="radar-label" x="${center+Math.cos(angle)*98}" y="${center+Math.sin(angle)*98+3}">${label}</text>`;}).join('');return `<div class="radar-wrap player-sheet-radar"><svg viewBox="0 0 220 220" role="img" aria-label="Radar des quatre secteurs">${rings}<polygon class="radar-area" points="${polygon}"/>${labels}</svg></div>`;})():'<p class="chart-empty">Le radar complet apparaîtra lorsque les quatre secteurs seront notés dans un bilan.</p>';
+  const avg=validValues.length?validValues.reduce((sum,x)=>sum+x[1],0)/validValues.length:null;
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">FICHE DE PROGRESSION</p><h2>${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}</h2><p class="muted">${escapeHtml(player.fft_ranking||'Classement non renseigné')} · ${escapeHtml(player.player_type||'Loisir')}</p></div><button class="btn icon-btn" data-close>✕</button></div>
-  
-<section class="sheet-section player-personal-info">
-  <h3>Informations du joueur</h3>
-  <div class="stats-grid">
-    <div class="stat-card blue">
-      <span>DATE DE NAISSANCE</span>
-      <strong>${player.birth_date ? formatDate(player.birth_date) : 'Non renseignée'}</strong>
-    </div>
-    <div class="stat-card purple">
-      <span>ÂGE</span>
-      <strong>${playerAge}</strong>
-    </div>
-    <div class="stat-card green">
-      <span>CLASSEMENT FFT</span>
-      <strong>${escapeHtml(player.fft_ranking || 'Non renseigné')}</strong>
-    </div>
-    <div class="stat-card orange">
-      <span>CATÉGORIE</span>
-      <strong>${escapeHtml(player.age_category || 'Non renseignée')}</strong>
-    </div>
-    <div class="stat-card blue">
-      <span>E-MAIL</span>
-      <strong>${escapeHtml(player.email || 'Non renseigné')}</strong>
-    </div>
-    <div class="stat-card purple">
-      <span>PROFIL</span>
-      <strong>${escapeHtml(player.player_type || 'Loisir')}</strong>
-    </div>
-  </div>
-</section>
-
-  <div class="stats-grid"><div class="stat-card blue"><span>SÉANCES</span><strong>${sessions.length}</strong></div><div class="stat-card purple"><span>BILANS</span><strong>${reports.length}</strong></div><div class="stat-card green"><span>RÉUSSITES</span><strong>${achievements.length}</strong></div><div class="stat-card orange"><span>À TRAVAILLER</span><strong>${criteria.filter(x=>x.criterion_type==='improvement').length}</strong></div></div>
+  <section class="sheet-section player-personal-info"><h3>Informations du joueur</h3><div class="stats-grid">
+    <div class="stat-card blue"><span>DATE DE NAISSANCE</span><strong>${player.birth_date?formatDate(player.birth_date):'Non renseignée'}</strong></div>
+    <div class="stat-card purple"><span>ÂGE</span><strong>${playerAge}</strong></div>
+    <div class="stat-card green"><span>CLASSEMENT FFT</span><strong>${escapeHtml(player.fft_ranking||'Non renseigné')}</strong></div>
+    <div class="stat-card orange"><span>CATÉGORIE</span><strong>${escapeHtml(player.age_category||'Non renseignée')}</strong></div>
+    <div class="stat-card blue"><span>E-MAIL</span><strong>${escapeHtml(player.email||'Non renseigné')}</strong></div>
+    <div class="stat-card purple"><span>PROFIL</span><strong>${escapeHtml(player.player_type||'Loisir')}</strong></div>
+  </div></section>
+  <div class="stats-grid"><div class="stat-card blue"><span>SÉANCES</span><strong>${sessions.length}</strong></div><div class="stat-card purple"><span>BILANS</span><strong>${reports.length}</strong></div><div class="stat-card green"><span>RÉUSSITES</span><strong>${achievements.length}</strong></div><div class="stat-card orange"><span>À TRAVAILLER</span><strong>${improvement}</strong></div></div>
+  <section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">DERNIER BILAN</p><h3>Profil de performance</h3></div><span class="tag">${latest?formatDate(latest.evaluated_at||latest.created_at,{day:'2-digit',month:'short',year:'numeric'}):'En attente'}</span></div>
+    <div class="player-sheet-analytics"><article class="dashboard-chart-card"><h3>Radar des compétences</h3>${radar}</article><article class="dashboard-chart-card"><h3>Score moyen du dernier bilan</h3>${avg===null?'<p class="chart-empty">Aucune note disponible.</p>':`<div class="player-average-score"><strong>${avg.toFixed(1).replace('.',',')}</strong><span>/20</span></div><div class="sector-bars">${values.map(([label,value])=>`<div class="sector-bar-row"><div><span>${label}</span><b>${value===null?'—':value+'/20'}</b></div><div class="sector-track"><i style="width:${value===null?0:value/20*100}%"></i></div></div>`).join('')}</div>`}</article></div>
+    <div class="criterion-donut-row">${totalCriteria?`<div class="donut-chart" role="img" aria-label="${positive} réussites et ${improvement} points à améliorer" style="background:conic-gradient(#66e0ad 0deg ${positiveAngle}deg,#ffb36e ${positiveAngle}deg 360deg)"><div><strong>${totalCriteria}</strong><small>critères</small></div></div><div class="chart-legend"><span><i class="legend-dot positive"></i><b>${positive}</b> réussites</span><span><i class="legend-dot improvement"></i><b>${improvement}</b> à améliorer</span></div>`:'<p class="chart-empty">Les critères positifs et les axes de travail apparaîtront après les premiers bilans détaillés.</p>'}</div>
+  </section>
   <section class="sheet-section"><h3>Défi prioritaire</h3>${challenge?`<div class="challenge-strip"><b>${escapeHtml(challenge.criterion)}</b><span>${escapeHtml(challenge.objective)}</span><small>${challenge.current_value??'—'} / ${challenge.target_value??'—'} · ${challenge.consecutive_successes||0}/2 validations consécutives</small></div>`:'<p class="muted">Aucun défi actif.</p>'}</section>
   <section class="sheet-section"><h3>Réussites débloquées</h3><div class="achievement-grid">${achievements.map(a=>`<div class="achievement-card"><span>✦</span><strong>${escapeHtml(a.criterion)}</strong></div>`).join('')||'<p class="muted">Aucune réussite débloquée pour le moment.</p>'}</div></section>
   <section class="sheet-section"><h3>Thèmes travaillés</h3>${themeSummary||'<p class="muted">Aucun critère détaillé enregistré.</p>'}</section>
-  <section class="sheet-section"><h3>Historique des bilans</h3>${reports.map(r=>{const rows=criteria.filter(c=>c.evaluation_id===r.id);return `<article class="journal-card"><div class="journal-date">${formatDate(r.evaluated_at||r.created_at,{day:'2-digit',month:'long',year:'numeric'})}</div><div class="radar-mini">${[['Technique',r.technical_score],['Tactique',r.tactical_score],['Physique',r.physical_score],['Mental',r.mental_score]].filter(x=>x[1]!==null&&x[1]!==undefined).map(x=>`<span>${x[0]} : ${x[1]}/20</span>`).join(' · ')}</div><div class="journal-criteria">${rows.map(c=>`<span class="journal-tag ${c.criterion_type==='positive'?'positive':'improvement'}">${c.criterion_type==='positive'?'✓':'↗'} ${escapeHtml(c.criterion)}</span>`).join('')||'<small class="muted">Aucun critère associé à ce bilan.</small>'}</div><button class="btn subtle" data-send-evaluation="${r.id}">Envoyer le bilan au joueur</button></article>`}).join('')||'<p class="muted">Aucun bilan enregistré.</p>'}</section>
-<section class="sheet-section">
-  <h3>Historique des séances</h3>
-  ${sessions.map(s=>`<article class="list-card"><div class="list-date"><strong>${formatDate(s.session_date,{day:'2-digit',month:'short'})}</strong><small>${s.duration_minutes||60} min</small></div><div class="list-main"><strong>${escapeHtml(s.theme||'Séance de tennis')}</strong><span>${escapeHtml(s.player_visible_summary||'Séance enregistrée')}</span></div></article>`).join('')||'<p class="muted">Aucune séance.</p>'}
-</section>
-
-<section class="sheet-section">
-  <h3>Notes privées du coach</h3>
-  ${sessions.filter(s => s.coach_private_notes?.trim()).map(s => `
-    <article class="journal-card">
-      <div class="journal-date">
-        ${formatDate(s.session_date, {day:'2-digit', month:'long', year:'numeric'})}
-        · ${escapeHtml(s.theme || 'Séance de tennis')}
-      </div>
-      <p>${escapeHtml(s.coach_private_notes)}</p>
-    </article>
-  `).join('') || '<p class="muted">Aucune note privée enregistrée.</p>'}
-</section>`);
+  <section class="sheet-section"><h3>Historique des bilans</h3>${reports.map(r=>{const rows=criteria.filter(c=>c.evaluation_id===r.id);return `<article class="journal-card"><div class="journal-date">${formatDate(r.evaluated_at||r.created_at,{day:'2-digit',month:'long',year:'numeric'})}</div><div class="radar-mini">${[['Technique',r.technical_score],['Tactique',r.tactical_score],['Physique',r.physical_score],['Mental',r.mental_score]].filter(x=>x[1]!==null&&x[1]!==undefined).map(x=>`<span>${x[0]} : ${x[1]}/20</span>`).join(' · ')}</div><div class="journal-criteria">${rows.map(row=>`<span class="journal-tag ${row.criterion_type==='positive'?'positive':'improvement'}">${row.criterion_type==='positive'?'✓':'↗'} ${escapeHtml(row.criterion)}</span>`).join('')||'<small class="muted">Aucun critère associé à ce bilan.</small>'}</div><button class="btn subtle" data-send-evaluation="${r.id}">Envoyer le bilan au joueur</button></article>`;}).join('')||'<p class="muted">Aucun bilan enregistré.</p>'}</section>
+  <section class="sheet-section"><h3>Historique des séances</h3>${sessions.map(s=>`<article class="list-card"><div class="list-date"><strong>${formatDate(s.session_date,{day:'2-digit',month:'short'})}</strong><small>${s.duration_minutes||60} min</small></div><div class="list-main"><strong>${escapeHtml(s.theme||'Séance de tennis')}</strong><span>${escapeHtml(s.player_visible_summary||'Séance enregistrée')}</span></div></article>`).join('')||'<p class="muted">Aucune séance.</p>'}</section>
+  <section class="sheet-section"><h3>Notes privées du coach</h3>${sessions.filter(s=>s.coach_private_notes?.trim()).map(s=>`<article class="journal-card"><div class="journal-date">${formatDate(s.session_date,{day:'2-digit',month:'long',year:'numeric'})} · ${escapeHtml(s.theme||'Séance de tennis')}</div><p>${escapeHtml(s.coach_private_notes)}</p></article>`).join('')||'<p class="muted">Aucune note privée enregistrée.</p>'}</section>`);
 }
 
 function challengeDialog(playerId, criterion, criterionId){
