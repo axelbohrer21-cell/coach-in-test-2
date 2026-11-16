@@ -18,6 +18,8 @@ let messageChannel = null;
 let notificationChannel = null;
 let notificationRefreshPromise = null;
 let messageRefreshPromise = null;
+let notificationRetryCount = 0;
+let messageRetryCount = 0;
 const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['videos','Mes vidéos','▣'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'] ];
@@ -780,7 +782,7 @@ function findScheduleConflict({session_date,session_time,duration_minutes,exclud
   const events=[
     ...(state.sessions||[]).filter(row=>row.session_date===session_date).map(row=>({
       start:timeToMinutes(row.session_time),end:timeToMinutes(row.session_time)+Number(row.duration_minutes||60),
-      label:'un cours particulier ('+(playerName(row.player_id)||'joueur')+')'
+      label:'un cours particulier ('+((state.players||[]).find(player=>player.id===row.player_id)?.first_name||'joueur')+')'
     })),
     ...(state.groupSessions||[]).filter(row=>row.session_date===session_date&&row.status!=='cancelled'&&row.id!==excludeGroupId).map(row=>({
       start:timeToMinutes(row.start_time),end:timeToMinutes(row.end_time),
@@ -875,6 +877,7 @@ async function refreshMessagesOnly(){
 function stopRealtimeChannels(){
   if(messageChannel){const channel=messageChannel;messageChannel=null;supabase.removeChannel(channel);}
   if(notificationChannel){const channel=notificationChannel;notificationChannel=null;supabase.removeChannel(channel);}
+  messageRetryCount=0;notificationRetryCount=0;
 }
 
 supabase.auth.onAuthStateChange((_event,session)=>{
@@ -920,7 +923,14 @@ function subscribeToNotifications(){
   });
  notificationChannel=channel;
  channel.subscribe(status=>{
-  if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)&&notificationChannel===channel)notificationChannel=null;
+  if(status==='SUBSCRIBED')notificationRetryCount=0;
+  if(['CHANNEL_ERROR','TIMED_OUT'].includes(status)&&notificationChannel===channel){
+   notificationChannel=null;
+   if(notificationRetryCount<3){
+    notificationRetryCount++;
+    window.setTimeout(()=>{if(state.user&&state.profile&&!notificationChannel)subscribeToNotifications();},1500*notificationRetryCount);
+   }
+  }
  });
 }
 
@@ -938,6 +948,13 @@ function subscribeToMessages(){
   });
  messageChannel=channel;
  channel.subscribe(status=>{
-  if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)&&messageChannel===channel)messageChannel=null;
+  if(status==='SUBSCRIBED')messageRetryCount=0;
+  if(['CHANNEL_ERROR','TIMED_OUT'].includes(status)&&messageChannel===channel){
+   messageChannel=null;
+   if(messageRetryCount<3){
+    messageRetryCount++;
+    window.setTimeout(()=>{if(state.user&&state.profile&&state.currentPage==='messages'&&!messageChannel)subscribeToMessages();},1500*messageRetryCount);
+   }
+  }
  });
 }
