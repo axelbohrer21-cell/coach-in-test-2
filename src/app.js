@@ -780,7 +780,7 @@ function findScheduleConflict({session_date,session_time,duration_minutes,exclud
   const start=timeToMinutes(session_time),end=start+Number(duration_minutes||0);
   if(!session_date||end<=start)return null;
   const events=[
-    ...(state.sessions||[]).filter(row=>row.session_date===session_date).map(row=>({
+    ...(state.sessions||[]).filter(row=>row.session_date===session_date&&!['cancelled','annulée','annulee'].includes(String(row.status||'').toLowerCase())).map(row=>({
       start:timeToMinutes(row.session_time),end:timeToMinutes(row.session_time)+Number(row.duration_minutes||60),
       label:'un cours particulier ('+((state.players||[]).find(player=>player.id===row.player_id)?.first_name||'joueur')+')'
     })),
@@ -788,7 +788,7 @@ function findScheduleConflict({session_date,session_time,duration_minutes,exclud
       start:timeToMinutes(row.start_time),end:timeToMinutes(row.end_time),
       label:'un cours collectif (« '+(row.title||'cours collectif')+' »)'
     })),
-    ...(state.bookingRequests||[]).filter(row=>row.session_date===session_date&&['pending','accepted','confirmed'].includes(String(row.status||'').toLowerCase())).map(row=>({
+    ...(state.bookingRequests||[]).filter(row=>row.session_date===session_date&&(row.start_time||row.session_time)&&['pending','accepted','confirmed'].includes(String(row.status||'').toLowerCase())).map(row=>({
       start:timeToMinutes(row.start_time||row.session_time),
       end:timeToMinutes(row.start_time||row.session_time)+Number(row.duration_minutes||row.duration||60),
       label:'une réservation '+(String(row.status).toLowerCase()==='pending'?'en attente':'confirmée')
@@ -808,6 +808,15 @@ async function generateGroupSeries(id){
     const existing=new Set(state.groupSessions.filter(row=>row.series_id===id).map(row=>row.session_date));
     const missing=all.filter(row=>!existing.has(row.session_date));
     if(!missing.length){toast('Toutes les dates de la saison sont déjà générées.');return;}
+    const conflicts=missing.filter(row=>findScheduleConflict({
+      session_date:row.session_date,
+      session_time:row.start_time,
+      duration_minutes:timeToMinutes(row.end_time)-timeToMinutes(row.start_time)
+    }));
+    if(conflicts.length){
+      toast('Certaines dates de cette série chevauchent déjà un cours ou une réservation. Modifie le créneau avant de générer la saison.','error');
+      return;
+    }
     await dataService.createGroupSessionsBatch(missing);
     toast(`${missing.length} dates ajoutées au planning pour « ${series.title} ».`); await refreshAndRender();
   }catch(error){toast(error.message||'Impossible de générer les dates.','error');}
