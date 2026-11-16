@@ -80,6 +80,8 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
     const pastUnrecorded = sessions.filter(s => s.status === 'scheduled' && s.session_date < now).length;
     const remaining = Math.max(0, def.target - completed);
     const catchUp = Math.max(0, def.target - completed - planned);
+    const expectedByNow = Math.min(def.target, eligibleDates.filter(date => date < now).length);
+    const paceGap = Math.max(0, expectedByNow - completed);
     return {
       ...def,
       label: `${def.audience === 'adultes' ? 'Adultes' : 'Enfants'} · ${DAY_LABELS[def.weekday]}`,
@@ -89,9 +91,11 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
       completed,
       planned,
       pastUnrecorded,
+      expectedByNow,
+      paceGap,
       remaining,
       catchUp,
-      status: completed >= def.target ? 'target_reached' : eligibleDates.length < def.target ? 'availability_risk' : catchUp > 0 ? 'to_schedule' : 'on_track'
+      status: completed >= def.target ? 'target_reached' : eligibleDates.length < def.target ? 'availability_risk' : paceGap > 0 ? 'behind_schedule' : catchUp > 0 ? 'to_schedule' : 'on_track'
     };
   });
 }
