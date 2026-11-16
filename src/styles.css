@@ -397,3 +397,30 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .dialog-actions{flex-wrap:wrap}
   .dialog-actions .btn{flex:1}
 }
+
+
+/* Visual analytics — graphiques de tableau de bord */
+.dashboard-visuals{overflow:hidden}
+.dashboard-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.dashboard-chart-card{min-width:0;padding:17px;border:1px solid rgba(92,139,180,.22);border-radius:15px;background:linear-gradient(145deg,rgba(7,23,41,.82),rgba(14,34,57,.82));display:grid;align-content:start;gap:18px}
+.dashboard-chart-card h3{margin:0;font-size:15px;letter-spacing:-.2px}
+.dashboard-chart-card .eyebrow{margin:0 0 5px;font-size:9px}
+.donut-layout{display:flex;align-items:center;justify-content:center;gap:clamp(12px,3vw,26px);flex-wrap:wrap;padding:8px 0}
+.donut-chart{width:148px;height:148px;flex:none;border-radius:50%;display:grid;place-items:center;position:relative;box-shadow:0 8px 26px rgba(0,0,0,.18)}
+.donut-chart:before{content:"";position:absolute;inset:17px;border-radius:50%;background:#0b1d32;border:1px solid rgba(130,170,205,.14)}
+.donut-chart>div{position:relative;z-index:1;display:grid;text-align:center;gap:2px}
+.donut-chart strong{font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.donut-chart small{font-size:10px;color:var(--muted)}
+.chart-legend{display:grid;gap:11px;color:var(--muted);font-size:12px}
+.chart-legend span{display:flex;align-items:center;gap:8px}
+.chart-legend b{color:var(--text);font-variant-numeric:tabular-nums}
+.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.legend-dot.positive{background:#66e0ad}.legend-dot.improvement{background:#ffb36e}
+.sector-bars{display:grid;gap:13px}
+.sector-bar-row>div:first-child{display:flex;justify-content:space-between;gap:10px;font-size:12px}
+.sector-bar-row b{font-variant-numeric:tabular-nums;color:#dff7ff}
+.sector-track{height:9px;margin-top:7px;overflow:hidden;border-radius:20px;background:#203852}
+.sector-track i{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#43d4f2,#9c8cff)}
+.sector-bar-row small{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+.chart-empty{margin:0;padding:16px;border:1px dashed rgba(122,160,199,.2);border-radius:12px;color:var(--muted);font-size:12px;line-height:1.55}
+@media(max-width:680px){.dashboard-chart-grid{grid-template-columns:1fr}.dashboard-chart-card{padding:14px}.donut-chart{width:126px;height:126px}}
