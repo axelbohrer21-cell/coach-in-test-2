@@ -71,7 +71,8 @@ export const dataService = {
     ]);
     const coachIds = coachLinks.map(row => row.coach_id);
     const playerCoaches = coachIds.length ? await unwrap(supabase.from('profiles').select('id,first_name,last_name,email').in('id', coachIds).is('archived_at',null).order('last_name')) : [];
-    const weeklyAvailability = coachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',coachIds).eq('active',true).order('weekday').order('start_time')) : [];
+    const activeCoachIds = playerCoaches.map(row => row.id);
+    const weeklyAvailability = activeCoachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',activeCoachIds).eq('active',true).order('weekday').order('start_time')) : [];
     const messages = await unwrap(supabase.from('coach_player_messages').select('*').eq('player_id',state.user.id).order('created_at'));
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const evaluationCriteria = evaluationIds.length ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : [];
