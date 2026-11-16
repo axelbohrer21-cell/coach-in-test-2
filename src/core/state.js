@@ -22,6 +22,7 @@ export const state = {
   weeklyAvailability: [],
   weather: null,
   messages: [],
+  videoAnalyses: [],
   messagePartnerId: '',
   currentPage: 'dashboard',
   planningWeekOffset: 0,
@@ -32,7 +33,7 @@ export function resetState() {
   Object.assign(state, {
     user: null, profile: null, players: [], sessions: [], evaluations: [], groupSessions: [], groupSeries: [],
     bookingRequests: [], library: [], notifications: [], notificationPreferences: null, criteria: [], evaluationCriteria: [],
-    challenges: [], achievements: [], playerCoaches: [], playerCoachHistory: [], coachInvitations: [], coachPlayerShares: [], adminCoaches: [], weeklyAvailability: [], weather: null, messages: [], messagePartnerId: '', currentPage: 'dashboard', planningWeekOffset: 0,
+    challenges: [], achievements: [], playerCoaches: [], playerCoachHistory: [], coachInvitations: [], coachPlayerShares: [], adminCoaches: [], weeklyAvailability: [], weather: null, messages: [], videoAnalyses: [], messagePartnerId: '', currentPage: 'dashboard', planningWeekOffset: 0,
     filters: { playerType: 'all', search: '', libraryCategory: 'all', librarySearch: '' }
   });
 }
