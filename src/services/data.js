@@ -156,6 +156,14 @@ export const dataService = {
     if (error) throw error;
     return data;
   },
+  async loadMessagesForCurrentUser() {
+    const isCoach = state.profile?.role === 'coach';
+    const field = isCoach ? 'coach_id' : 'player_id';
+    const { data, error } = await supabase.from('coach_player_messages').select('*')
+      .eq(field, state.user.id).order('created_at');
+    if (error) throw error;
+    return hydrateMessages(data || []);
+  },
   async markMessageRead(messageId) {
     const {error}=await supabase.rpc('mark_coach_in_message_read',{p_message_id:messageId}); if(error)throw error;
   },
