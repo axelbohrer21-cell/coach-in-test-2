@@ -181,6 +181,8 @@ function playersPage() {
         const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
 
         return `<article class="player-card"
+          data-player-search="${escapeHtml(`${p.first_name || ''} ${p.last_name || ''} ${p.email || ''}`.toLocaleLowerCase('fr'))}"
+          data-player-type="${escapeHtml(p.player_type || 'Loisir')}"
           style="--player-accent:${color}">
 
           <div class="player-avatar">
