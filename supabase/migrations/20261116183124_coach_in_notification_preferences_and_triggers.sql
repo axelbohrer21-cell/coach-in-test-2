@@ -25,7 +25,7 @@ begin
   if v_column is not null then
     execute format('select coalesce(%I,true) from public.notification_preferences where user_id=$1',v_column)
       into v_enabled using v_user_id;
-    if not found then v_enabled := true; end if;
+    v_enabled := coalesce(v_enabled,true);
   end if;
   if not coalesce(v_enabled,true) then return null; end if;
   return new;
