@@ -714,6 +714,132 @@
     },
     {
       "main_theme": "Mental",
+      "subtheme": "Attitude en match",
+      "criterion": "Attitude inadaptée envers l’adversaire ou l’arbitrage",
+      "criterion_type": "improvement",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Attitude en match",
+      "criterion": "Manque de respect des routines",
+      "criterion_type": "improvement",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Attitude en match",
+      "criterion": "Attitude négative sur le terrain",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Attitude en match",
+      "criterion": "Baisse d’engagement pendant le match",
+      "criterion_type": "improvement",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Attitude en match",
+      "criterion": "Respect de l’adversaire et de l’arbitrage",
+      "criterion_type": "positive",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Attitude en match",
+      "criterion": "Respect des routines entre les points",
+      "criterion_type": "positive",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Attitude en match",
+      "criterion": "Attitude positive sur le terrain",
+      "criterion_type": "positive",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Attitude en match",
+      "criterion": "Capacité à rester engagé dans le match",
+      "criterion_type": "positive",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Combativité et engagement",
+      "criterion": "Baisse d’engagement pendant le match",
+      "criterion_type": "improvement",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Combativité et engagement",
+      "criterion": "Manque de combativité",
+      "criterion_type": "improvement",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Combativité et engagement",
+      "criterion": "Découragement après plusieurs erreurs",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Combativité et engagement",
+      "criterion": "Difficulté à maintenir ses efforts",
+      "criterion_type": "improvement",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Combativité et engagement",
+      "criterion": "Tendance à abandonner certains points",
+      "criterion_type": "improvement",
+      "display_order": 5
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Combativité et engagement",
+      "criterion": "Combativité sur chaque point",
+      "criterion_type": "positive",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Combativité et engagement",
+      "criterion": "Engagement physique constant",
+      "criterion_type": "positive",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Combativité et engagement",
+      "criterion": "Persévérance dans les moments difficiles",
+      "criterion_type": "positive",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Combativité et engagement",
+      "criterion": "Attitude volontaire",
+      "criterion_type": "positive",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Combativité et engagement",
+      "criterion": "Capacité à ne jamais abandonner",
+      "criterion_type": "positive",
+      "display_order": 5
+    },
+    {
+      "main_theme": "Mental",
       "subtheme": "Concentration",
       "criterion": "Baisse de concentration pendant le point",
       "criterion_type": "improvement",
@@ -765,6 +891,118 @@
       "main_theme": "Mental",
       "subtheme": "Concentration",
       "criterion": "Recentrage rapide après une distraction",
+      "criterion_type": "positive",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Confiance en soi",
+      "criterion": "Hésitation dans les choix de jeu",
+      "criterion_type": "improvement",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Confiance en soi",
+      "criterion": "Manque de confiance dans ses capacités",
+      "criterion_type": "improvement",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Confiance en soi",
+      "criterion": "Peur de prendre des initiatives",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Confiance en soi",
+      "criterion": "Difficulté à prendre des risques",
+      "criterion_type": "improvement",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Confiance en soi",
+      "criterion": "Engagement dans ses choix de jeu",
+      "criterion_type": "positive",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Confiance en soi",
+      "criterion": "Prise d’initiative sans hésitation",
+      "criterion_type": "positive",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Confiance en soi",
+      "criterion": "Confiance dans ses capacités",
+      "criterion_type": "positive",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Confiance en soi",
+      "criterion": "Capacité à prendre des risques adaptés",
+      "criterion_type": "positive",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion de la pression",
+      "criterion": "Difficulté à jouer les points importants",
+      "criterion_type": "improvement",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion de la pression",
+      "criterion": "Précipitation sous pression",
+      "criterion_type": "improvement",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion de la pression",
+      "criterion": "Stress qui perturbe le jeu",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion de la pression",
+      "criterion": "Abandon du plan de jeu dans les moments importants",
+      "criterion_type": "improvement",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion de la pression",
+      "criterion": "Capacité à jouer les points importants",
+      "criterion_type": "positive",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion de la pression",
+      "criterion": "Gestion du stress en situation de match",
+      "criterion_type": "positive",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion de la pression",
+      "criterion": "Prise de décision lucide sous pression",
+      "criterion_type": "positive",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion de la pression",
+      "criterion": "Capacité à conserver son plan de jeu",
       "criterion_type": "positive",
       "display_order": 4
     },
