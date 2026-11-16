@@ -196,7 +196,7 @@ function libraryDialog(itemId='', seedItem=null){
   const editing=Boolean(itemId);
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">BIBLIOTHÈQUE</p><h2>${editing?'Modifier une séance':'Ajouter une séance'}</h2></div><button class="btn icon-btn" data-close>✕</button></div>
   <form id="library-form" class="form-grid">
-    <input type="hidden" name="id" value="${escapeHtml(item.id||'')}">
+    <input type="hidden" name="id" value="${escapeHtml(editing ? item.id||'' : '')}">
     <label>Format<select name="category"><option value="particulier" ${item.category==='particulier'?'selected':''}>Cours particulier</option><option value="collectif" ${item.category==='collectif'?'selected':''}>Cours collectif</option></select></label>
     <label>Niveau<input name="level" value="${escapeHtml(item.level||'Tous niveaux')}" placeholder="Tous niveaux, débutant, confirmé…"></label>
     <label class="span-2">Titre<input name="title" required value="${escapeHtml(item.title||'')}"></label>
