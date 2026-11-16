@@ -433,6 +433,7 @@ function availabilityPage() {
 function messagesPage(isCoach) {
  const partners=isCoach?(state.players||[]):(state.playerCoaches||[]);
  const partnerId=state.messagePartnerId&&partners.some(p=>p.id===state.messagePartnerId)?state.messagePartnerId:(partners[0]?.id||'');
+ if(partnerId)state.messagePartnerId=partnerId;
  const rows=(state.messages||[]).filter(m=>isCoach?m.player_id===partnerId:m.coach_id===partnerId).sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));
  const unreadFor=partner=>(state.messages||[]).filter(m=>(isCoach?m.player_id===partner.id:m.coach_id===partner.id)&&m.sender_id!==state.user.id&&!m.read_at).length;
  const options=partners.map(p=>{const unread=unreadFor(p);return '<option value="'+p.id+'" '+(p.id===partnerId?'selected':'')+'>'+escapeHtml([p.first_name,p.last_name].filter(Boolean).join(' ')||p.email||'Contact')+(unread?' · '+unread+' non lu(s)':'')+'</option>';}).join('');
