@@ -27,6 +27,10 @@ function normalizeAnalysis(value: any) {
     priority: cleanText(item?.priority, 60) || (index === 0 ? "Priorité 1" : `Priorité ${index + 1}`),
     observation: cleanText(item?.observation, 500),
     correction: cleanText(item?.correction, 500),
+    exercise_name: cleanText(item?.exercise_name, 120),
+    exercise_setup: cleanText(item?.exercise_setup, 500),
+    verification_goal: cleanText(item?.verification_goal, 400),
+    success_criteria: cleanText(item?.success_criteria, 300),
   })).filter((item: any) => item.observation || item.correction) : [];
   const drills = Array.isArray(value?.drills) ? value.drills.slice(0, 4).map((item: any) => ({
     name: cleanText(item?.name, 120),
@@ -36,6 +40,7 @@ function normalizeAnalysis(value: any) {
   const confidence = cleanText(value?.confidence, 20).toLowerCase();
   return {
     summary: cleanText(value?.summary, 1200) || "L’analyse n’a pas fourni de synthèse exploitable.",
+    next_session_focus: cleanText(value?.next_session_focus, 500),
     phases,
     strengths: stringList(value?.strengths, 6),
     corrections,
@@ -110,11 +115,13 @@ MÉTHODE :
 1. Décris d'abord les faits réellement visibles, puis sépare clairement interprétation et conseil.
 2. Repère les phases pertinentes selon le geste : préparation, placement/armement, déclenchement, frappe ou zone de frappe si visible, accompagnement et replacement. N'invente pas une phase absente des images.
 3. Relie chaque correction à un indice observable et propose une consigne courte, priorisée et directement testable sur le court.
-4. Propose des exercices progressifs, réalisables avec du matériel courant, avec objectif et mise en place concrète.
-5. Si l'angle de caméra, le cadrage, la fréquence d'images ou l'occlusion empêchent de conclure, signale-le et baisse le niveau de confiance.
+4. Pour CHAQUE correction, fournis obligatoirement : exercise_name (nom d'un exercice correctif), exercise_setup (organisation, répétitions ou séries et consigne), verification_goal (ce que le coach devra observer à la prochaine séance), success_criteria (un critère observable et simple permettant de dire si le joueur progresse). Si aucun exercice fiable n'est justifié, indique-le clairement sans inventer.
+5. Propose aussi des exercices progressifs complémentaires, réalisables avec du matériel courant, avec objectif et mise en place concrète.
+6. Termine par next_session_focus : une priorité unique à reprendre à la prochaine séance, formulée comme un objectif d'entraînement.
+7. Si l'angle de caméra, le cadrage, la fréquence d'images ou l'occlusion empêchent de conclure, signale-le et baisse le niveau de confiance.
 LIMITES : ces images fixes ne permettent pas de mesurer précisément les angles articulaires, la vitesse de balle, les effets, la puissance ou le timing réel entre les images. N'affirme jamais ces mesures. Pas de diagnostic médical. Ne transforme pas une hypothèse en certitude.
 Réponds en français, de façon concise, professionnelle et utile au coach. Évite les conseils génériques.
-Retourne un JSON strict avec les clés : summary (string), phases (array d'objets {phase,timestamp,observation}), strengths (array de strings), corrections (array d'objets {priority,observation,correction}), drills (array d'objets {name,objective,setup}), limitations (array de strings), confidence ("faible"|"moyenne"|"bonne"). Si les images ne permettent pas une analyse fiable, dis-le explicitement dans summary et limitations.`;
+Retourne un JSON strict avec les clés : summary (string), next_session_focus (string), phases (array d'objets {phase,timestamp,observation}), strengths (array de strings), corrections (array d'objets {priority,observation,correction,exercise_name,exercise_setup,verification_goal,success_criteria}), drills (array d'objets {name,objective,setup}), limitations (array de strings), confidence ("faible"|"moyenne"|"bonne"). Si les images ne permettent pas une analyse fiable, dis-le explicitement dans summary et limitations.`;
   const content: any[] = [{ type: "text", text: instructions }];
   for (const frame of frames) {
     content.push({ type: "text", text: `Image à ${Number(frame.timestamp).toFixed(2)} seconde(s), dans l'ordre de la séquence.` });
