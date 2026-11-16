@@ -234,6 +234,21 @@ function libraryDialog(itemId='', seedItem=null){
 
 let generatedSessionPlan = null;
 
+function updateSessionBuilderExerciseOptions(){
+  const form=$('#session-builder-form');if(!form)return;
+  const theme=form.elements.theme.value,level=form.elements.level.value;
+  const filtered=(state.library||[]).filter(item=>item.category==='particulier'&&(!theme||item.theme===theme)&&(level==='Tous niveaux'||item.level==='Tous niveaux'||item.level===level)).sort((x,y)=>String(x.title||'').localeCompare(String(y.title||''),'fr'));
+  const first=form.elements.exercise_one,second=form.elements.exercise_two;
+  const oldFirst=first.value,oldSecond=second.value;
+  const optionMarkup=filtered.map(item=>'<option value="'+escapeHtml(item.id)+'">'+escapeHtml(item.title||'Exercice')+' · '+escapeHtml(item.theme||'Sans thème')+' · '+escapeHtml(item.level||'Tous niveaux')+'</option>').join('');
+  first.innerHTML=optionMarkup||'<option value="">Aucun exercice pour ces filtres</option>';
+  second.innerHTML='<option value="">Aucun · séance centrée sur un exercice</option>'+optionMarkup;
+  if(filtered.some(item=>String(item.id)===oldFirst))first.value=oldFirst;
+  else if(filtered.length)first.value=String(filtered[0].id);
+  if(filtered.some(item=>String(item.id)===oldSecond)&&oldSecond!==first.value)second.value=oldSecond;
+  else if(filtered.length>1)second.value=String(filtered.find(item=>String(item.id)!==first.value)?.id||'');
+}
+
 function sessionBuilderDialog(){
   if(!state.players.length){toast('Ajoute au moins un joueur à ton effectif avant de préparer une séance.','error');return;}
   const items=(state.library||[]).filter(item=>item.category==='particulier').sort((x,y)=>String(x.title||'').localeCompare(String(y.title||''),'fr'));
@@ -247,15 +262,14 @@ function sessionBuilderDialog(){
     '<label class="span-2">Joueur<select name="player_id" required>'+state.players.map(player=>'<option value="'+player.id+'">'+escapeHtml(player.first_name)+' '+escapeHtml(player.last_name)+'</option>').join('')+'</select></label>'+
     '<label>Date<input name="session_date" type="date" required value="'+today+'"></label><label>Heure<input name="session_time" type="time" required value="17:00"></label>'+
     '<label>Durée<select name="duration_minutes"><option value="60">1 heure</option><option value="90" selected>1 h 30</option><option value="120">2 heures</option></select></label>'+
-    '<label>Niveau de travail<select name="level"><option>Tous niveaux</option><option>Débutant</option><option>Intermédiaire</option><option>Confirmé</option><option>Compétition</option></select></label>'+
-    '<label class="span-2">Thème principal<select name="theme">'+themes.map(theme=>'<option value="'+escapeHtml(theme)+'">'+escapeHtml(theme)+'</option>').join('')+'</select></label>'+
+    '<label>Niveau de travail<select name="level"><option>Tous niveaux</option>'+[...new Set(items.map(item=>item.level).filter(level=>level&&level!=='Tous niveaux'))].sort((x,y)=>x.localeCompare(y,'fr')).map(level=>'<option>'+escapeHtml(level)+'</option>').join('')+'</select></label>'+
+    '<label class="span-2">Thème principal<select name="theme"><option value="">Tous les thèmes</option>'+themes.map(theme=>'<option value="'+escapeHtml(theme)+'">'+escapeHtml(theme)+'</option>').join('')+'</select></label>'+
     '<label class="span-2">Exercice 1 · situation principale<select name="exercise_one" required>'+options+'</select></label>'+
     '<label class="span-2">Exercice 2 · variation ou transfert<select name="exercise_two"><option value="">Aucun · séance centrée sur un exercice</option>'+options+'</select></label>'+
     '<div class="span-2 session-builder-tip"><strong>Comment la séance sera construite</strong><p>Échauffement progressif, deux situations issues de ta bibliothèque, puis retour au match pour réinvestir le thème. Les durées s’adaptent au format choisi.</p></div>'+
     '<div id="session-builder-preview" class="span-2"></div>'+
     '<div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button type="button" class="btn primary" data-generate-session>Générer la séance</button></div></form>');
-  const form=$('#session-builder-form');
-  if(form&&items.length>1)form.elements.exercise_two.value=items[1].id;
+  updateSessionBuilderExerciseOptions();
 }
 
 function sessionBuilderExerciseText(item){
@@ -274,7 +288,8 @@ function generateSessionPlan(){
   const values=Object.fromEntries(new FormData(form));
   if(!isPrivateLessonDateAllowed(values.session_date)){toast('Cette date tombe pendant une période sans cours particuliers. Choisis une autre date.','error');return;}
   const itemOne=state.library.find(item=>String(item.id)===String(values.exercise_one));
-  const itemTwo=values.exercise_two?state.library.find(item=>String(item.id)===String(values.exercise_two)):null;
+  const selectedSecond=values.exercise_two?state.library.find(item=>String(item.id)===String(values.exercise_two)):null;
+  const itemTwo=selectedSecond&&String(selectedSecond.id)!==String(itemOne?.id)?selectedSecond:null;
   if(!itemOne){toast('Sélectionne un exercice enregistré dans ta bibliothèque.','error');return;}
   const duration=Number(values.duration_minutes);
   const split=duration===60?{warm:10,one:20,two:20,match:10}:duration===120?{warm:20,one:40,two:40,match:20}:{warm:15,one:30,two:30,match:15};
