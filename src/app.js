@@ -26,19 +26,28 @@ function showAuth(message='') {
 }
 function showApp() { $('#auth-view').classList.add('hidden'); $('#app-view').classList.remove('hidden'); }
 
+let workspaceLoadPromise = null;
 async function loadWorkspace() {
-  const user = await authService.getCurrentUser();
-  if (!user) return showAuth();
-  state.user = user;
-  state.profile = await dataService.loadProfile(user.id);
-  const isAdmin = state.profile.is_admin === true || state.profile.role === 'admin';
-  if (state.profile.role === 'coach') await dataService.loadCoachWorkspace(user.id);
-  else if (!isAdmin) await dataService.loadPlayerWorkspace();
-  if (isAdmin) await dataService.loadAdminWorkspace();
-  showApp();
-  const roleLabel = state.profile.role === 'coach' && isAdmin ? 'Coach · Administrateur' : state.profile.role === 'admin' ? 'Administrateur' : state.profile.role === 'coach' ? 'Coach' : 'Joueur';
-  $('#account-label').textContent = `${state.profile.first_name || ''} ${state.profile.last_name || ''} · ${roleLabel}`;
-  render('dashboard');
+  if (workspaceLoadPromise) return workspaceLoadPromise;
+  workspaceLoadPromise = (async () => {
+    const user = await authService.getCurrentUser();
+    if (!user) return showAuth();
+    state.user = user;
+    state.profile = await dataService.loadProfile(user.id);
+    const isAdmin = state.profile.is_admin === true || state.profile.role === 'admin';
+    if (state.profile.role === 'coach') await dataService.loadCoachWorkspace(user.id);
+    else if (!isAdmin) await dataService.loadPlayerWorkspace();
+    if (isAdmin) await dataService.loadAdminWorkspace();
+    showApp();
+    const roleLabel = state.profile.role === 'coach' && isAdmin ? 'Coach · Administrateur' : state.profile.role === 'admin' ? 'Administrateur' : state.profile.role === 'coach' ? 'Coach' : 'Joueur';
+    $('#account-label').textContent = `${state.profile.first_name || ''} ${state.profile.last_name || ''} · ${roleLabel}`;
+    render('dashboard');
+  })();
+  try {
+    return await workspaceLoadPromise;
+  } finally {
+    workspaceLoadPromise = null;
+  }
 }
 
 function render(page) {
