@@ -16,9 +16,9 @@ let signupMode = false;
 let weatherRequest = 0;
 let messageChannel = null;
 let notificationChannel = null;
-const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
+const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
-const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'] ];
+const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['videos','Mes vidéos','▣'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'] ];
 
 function showAuth(message='') {
   $('#auth-view').classList.remove('hidden'); $('#app-view').classList.add('hidden');
@@ -105,6 +105,7 @@ $('#page-content').addEventListener('click', async event=>{
   const revokeShare=event.target.closest('[data-revoke-coach-share]'); if(revokeShare) return revokeCoachShare(revokeShare.dataset.revokeCoachShare,revokeShare.dataset.playerId);
   const action=event.target.closest('[data-action]')?.dataset.action;
   if(action==='generate-session') return sessionBuilderDialog();
+  const shareVideo=event.target.closest('[data-share-video]'); if(shareVideo) return toggleVideoShare(shareVideo.dataset.shareVideo,shareVideo.dataset.shared==='true');
   if(action==='new-session') return sessionDialog();
   if(action==='add-availability') return availabilityDialog();
   if(action==='invite-coach') return inviteCoachDialog();
@@ -189,6 +190,10 @@ $('#dialog-content').addEventListener('change',event=>{
   }
 });
 $('#page-content').addEventListener('submit',async event=>{
+  const videoForm=event.target.closest('#video-analysis-form');
+  if(videoForm){event.preventDefault();await submitVideoAnalysis(videoForm);return;}
+  const reviewForm=event.target.closest('#video-review-form');
+  if(reviewForm){event.preventDefault();await saveVideoReview(reviewForm);return;}
   const form=event.target.closest('#notification-preferences-form'); if(!form)return;
   event.preventDefault();
   const preferences=Object.fromEntries(['booking_requests','booking_decisions','booking_changes','reminders_24h','messages','progress','session_changes'].map(key=>[key,form.elements[key].checked]));
@@ -204,6 +209,68 @@ $('#page-content').addEventListener('change',event=>{
   if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;render('players');}
   if(['library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
+
+async function extractVideoFrames(file){
+  const objectUrl=URL.createObjectURL(file),video=document.createElement('video');
+  video.muted=true;video.playsInline=true;video.preload='metadata';video.src=objectUrl;
+  const waitFor=(target,event)=>new Promise((resolve,reject)=>{const done=()=>{cleanup();resolve();};const fail=()=>{cleanup();reject(new Error('Impossible de lire cette vidéo.'));};const cleanup=()=>{target.removeEventListener(event,done);target.removeEventListener('error',fail);};target.addEventListener(event,done,{once:true});target.addEventListener('error',fail,{once:true});});
+  try{
+    await waitFor(video,'loadedmetadata');
+    const duration=Number(video.duration);
+    if(!Number.isFinite(duration)||duration<=0||duration>600)throw new Error('La vidéo doit durer 10 minutes maximum.');
+    const canvas=document.createElement('canvas'),width=768,height=Math.max(1,Math.round(768*(video.videoHeight/video.videoWidth)));
+    canvas.width=width;canvas.height=Math.min(768,height);
+    const context=canvas.getContext('2d',{alpha:false}),frames=[];
+    for(let i=0;i<6;i++){
+      const timestamp=Math.min(Math.max(.1,duration*(i+1)/7),Math.max(.1,duration-.1));
+      video.currentTime=timestamp;await waitFor(video,'seeked');
+      context.drawImage(video,0,0,canvas.width,canvas.height);
+      frames.push({timestamp:Number(timestamp.toFixed(2)),data_url:canvas.toDataURL('image/jpeg',.68)});
+    }
+    return {duration,frames};
+  }finally{URL.revokeObjectURL(objectUrl);video.removeAttribute('src');video.load();}
+}
+async function submitVideoAnalysis(form){
+  const button=form.querySelector('button[type=submit]'),file=form.elements.video.files?.[0];
+  const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value;
+  if(!file||!title||!playerId){toast('Renseigne le joueur, le titre et la vidéo.','error');return;}
+  if(!['video/mp4','video/quicktime','video/webm'].includes(file.type)){toast('Format accepté : MP4, MOV ou WEBM.','error');return;}
+  if(file.size>262144000){toast('La vidéo dépasse la limite de 250 Mo.','error');return;}
+  if(!form.elements.consent.checked){toast('Confirme que tu disposes de l’autorisation du joueur avant l’analyse.','error');return;}
+  button.disabled=true;button.textContent='Préparation de la vidéo…';
+  let analysisId=null,videoPath=null;
+  try{
+    const {duration,frames}=await extractVideoFrames(file);
+    analysisId=crypto.randomUUID();
+    const extension=file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4';
+    videoPath=state.user.id+'/'+playerId+'/'+analysisId+'.'+extension;
+    const {error:uploadError}=await supabase.storage.from('coach-in-videos').upload(videoPath,file,{contentType:file.type,upsert:false});
+    if(uploadError)throw uploadError;
+    const {error:insertError}=await supabase.from('coach_video_analyses').insert({id:analysisId,coach_id:state.user.id,player_id:playerId,title,stroke_type:stroke,video_path:videoPath,video_mime:file.type,video_size_bytes:file.size,duration_seconds:Number(duration.toFixed(2)),status:'uploaded'});
+    if(insertError){await supabase.storage.from('coach-in-videos').remove([videoPath]);throw insertError;}
+    button.textContent='Analyse IA en cours…';
+    const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,frames}});
+    if(error||data?.error){
+      const message=data?.error||error?.message||'Le service IA n’a pas répondu.';
+      await supabase.from('coach_video_analyses').update({status:'failed',analysis_error:String(message).slice(0,500)}).eq('id',analysisId);
+      throw new Error(message);
+    }
+    toast('Analyse terminée. Vérifie les observations avant de les transmettre au joueur.');
+    await dataService.loadCoachWorkspace(state.user.id);render('videos');
+  }catch(error){
+    toast(error.message||'Impossible de traiter cette vidéo.','error');
+    try{await dataService.loadCoachWorkspace(state.user.id);render('videos');}catch(_){}
+  }finally{if(button.isConnected){button.disabled=false;button.textContent='Lancer l’analyse IA';}}
+}
+async function toggleVideoShare(id,current){
+  try{const {error}=await supabase.from('coach_video_analyses').update({shared_with_player:!current,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id);if(error)throw error;await dataService.loadCoachWorkspace(state.user.id);render('videos');toast(!current?'Analyse partagée avec le joueur.':'Partage retiré.');}
+  catch(error){toast(error.message||'Impossible de modifier le partage.','error');}
+}
+async function saveVideoReview(form){
+  const id=form.elements.analysis_id.value,review=String(form.elements.coach_review.value||'').trim();
+  try{const {error}=await supabase.from('coach_video_analyses').update({coach_review:review,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id);if(error)throw error;await dataService.loadCoachWorkspace(state.user.id);render('videos');toast('Commentaire coach enregistré.');}
+  catch(error){toast(error.message||'Impossible d’enregistrer le commentaire.','error');}
+}
 
 function libraryDialog(itemId='', seedItem=null){
   const item=state.library.find(row=>row.id===itemId)||seedItem||{};
