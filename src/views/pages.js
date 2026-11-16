@@ -388,7 +388,8 @@ export function libraryItemsForCoach() {
     const theme=String(week.theme||'').replace(/^SEMAINE\s+\d+\s*:\s*/i,'').trim();
     return {id:'program-'+week.week+'-'+(index+1),is_program_template:true,category:'collectif',title:'S'+String(week.week).padStart(2,'0')+' · Atelier '+(index+1)+' — '+theme,theme:theme||'Programme collectif',subtheme:'Atelier terrain '+(index+1),level:'Tous niveaux',objective:'',equipment:'',setup:'',instructions:text,rotations:'',variations:'',keywords:[theme,'programme annuel','collectif'].filter(Boolean),source_week:Number(week.week),duration_minutes:null};
   }).filter(Boolean));
-  return [...(state.library||[]),...programItems];
+  const savedKeys=new Set((state.library||[]).map(item=>String(item.source_week||'')+'|'+String(item.title||'')));
+  return [...(state.library||[]),...programItems.filter(item=>!savedKeys.has(String(item.source_week)+'|'+String(item.title)))];
 }
 function libraryPage() {
   const items=libraryItemsForCoach().sort((a,b)=>String(a.title).localeCompare(String(b.title),'fr'));
