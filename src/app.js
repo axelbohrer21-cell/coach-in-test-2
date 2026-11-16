@@ -213,19 +213,31 @@ $('#page-content').addEventListener('change',event=>{
 async function extractVideoFrames(file){
   const objectUrl=URL.createObjectURL(file),video=document.createElement('video');
   video.muted=true;video.playsInline=true;video.preload='metadata';
-  const waitFor=(target,event)=>new Promise((resolve,reject)=>{const done=()=>{cleanup();resolve();};const fail=()=>{cleanup();reject(new Error('Impossible de lire cette vidéo.'));};const cleanup=()=>{target.removeEventListener(event,done);target.removeEventListener('error',fail);};target.addEventListener(event,done,{once:true});target.addEventListener('error',fail,{once:true});});
+  const waitFor=(target,event)=>new Promise((resolve,reject)=>{
+    const done=()=>{cleanup();resolve();};
+    const fail=()=>{cleanup();reject(new Error('Impossible de décoder cette vidéo. Vérifie son format et son intégrité.'));};
+    const cleanup=()=>{target.removeEventListener(event,done);target.removeEventListener('error',fail);};
+    target.addEventListener(event,done,{once:true});target.addEventListener('error',fail,{once:true});
+  });
   try{
     const metadataReady=waitFor(video,'loadedmetadata');video.src=objectUrl;await metadataReady;
-    const duration=Number(video.duration);
+    const duration=Number(video.duration),sourceWidth=Number(video.videoWidth),sourceHeight=Number(video.videoHeight);
     if(!Number.isFinite(duration)||duration<=0||duration>600)throw new Error('La vidéo doit durer 10 minutes maximum.');
-    const canvas=document.createElement('canvas'),width=768,height=Math.max(1,Math.round(768*(video.videoHeight/video.videoWidth)));
-    canvas.width=width;canvas.height=Math.min(768,height);
-    const context=canvas.getContext('2d',{alpha:false}),frames=[];
-    for(let i=0;i<6;i++){
-      const timestamp=Math.min(Math.max(.1,duration*(i+1)/7),Math.max(.1,duration-.1));
+    if(!sourceWidth||!sourceHeight)throw new Error('Les dimensions de la vidéo sont illisibles.');
+    const maxDimension=768,scale=Math.min(1,maxDimension/Math.max(sourceWidth,sourceHeight));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(sourceWidth*scale));
+    canvas.height=Math.max(1,Math.round(sourceHeight*scale));
+    const context=canvas.getContext('2d',{alpha:false});
+    if(!context)throw new Error('Impossible de préparer les images de cette vidéo.');
+    const frames=[],frameCount=8;
+    for(let i=0;i<frameCount;i++){
+      const timestamp=duration*(i+0.5)/frameCount;
       const seekReady=waitFor(video,'seeked');video.currentTime=timestamp;await seekReady;
       context.drawImage(video,0,0,canvas.width,canvas.height);
-      frames.push({timestamp:Number(timestamp.toFixed(2)),data_url:canvas.toDataURL('image/jpeg',.68)});
+      const dataUrl=canvas.toDataURL('image/jpeg',.62);
+      if(dataUrl.length>950000)throw new Error('Une image extraite est trop volumineuse. Essaie une vidéo plus courte ou une résolution inférieure.');
+      frames.push({timestamp:Number(timestamp.toFixed(2)),data_url:dataUrl});
     }
     return {duration,frames};
   }finally{URL.revokeObjectURL(objectUrl);video.removeAttribute('src');video.load();}
