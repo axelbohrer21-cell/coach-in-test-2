@@ -104,6 +104,7 @@ $('#page-content').addEventListener('click', async event=>{
   const invitation=event.target.closest('[data-coach-invitation]'); if(invitation) return respondCoachInvitation(invitation.dataset.coachInvitation, invitation.dataset.accept==='true');
   const revokeShare=event.target.closest('[data-revoke-coach-share]'); if(revokeShare) return revokeCoachShare(revokeShare.dataset.revokeCoachShare,revokeShare.dataset.playerId);
   const action=event.target.closest('[data-action]')?.dataset.action;
+  if(action==='generate-session') return sessionBuilderDialog();
   if(action==='new-session') return sessionDialog();
   if(action==='add-availability') return availabilityDialog();
   if(action==='invite-coach') return inviteCoachDialog();
@@ -148,6 +149,8 @@ $('#page-content').addEventListener('click', async event=>{
   const week=event.target.closest('[data-week]'); if(week){state.planningWeekOffset=Number(week.dataset.week)===0?0:(state.planningWeekOffset||0)+Number(week.dataset.week);render('planning');}
 });
 $('#dialog-content').addEventListener('click',async event=>{
+  if(event.target.closest('[data-generate-session]')){generateSessionPlan();return;}
+  if(event.target.closest('[data-use-generated-session]')){if(!generatedSessionPlan)return;const plan=generatedSessionPlan;closeDialog();sessionDialog(plan.session_date,plan.session_time,plan);return;}
   const confirmCriteria=event.target.closest('[data-confirm-criteria]');
   if(confirmCriteria){
     const form=$('#evaluation-form');
@@ -228,6 +231,69 @@ function libraryDialog(itemId='', seedItem=null){
   </form>`);
 }
 
+
+let generatedSessionPlan = null;
+
+function sessionBuilderDialog(){
+  if(!state.players.length){toast('Ajoute au moins un joueur à ton effectif avant de préparer une séance.','error');return;}
+  const items=(state.library||[]).filter(item=>item.category==='particulier').sort((x,y)=>String(x.title||'').localeCompare(String(y.title||''),'fr'));
+  if(!items.length){toast('Ajoute d’abord des exercices au format cours particulier dans ta bibliothèque.','error');render('library');return;}
+  const themes=[...new Set(items.map(item=>item.theme).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'fr'));
+  const options=items.map(item=>'<option value="'+escapeHtml(item.id)+'">'+escapeHtml(item.title||'Exercice')+' · '+escapeHtml(item.theme||'Sans thème')+' · '+escapeHtml(item.level||'Tous niveaux')+'</option>').join('');
+  const today=toLocalISO(new Date());
+  generatedSessionPlan=null;
+  showDialog('<div class="dialog-head"><div><p class="eyebrow">COACH IN · PRÉPARATION GUIDÉE</p><h2>Composer une séance</h2><p class="muted">Construis une séance à partir de tes exercices enregistrés.</p></div><button class="btn icon-btn" data-close>✕</button></div>'+
+    '<form id="session-builder-form" class="form-grid">'+
+    '<label class="span-2">Joueur<select name="player_id" required>'+state.players.map(player=>'<option value="'+player.id+'">'+escapeHtml(player.first_name)+' '+escapeHtml(player.last_name)+'</option>').join('')+'</select></label>'+
+    '<label>Date<input name="session_date" type="date" required value="'+today+'"></label><label>Heure<input name="session_time" type="time" required value="17:00"></label>'+
+    '<label>Durée<select name="duration_minutes"><option value="60">1 heure</option><option value="90" selected>1 h 30</option><option value="120">2 heures</option></select></label>'+
+    '<label>Niveau de travail<select name="level"><option>Tous niveaux</option><option>Débutant</option><option>Intermédiaire</option><option>Confirmé</option><option>Compétition</option></select></label>'+
+    '<label class="span-2">Thème principal<select name="theme">'+themes.map(theme=>'<option value="'+escapeHtml(theme)+'">'+escapeHtml(theme)+'</option>').join('')+'</select></label>'+
+    '<label class="span-2">Exercice 1 · situation principale<select name="exercise_one" required>'+options+'</select></label>'+
+    '<label class="span-2">Exercice 2 · variation ou transfert<select name="exercise_two"><option value="">Aucun · séance centrée sur un exercice</option>'+options+'</select></label>'+
+    '<div class="span-2 session-builder-tip"><strong>Comment la séance sera construite</strong><p>Échauffement progressif, deux situations issues de ta bibliothèque, puis retour au match pour réinvestir le thème. Les durées s’adaptent au format choisi.</p></div>'+
+    '<div id="session-builder-preview" class="span-2"></div>'+
+    '<div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button type="button" class="btn primary" data-generate-session>Générer la séance</button></div></form>');
+  const form=$('#session-builder-form');
+  if(form&&items.length>1)form.elements.exercise_two.value=items[1].id;
+}
+
+function sessionBuilderExerciseText(item){
+  return [
+    item.objective?'Objectif : '+item.objective:'',
+    item.equipment?'Matériel : '+item.equipment:'',
+    item.setup?'Mise en place : '+item.setup:'',
+    item.instructions?'Consignes : '+item.instructions:'',
+    item.rotations?'Rotations : '+item.rotations:'',
+    item.variations?'Variantes : '+item.variations:''
+  ].filter(Boolean).join('\n\n')||'Contenu à compléter depuis la bibliothèque.';
+}
+
+function generateSessionPlan(){
+  const form=$('#session-builder-form');if(!form)return;
+  const values=Object.fromEntries(new FormData(form));
+  if(!isPrivateLessonDateAllowed(values.session_date)){toast('Cette date tombe pendant une période sans cours particuliers. Choisis une autre date.','error');return;}
+  const itemOne=state.library.find(item=>String(item.id)===String(values.exercise_one));
+  const itemTwo=values.exercise_two?state.library.find(item=>String(item.id)===String(values.exercise_two)):null;
+  if(!itemOne){toast('Sélectionne un exercice enregistré dans ta bibliothèque.','error');return;}
+  const duration=Number(values.duration_minutes);
+  const split=duration===60?{warm:10,one:20,two:20,match:10}:duration===120?{warm:20,one:40,two:40,match:20}:{warm:15,one:30,two:30,match:15};
+  const exerciseOne='ÉCHAUFFEMENT · '+split.warm+' min\nMise en route progressive : échanges à intensité modérée, mobilité et augmentation graduelle du rythme.\n\nEXERCICE 1 · '+split.one+' min\n'+sessionBuilderExerciseText(itemOne);
+  const exerciseTwo=(itemTwo?'EXERCICE 2 · '+split.two+' min\n'+sessionBuilderExerciseText(itemTwo)+'\n\n':'')+
+    'RETOUR AU MATCH · '+(split.match+(itemTwo?0:split.two))+' min\nJeu à thème : réinvestir l’objectif de la séance en situation de points. Le coach observe la réussite et ajuste la consigne si nécessaire.';
+  generatedSessionPlan={
+    generated:true,player_id:values.player_id,session_date:values.session_date,session_time:values.session_time,
+    duration_minutes:duration,theme:values.theme||itemOne.theme||'Tennis',
+    exercise_1:exerciseOne,exercise_2:exerciseTwo,level:values.level
+  };
+  const preview=$('#session-builder-preview');
+  if(preview)preview.innerHTML='<section class="session-builder-preview"><div class="session-builder-preview-head"><div><p class="eyebrow">SÉANCE GÉNÉRÉE</p><h3>'+escapeHtml(generatedSessionPlan.theme)+' · '+duration+' min</h3></div><span class="tag">'+escapeHtml(values.level)+'</span></div>'+
+    '<div class="session-builder-phase"><strong>01 · Échauffement + exercice 1</strong><small>'+split.warm+' min + '+split.one+' min</small><p>'+escapeHtml(itemOne.title)+' · '+escapeHtml(itemOne.objective||itemOne.theme||'Objectif issu de la bibliothèque')+'</p></div>'+
+    (itemTwo?'<div class="session-builder-phase"><strong>02 · Exercice 2</strong><small>'+split.two+' min</small><p>'+escapeHtml(itemTwo.title)+' · '+escapeHtml(itemTwo.objective||itemTwo.theme||'Variation issue de la bibliothèque')+'</p></div>':'')+
+    '<div class="session-builder-phase"><strong>0'+(itemTwo?3:2)+' · Retour au match</strong><small>'+(split.match+(itemTwo?0:split.two))+' min</small><p>Jeu à thème pour réinvestir les apprentissages.</p></div>'+
+    '<div class="session-builder-actions"><button type="button" class="btn primary" data-use-generated-session>Utiliser cette séance →</button></div></section>';
+}
+
 function sessionDialog(date=toLocalISO(new Date()), time='17:00', libraryItem=null){
   if(!state.players.length){toast('Associe d’abord un compte joueur à ton effectif.','error');return;}
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">TERRAIN</p><h2>Planifier une séance</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="session-form" class="form-grid"><label class="span-2">Joueur<select name="player_id" required>${state.players.map(p=>`<option value="${p.id}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label><label>Date<input name="session_date" type="date" required value="${date}"></label><label>Heure<input name="session_time" type="time" required value="${time}"></label><label>Durée<select name="duration_minutes"><option value="60">1 heure</option><option value="90">1 h 30</option><option value="120">2 heures</option></select></label><label>Court<select name="court_number"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><label>Thème<input name="theme" required placeholder="Ex. Construction du point"></label><label class="span-2">Exercice 1<textarea name="exercise_1" rows="2"></textarea></label><label class="span-2">Exercice 2<textarea name="exercise_2" rows="2"></textarea></label><label class="span-2">Synthèse visible joueur<textarea name="player_visible_summary" rows="2"></textarea></label><label class="span-2">Notes privées coach<textarea name="coach_private_notes" rows="2"></textarea></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer la séance</button></div></form>`);
@@ -235,6 +301,14 @@ function sessionDialog(date=toLocalISO(new Date()), time='17:00', libraryItem=nu
 }
 function applyLibraryItemToSessionForm(item){
   const form=$('#session-form'); if(!form||!item)return;
+  if(item.generated){
+    if(form.elements.player_id&&item.player_id)form.elements.player_id.value=item.player_id;
+    if(form.elements.duration_minutes&&[60,90,120].includes(Number(item.duration_minutes)))form.elements.duration_minutes.value=String(item.duration_minutes);
+    if(form.elements.theme)form.elements.theme.value=item.theme||'';
+    if(form.elements.exercise_1)form.elements.exercise_1.value=item.exercise_1||'';
+    if(form.elements.exercise_2)form.elements.exercise_2.value=item.exercise_2||'';
+    return;
+  }
   if(form.elements.theme)form.elements.theme.value=item.theme||item.title||'';
   if(form.elements.exercise_1)form.elements.exercise_1.value=[item.objective,item.setup,item.instructions,item.equipment?'Matériel : '+item.equipment:''].filter(Boolean).join('\n\n');
   if(form.elements.exercise_2)form.elements.exercise_2.value=[item.rotations,item.variations].filter(Boolean).join('\n\n');
