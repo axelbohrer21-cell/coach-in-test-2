@@ -32,8 +32,8 @@ await this.refreshAchievements(playerId, coachId);
 await this.updateActiveChallenge(playerId, coachId, detailRows);
 
 const { error: notificationError } = await supabase.rpc(
-  'notify_player_new_evaluation',
-  { p_player_id: playerId }
+  'notify_player_existing_evaluation',
+  { p_evaluation_id: evaluation.id }
 );
 
 if (notificationError) throw notificationError;
