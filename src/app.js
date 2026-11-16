@@ -182,6 +182,13 @@ $('#dialog-content').addEventListener('change',event=>{
     if(form){form.dataset.criteriaConfirmed='false';const confirm=form.querySelector('[data-confirm-criteria]');if(confirm){confirm.textContent='Valider les critères ✓';confirm.classList.remove('criteria-confirmed');}const title=form.querySelector('[data-validation-title]');if(title)title.textContent='Sélection à confirmer';const hint=form.querySelector('[data-validation-hint]');if(hint)hint.textContent='Ta sélection a changé : valide-la à nouveau.';updateEvaluationSelectionUI();}
   }
 });
+$('#page-content').addEventListener('submit',async event=>{
+  const form=event.target.closest('#notification-preferences-form'); if(!form)return;
+  event.preventDefault();
+  const preferences=Object.fromEntries(['booking_requests','booking_decisions','booking_changes','reminders_24h','messages','progress','session_changes'].map(key=>[key,form.elements[key].checked]));
+  try{state.notificationPreferences=await notificationService.savePreferences(state.user.id,preferences);toast('Préférences de notifications enregistrées.');await refreshAndRender();render('notifications');}
+  catch(error){toast(error.message||'Impossible d’enregistrer les préférences.','error');}
+});
 $('#page-content').addEventListener('input',event=>{
   if(event.target.id==='player-search'){state.filters.search=event.target.value;render('players');const input=$('#player-search');input.focus();input.setSelectionRange(input.value.length,input.value.length);}
   if(['library-search','library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
