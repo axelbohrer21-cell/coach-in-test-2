@@ -29,7 +29,8 @@ export const progressionService = {
 
 
 await this.refreshAchievements(playerId, coachId);
-await this.updateActiveChallenge(playerId, coachId, detailRows);
+const hadActiveChallenge = await this.updateActiveChallenge(playerId, coachId);
+if (!hadActiveChallenge) await this.createNextChallenge(playerId, coachId);
 
 const { error: notificationError } = await supabase.rpc(
   'notify_player_existing_evaluation',
@@ -112,34 +113,87 @@ return evaluation;
     }
   },
 
-  async updateActiveChallenge(playerId, coachId, selectedRows) {
-    const { data: challenge, error } = await supabase.from('player_challenges').select('*').eq('player_id',playerId).eq('coach_id',coachId).eq('status','active').maybeSingle();
+  async updateActiveChallenge(playerId, coachId) {
+    const { data: challenge, error } = await supabase
+      .from('player_challenges').select('*')
+      .eq('player_id', playerId).eq('coach_id', coachId)
+      .eq('status', 'active').maybeSingle();
     if (error) throw error;
-    if (!challenge) return;
-    const match = selectedRows.find(x => x.criterion_id === challenge.criterion_id && x.criterion_type === 'improvement');
-    const success = match && challengeEvaluationResult({ measuredValue:match.measured_value, targetValue:challenge.target_value, operator:challenge.comparison_operator || 'gte' });
-    const nextCount = success ? Number(challenge.consecutive_successes || 0)+1 : 0;
-    const changes = { consecutive_successes:nextCount, current_value:match?.measured_value ?? challenge.current_value };
-    if (nextCount >= 2) Object.assign(changes,{status:'completed',completed_at:new Date().toISOString()});
-    const { error:updateError } = await supabase.from('player_challenges').update(changes).eq('id',challenge.id);
+    if (!challenge) return false;
+
+    // Le défi suit la fréquence du point à améliorer sur les trois derniers bilans.
+    const evaluations = await rows(
+      supabase.from('evaluations').select('id')
+        .eq('player_id', playerId).eq('created_by', coachId)
+        .order('evaluated_at', { ascending: false }).limit(3)
+    );
+    if (evaluations.length < 3) return true;
+    const ids = evaluations.map(row => row.id);
+    const history = await rows(
+      supabase.from('evaluation_criteria')
+        .select('evaluation_id,criterion_type')
+        .in('evaluation_id', ids).eq('criterion_id', challenge.criterion_id)
+        .eq('criterion_type', 'improvement')
+    );
+    const currentValue = new Set(history.map(row => row.evaluation_id)).size;
+    const success = challengeEvaluationResult({
+      measuredValue: currentValue,
+      targetValue: challenge.target_value,
+      operator: challenge.comparison_operator || 'lte'
+    });
+    const nextCount = success ? Number(challenge.consecutive_successes || 0) + 1 : 0;
+    const changes = { current_value: currentValue, consecutive_successes: nextCount };
+    if (nextCount >= 2) Object.assign(changes, { status: 'completed', completed_at: new Date().toISOString() });
+    const { error: updateError } = await supabase.from('player_challenges').update(changes).eq('id', challenge.id);
     if (updateError) throw updateError;
+    return true;
   },
 
   async createNextChallenge(playerId, coachId) {
-    const [{data:active,error:activeError},{data:allRows,error:rowsError},{data:unlocked,error:unlockedError}] = await Promise.all([
-      supabase.from('player_challenges').select('id').eq('player_id',playerId).eq('coach_id',coachId).eq('status','active').maybeSingle(),
-      supabase.from('evaluation_criteria').select('evaluation_id,criterion_id,criterion,criterion_type').eq('criterion_type','improvement').not('criterion_id','is',null),
-      supabase.from('player_achievements').select('criterion_id').eq('player_id',playerId)
+    const [{ data: active, error: activeError }, { data: evaluations, error: evaluationError }, { data: unlocked, error: unlockedError }, { data: completed, error: completedError }] = await Promise.all([
+      supabase.from('player_challenges').select('id').eq('player_id', playerId).eq('coach_id', coachId).eq('status', 'active').maybeSingle(),
+      supabase.from('evaluations').select('id,evaluated_at').eq('player_id', playerId).eq('created_by', coachId).order('evaluated_at', { ascending: false }).limit(3),
+      supabase.from('player_achievements').select('criterion_id').eq('player_id', playerId).eq('coach_id', coachId),
+      supabase.from('player_challenges').select('criterion_id').eq('player_id', playerId).eq('coach_id', coachId).eq('status', 'completed')
     ]);
-    if(activeError)throw activeError;if(rowsError)throw rowsError;if(unlockedError)throw unlockedError;if(active)return null;
-    const {data:evaluations,error:evaluationError}=await supabase.from('evaluations').select('id').eq('player_id',playerId).eq('created_by',coachId);
-    if(evaluationError)throw evaluationError;
-    const ids=new Set((evaluations||[]).map(x=>x.id));
-    if(ids.size<3)return null;
-    const suggestion=recommendChallenge((allRows||[]).filter(x=>ids.has(x.evaluation_id)),(unlocked||[]).map(x=>x.criterion_id));
-    if(!suggestion)return null;
-    const {data:criterion,error:criterionError}=await supabase.from('criteria_catalog').select('main_theme,subtheme').eq('id',suggestion.criterion_id).single();
-    if(criterionError)throw criterionError;
-    return { ...suggestion, main_theme:criterion.main_theme, subtheme:criterion.subtheme };
-  }
-};
+    if (activeError) throw activeError;
+    if (evaluationError) throw evaluationError;
+    if (unlockedError) throw unlockedError;
+    if (completedError) throw completedError;
+    if (active || (evaluations || []).length < 3) return null;
+
+    const ids = evaluations.map(row => row.id);
+    const history = await rows(
+      supabase.from('evaluation_criteria')
+        .select('evaluation_id,criterion_id,criterion,criterion_type')
+        .in('evaluation_id', ids).eq('criterion_type', 'improvement')
+        .not('criterion_id', 'is', null)
+    );
+    const excluded = [
+      ...(unlocked || []).map(row => row.criterion_id),
+      ...(completed || []).map(row => row.criterion_id)
+    ].filter(Boolean);
+    const suggestion = recommendChallenge(history, excluded);
+    if (!suggestion) return null;
+
+    const { data: criterion, error: criterionError } = await supabase
+      .from('criteria_catalog').select('main_theme,subtheme')
+      .eq('id', suggestion.criterion_id).single();
+    if (criterionError) throw criterionError;
+
+    // Cible calculée sur l'historique réel : au moins une occurrence de moins
+    // dans une fenêtre de trois bilans, puis deux fenêtres consécutives réussies.
+    const baseline = Number(suggestion.occurrences);
+    const target = Math.max(0, baseline - 1);
+    const objective = `Faire apparaître « ${suggestion.criterion} » dans au plus ${target} bilan(s) sur les 3 prochains (contre ${baseline} sur les 3 derniers).`;
+    const { data: created, error: insertError } = await supabase
+      .from('player_challenges')
+      .insert({
+        coach_id: coachId, player_id: playerId, criterion_id: suggestion.criterion_id,
+        criterion: suggestion.criterion, objective, target_value: target,
+        current_value: baseline, comparison_operator: 'lte', status: 'active'
+      })
+      .select().single();
+    if (insertError) throw insertError;
+    return { ...created, main_theme: criterion.main_theme, subtheme: criterion.subtheme };
+  }};
