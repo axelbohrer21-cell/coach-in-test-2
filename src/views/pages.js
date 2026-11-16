@@ -40,12 +40,44 @@ export function renderPage(page) {
   return emptyState('Page inconnue');
 }
 
+function dashboardCharts(evaluations, evaluationCriteria) {
+  const criteria = evaluationCriteria || [];
+  const positive = criteria.filter(row => row.criterion_type === 'positive').length;
+  const improvement = criteria.filter(row => row.criterion_type === 'improvement').length;
+  const total = positive + improvement;
+  const sectors = [
+    ['Technique', 'technical_score'],
+    ['Tactique', 'tactical_score'],
+    ['Physique', 'physical_score'],
+    ['Mental', 'mental_score']
+  ].map(([label, key]) => {
+    const values = (evaluations || []).map(row => Number(row[key])).filter(value => Number.isFinite(value) && value >= 0 && value <= 20);
+    return { label, average: values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null, count: values.length };
+  });
+  const hasScores = sectors.some(row => row.average !== null);
+  const positiveAngle = total ? positive / total * 360 : 0;
+  return `<section class="panel dashboard-visuals">
+    <div class="section-heading"><div><p class="eyebrow">LECTURE VISUELLE</p><h2>Les indicateurs de progression</h2></div><span class="tag">Données enregistrées</span></div>
+    <div class="dashboard-chart-grid">
+      <article class="dashboard-chart-card">
+        <div><p class="eyebrow">CRITÈRES OBSERVÉS</p><h3>Réussites & axes de travail</h3></div>
+        ${total ? `<div class="donut-layout"><div class="donut-chart" role="img" aria-label="${positive} réussites et ${improvement} points à améliorer" style="background:conic-gradient(#66e0ad 0deg ${positiveAngle}deg,#ffb36e ${positiveAngle}deg 360deg)"><div><strong>${total}</strong><small>critères</small></div></div><div class="chart-legend"><span><i class="legend-dot positive"></i><b>${positive}</b> réussites</span><span><i class="legend-dot improvement"></i><b>${improvement}</b> à améliorer</span></div></div>` : '<p class="chart-empty">Les graphiques apparaîtront après les premiers critères renseignés dans les bilans.</p>'}
+      </article>
+      <article class="dashboard-chart-card">
+        <div><p class="eyebrow">SCORES MOYENS</p><h3>Équilibre des quatre secteurs</h3></div>
+        ${hasScores ? `<div class="sector-bars">${sectors.map(row => `<div class="sector-bar-row"><div><span>${row.label}</span><b>${row.average === null ? '—' : `${row.average.toFixed(1).replace('.', ',')}/20`}</b></div><div class="sector-track"><i style="width:${row.average === null ? 0 : row.average / 20 * 100}%"></i></div><small>${row.count ? `Basé sur ${row.count} note(s)` : 'Pas encore noté'}</small></div>`).join('')}</div>` : '<p class="chart-empty">Les moyennes seront calculées à partir des notes réellement saisies dans les bilans.</p>'}
+      </article>
+    </div>
+    <p class="tiny muted">Ces indicateurs décrivent uniquement les bilans et critères accessibles dans cet espace. Aucune donnée manquante n’est estimée.</p>
+  </section>`;
+}
+
 function dashboard(isCoach) {
   const nextSessions = [...state.sessions].filter(s => s.session_date >= new Date().toISOString().slice(0, 10)).sort((a,b) => `${a.session_date} ${a.session_time || ''}`.localeCompare(`${b.session_date} ${b.session_time || ''}`)).slice(0, 5);
-  if (!isCoach) return `<div class="stats-grid">${statCard('Mes séances', state.sessions.length, 'blue')}${statCard('Mes bilans', state.evaluations.length, 'purple')}${statCard('Demandes', state.bookingRequests.filter(x=>x.status==='pending').length, 'orange')}</div><section class="panel"><div class="section-heading"><div><p class="eyebrow">MON PARCOURS TENNIS</p><h2>Mes dernières séances</h2></div></div>${state.sessions.slice(0,5).map(s=>sessionCard(s,false)).join('') || emptyState('Ton carnet commence ici','Tes séances apparaîtront dans cet espace.')}</section>`;
+  if (!isCoach) return `<div class="stats-grid">${statCard('Mes séances', state.sessions.length, 'blue')}${statCard('Mes bilans', state.evaluations.length, 'purple')}${statCard('Demandes', state.bookingRequests.filter(x=>x.status==='pending').length, 'orange')}</div>${dashboardCharts(state.evaluations, state.evaluationCriteria)}<section class="panel"><div class="section-heading"><div><p class="eyebrow">MON PARCOURS TENNIS</p><h2>Mes dernières séances</h2></div></div>${state.sessions.slice(0,5).map(s=>sessionCard(s,false)).join('') || emptyState('Ton carnet commence ici','Tes séances apparaîtront dans cet espace.')}</section>`;
   const invitations = state.coachInvitations || [];
   const invitationPanel = invitations.length ? `<section class="panel"><div class="section-heading"><div><p class="eyebrow">COLLABORATION</p><h2>Invitations de partage</h2></div></div>${invitations.map(i=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml(i.player_first_name)} ${escapeHtml(i.player_last_name)}</strong><span>Invité par ${escapeHtml(i.inviter_first_name)} ${escapeHtml(i.inviter_last_name)}</span></div><button class="btn primary" data-coach-invitation="${i.id}" data-accept="true">Accepter</button><button class="btn danger" data-coach-invitation="${i.id}" data-accept="false">Refuser</button></article>`).join('')}</section>` : '';
-  return `<div class="welcome-panel"><div><p class="eyebrow">ESPACE ENTRAÎNEUR</p><h2>Construis la progression, séance après séance.</h2><p>Ton activité, ton effectif et tes priorités au même endroit.</p></div><div class="welcome-mark">CI<span>+</span></div></div>${invitationPanel}<div class="stats-grid">${statCard('Joueurs', state.players.length, 'blue', 'Dans ton effectif')}${statCard('Séances', state.sessions.length, 'purple', 'Historique chargé')}${statCard('Bilans', state.evaluations.length, 'green', 'Évaluations enregistrées')}${statCard('Demandes en attente', state.bookingRequests.filter(x=>x.status==='pending').length, 'orange', 'À traiter')}</div><section class="panel"><div class="section-heading"><div><p class="eyebrow">À VENIR</p><h2>Prochaines séances</h2></div><button class="btn subtle" data-go="planning">Voir le planning</button></div>${nextSessions.map(s=>sessionCard(s,true)).join('') || emptyState('Aucune séance à venir','Planifie une séance pour commencer.')}</section>`;
+  return `<div class="welcome-panel"><div><p class="eyebrow">ESPACE ENTRAÎNEUR</p><h2>Construis la progression, séance après séance.</h2><p>Ton activité, ton effectif et tes priorités au même endroit.</p></div><div class="welcome-mark">CI<span>+</span></div></div>${invitationPanel}<div class="stats-grid">${statCard('Joueurs', state.players.length, 'blue', 'Dans ton effectif')}${statCard('Séances', state.sessions.length, 'purple', 'Historique chargé')}${statCard('Bilans', state.evaluations.length, 'green', 'Évaluations enregistrées')}${statCard('Demandes en attente', state.bookingRequests.filter(x=>x.status==='pending').length, 'orange', 'À traiter')}</div>${dashboardCharts(state.evaluations, state.evaluationCriteria)}<section class="panel"><div class="section-heading"><div><p class="eyebrow">À VENIR</p><h2>Prochaines séances</h2></div><button class="btn subtle" data-go="planning">Voir le planning</button></div>${nextSessions.map(s=>sessionCard(s,true)).join('') || emptyState('Aucune séance à venir','Planifie une séance pour commencer.')}</section>`;
 }
 
 
