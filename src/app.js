@@ -217,14 +217,25 @@ $('#page-content').addEventListener('submit',async event=>{
   catch(error){toast(error.message||'Impossible d’enregistrer les préférences.','error');}
 });
 $('#page-content').addEventListener('input',event=>{
-  if(event.target.id==='player-search'){state.filters.search=event.target.value;render('players');const input=$('#player-search');input.focus();input.setSelectionRange(input.value.length,input.value.length);}
+  if(event.target.id==='player-search'){state.filters.search=event.target.value;filterPlayerCards();}
   if(['library-search','library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
 $('#page-content').addEventListener('change',event=>{
   if(event.target.id==='message-partner'){state.messagePartnerId=event.target.value;render('messages');}
-  if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;render('players');}
+  if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;filterPlayerCards();}
   if(['library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
+
+function filterPlayerCards(){
+  const normalize=value=>String(value||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+  const query=normalize(state.filters.search);
+  const type=state.filters.playerType||'all';
+  $('#page-content').querySelectorAll('[data-player-search]').forEach(card=>{
+    const matchesText=normalize(card.dataset.playerSearch).includes(query);
+    const matchesType=type==='all'||card.dataset.playerType===type;
+    card.hidden=!(matchesText&&matchesType);
+  });
+}
 
 async function extractVideoFrames(file){
   const objectUrl=URL.createObjectURL(file),video=document.createElement('video');
@@ -649,7 +660,12 @@ function editPlayerDialog(id){
 $('#dialog-content').addEventListener('click',event=>{if(event.target.closest('[data-close]'))closeDialog();});
 $('#dialog-content').addEventListener('change',event=>{if(['theme','level','exercise_one'].includes(event.target.name)&&event.target.form?.id==='session-builder-form')updateSessionBuilderExerciseOptions();if(event.target.name==='audience' && event.target.form?.id==='group-series-form'){const target=event.target.form.elements.target_sessions;const weekday=event.target.form.elements.weekday;if(target)target.value=event.target.value==='adultes'?28:30;if(weekday)weekday.value=event.target.value==='adultes'?'1':'3';}if(event.target.name==='birth_date'){ const category=$('#player-form [name=age_category]');if(category)category.value=calculateAgeCategory(event.target.value, new Date().getFullYear());}if(event.target.matches('input[name=criterion]')){const row=event.target.closest('.criterion-measure-row');const measure=row?.querySelector('.criterion-measure');if(measure)measure.disabled=!event.target.checked;}});
 $('#dialog-content').addEventListener('submit',async event=>{
-  event.preventDefault();const form=event.target;const values=Object.fromEntries(new FormData(form));
+  event.preventDefault();const form=event.target;
+  if(form.dataset.submitting==='true')return;
+  form.dataset.submitting='true';
+  const submitButtons=[...form.querySelectorAll('button[type="submit"],button:not([type])')];
+  submitButtons.forEach(button=>{button.dataset.originalText=button.textContent;button.disabled=true;button.textContent='Enregistrement…';});
+  const values=Object.fromEntries(new FormData(form));
   try{
     if(form.id==='notification-preferences-form'){
       const preferences=Object.fromEntries(['booking_requests','booking_decisions','booking_changes','reminders_24h','messages','progress','session_changes'].map(key=>[key,form.elements[key].checked]));
@@ -680,11 +696,16 @@ $('#dialog-content').addEventListener('submit',async event=>{
       if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
       if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isTeachingDate(values.session_date,values.audience)) throw new Error('Ce cours collectif ne peut pas être programmé ce jour : vérifie le jour autorisé, les vacances Zone B et les jours fériés.');
       if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isWithinTeachingWindow(values.session_date,values.start_time,values.end_time)) throw new Error('Les cours enfants doivent respecter les horaires du mercredi (9 h 30–18 h) ou du samedi (9 h 30–14 h 30).');
+      const groupDuration=timeToMinutes(values.end_time)-timeToMinutes(values.start_time);
+      const conflict=findScheduleConflict({session_date:values.session_date,session_time:values.start_time,duration_minutes:groupDuration,excludeGroupId:values.id});
+      if(conflict)throw new Error('Ce créneau chevauche déjà '+conflict+'. Choisis un autre horaire.');
       const groupPayload={title:values.title.trim(),theme:values.theme||'',session_date:values.session_date,start_time:values.start_time,end_time:values.end_time,court_number:Number(values.court_number),audience:values.audience};
       if(values.id){await dataService.updateGroupSession(values.id,groupPayload,state.user.id);toast('Cours collectif modifié.');}
       else{await dataService.createGroupSession({coach_id:state.user.id,...groupPayload,status:'scheduled'});toast('Cours collectif ajouté au planning.');}
     } else if(form.id==='session-form'){
       if(!isPrivateLessonDateAllowed(values.session_date)) throw new Error('Les cours particuliers sont suspendus pendant les vacances scolaires et les jours fériés (sauf le 8 mai).');
+      const conflict=findScheduleConflict({session_date:values.session_date,session_time:values.session_time,duration_minutes:Number(values.duration_minutes)});
+      if(conflict)throw new Error('Ce créneau chevauche déjà '+conflict+'. Choisis un autre horaire.');
       const payload={...values,player_id:values.player_id,created_by:state.user.id,duration_minutes:Number(values.duration_minutes),court_number:Number(values.court_number),status:'Prévue'};
       await dataService.createSession(payload);toast('Séance enregistrée.');
     } else if(form.id==='evaluation-form'){
@@ -741,8 +762,39 @@ toast('Joueur ajouté à ton effectif.');
       const {id,...changes}=values;await dataService.updatePlayer(id,{...changes,first_name:changes.first_name.trim(),last_name:changes.last_name.trim()});toast('Fiche joueur mise à jour.');
     }
     closeDialog();await refreshAndRender();
-  }catch(error){toast(error.message||'Une erreur est survenue.','error');}
+  }catch(error){
+    form.dataset.submitting='false';
+    submitButtons.forEach(button=>{button.disabled=false;button.textContent=button.dataset.originalText||'Enregistrer';});
+    toast(error.message||'Une erreur est survenue.','error');
+  }
 });
+
+function timeToMinutes(value){
+  const [hours,minutes]=String(value||'00:00').slice(0,5).split(':').map(Number);
+  return (Number.isFinite(hours)?hours:0)*60+(Number.isFinite(minutes)?minutes:0);
+}
+
+function findScheduleConflict({session_date,session_time,duration_minutes,excludeGroupId=null}){
+  const start=timeToMinutes(session_time),end=start+Number(duration_minutes||0);
+  if(!session_date||end<=start)return null;
+  const events=[
+    ...(state.sessions||[]).filter(row=>row.session_date===session_date).map(row=>({
+      start:timeToMinutes(row.session_time),end:timeToMinutes(row.session_time)+Number(row.duration_minutes||60),
+      label:'un cours particulier ('+(playerName(row.player_id)||'joueur')+')'
+    })),
+    ...(state.groupSessions||[]).filter(row=>row.session_date===session_date&&row.status!=='cancelled'&&row.id!==excludeGroupId).map(row=>({
+      start:timeToMinutes(row.start_time),end:timeToMinutes(row.end_time),
+      label:'un cours collectif (« '+(row.title||'cours collectif')+' »)'
+    })),
+    ...(state.bookingRequests||[]).filter(row=>row.session_date===session_date&&['pending','accepted','confirmed'].includes(String(row.status||'').toLowerCase())).map(row=>({
+      start:timeToMinutes(row.start_time||row.session_time),
+      end:timeToMinutes(row.start_time||row.session_time)+Number(row.duration_minutes||row.duration||60),
+      label:'une réservation '+(String(row.status).toLowerCase()==='pending'?'en attente':'confirmée')
+    }))
+  ];
+  const conflict=events.find(event=>event.end>event.start&&start<event.end&&event.start<end);
+  return conflict?.label||null;
+}
 
 async function updateBooking(id,status){
   try{await bookingService.review(id,status);toast(status==='accepted'?'Demande acceptée.':'Demande refusée.');await refreshAndRender();}catch(e){toast(e.message,'error');}
