@@ -90,6 +90,11 @@ $('#page-actions').addEventListener('click', event => {
   if (button) addPlayerDialog();
 });
 
+$('#page-content').addEventListener('keydown', event=>{
+  const card=event.target.closest('[data-calendar-event]');
+  if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();card.click();}
+});
+
 $('#page-content').addEventListener('click', async event=>{
   const go=event.target.closest('[data-go]'); if(go){render(go.dataset.go);return;}
   const planSlot=event.target.closest('[data-plan-slot]'); if(planSlot)return sessionDialog(planSlot.dataset.slotDate,planSlot.dataset.slotTime);
@@ -114,6 +119,13 @@ $('#page-content').addEventListener('click', async event=>{
   const booking=event.target.closest('[data-booking]'); if(booking) return updateBooking(booking.dataset.booking,booking.dataset.status);
   const cancel=event.target.closest('[data-cancel-booking]'); if(cancel) return cancelBooking(cancel.dataset.cancelBooking);
   const cancelGroup=event.target.closest('[data-cancel-group]'); if(cancelGroup) return cancelGroupSession(cancelGroup.dataset.cancelGroup);
+  const calendarEvent=event.target.closest('[data-calendar-event]');
+  if(calendarEvent){
+    const wasSelected=calendarEvent.classList.contains('is-selected');
+    $('#page-content').querySelectorAll('[data-calendar-event].is-selected').forEach(card=>{card.classList.remove('is-selected');card.setAttribute('aria-pressed','false');});
+    if(!wasSelected){calendarEvent.classList.add('is-selected');calendarEvent.setAttribute('aria-pressed','true');}
+    return;
+  }
   const removeAvailability=event.target.closest('[data-delete-availability]'); if(removeAvailability) return deleteAvailability(removeAvailability.dataset.deleteAvailability);
   const coachState=event.target.closest('[data-coach-state]'); if(coachState) return setCoachState(coachState.dataset.coachState,coachState.dataset.coachId);
   const generateSeries=event.target.closest('[data-generate-series]'); if(generateSeries) return generateGroupSeries(generateSeries.dataset.generateSeries);
