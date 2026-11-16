@@ -474,3 +474,14 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 @keyframes criteriaReveal{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:560px){.evaluation-stepper{gap:6px;font-size:10px}.criteria-validation{align-items:stretch;flex-direction:column}.criteria-validation .btn{width:100%}.criterion-columns{grid-template-columns:1fr}.criterion-measure-row{grid-template-columns:minmax(0,1fr) 76px}}
 @media(prefers-reduced-motion:reduce){.criterion-theme-content,.criterion-subtheme-body{animation:none}}
+
+/* En-tête premium de la fiche individuelle */
+.player-profile-head{align-items:center;gap:16px;padding-bottom:16px;border-bottom:1px solid rgba(92,139,180,.2)}
+.player-profile-identity{display:flex;align-items:center;gap:14px;min-width:0}
+.player-profile-avatar{display:grid;place-items:center;flex:0 0 58px;width:58px;height:58px;border:1px solid rgba(110,220,255,.45);border-radius:18px;background:linear-gradient(145deg,rgba(67,212,242,.22),rgba(156,140,255,.2));box-shadow:inset 0 1px rgba(255,255,255,.12),0 8px 24px rgba(0,0,0,.18);color:#dff8ff;font-size:20px;font-weight:950;letter-spacing:-1px}
+.player-profile-copy{min-width:0}
+.player-profile-copy h2{margin:2px 0 4px;overflow-wrap:anywhere}
+.player-profile-copy .muted{margin:0;font-size:12px}
+.player-profile-head>.icon-btn{flex:0 0 auto}
+@media(max-width:460px){.player-profile-head{align-items:flex-start}.player-profile-identity{gap:10px}.player-profile-avatar{width:48px;height:48px;flex-basis:48px;border-radius:15px;font-size:17px}.player-profile-copy h2{font-size:19px}}
+
