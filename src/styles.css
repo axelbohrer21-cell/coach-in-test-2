@@ -823,3 +823,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{box-shadow:var(-
 .video-review-form textarea{width:100%;padding:10px;border:1px solid #2c4967;border-radius:10px;background:#07182b;color:#eef6ff}.video-review-form .btn{justify-self:start}
 .video-error{margin:0;padding:10px;border-radius:10px;background:rgba(255,130,100,.1);color:#ffb4a1;font-size:11px;line-height:1.5}.video-analysis-card>.btn{justify-self:start}
 @media(max-width:600px){.video-card-heading{display:grid}.video-review-form .btn,.video-analysis-card>.btn{width:100%}}
+
+/* Actions sensibles de l'espace vidéo */
+.btn.danger{border:1px solid rgba(255,125,125,.38);background:rgba(128,35,45,.22);color:#ffb8b8}
+.btn.danger:hover{border-color:rgba(255,125,125,.68);background:rgba(150,42,52,.34);color:#ffe0e0}
