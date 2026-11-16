@@ -50,7 +50,7 @@ export function validateBooking({ date, time, duration, court }) {
   if (parsedDate.getFullYear() !== year || parsedDate.getMonth() !== month - 1 || parsedDate.getDate() !== day) throw new Error('Choisis une date valide.');
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time || '')) throw new Error('Choisis un horaire valide.');
   if (![60, 90, 120].includes(Number(duration))) throw new Error('Durée autorisée : 1 h, 1 h 30 ou 2 h.');
-  if (![1, 2, 3].includes(Number(court))) throw new Error('Choisis un court disponible.');
+  if (![1, 2, 3, 4].includes(Number(court))) throw new Error('Choisis un court disponible.');
   const start = new Date(`${date}T${time}:00`);
   if (Number.isNaN(start.getTime()) || start <= new Date()) throw new Error('Le créneau doit être dans le futur.');
   return true;
