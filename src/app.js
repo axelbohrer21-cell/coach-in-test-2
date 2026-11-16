@@ -15,6 +15,7 @@ import { progressionService } from './services/progression.js';
 let signupMode = false;
 let weatherRequest = 0;
 let messageChannel = null;
+let notificationChannel = null;
 const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'] ];
@@ -46,6 +47,7 @@ function render(page) {
   const navItems = isCoach ? [...coachNav, ...(isAdmin ? adminNav : [])] : isAdmin ? [['coaches','Gestion des coachs','♙']] : playerNav;
   if (!navItems.some(item => item[0] === page)) page = 'dashboard';
   state.currentPage = page;
+  subscribeToNotifications();
   $('#navigation').innerHTML = navItems.map(([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}</button>`).join('');
   const [kicker,title,description] = pageMeta[page];
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
@@ -526,7 +528,7 @@ async function respondCoachInvitation(id, accept){
 }
 async function refreshAndRender(){const isAdmin=state.profile.is_admin===true||state.profile.role==='admin';if(state.profile.role==='coach')await dataService.loadCoachWorkspace(state.user.id);else if(!isAdmin)await dataService.loadPlayerWorkspace();if(isAdmin)await dataService.loadAdminWorkspace();render(state.currentPage);}
 
-supabase.auth.onAuthStateChange((_event,session)=>{if(session?.user){window.setTimeout(()=>loadWorkspace().catch(error=>showAuth(`Erreur de chargement : ${error.message}`)),0);}else{resetState();showAuth();}});
+supabase.auth.onAuthStateChange((_event,session)=>{if(session?.user){window.setTimeout(()=>loadWorkspace().catch(error=>showAuth(`Erreur de chargement : ${error.message}`)),0);}else{if(messageChannel){supabase.removeChannel(messageChannel);messageChannel=null;}if(notificationChannel){supabase.removeChannel(notificationChannel);notificationChannel=null;}resetState();showAuth();}});
 supabase.auth.getSession().then(({data,error})=>{if(error)return showAuth(error.message);if(data.session)loadWorkspace().catch(e=>showAuth(`Erreur de chargement : ${e.message}`));else showAuth();});
 
 
@@ -549,6 +551,17 @@ async function loadWeatherForecast(){
 }
 function weatherDescription(code){const c=Number(code);if(c===0)return'ciel dégagé';if([1,2,3].includes(c))return'nuageux';if([45,48].includes(c))return'brouillard';if([51,53,55,56,57].includes(c))return'bruine';if([61,63,65,66,67,80,81,82].includes(c))return'pluie';if([71,73,75,77,85,86].includes(c))return'neige';if([95,96,99].includes(c))return'orage';return'conditions météo';}
 
+
+function subscribeToNotifications(){
+ if(notificationChannel||!state.user)return;
+ const isCoach=state.profile.role==='coach';
+ const table=isCoach?'coach_notifications':'player_notifications';
+ const field=isCoach?'coach_id':'player_id';
+ notificationChannel=supabase.channel('coach-in-notifications-'+state.user.id)
+  .on('postgres_changes',{event:'INSERT',schema:'public',table,filter:field+'=eq.'+state.user.id},()=>{
+   refreshAndRender().catch(error=>toast(error.message||'Actualisation des notifications impossible.','error'));
+  }).subscribe();
+}
 
 function subscribeToMessages(){
  if(messageChannel||!state.user)return;
