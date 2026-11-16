@@ -3,7 +3,7 @@ import { state, resetState } from './core/state.js';
 import { supabase } from './core/supabase.js';
 import { authService } from './services/auth.js';
 import { dataService } from './services/data.js';
-import { pageMeta, renderPage } from './views/pages.js';
+import { pageMeta, renderPage, libraryItemsForCoach, libraryCard } from './views/pages.js';
 import { bookingService } from './services/booking.js';
 import { notificationService } from './services/notifications.js';
 import { calculateAgeCategory, toLocalISO } from './domain/tennis.js';
@@ -112,6 +112,8 @@ $('#page-content').addEventListener('click', async event=>{
   if(action==='new-evaluation') return evaluationDialog();
   if(action==='new-library-item') return libraryDialog();
   const editLibrary=event.target.closest('[data-edit-library]'); if(editLibrary) return libraryDialog(editLibrary.dataset.editLibrary);
+  const addProgramItem=event.target.closest('[data-add-program-item]'); if(addProgramItem){const template=libraryItemsForCoach().find(item=>item.id===addProgramItem.dataset.addProgramItem);if(template)return libraryDialog('',template);}
+  const useLibrary=event.target.closest('[data-use-library]'); if(useLibrary){const item=state.library.find(row=>row.id===useLibrary.dataset.useLibrary);if(item)return sessionDialog(undefined,undefined,item);}
   if(action==='add-player') return addPlayerDialog();
   const challenge=event.target.closest('[data-create-challenge]'); if(challenge) return challengeDialog(challenge.dataset.createChallenge, challenge.dataset.criterion, challenge.dataset.criterionId);
   const sheet=event.target.closest('[data-player-sheet]'); if(sheet) return playerSheetDialog(sheet.dataset.playerSheet);
@@ -181,16 +183,16 @@ $('#dialog-content').addEventListener('change',event=>{
 });
 $('#page-content').addEventListener('input',event=>{
   if(event.target.id==='player-search'){state.filters.search=event.target.value;render('players');const input=$('#player-search');input.focus();input.setSelectionRange(input.value.length,input.value.length);}
-  if(event.target.id==='library-search'||event.target.id==='library-category')filterLibrary();
+  if(['library-search','library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
 $('#page-content').addEventListener('change',event=>{
   if(event.target.id==='message-partner'){state.messagePartnerId=event.target.value;render('messages');}
   if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;render('players');}
-  if(event.target.id==='library-category')filterLibrary();
+  if(['library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
 
-function libraryDialog(itemId=''){
-  const item=state.library.find(row=>row.id===itemId)||{};
+function libraryDialog(itemId='', seedItem=null){
+  const item=state.library.find(row=>row.id===itemId)||seedItem||{};
   const editing=Boolean(itemId);
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">BIBLIOTHÈQUE</p><h2>${editing?'Modifier une séance':'Ajouter une séance'}</h2></div><button class="btn icon-btn" data-close>✕</button></div>
   <form id="library-form" class="form-grid">
@@ -215,9 +217,17 @@ function libraryDialog(itemId=''){
   </form>`);
 }
 
-function sessionDialog(date=toLocalISO(new Date()), time='17:00'){
+function sessionDialog(date=toLocalISO(new Date()), time='17:00', libraryItem=null){
   if(!state.players.length){toast('Associe d’abord un compte joueur à ton effectif.','error');return;}
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">TERRAIN</p><h2>Planifier une séance</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="session-form" class="form-grid"><label class="span-2">Joueur<select name="player_id" required>${state.players.map(p=>`<option value="${p.id}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label><label>Date<input name="session_date" type="date" required value="${date}"></label><label>Heure<input name="session_time" type="time" required value="${time}"></label><label>Durée<select name="duration_minutes"><option value="60">1 heure</option><option value="90">1 h 30</option><option value="120">2 heures</option></select></label><label>Court<select name="court_number"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><label>Thème<input name="theme" required placeholder="Ex. Construction du point"></label><label class="span-2">Exercice 1<textarea name="exercise_1" rows="2"></textarea></label><label class="span-2">Exercice 2<textarea name="exercise_2" rows="2"></textarea></label><label class="span-2">Synthèse visible joueur<textarea name="player_visible_summary" rows="2"></textarea></label><label class="span-2">Notes privées coach<textarea name="coach_private_notes" rows="2"></textarea></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer la séance</button></div></form>`);
+  if(libraryItem) applyLibraryItemToSessionForm(libraryItem);
+}
+function applyLibraryItemToSessionForm(item){
+  const form=$('#session-form'); if(!form||!item)return;
+  if(form.elements.theme)form.elements.theme.value=item.theme||item.title||'';
+  if(form.elements.exercise_1)form.elements.exercise_1.value=[item.objective,item.setup,item.instructions,item.equipment?'Matériel : '+item.equipment:''].filter(Boolean).join('\n\n');
+  if(form.elements.exercise_2)form.elements.exercise_2.value=[item.rotations,item.variations].filter(Boolean).join('\n\n');
+  if(form.elements.duration_minutes&&[60,90,120].includes(Number(item.duration_minutes)))form.elements.duration_minutes.value=String(item.duration_minutes);
 }
 function updateEvaluationSelectionUI(){
   const form=$('#evaluation-form');if(!form)return;
@@ -484,7 +494,15 @@ async function cancelBooking(id){
 async function markNotificationRead(id){
   try{if(state.profile.role==='coach')await notificationService.markCoachRead(id);else await notificationService.markPlayerRead(id);await refreshAndRender();render('notifications');}catch(e){toast(e.message,'error');}
 }
-function filterLibrary(){const q=($('#library-search')?.value||'').toLowerCase();const category=$('#library-category')?.value||'all';const list=state.library.filter(x=>(category==='all'||x.category===category)&&`${x.title} ${x.theme} ${x.subtheme} ${x.level} ${x.objective} ${x.setup} ${x.instructions} ${(x.keywords||[]).join(' ')}`.toLowerCase().includes(q));$('#library-results').innerHTML=list.map(x=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml(x.title)}</strong><span>${escapeHtml(x.theme)} · ${escapeHtml(x.category)}</span><small>${escapeHtml(x.objective||'')}</small></div></article>`).join('')||'<p class="muted">Aucun exercice correspondant.</p>';}
+function filterLibrary(){
+  const normalize=value=>String(value||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const q=normalize($('#library-search')?.value||'');
+  const category=$('#library-category')?.value||'all', theme=$('#library-theme')?.value||'all', level=$('#library-level')?.value||'all';
+  const list=libraryItemsForCoach().filter(x=>(category==='all'||x.category===category)&&(theme==='all'||x.theme===theme)&&(level==='all'||x.level===level)&&normalize([x.title,x.theme,x.subtheme,x.level,x.objective,x.equipment,x.setup,x.instructions,x.rotations,x.variations,(x.keywords||[]).join(' ')].join(' ')).includes(q)).sort((a,b)=>String(a.title).localeCompare(String(b.title),'fr'));
+  const target=$('#library-results');
+  if(target){let previous='';target.innerHTML=list.map(item=>{const letter=(String(item.title||'#').trim()[0]||'#').toLocaleUpperCase('fr');const heading=letter!==previous?'<h3 class="library-letter-heading">'+escapeHtml(letter)+'</h3>':'';previous=letter;return heading+libraryCard(item);}).join('')||'<p class="muted">Aucun exercice correspondant.</p>';}
+  const count=$('.library-count-line span');if(count)count.textContent=list.length+' contenu(s) affiché(s)';
+}
 async function respondCoachInvitation(id, accept){
   try{await dataService.respondToCoachInvitation(id,accept);toast(accept?'Partage accepté : le dossier joueur est maintenant accessible.':'Invitation refusée.');await refreshAndRender();}catch(error){toast(error.message||'Impossible de traiter cette invitation.','error');}
 }
