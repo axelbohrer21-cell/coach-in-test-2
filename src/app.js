@@ -212,10 +212,10 @@ $('#page-content').addEventListener('change',event=>{
 
 async function extractVideoFrames(file){
   const objectUrl=URL.createObjectURL(file),video=document.createElement('video');
-  video.muted=true;video.playsInline=true;video.preload='metadata';video.src=objectUrl;
+  video.muted=true;video.playsInline=true;video.preload='metadata';
   const waitFor=(target,event)=>new Promise((resolve,reject)=>{const done=()=>{cleanup();resolve();};const fail=()=>{cleanup();reject(new Error('Impossible de lire cette vidéo.'));};const cleanup=()=>{target.removeEventListener(event,done);target.removeEventListener('error',fail);};target.addEventListener(event,done,{once:true});target.addEventListener('error',fail,{once:true});});
   try{
-    await waitFor(video,'loadedmetadata');
+    const metadataReady=waitFor(video,'loadedmetadata');video.src=objectUrl;await metadataReady;
     const duration=Number(video.duration);
     if(!Number.isFinite(duration)||duration<=0||duration>600)throw new Error('La vidéo doit durer 10 minutes maximum.');
     const canvas=document.createElement('canvas'),width=768,height=Math.max(1,Math.round(768*(video.videoHeight/video.videoWidth)));
@@ -223,7 +223,7 @@ async function extractVideoFrames(file){
     const context=canvas.getContext('2d',{alpha:false}),frames=[];
     for(let i=0;i<6;i++){
       const timestamp=Math.min(Math.max(.1,duration*(i+1)/7),Math.max(.1,duration-.1));
-      video.currentTime=timestamp;await waitFor(video,'seeked');
+      const seekReady=waitFor(video,'seeked');video.currentTime=timestamp;await seekReady;
       context.drawImage(video,0,0,canvas.width,canvas.height);
       frames.push({timestamp:Number(timestamp.toFixed(2)),data_url:canvas.toDataURL('image/jpeg',.68)});
     }
@@ -243,7 +243,7 @@ async function submitVideoAnalysis(form){
     const {duration,frames}=await extractVideoFrames(file);
     analysisId=crypto.randomUUID();
     const extension=file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4';
-    videoPath=state.user.id+'/'+playerId+'/'+analysisId+'.'+extension;
+    videoPath=state.user.id+'/'+playerId+'/'+analysisId+'/original.'+extension;
     const {error:uploadError}=await supabase.storage.from('coach-in-videos').upload(videoPath,file,{contentType:file.type,upsert:false});
     if(uploadError)throw uploadError;
     const {error:insertError}=await supabase.from('coach_video_analyses').insert({id:analysisId,coach_id:state.user.id,player_id:playerId,title,stroke_type:stroke,video_path:videoPath,video_mime:file.type,video_size_bytes:file.size,duration_seconds:Number(duration.toFixed(2)),status:'uploaded'});
