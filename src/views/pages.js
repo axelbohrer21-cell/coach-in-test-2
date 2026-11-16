@@ -117,7 +117,7 @@ function dashboard(isCoach) {
   const seriesRows = buildSeriesCounters(state.groupSeries || [], state.groupSessions || []);
   const seriesHtml = seriesRows.length ? seriesRows.map(row => {
     const pct = row.target ? Math.min(100, Math.round(row.completed / row.target * 100)) : 0;
-    return `<article class="coach-goal-row"><div class="coach-goal-head"><div><strong>${escapeHtml(row.title)}</strong><span>${row.audience === 'adultes' ? 'Adultes' : 'Enfants'} · ${['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][row.weekday]}</span></div><b>${row.completed}<small> / ${row.target}</small></b></div><div class="coach-goal-track"><i style="width:${pct}%"></i></div><small>${row.toSchedule} à programmer · ${row.planned} à venir · ${row.cancelled} annulée(s)</small></article>`;
+    return `<article class="coach-goal-row"><div class="coach-goal-head"><div><strong>${escapeHtml(row.title)}</strong><span>${row.audience === 'adultes' ? 'Adultes' : 'Enfants'} · ${['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][row.weekday]}</span></div><b>${row.completed}<small> / ${row.target}</small></b></div><div class="coach-goal-track"><i style="width:${pct}%"></i></div><small>${row.toSchedule} à programmer · ${row.planned} à venir · ${row.pastUnrecorded} à régulariser · ${row.cancelled} annulée(s)</small></article>`;
   }).join('') : '<div class="coach-empty-state"><strong>Aucune série annuelle configurée.</strong><span>Ajoute tes créneaux récurrents pour suivre les objectifs de 28 séances adultes et 30 séances enfants.</span><button class="btn subtle" data-go="group-calendar">Configurer la saison</button></div>';
   const upcomingHtml = nextEvents.length ? nextEvents.map(row => {
     const isGroup = row.kind === 'group';
