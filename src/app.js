@@ -16,6 +16,8 @@ let signupMode = false;
 let weatherRequest = 0;
 let messageChannel = null;
 let notificationChannel = null;
+let notificationRefreshPromise = null;
+let messageRefreshPromise = null;
 const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['videos','Mes vidéos','▣'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'] ];
@@ -93,7 +95,7 @@ $('#auth-form').addEventListener('submit', async event => {
   finally { button.disabled=false; }
 });
 
-$('#logout').addEventListener('click', async()=>{try{await authService.signOut();resetState();showAuth();}catch(e){toast(e.message,'error');}});
+$('#logout').addEventListener('click', async()=>{try{stopRealtimeChannels();await authService.signOut();resetState();showAuth();}catch(e){toast(e.message,'error');}});
 $('#navigation').addEventListener('click',event=>{const button=event.target.closest('[data-page]');if(button)render(button.dataset.page);});
 
 $('#page-actions').addEventListener('click', event => {
@@ -787,9 +789,51 @@ async function revokeCoachShare(id,playerId){
 async function respondCoachInvitation(id, accept){
   try{await dataService.respondToCoachInvitation(id,accept);toast(accept?'Partage accepté : le dossier joueur est maintenant accessible.':'Invitation refusée.');await refreshAndRender();}catch(error){toast(error.message||'Impossible de traiter cette invitation.','error');}
 }
-async function refreshAndRender(){const isAdmin=state.profile.is_admin===true||state.profile.role==='admin';if(state.profile.role==='coach')await dataService.loadCoachWorkspace(state.user.id);else if(!isAdmin)await dataService.loadPlayerWorkspace();if(isAdmin)await dataService.loadAdminWorkspace();render(state.currentPage);}
+async function refreshAndRender(){
+  const isAdmin=state.profile.is_admin===true||state.profile.role==='admin';
+  if(state.profile.role==='coach')await dataService.loadCoachWorkspace(state.user.id);
+  else if(!isAdmin)await dataService.loadPlayerWorkspace();
+  if(isAdmin)await dataService.loadAdminWorkspace();
+  render(state.currentPage);
+}
 
-supabase.auth.onAuthStateChange((_event,session)=>{if(session?.user){window.setTimeout(()=>loadWorkspace().catch(error=>showAuth(`Erreur de chargement : ${error.message}`)),0);}else{if(messageChannel){supabase.removeChannel(messageChannel);messageChannel=null;}if(notificationChannel){supabase.removeChannel(notificationChannel);notificationChannel=null;}resetState();showAuth();}});
+async function refreshNotificationsOnly(){
+  if(notificationRefreshPromise)return notificationRefreshPromise;
+  notificationRefreshPromise=(async()=>{
+    const rows=state.profile.role==='coach'
+      ?await notificationService.listCoach()
+      :await notificationService.listPlayer();
+    state.notifications=rows;
+    if(state.currentPage==='notifications')render('notifications');
+  })();
+  try{return await notificationRefreshPromise;}
+  finally{notificationRefreshPromise=null;}
+}
+
+async function refreshMessagesOnly(){
+  if(messageRefreshPromise)return messageRefreshPromise;
+  messageRefreshPromise=(async()=>{
+    state.messages=await dataService.loadMessagesForCurrentUser();
+    if(state.currentPage==='messages')render('messages');
+  })();
+  try{return await messageRefreshPromise;}
+  finally{messageRefreshPromise=null;}
+}
+
+function stopRealtimeChannels(){
+  if(messageChannel){const channel=messageChannel;messageChannel=null;supabase.removeChannel(channel);}
+  if(notificationChannel){const channel=notificationChannel;notificationChannel=null;supabase.removeChannel(channel);}
+}
+
+supabase.auth.onAuthStateChange((_event,session)=>{
+  if(session?.user){
+    window.setTimeout(()=>loadWorkspace().catch(error=>showAuth(`Erreur de chargement : ${error.message}`)),0);
+  }else{
+    stopRealtimeChannels();
+    resetState();
+    showAuth();
+  }
+});
 supabase.auth.getSession().then(({data,error})=>{if(error)return showAuth(error.message);if(data.session)loadWorkspace().catch(e=>showAuth(`Erreur de chargement : ${e.message}`));else showAuth();});
 
 
@@ -814,24 +858,34 @@ function weatherDescription(code){const c=Number(code);if(c===0)return'ciel dég
 
 
 function subscribeToNotifications(){
- if(notificationChannel||!state.user)return;
+ if(notificationChannel||!state.user||!state.profile)return;
  const isCoach=state.profile.role==='coach';
  const table=isCoach?'coach_notifications':'player_notifications';
  const field=isCoach?'coach_id':'player_id';
- notificationChannel=supabase.channel('coach-in-notifications-'+state.user.id)
+ const channel=supabase.channel('coach-in-notifications-'+state.user.id)
   .on('postgres_changes',{event:'INSERT',schema:'public',table,filter:field+'=eq.'+state.user.id},()=>{
-   refreshAndRender().catch(error=>toast(error.message||'Actualisation des notifications impossible.','error'));
-  }).subscribe();
+   refreshNotificationsOnly().catch(error=>toast(error.message||'Actualisation des notifications impossible.','error'));
+  });
+ notificationChannel=channel;
+ channel.subscribe(status=>{
+  if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)&&notificationChannel===channel)notificationChannel=null;
+ });
 }
 
 function subscribeToMessages(){
- if(messageChannel||!state.user)return;
+ if(messageChannel||!state.user||!state.profile)return;
  const field=state.profile.role==='coach'?'coach_id':'player_id';
- messageChannel=supabase.channel('coach-in-messages-'+state.user.id)
+ const channel=supabase.channel('coach-in-messages-'+state.user.id)
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'coach_player_messages',filter:field+'=eq.'+state.user.id},()=>{
-   if(state.currentPage==='messages')refreshAndRender().catch(error=>toast(error.message||'Actualisation des messages impossible.','error'));
+   if(state.currentPage==='messages')refreshMessagesOnly().catch(error=>toast(error.message||'Actualisation des messages impossible.','error'));
   })
-  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'coach_player_messages',filter:field+'=eq.'+state.user.id},()=>{
-   if(state.currentPage==='messages')refreshAndRender().catch(error=>toast(error.message||'Actualisation des accusés de lecture impossible.','error'));
-  }).subscribe();
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'coach_player_messages',filter:field+'=eq.'+state.user.id},payload=>{
+   if(state.currentPage==='messages'&&payload?.new?.sender_id===state.user.id){
+    refreshMessagesOnly().catch(error=>toast(error.message||'Actualisation des accusés de lecture impossible.','error'));
+   }
+  });
+ messageChannel=channel;
+ channel.subscribe(status=>{
+  if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)&&messageChannel===channel)messageChannel=null;
+ });
 }
