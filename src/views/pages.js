@@ -73,11 +73,73 @@ function dashboardCharts(evaluations, evaluationCriteria) {
 }
 
 function dashboard(isCoach) {
-  const nextSessions = [...state.sessions].filter(s => s.session_date >= new Date().toISOString().slice(0, 10)).sort((a,b) => `${a.session_date} ${a.session_time || ''}`.localeCompare(`${b.session_date} ${b.session_time || ''}`)).slice(0, 5);
+  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const dateDaysAgo = days => { const d = new Date(now); d.setDate(d.getDate() - days); return d.toISOString().slice(0,10); };
+  const playerById = new Map((state.players || []).map(player => [player.id, player]));
+  const nextPrivate = (state.sessions || [])
+    .filter(row => row.session_date >= today)
+    .map(row => ({ ...row, kind: 'private', sortTime: row.session_time || '08:00' }));
+  const nextGroup = (state.groupSessions || [])
+    .filter(row => row.session_date >= today && row.status === 'scheduled')
+    .map(row => ({ ...row, kind: 'group', sortTime: row.start_time || '08:00' }));
+  const nextEvents = [...nextPrivate, ...nextGroup]
+    .sort((a,b) => `${a.session_date} ${a.sortTime}`.localeCompare(`${b.session_date} ${b.sortTime}`))
+    .slice(0,5);
   if (!isCoach) return `<div class="stats-grid">${statCard('Mes séances', state.sessions.length, 'blue')}${statCard('Mes bilans', state.evaluations.length, 'purple')}${statCard('Demandes', state.bookingRequests.filter(x=>x.status==='pending').length, 'orange')}</div>${dashboardCharts(state.evaluations, state.evaluationCriteria)}<section class="panel"><div class="section-heading"><div><p class="eyebrow">MON PARCOURS TENNIS</p><h2>Mes dernières séances</h2></div></div>${state.sessions.slice(0,5).map(s=>sessionCard(s,false)).join('') || emptyState('Ton carnet commence ici','Tes séances apparaîtront dans cet espace.')}</section>`;
   const invitations = state.coachInvitations || [];
-  const invitationPanel = invitations.length ? `<section class="panel"><div class="section-heading"><div><p class="eyebrow">COLLABORATION</p><h2>Invitations de partage</h2></div></div>${invitations.map(i=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml(i.player_first_name)} ${escapeHtml(i.player_last_name)}</strong><span>Invité par ${escapeHtml(i.inviter_first_name)} ${escapeHtml(i.inviter_last_name)}</span></div><button class="btn primary" data-coach-invitation="${i.id}" data-accept="true">Accepter</button><button class="btn danger" data-coach-invitation="${i.id}" data-accept="false">Refuser</button></article>`).join('')}</section>` : '';
-  return `<div class="welcome-panel"><div><p class="eyebrow">ESPACE ENTRAÎNEUR</p><h2>Construis la progression, séance après séance.</h2><p>Ton activité, ton effectif et tes priorités au même endroit.</p></div><div class="welcome-mark">CI<span>+</span></div></div>${invitationPanel}<div class="stats-grid">${statCard('Joueurs', state.players.length, 'blue', 'Dans ton effectif')}${statCard('Séances', state.sessions.length, 'purple', 'Historique chargé')}${statCard('Bilans', state.evaluations.length, 'green', 'Évaluations enregistrées')}${statCard('Demandes en attente', state.bookingRequests.filter(x=>x.status==='pending').length, 'orange', 'À traiter')}</div>${dashboardCharts(state.evaluations, state.evaluationCriteria)}<section class="panel"><div class="section-heading"><div><p class="eyebrow">À VENIR</p><h2>Prochaines séances</h2></div><button class="btn subtle" data-go="planning">Voir le planning</button></div>${nextSessions.map(s=>sessionCard(s,true)).join('') || emptyState('Aucune séance à venir','Planifie une séance pour commencer.')}</section>`;
+  const invitationPanel = invitations.length ? `<section class="panel"><div class="section-heading"><div><p class="eyebrow">COLLABORATION</p><h2>Invitations de partage</h2></div><span class="tag tag-orange">${invitations.length} en attente</span></div>${invitations.map(i=>`<article class="list-card"><div class="list-main"><strong>${escapeHtml(i.player_first_name)} ${escapeHtml(i.player_last_name)}</strong><span>Invité par ${escapeHtml(i.inviter_first_name)} ${escapeHtml(i.inviter_last_name)}</span></div><button class="btn primary" data-coach-invitation="${i.id}" data-accept="true">Accepter</button><button class="btn danger" data-coach-invitation="${i.id}" data-accept="false">Refuser</button></article>`).join('')}</section>` : '';
+  const activePlayers = (state.players || []).filter(player => !player.archived_at);
+  const pendingBookings = (state.bookingRequests || []).filter(row => row.status === 'pending');
+  const activeChallenges = (state.challenges || []).filter(row => row.status === 'active');
+  const playerActivity = activePlayers.map(player => {
+    const reports = (state.evaluations || []).filter(row => row.player_id === player.id).sort((a,b) => String(b.evaluated_at || b.created_at || '').localeCompare(String(a.evaluated_at || a.created_at || '')));
+    const sessions = (state.sessions || []).filter(row => row.player_id === player.id).sort((a,b) => String(b.session_date || '').localeCompare(String(a.session_date || '')));
+    const lastReport = reports[0] || null;
+    const lastSession = sessions[0] || null;
+    const reportDate = lastReport ? String(lastReport.evaluated_at || lastReport.created_at || '').slice(0,10) : '';
+    const sessionDate = lastSession?.session_date || '';
+    const reasons = [];
+    if (!lastReport) reasons.push('Premier bilan à réaliser');
+    else if (reportDate && reportDate <= dateDaysAgo(30)) reasons.push('Bilan à actualiser');
+    const challenge = activeChallenges.find(row => row.player_id === player.id);
+    if (challenge) reasons.push('Défi en cours');
+    const lastTouch = [reportDate,sessionDate].filter(Boolean).sort().at(-1) || '';
+    if (!lastTouch) reasons.push('Aucune activité enregistrée');
+    else if (lastTouch <= dateDaysAgo(45) && !reasons.includes('Bilan à actualiser')) reasons.push('Activité à relancer');
+    return { player, lastReport, lastSession, reportDate, sessionDate, challenge, reasons, lastTouch };
+  });
+  const attention = playerActivity.filter(row => row.reasons.length).sort((a,b) => {
+    const score = row => (row.reasons.includes('Premier bilan à réaliser') ? 3 : 0) + (row.reasons.includes('Bilan à actualiser') ? 2 : 0) + (row.reasons.includes('Activité à relancer') ? 1 : 0) + (row.challenge ? 1 : 0);
+    return score(b)-score(a) || String(a.lastTouch).localeCompare(String(b.lastTouch));
+  }).slice(0,6);
+  const attentionHtml = attention.length ? attention.map(row => `<article class="coach-attention-row"><div class="coach-player-avatar">${escapeHtml((row.player.first_name || '?').slice(0,1))}${escapeHtml((row.player.last_name || '').slice(0,1))}</div><div class="coach-attention-main"><strong>${escapeHtml(row.player.first_name)} ${escapeHtml(row.player.last_name)}</strong><span>${row.reasons.map(escapeHtml).join(' · ')}</span><small>${row.lastReport ? 'Dernier bilan : '+formatDate(row.reportDate) : 'Aucun bilan enregistré'}${row.lastSession ? ' · Dernière séance : '+formatDate(row.sessionDate) : ''}</small></div><button class="btn subtle" data-player-sheet="${row.player.id}">Ouvrir</button></article>`).join('') : '<div class="coach-empty-state"><strong>Tout est à jour.</strong><span>Aucun joueur ne nécessite de suivi prioritaire selon les données disponibles.</span></div>';
+  const seriesRows = buildSeriesCounters(state.groupSeries || [], state.groupSessions || []);
+  const seriesHtml = seriesRows.length ? seriesRows.map(row => {
+    const pct = row.target ? Math.min(100, Math.round(row.completed / row.target * 100)) : 0;
+    return `<article class="coach-goal-row"><div class="coach-goal-head"><div><strong>${escapeHtml(row.title)}</strong><span>${row.audience === 'adultes' ? 'Adultes' : 'Enfants'} · ${['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][row.weekday]}</span></div><b>${row.completed}<small> / ${row.target}</small></b></div><div class="coach-goal-track"><i style="width:${pct}%"></i></div><small>${row.toSchedule} à programmer · ${row.planned} à venir · ${row.cancelled} annulée(s)</small></article>`;
+  }).join('') : '<div class="coach-empty-state"><strong>Aucune série annuelle configurée.</strong><span>Ajoute tes créneaux récurrents pour suivre les objectifs de 28 séances adultes et 30 séances enfants.</span><button class="btn subtle" data-go="group-calendar">Configurer la saison</button></div>';
+  const upcomingHtml = nextEvents.length ? nextEvents.map(row => {
+    const isGroup = row.kind === 'group';
+    const title = isGroup ? row.title : (playerById.get(row.player_id) ? `${playerById.get(row.player_id).first_name} ${playerById.get(row.player_id).last_name}` : 'Cours particulier');
+    const time = row.sortTime || '08:00';
+    return `<article class="coach-agenda-row"><div class="coach-agenda-date"><strong>${new Date(row.session_date+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit'})}</strong><span>${new Date(row.session_date+'T12:00:00').toLocaleDateString('fr-FR',{month:'short'})}</span></div><div class="coach-agenda-main"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(row.theme || (isGroup ? 'Cours collectif' : 'Cours particulier'))} · ${isGroup ? 'Collectif' : 'Individuel'}</span></div><time>${escapeHtml(formatTime(time))}</time></article>`;
+  }).join('') : '<div class="coach-empty-state"><strong>Aucun cours à venir.</strong><span>Ajoute un cours particulier ou programme une séance collective.</span></div>';
+  const recentReports = [...(state.evaluations || [])].sort((a,b) => String(b.evaluated_at || b.created_at || '').localeCompare(String(a.evaluated_at || a.created_at || ''))).slice(0,4);
+  const reportsHtml = recentReports.length ? recentReports.map(row => {
+    const player = playerById.get(row.player_id);
+    const values = ['technical_score','tactical_score','physical_score','mental_score'].map(key => row[key]).filter(value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value))).map(Number);
+    const average = values.length ? (values.reduce((sum,value)=>sum+value,0)/values.length).toFixed(1).replace('.',',')+'/20' : 'Notes non renseignées';
+    const date = String(row.evaluated_at || row.created_at || '').slice(0,10);
+    return `<article class="coach-report-row"><div class="coach-report-mark">↗</div><div class="coach-report-main"><strong>${escapeHtml(player ? player.first_name+' '+player.last_name : 'Joueur')}</strong><span>${date ? formatDate(date) : 'Date non renseignée'} · ${average}</span></div><button class="btn subtle" data-player-sheet="${row.player_id}">Fiche</button></article>`;
+  }).join('') : '<div class="coach-empty-state"><strong>Pas encore de bilan.</strong><span>Les évaluations récentes apparaîtront ici.</span><button class="btn subtle" data-go="reports">Voir les évaluations</button></div>';
+  return `<div class="welcome-panel coach-dashboard-hero"><div><p class="eyebrow">ESPACE ENTRAÎNEUR · ${escapeHtml(state.profile.first_name || '')}</p><h2>Bonjour ${escapeHtml(state.profile.first_name || 'coach')}, prêt pour ta prochaine séance ?</h2><p>Retrouve tes priorités, ton effectif et ton activité au même endroit.</p><div class="coach-quick-actions"><button class="btn primary" data-action="new-session">＋ Préparer une séance</button><button class="btn subtle" data-action="new-evaluation">＋ Nouveau bilan</button><button class="btn ghost" data-action="add-player">＋ Ajouter un joueur</button></div></div><div class="welcome-mark">CI<span>+</span></div></div>
+  ${invitationPanel}
+  <div class="stats-grid coach-dashboard-stats">${statCard('Joueurs actifs', activePlayers.length, 'blue', 'Dans ton effectif')}${statCard('Séances individuelles', state.sessions.length, 'purple', 'Suivies par toi')}${statCard('Bilans réalisés', state.evaluations.length, 'green', 'Ton suivi uniquement')}${statCard('Demandes à traiter', pendingBookings.length, 'orange', 'Réservations en attente')}</div>
+  <section class="coach-dashboard-grid"><div class="panel coach-dashboard-panel"><div class="section-heading"><div><p class="eyebrow">PRIORITÉS DE SUIVI</p><h2>Joueurs à accompagner</h2></div><button class="btn subtle" data-go="players">Tout l’effectif</button></div><div class="coach-attention-list">${attentionHtml}</div></div><div class="panel coach-dashboard-panel"><div class="section-heading"><div><p class="eyebrow">OBJECTIFS DE SAISON</p><h2>Avancement des cours collectifs</h2></div><button class="btn subtle" data-go="group-calendar">Voir la saison</button></div><div class="coach-goals-list">${seriesHtml}</div></div></section>
+  <section class="coach-dashboard-grid coach-dashboard-grid-bottom"><div class="panel coach-dashboard-panel"><div class="section-heading"><div><p class="eyebrow">AGENDA</p><h2>Les prochains rendez-vous</h2></div><button class="btn subtle" data-go="planning">Planning complet</button></div><div class="coach-agenda-list">${upcomingHtml}</div></div><div class="panel coach-dashboard-panel"><div class="section-heading"><div><p class="eyebrow">PROGRESSION</p><h2>Derniers bilans enregistrés</h2></div><button class="btn subtle" data-go="reports">Tous les bilans</button></div><div class="coach-reports-list">${reportsHtml}</div></div></section>
+  ${dashboardCharts(state.evaluations, state.evaluationCriteria)}
+  <p class="tiny muted coach-dashboard-footnote">Les données de suivi, les bilans, les défis et les notes affichés ici correspondent uniquement à ton espace coach. Les objectifs collectifs sont calculés à partir des séries et séances réellement enregistrées.</p>`;
 }
 
 
