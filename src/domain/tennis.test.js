@@ -32,6 +32,10 @@ test('réservation : contrôle durée et court', () => {
   assert.throws(() => validateBooking({ date: '2027-01-01', time: '10:00', duration: 45, court: 1 }), /Durée autorisée/);
 });
 
+test('réservation : le quatrième court est accepté', () => {
+  assert.equal(validateBooking({ date: '2027-01-01', time: '10:00', duration: 60, court: 4 }), true);
+});
+
 test('défi : un critère répété dans un même bilan ne compte qu’une fois', () => {
   const rows = [
     { evaluation_id: 'a', criterion: 'Déplacement', criterion_type: 'improvement' },
