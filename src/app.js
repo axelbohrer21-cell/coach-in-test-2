@@ -129,6 +129,18 @@ $('#page-content').addEventListener('click', async event=>{
   const week=event.target.closest('[data-week]'); if(week){state.planningWeekOffset=Number(week.dataset.week)===0?0:(state.planningWeekOffset||0)+Number(week.dataset.week);render('planning');}
 });
 $('#dialog-content').addEventListener('click',async event=>{
+  const confirmCriteria=event.target.closest('[data-confirm-criteria]');
+  if(confirmCriteria){
+    const form=$('#evaluation-form');
+    const count=form?.querySelectorAll('input[name=criterion]:checked').length||0;
+    if(!count){toast('Sélectionne au moins un critère avant de valider.','error');return;}
+    form.dataset.criteriaConfirmed='true';
+    confirmCriteria.textContent='Critères validés ✓';
+    confirmCriteria.classList.add('criteria-confirmed');
+    const title=form.querySelector('[data-validation-title]');if(title)title.textContent='Sélection validée';
+    const hint=form.querySelector('[data-validation-hint]');if(hint)hint.textContent=count+' critère(s) prêt(s) à être enregistrés.';
+    return;
+  }
   const send=event.target.closest('[data-send-evaluation]');
   if(send){
     send.disabled=true;
@@ -150,6 +162,8 @@ $('#dialog-content').addEventListener('change',event=>{
     const row=event.target.closest('.criterion-measure-row');
     const measure=row?.querySelector('.criterion-measure');
     if(measure){measure.disabled=!event.target.checked;if(!event.target.checked)measure.value='';}
+    const form=event.target.closest('#evaluation-form');
+    if(form){form.dataset.criteriaConfirmed='false';const confirm=form.querySelector('[data-confirm-criteria]');if(confirm){confirm.textContent='Valider les critères ✓';confirm.classList.remove('criteria-confirmed');}const title=form.querySelector('[data-validation-title]');if(title)title.textContent='Sélection à confirmer';const hint=form.querySelector('[data-validation-hint]');if(hint)hint.textContent='Ta sélection a changé : valide-la à nouveau.';updateEvaluationSelectionUI();}
   }
 });
 $('#page-content').addEventListener('input',event=>{
@@ -192,11 +206,34 @@ function sessionDialog(date=toLocalISO(new Date()), time='17:00'){
   if(!state.players.length){toast('Associe d’abord un compte joueur à ton effectif.','error');return;}
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">TERRAIN</p><h2>Planifier une séance</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="session-form" class="form-grid"><label class="span-2">Joueur<select name="player_id" required>${state.players.map(p=>`<option value="${p.id}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label><label>Date<input name="session_date" type="date" required value="${date}"></label><label>Heure<input name="session_time" type="time" required value="${time}"></label><label>Durée<select name="duration_minutes"><option value="60">1 heure</option><option value="90">1 h 30</option><option value="120">2 heures</option></select></label><label>Court<select name="court_number"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><label>Thème<input name="theme" required placeholder="Ex. Construction du point"></label><label class="span-2">Exercice 1<textarea name="exercise_1" rows="2"></textarea></label><label class="span-2">Exercice 2<textarea name="exercise_2" rows="2"></textarea></label><label class="span-2">Synthèse visible joueur<textarea name="player_visible_summary" rows="2"></textarea></label><label class="span-2">Notes privées coach<textarea name="coach_private_notes" rows="2"></textarea></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer la séance</button></div></form>`);
 }
+function updateEvaluationSelectionUI(){
+  const form=$('#evaluation-form');if(!form)return;
+  const checked=[...form.querySelectorAll('input[name=criterion]:checked')];
+  const total=form.querySelector('[data-selection-total]');if(total)total.textContent=checked.length+' critère'+(checked.length>1?'s':'');
+  form.querySelectorAll('[data-theme-index]').forEach(theme=>{
+    const count=theme.querySelectorAll('input[name=criterion]:checked').length;
+    const label=theme.querySelector('[data-theme-count]');if(label)label.textContent=count+' sélectionné'+(count>1?'s':'');
+    theme.classList.toggle('has-selection',count>0);
+  });
+}
+
 function evaluationDialog(){
   if(!state.players.length){toast('Aucun joueur dans ton effectif.','error');return;}
   const groups=groupCriteria(state.criteria||[]);
-  const criteriaMarkup=groups.length?groups.map(group=>`<details class="criterion-theme" open><summary>${escapeHtml(group.theme)}</summary>${group.subthemes.map(sub=>`<div class="criterion-subtheme"><h4>${escapeHtml(sub.subtheme||group.theme)}</h4><div class="criterion-columns"><div><p class="criterion-positive-title">Réussites</p>${sub.positive.map(item=>`<label class="criterion-option positive"><input type="checkbox" name="criterion" value="${item.id}" data-criterion-id="${item.id}"><span>${escapeHtml(item.criterion)}</span></label>`).join('')||'<small class="muted">Aucun critère enregistré.</small>'}</div><div><p class="criterion-improvement-title">À améliorer</p>${sub.improvement.map(item=>`<div class="criterion-measure-row"><label class="criterion-option improvement"><input type="checkbox" name="criterion" value="${item.id}" data-criterion-id="${item.id}"><span>${escapeHtml(item.criterion)}</span></label><input class="criterion-measure" type="number" step="0.1" name="measure_${item.id}" aria-label="Mesure pour ${escapeHtml(item.criterion)}" placeholder="Mesure" disabled></div>`).join('')||'<small class="muted">Aucun critère enregistré.</small>'}</div></div></div>`).join('')}</details>`).join(''):'<div class="empty-state"><h3>Catalogue de critères non importé</h3><p>Le formulaire est prêt. Il faut importer le catalogue validé dans Supabase pour afficher les critères ici. Aucun critère n’a été inventé.</p></div>';
-  showDialog(`<div class="dialog-head"><div><p class="eyebrow">PROGRESSION</p><h2>Nouveau bilan tennis</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="evaluation-form" class="form-grid evaluation-form"><label class="span-2">Joueur<select name="player_id" required>${state.players.map(p=>`<option value="${p.id}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label><div class="span-2"><p class="form-section-title">Notes par secteur /20</p><div class="score-grid">${[['technical_score','Technique'],['tactical_score','Tactique'],['physical_score','Physique'],['mental_score','Mental']].map(([key,label])=>`<label>${label}<input type="number" name="${key}" min="0" max="20" step="0.5" placeholder="—"></label>`).join('')}</div><small class="muted">La moyenne est calculée uniquement sur les secteurs renseignés.</small></div><div class="span-2"><p class="form-section-title">Critères observés</p><p class="tiny muted">Sélectionne plusieurs réussites et points à améliorer. Les mesures chiffrées servent au suivi du défi actif.</p>${criteriaMarkup}</div><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer le bilan</button></div></form>`);
+  const criteriaMarkup=groups.length?groups.map((group,index)=>`<details class="criterion-theme coach-theme" data-theme-index="${index}">
+    <summary><span class="theme-summary-main"><span class="theme-summary-dot">●</span><span>${escapeHtml(group.theme)}</span></span><span class="theme-summary-meta"><small data-theme-count="${index}">0 sélectionné</small><span class="theme-chevron">⌄</span></span></summary>
+    <div class="criterion-theme-content">${group.subthemes.map((sub,subIndex)=>`<details class="criterion-subtheme-card" ${subIndex===0?'open':''}><summary><span>${escapeHtml(sub.subtheme||group.theme)}</span><span class="subtheme-summary-meta"><small>Ouvrir les critères</small><b>⌄</b></span></summary><div class="criterion-subtheme-body"><div class="criterion-columns"><div><p class="criterion-positive-title">✓ Réussites</p>${sub.positive.map(item=>`<label class="criterion-option positive"><input type="checkbox" name="criterion" value="${item.id}" data-criterion-id="${item.id}"><span>${escapeHtml(item.criterion)}</span></label>`).join('')||'<small class="muted">Aucun critère enregistré.</small>'}</div><div><p class="criterion-improvement-title">↗ À améliorer</p>${sub.improvement.map(item=>`<div class="criterion-measure-row"><label class="criterion-option improvement"><input type="checkbox" name="criterion" value="${item.id}" data-criterion-id="${item.id}"><span>${escapeHtml(item.criterion)}</span></label><input class="criterion-measure" type="number" step="0.1" name="measure_${item.id}" aria-label="Mesure pour ${escapeHtml(item.criterion)}" placeholder="Mesure" disabled></div>`).join('')||'<small class="muted">Aucun critère enregistré.</small>'}</div></div></div></details>`).join('')}</div></details>`).join(''):'<div class="empty-state"><h3>Catalogue de critères non importé</h3><p>Le formulaire est prêt. Aucun critère n’a été inventé pour compléter les listes manquantes.</p></div>';
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">PROGRESSION · BILAN DE SÉANCE</p><h2>Nouveau bilan tennis</h2><p class="muted">Un parcours guidé, étape par étape.</p></div><button class="btn icon-btn" data-close>✕</button></div>
+  <form id="evaluation-form" class="form-grid evaluation-form">
+    <div class="evaluation-stepper span-2"><span class="step-current">1 Joueur</span><i></i><span>2 Thèmes</span><i></i><span>3 Notes</span><i></i><span>4 Validation</span></div>
+    <label class="span-2">Joueur<select name="player_id" required>${state.players.map(p=>`<option value="${p.id}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label>
+    <div class="span-2"><div class="evaluation-section-heading"><div><p class="form-section-title">Thèmes et sous-thèmes travaillés</p><p class="tiny muted">Appuie sur un thème pour afficher ses sous-thèmes, puis coche les observations.</p></div><span class="selection-total" data-selection-total>0 critère</span></div>${criteriaMarkup}
+      <div class="criteria-validation"><div><strong data-validation-title>Sélection à confirmer</strong><small data-validation-hint>Tu peux choisir plusieurs réussites et axes de progression.</small></div><button type="button" class="btn subtle" data-confirm-criteria>Valider les critères ✓</button></div>
+    </div>
+    <div class="span-2"><p class="form-section-title">Notes par secteur /20</p><div class="score-grid">${[['technical_score','Technique'],['tactical_score','Tactique'],['physical_score','Physique'],['mental_score','Mental']].map(([key,label])=>`<label>${label}<input type="number" name="${key}" min="0" max="20" step="0.5" placeholder="—"></label>`).join('')}</div><small class="muted">La moyenne est calculée uniquement sur les secteurs renseignés.</small></div>
+    <div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer le bilan</button></div>
+  </form>`);
+  updateEvaluationSelectionUI();
 }
 
 function playerSheetDialog(playerId){
@@ -323,6 +360,7 @@ $('#dialog-content').addEventListener('submit',async event=>{
         const measured=form.elements[`measure_${item.id}`]?.value ?? '';
         return {criterion_id:item.id,main_theme:item.main_theme,subtheme:item.subtheme,criterion:item.criterion,criterion_type:item.criterion_type,measured_value:measured};
       }).filter(Boolean);
+      if(selected.length && form.dataset.criteriaConfirmed!=='true') throw new Error('Valide ta sélection de critères avant d’enregistrer le bilan.');
       if(!hasEvaluationContent(scores,selected)) throw new Error('Renseigne au moins une note ou sélectionne un critère observé.');
       await progressionService.saveEvaluation({playerId:values.player_id,coachId:state.user.id,scores,selectedCriteria:selected});
       toast('Bilan enregistré. Les réussites et le défi actif ont été actualisés.');
