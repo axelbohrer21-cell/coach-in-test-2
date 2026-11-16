@@ -503,6 +503,7 @@ async function markVisibleConversationRead(){
   if(state.currentPage!=='messages'||!state.messagePartnerId)return;
   const incoming=(state.messages||[]).filter(m=>m.sender_id!==state.user.id&&!m.read_at&&(state.profile.role==='coach'?m.player_id===state.messagePartnerId:m.coach_id===state.messagePartnerId));
   for(const message of incoming){try{await dataService.markMessageRead(message.id);message.read_at=new Date().toISOString();}catch(error){toast(error.message||'Lecture du message impossible.','error');}}
+  if(incoming.length&&state.currentPage==='messages')render('messages');
 }
 function filterLibrary(){
   const normalize=value=>String(value||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -548,5 +549,8 @@ function subscribeToMessages(){
  messageChannel=supabase.channel('coach-in-messages-'+state.user.id)
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'coach_player_messages',filter:field+'=eq.'+state.user.id},()=>{
    if(state.currentPage==='messages')refreshAndRender().catch(error=>toast(error.message||'Actualisation des messages impossible.','error'));
+  })
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'coach_player_messages',filter:field+'=eq.'+state.user.id},()=>{
+   if(state.currentPage==='messages')refreshAndRender().catch(error=>toast(error.message||'Actualisation des accusés de lecture impossible.','error'));
   }).subscribe();
 }
