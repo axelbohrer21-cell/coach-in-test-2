@@ -70,14 +70,22 @@ export const dataService = {
       unwrap(supabase.from('coach_players').select('coach_id').eq('player_id', state.user.id))
     ]);
     const coachIds = coachLinks.map(row => row.coach_id);
+    const historicalCoachIds = [...new Set([
+      ...sessions.map(row => row.created_by),
+      ...evaluations.map(row => row.created_by),
+      ...challenges.map(row => row.coach_id),
+      ...achievements.map(row => row.coach_id)
+    ].filter(Boolean))];
+    const historyOnlyIds = historicalCoachIds.filter(id => !coachIds.includes(id));
     const playerCoaches = coachIds.length ? await unwrap(supabase.from('profiles').select('id,first_name,last_name,email').in('id', coachIds).is('archived_at',null).order('last_name')) : [];
+    const playerCoachHistory = historyOnlyIds.length ? await unwrap(supabase.from('profiles').select('id,first_name,last_name,email,archived_at').in('id', historyOnlyIds).order('last_name')) : [];
     const activeCoachIds = playerCoaches.map(row => row.id);
     const weeklyAvailability = activeCoachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',activeCoachIds).eq('active',true).order('weekday').order('start_time')) : [];
     const messages = await unwrap(supabase.from('coach_player_messages').select('*').eq('player_id',state.user.id).order('created_at'));
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const evaluationCriteria = evaluationIds.length ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : [];
     const hydratedMessages=await hydrateMessages(messages);
-    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, weeklyAvailability, messages:hydratedMessages });
+    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, playerCoachHistory, weeklyAvailability, messages:hydratedMessages });
   },
 
   async revokeCoachPlayerInvitation(invitationId) {
@@ -107,7 +115,7 @@ export const dataService = {
     return data;
   },
   async createEvaluation(payload) {
-    const { data, error } = await supabase.from('evaluations').insert(payload).select().single();
+    const { data, error } = await supabase.from('evaluations').insert(payload).select('id,player_id,session_id,evaluated_at,score,technical_score,tactical_score,physical_score,mental_score,player_visible_comment,created_by,created_at').single();
     if (error) throw error;
     return data;
   },
