@@ -358,86 +358,310 @@
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur deuxième balle",
-      "criterion": "Difficulté à prendre l’initiative",
+      "criterion": "Choix tactique inadapté",
       "criterion_type": "improvement",
       "display_order": 2
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Difficulté à prendre l’initiative",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Manque de profondeur",
+      "criterion_type": "improvement",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Manque de régularité",
+      "criterion_type": "improvement",
+      "display_order": 5
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Précipitation",
+      "criterion_type": "improvement",
+      "display_order": 6
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Prise de balle tardive",
+      "criterion_type": "improvement",
+      "display_order": 7
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Retour trop centré",
+      "criterion_type": "improvement",
+      "display_order": 8
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Retour trop court",
+      "criterion_type": "improvement",
+      "display_order": 9
     },
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur deuxième balle",
       "criterion": "Variation des zones insuffisante",
       "criterion_type": "improvement",
-      "display_order": 3
+      "display_order": 10
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Anticipation de la direction",
+      "criterion_type": "positive",
+      "display_order": 1
     },
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur deuxième balle",
       "criterion": "Attaque de la deuxième balle",
       "criterion_type": "positive",
-      "display_order": 1
+      "display_order": 2
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Contrôle de la profondeur",
+      "criterion_type": "positive",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Lecture de la trajectoire",
+      "criterion_type": "positive",
+      "display_order": 4
     },
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur deuxième balle",
       "criterion": "Prise d’initiative",
       "criterion_type": "positive",
-      "display_order": 2
+      "display_order": 5
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Prise de balle devant et précoce",
+      "criterion_type": "positive",
+      "display_order": 6
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Qualité de centrage",
+      "criterion_type": "positive",
+      "display_order": 7
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Régularité",
+      "criterion_type": "positive",
+      "display_order": 8
     },
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur deuxième balle",
       "criterion": "Utilisation des angles",
       "criterion_type": "positive",
-      "display_order": 3
+      "display_order": 9
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Variation des zones",
+      "criterion_type": "positive",
+      "display_order": 10
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur deuxième balle",
+      "criterion": "Vitesse d’exécution",
+      "criterion_type": "positive",
+      "display_order": 11
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Anticipation tardive",
+      "criterion_type": "improvement",
+      "display_order": 1
     },
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur première balle",
       "criterion": "Blocage insuffisant",
       "criterion_type": "improvement",
-      "display_order": 1
-    },
-    {
-      "main_theme": "Retour de service",
-      "subtheme": "Retour sur première balle",
-      "criterion": "Contrôle de profondeur irrégulier",
-      "criterion_type": "improvement",
       "display_order": 2
     },
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur première balle",
-      "criterion": "Retour trop centré",
+      "criterion": "Profondeur irrégulière",
       "criterion_type": "improvement",
       "display_order": 3
     },
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur première balle",
-      "criterion": "Retour trop court",
+      "criterion": "Lecture tardive du service",
       "criterion_type": "improvement",
       "display_order": 4
     },
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur première balle",
-      "criterion": "Blocage efficace sur service rapide",
+      "criterion": "Réactivité insuffisante",
+      "criterion_type": "improvement",
+      "display_order": 5
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Placement initial inadapté",
+      "criterion_type": "improvement",
+      "display_order": 6
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Préparation trop ample",
+      "criterion_type": "improvement",
+      "display_order": 7
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Prise de balle tardive",
+      "criterion_type": "improvement",
+      "display_order": 8
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Centrage irrégulier",
+      "criterion_type": "improvement",
+      "display_order": 9
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Retour trop centré",
+      "criterion_type": "improvement",
+      "display_order": 10
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Retour trop court",
+      "criterion_type": "improvement",
+      "display_order": 11
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Stabilité insuffisante",
+      "criterion_type": "improvement",
+      "display_order": 12
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Anticipation de la direction du service",
       "criterion_type": "positive",
       "display_order": 1
     },
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur première balle",
-      "criterion": "Contrôle de la profondeur",
+      "criterion": "Blocage efficace",
       "criterion_type": "positive",
       "display_order": 2
     },
     {
       "main_theme": "Retour de service",
       "subtheme": "Retour sur première balle",
-      "criterion": "Placement adapté",
+      "criterion": "Contrôle de la profondeur",
       "criterion_type": "positive",
       "display_order": 3
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Lecture de la trajectoire",
+      "criterion_type": "positive",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Placement adapté",
+      "criterion_type": "positive",
+      "display_order": 5
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Préparation courte et compacte",
+      "criterion_type": "positive",
+      "display_order": 6
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Prise de balle devant soi",
+      "criterion_type": "positive",
+      "display_order": 7
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Qualité de centrage",
+      "criterion_type": "positive",
+      "display_order": 8
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Réactivité",
+      "criterion_type": "positive",
+      "display_order": 9
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Régularité",
+      "criterion_type": "positive",
+      "display_order": 10
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Reprise d’appuis synchronisée",
+      "criterion_type": "positive",
+      "display_order": 11
+    },
+    {
+      "main_theme": "Retour de service",
+      "subtheme": "Retour sur première balle",
+      "criterion": "Stabilité",
+      "criterion_type": "positive",
+      "display_order": 12
     },
     {
       "main_theme": "Volée",
