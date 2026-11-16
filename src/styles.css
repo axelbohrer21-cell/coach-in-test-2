@@ -536,3 +536,48 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .sector-evolution-card>small{display:block;margin-top:8px;color:var(--muted);font-size:9px}
 .sector-evolution-empty{margin:16px 0 7px;color:var(--muted);font-size:11px}
 @media(max-width:560px){.coach-evolution-block{padding:12px}.sector-evolution-grid{grid-template-columns:1fr}.sector-evolution-card{padding:12px}.coach-evolution-heading h3{font-size:14px}}
+
+
+/* Fiche joueur premium — synthèse sportive, tendances et confidentialité */
+.profile-coach-attribution{display:inline-flex;margin-top:7px;padding:5px 9px;border:1px solid rgba(67,212,242,.22);border-radius:20px;background:rgba(67,212,242,.08);color:#9be9ff;font-size:10px;font-weight:800}
+.profile-hero-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:15px 0}
+.profile-hero-stats>div{display:grid;gap:5px;min-width:0;padding:13px;border:1px solid rgba(92,139,180,.22);border-radius:13px;background:linear-gradient(145deg,rgba(18,43,67,.9),rgba(8,23,41,.88))}
+.profile-hero-stats span,.profile-info-grid small{color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.55px;text-transform:uppercase}
+.profile-hero-stats strong{font-size:18px;line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.profile-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.profile-info-grid>div{display:grid;gap:5px;min-width:0;padding:11px 12px;border:1px solid rgba(92,139,180,.18);border-radius:11px;background:rgba(7,23,41,.42)}
+.profile-info-grid strong{font-size:12px;overflow-wrap:anywhere}
+.profile-sector-list{display:grid;gap:10px}
+.profile-sector-card{display:grid;gap:6px;padding:10px 11px;border:1px solid rgba(92,139,180,.18);border-radius:11px;background:rgba(5,19,34,.55)}
+.profile-sector-heading{display:flex;justify-content:space-between;gap:8px;font-size:11px;font-weight:800}
+.profile-sector-heading small{font-size:10px}
+.profile-sector-heading .positive{color:#8cf0c0}.profile-sector-heading .improvement{color:#ffc58f}
+.profile-sector-card>strong{font-size:19px;line-height:1.1;font-variant-numeric:tabular-nums}
+.profile-sector-card>small{color:var(--muted);font-size:9px}
+.profile-sector-track{height:6px;overflow:hidden;border-radius:20px;background:#203852}
+.profile-sector-track i{display:block;height:100%;border-radius:20px;background:var(--sector-color)}
+.profile-criterion-list{display:grid;gap:8px}
+.profile-criterion-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(92,139,180,.18);border-radius:11px;background:rgba(7,23,41,.45)}
+.profile-criterion-item>span{display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border-radius:9px;font-weight:900}
+.profile-criterion-item.strength>span{background:rgba(102,224,173,.13);color:#8cf0c0}
+.profile-criterion-item.improvement>span{background:rgba(255,179,110,.13);color:#ffc58f}
+.profile-criterion-item>div{display:grid;gap:3px;min-width:0}
+.profile-criterion-item strong{font-size:12px;line-height:1.4}
+.profile-criterion-item small{color:var(--muted);font-size:10px}
+.profile-history-card{padding:14px}
+.profile-history-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.profile-history-top>div{min-width:0}
+.profile-history-top>div>strong{font-size:13px}
+.profile-history-counts{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0;font-size:10px;font-weight:800}
+.profile-history-counts .positive{color:#8cf0c0}.profile-history-counts .improvement{color:#ffc58f}
+.profile-visible-comment{margin:10px 0 0;padding:10px 12px;border-left:3px solid #43d4f2;border-radius:0 9px 9px 0;background:rgba(67,212,242,.07);font-size:11px;line-height:1.5}
+.profile-session-card .list-main>small{display:block;margin-top:5px;color:var(--muted);font-size:10px;line-height:1.45}
+.profile-session-card .list-main{min-width:0}
+@media(max-width:600px){
+  .profile-hero-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .profile-hero-stats>div{padding:11px}
+  .profile-hero-stats strong{font-size:16px}
+  .profile-info-grid{grid-template-columns:1fr}
+  .profile-history-top{align-items:flex-start}
+  .profile-history-top .tag{flex:none}
+}
