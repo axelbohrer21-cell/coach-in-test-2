@@ -10,7 +10,7 @@ export const progressionService = {
     const score = calculateAverage(scores);
     const { data: evaluation, error } = await supabase.from('evaluations').insert({
       player_id: playerId, created_by: coachId, ...scores, score
-    }).select().single();
+    }).select('id,player_id,session_id,evaluated_at,score,technical_score,tactical_score,physical_score,mental_score,player_visible_comment,created_by,created_at').single();
     if (error) throw error;
 
     const detailRows = selectedCriteria.map(item => ({
