@@ -105,11 +105,7 @@ return evaluation;
         throw insertError;
       }
 
-      const { error: notificationError } = await supabase.rpc(
-        'notify_player_achievement_unlocked',
-        { p_achievement_id: created.id }
-      );
-      if (notificationError) throw notificationError;
+      // La notification est créée automatiquement par le trigger SQL après insertion.
     }
   },
 
