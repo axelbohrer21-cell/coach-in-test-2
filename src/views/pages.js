@@ -7,6 +7,13 @@ import { buildDaySeriesOverview, getWeekProgram, GROUP_SEASON, isPublicHoliday, 
 import { buildSeriesCounters } from '../domain/group-series.js';
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
 
+const PLAYER_ACCENTS = ['#42c7f5','#a78bfa','#54d6a0','#ffad66','#fb7185','#facc15','#2dd4bf','#c084fc'];
+function playerAccent(playerId) {
+  let hash = 0;
+  for (const char of String(playerId || '')) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return PLAYER_ACCENTS[hash % PLAYER_ACCENTS.length];
+}
+
 export const pageMeta = {
   dashboard: ['Vue d’ensemble', 'Tableau de bord', 'Le résumé de ton activité tennis.'],
   players: ['Effectif', 'Mes joueurs', 'Retrouve les profils et les informations de ton effectif.'],
@@ -152,18 +159,6 @@ function playersPage() {
     (p.player_type || 'Loisir') === state.filters.playerType)
   );
 
-  const colors = [
-    '#42c7f5', '#a78bfa', '#54d6a0', '#ffad66',
-    '#fb7185', '#facc15', '#2dd4bf', '#c084fc'
-  ];
-
-  const colorForPlayer = id => {
-    let hash = 0;
-    for (const char of String(id || '')) {
-      hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-    }
-    return colors[hash % colors.length];
-  };
 
   return `<section class="panel">
     <div class="toolbar">
@@ -180,7 +175,7 @@ function playersPage() {
 
     <div class="player-grid">
       ${filtered.map(p => {
-        const color = colorForPlayer(p.id);
+        const color = playerAccent(p.id);
         const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
 
         return `<article class="player-card"
@@ -233,20 +228,24 @@ function planningPage() {
     const disabled=d.getDay()===0||Boolean(schoolBreak)||publicHolidayBlocks;
     const reason=d.getDay()===0?'Dimanche':schoolBreak?('Vacances de '+schoolBreak.label):publicHoliday?(childCollectiveDay?'Jour férié · cours enfants maintenus':'Jour férié'):'';
     const events=[
-      ...state.sessions.filter(s=>s.session_date===iso).map(s=>({time:s.session_time||'08:00',kind:'session',title:playerName(s.player_id),detail:s.theme||'Cours particulier'})),
-      ...state.groupSessions.filter(s=>s.session_date===iso).map(s=>({time:s.start_time||'08:00',kind:'group',title:s.title,detail:s.status==='cancelled'?'ANNULÉ':'Cours collectif',id:s.id,status:s.status}))
+      ...state.sessions.filter(s=>s.session_date===iso).map(s=>({time:s.session_time||'08:00',kind:'session',id:s.id,playerId:s.player_id,title:playerName(s.player_id),detail:s.theme||'Cours particulier',duration:Number(s.duration_minutes||60),court:s.court_number})),
+      ...state.groupSessions.filter(s=>s.session_date===iso).map(s=>({time:s.start_time||'08:00',kind:'group',id:s.id,title:s.title,detail:s.status==='cancelled'?'ANNULÉ':'Cours collectif',duration:Math.max(0,(Number(String(s.end_time||'00:00').slice(0,2))*60+Number(String(s.end_time||'00:00').slice(3,5)))-(Number(String(s.start_time||'00:00').slice(0,2))*60+Number(String(s.start_time||'00:00').slice(3,5)))),court:s.court_number,status:s.status}))
     ];
     const slots=Array.from({length:14},(_,hourIndex)=>{
       const hour=hourIndex+8;const time=String(hour).padStart(2,'0')+':00';
       const inSlot=events.filter(event=>Number(String(event.time).slice(0,2))===hour);
-      const cards=inSlot.map(event=>'<div class="calendar-event '+(event.kind==='group'?'group-event':'')+'"><b>'+formatTime(event.time)+'</b> · '+escapeHtml(event.title)+'<small>'+escapeHtml(event.detail)+'</small>'+(event.kind==='group'&&event.status!=='cancelled'?'<button class="btn subtle" data-edit-group="'+event.id+'">Modifier</button><button class="btn danger" data-cancel-group="'+event.id+'">Annuler</button>':'')+'</div>').join('');
+      const cards=inSlot.map(event=>{
+        const accent=event.kind==='session'?playerAccent(event.playerId):(event.status==='cancelled'?'#64748b':'#a78bfa');
+        const durationLabel=event.duration?`${Math.floor(event.duration/60)} h${event.duration%60?` ${event.duration%60}`:''}`:'';
+        return '<div class="calendar-event '+(event.kind==='group'?'group-event':'player-event')+(event.status==='cancelled'?' event-cancelled':'')+'" data-calendar-event data-event-id="'+escapeHtml(event.id||'')+'" tabindex="0" role="button" aria-pressed="false" aria-label="Sélectionner '+escapeHtml(event.title)+' à '+formatTime(event.time)+'" style="--event-accent:'+accent+'"><div class="calendar-event-main"><b>'+formatTime(event.time)+'</b><strong>'+escapeHtml(event.title)+'</strong><small>'+escapeHtml(event.detail)+(durationLabel?' · '+durationLabel:'')+(event.court?' · Court '+event.court:'')+'</small></div>'+(event.kind==='group'&&event.status!=='cancelled'?'<div class="calendar-event-actions"><button class="btn subtle" data-edit-group="'+event.id+'">Modifier</button><button class="btn danger" data-cancel-group="'+event.id+'">Annuler</button></div>':'')+'</div>';
+      }).join('');
       const addButton=!disabled&&!inSlot.length&&isPrivateLessonDateAllowed(iso)?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'">＋ Cours particulier</button>':'';
       return '<div class="calendar-hour-row"><span class="calendar-hour-label">'+time+'</span><div class="calendar-hour-content">'+cards+addButton+'</div></div>';
     }).join('');
     return '<div class="calendar-day '+(disabled?'calendar-day-disabled':'')+'"><div class="calendar-day-head"><strong>'+['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()]+'</strong><span>'+d.getDate()+'</span></div>'+(reason?'<p class="calendar-day-reason">'+escapeHtml(reason)+'</p>':'')+'<div class="calendar-hours">'+slots+'</div></div>';
   }).join('');
   const label = formatDate(start,{day:'2-digit',month:'short'})+' – '+formatDate(new Date(start.getTime()+6*86400000),{day:'2-digit',month:'short',year:'numeric'});
-  return '<section class="panel" id="weather-panel"><div class="section-heading"><div><p class="eyebrow">MÉTÉO · LA PENNE-SUR-HUVEAUNE</p><h2 id="weather-title">Prévisions météo</h2></div></div><p id="weather-summary" class="muted">Chargement des prévisions de pluie…</p><p class="tiny muted">Source : Open-Meteo · Prévision indicative, à confirmer sur place.</p></section><section class="panel"><div class="section-heading"><div><p class="eyebrow">PLANNING HEBDOMADAIRE · 8 H–22 H</p><h2>'+label+'</h2></div><div class="toolbar"><button class="btn subtle" data-week="-1">←</button><button class="btn subtle" data-week="0">Aujourd’hui</button><button class="btn subtle" data-week="1">→</button><button class="btn primary" data-action="new-session">＋ Cours particulier</button><button class="btn subtle" data-action="new-group-session">＋ Cours collectif</button></div></div><div class="calendar-week">'+days+'</div><p class="tiny muted">Les cours particuliers sont indisponibles pendant les vacances scolaires et les jours fériés (sauf le 8 mai). Les cours collectifs enfants du mercredi et du samedi sont maintenus les jours fériés hors vacances. Les cours collectifs adultes ont lieu les lundis, mardis, jeudis et vendredis.</p></section>';
+  return '<section class="panel" id="weather-panel"><div class="section-heading"><div><p class="eyebrow">MÉTÉO · LA PENNE-SUR-HUVEAUNE</p><h2 id="weather-title">Prévisions météo</h2></div></div><p id="weather-summary" class="muted">Chargement des prévisions de pluie…</p><p class="tiny muted">Source : Open-Meteo · Prévision indicative, à confirmer sur place.</p></section><section class="panel"><div class="section-heading"><div><p class="eyebrow">PLANNING HEBDOMADAIRE · 8 H–22 H</p><h2>'+label+'</h2></div><div class="toolbar"><button class="btn subtle" data-week="-1">←</button><button class="btn subtle" data-week="0">Aujourd’hui</button><button class="btn subtle" data-week="1">→</button><button class="btn primary" data-action="new-session">＋ Cours particulier</button><button class="btn subtle" data-action="new-group-session">＋ Cours collectif</button></div></div><div class="calendar-week">'+days+'</div><p class="tiny muted">Les cours particuliers sont indisponibles pendant les vacances scolaires et les jours fériés (sauf le 8 mai). Les cours collectifs enfants du mercredi et du samedi sont maintenus les jours fériés hors vacances. Les cours collectifs adultes ont lieu les lundis, mardis, jeudis et vendredis. Clique sur une séance pour la mettre en évidence : sa couleur correspond à celle du joueur.</p></section>';
 }
 
 function groupCalendarPage() {
