@@ -38,7 +38,7 @@ export function isPublicHoliday(dateISO, holidays = PUBLIC_HOLIDAYS_2026_2027) {
 
 export function isPrivateLessonDateAllowed(dateISO, options = {}) {
   const { holidays = ZONE_B_HOLIDAYS_2026_2027, publicHolidays = PUBLIC_HOLIDAYS_2026_2027 } = options;
-  return !isSchoolHoliday(dateISO, holidays) && (!isPublicHoliday(dateISO, publicHolidays) || dateISO === '2027-05-08');
+  return parseISO(dateISO).getUTCDay() !== 0 && !isSchoolHoliday(dateISO, holidays) && (!isPublicHoliday(dateISO, publicHolidays) || dateISO === '2027-05-08');
 }
 export function isTeachingDate(dateISO, audience, options = {}) {
   const { holidays = ZONE_B_HOLIDAYS_2026_2027, publicHolidays = PUBLIC_HOLIDAYS_2026_2027 } = options;
