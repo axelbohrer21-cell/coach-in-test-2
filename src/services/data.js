@@ -32,7 +32,7 @@ export const dataService = {
   async loadCoachWorkspace(userId) {
     const links = await unwrap(supabase.from('coach_players').select('player_id').eq('coach_id', userId));
     const playerIds = links.map(link => link.player_id);
-    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations, weeklyAvailability, messages] = await Promise.all([
+    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, weeklyAvailability, messages] = await Promise.all([
       playerIds.length ? unwrap(supabase.from('profiles').select('*').in('id', playerIds).eq('role', 'player').order('last_name')) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('training_sessions').select('*').in('player_id', playerIds).eq('created_by', userId).order('session_date', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('coach_session_notes').select('session_id,note').eq('coach_id', userId)),
@@ -42,6 +42,7 @@ export const dataService = {
       unwrap(supabase.from('booking_requests').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('session_library').select('*').eq('coach_id', userId).order('title')),
       notificationService.listCoach(),
+      notificationService.getPreferences(userId),
       unwrap(supabase.from('criteria_catalog').select('*').eq('coach_id', userId).order('display_order')),
       playerIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', (await unwrap(supabase.from('evaluations').select('id').in('player_id', playerIds).eq('created_by', userId))).map(x => x.id))) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('player_challenges').select('*').in('player_id', playerIds).eq('coach_id', userId).order('created_at', { ascending: false })) : Promise.resolve([]),
@@ -53,15 +54,16 @@ export const dataService = {
     const notesBySession = new Map(privateNotes.map(row => [row.session_id, row.note]));
     const sessions = sessionRows.map(row => ({ ...row, coach_private_notes: notesBySession.get(row.id) || '' }));
     const hydratedMessages=await hydrateMessages(messages);
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, criteria, evaluationCriteria, challenges, achievements, coachInvitations, weeklyAvailability, messages:hydratedMessages });
+    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, weeklyAvailability, messages:hydratedMessages });
   },
 
   async loadPlayerWorkspace() {
-    const [sessions, evaluations, requests, notifications, challenges, achievements, coachLinks] = await Promise.all([
+    const [sessions, evaluations, requests, notifications, notificationPreferences, challenges, achievements, coachLinks] = await Promise.all([
       unwrap(supabase.from('player_sessions').select('*').order('session_date', { ascending: false })),
       unwrap(supabase.from('player_evaluations').select('*').order('evaluated_at', { ascending: false })),
       unwrap(supabase.from('booking_requests').select('*').order('session_date')),
       notificationService.listPlayer(),
+      notificationService.getPreferences(state.user.id),
       unwrap(supabase.from('player_challenges').select('*').eq('player_id', state.user.id).order('created_at', { ascending: false })),
       unwrap(supabase.from('player_achievements').select('*').eq('player_id', state.user.id).order('unlocked_at', { ascending: false })),
       unwrap(supabase.from('coach_players').select('coach_id').eq('player_id', state.user.id))
@@ -73,7 +75,7 @@ export const dataService = {
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const evaluationCriteria = evaluationIds.length ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : [];
     const hydratedMessages=await hydrateMessages(messages);
-    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, challenges, achievements, evaluationCriteria, playerCoaches, weeklyAvailability, messages:hydratedMessages });
+    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, weeklyAvailability, messages:hydratedMessages });
   },
 
   async respondToCoachInvitation(invitationId, accept) {
@@ -118,7 +120,11 @@ export const dataService = {
     if (error) throw error;
     return data;
   },
+  async markMessageRead(messageId) {
+    const {error}=await supabase.rpc('mark_coach_in_message_read',{p_message_id:messageId}); if(error)throw error;
+  },
   async sendMessage({coachId,playerId,senderId,body,file}) {
+    if(!String(body||'').trim()&&!file)throw new Error('Écris un message ou ajoute une pièce jointe.');
     let attachmentPath=null;
     if(file){if(file.size>52428800)throw new Error('Le fichier dépasse 50 Mo.');const allowed=['image/jpeg','image/png','image/webp','image/heic','video/mp4','video/quicktime','application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','text/plain'];if(!allowed.includes(file.type))throw new Error('Type de fichier non autorisé.');const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');attachmentPath=coachId+'/'+playerId+'/'+crypto.randomUUID()+'-'+safeName;const {error:uploadError}=await supabase.storage.from('coach-in-attachments').upload(attachmentPath,file,{contentType:file.type,upsert:false});if(uploadError)throw uploadError;}
     const {data,error}=await supabase.from('coach_player_messages').insert({coach_id:coachId,player_id:playerId,sender_id:senderId,body,attachment_path:attachmentPath,attachment_name:file?.name||null,attachment_mime:file?.type||null,attachment_size:file?.size||null}).select().single();
