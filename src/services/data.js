@@ -95,15 +95,19 @@ export const dataService = {
       ...achievements.map(row => row.coach_id)
     ].filter(Boolean))];
     const historyOnlyIds = historicalCoachIds.filter(id => !coachIds.includes(id));
-    const playerCoaches = coachIds.length ? await unwrap(supabase.from('profiles').select('id,first_name,last_name,email').in('id', coachIds).is('archived_at',null).order('last_name')) : [];
-    const playerCoachHistory = historyOnlyIds.length ? await unwrap(supabase.from('profiles').select('id,first_name,last_name,email,archived_at').in('id', historyOnlyIds).order('last_name')) : [];
+    const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
+    const [playerCoaches, playerCoachHistory, messages, evaluationCriteria] = await Promise.all([
+      coachIds.length ? unwrap(supabase.from('profiles').select('id,first_name,last_name,email').in('id', coachIds).is('archived_at',null).order('last_name')) : Promise.resolve([]),
+      historyOnlyIds.length ? unwrap(supabase.from('profiles').select('id,first_name,last_name,email,archived_at').in('id', historyOnlyIds).order('last_name')) : Promise.resolve([]),
+      unwrap(supabase.from('coach_player_messages').select('*').eq('player_id',state.user.id).order('created_at')),
+      evaluationIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : Promise.resolve([])
+    ]);
     const activeCoachIds = playerCoaches.map(row => row.id);
     const weeklyAvailability = activeCoachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',activeCoachIds).eq('active',true).order('weekday').order('start_time')) : [];
-    const messages = await unwrap(supabase.from('coach_player_messages').select('*').eq('player_id',state.user.id).order('created_at'));
-    const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
-    const evaluationCriteria = evaluationIds.length ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : [];
-    const hydratedMessages=await hydrateMessages(messages);
-    const videoAnalyses=await hydrateVideoAnalyses(videoRows);
+    const [hydratedMessages, videoAnalyses] = await Promise.all([
+      hydrateMessages(messages),
+      hydrateVideoAnalyses(videoRows)
+    ]);
     Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, playerCoachHistory, weeklyAvailability, messages:hydratedMessages, videoAnalyses });
   },
 
