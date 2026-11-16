@@ -802,3 +802,24 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{box-shadow:var(-
 
 /* Générateur guidé de séances */
 .session-builder-tip{padding:13px 15px;border:1px solid #294b6c;border-radius:13px;background:linear-gradient(120deg,#102d49,#172448)}.session-builder-tip strong{display:block;color:#aee9ff;font-size:12px}.session-builder-tip p{margin:6px 0 0;color:#b5c7dd;font-size:12px;line-height:1.55}.session-builder-preview{display:grid;gap:10px;padding:16px;border:1px solid #36709a;border-radius:16px;background:linear-gradient(145deg,#102b46,#111f3b)}.session-builder-preview-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.session-builder-preview-head h3{margin:0;font-size:18px}.session-builder-phase{display:grid;grid-template-columns:1fr auto;gap:5px 12px;padding:11px;border:1px solid #29415f;border-radius:11px;background:#091a2e}.session-builder-phase strong{font-size:12px}.session-builder-phase small{color:#8edfff;font-weight:800}.session-builder-phase p{grid-column:1/-1;margin:0;color:#aebfd4;font-size:11px;line-height:1.5}.session-builder-actions{display:flex;justify-content:flex-end;margin-top:3px}@media(max-width:600px){.session-builder-preview-head{align-items:flex-start}.session-builder-phase{grid-template-columns:1fr}.session-builder-phase small{grid-column:1}.session-builder-actions .btn{width:100%}}
+
+
+/* ===== ANALYSE VIDÉO IA TENNIS ===== */
+.video-upload-panel{border-color:rgba(67,212,242,.3);background:linear-gradient(145deg,rgba(14,39,63,.96),rgba(9,24,43,.94))}
+.video-ai-mark{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#36c8e9,#9b8cff);color:#081426;font-weight:950;font-size:19px;box-shadow:0 8px 24px #42c7f533}
+.video-file-label{display:grid;gap:8px;padding:13px;border:1px dashed #3a6689;border-radius:12px;background:#071a2c;color:#dcecff;font-weight:800}
+.video-file-label input{font-size:12px}.video-file-label small{color:#91a9c2;font-weight:500}
+.video-consent{display:flex;align-items:flex-start;gap:10px;color:#c4d6e9;font-size:12px;line-height:1.5}.video-consent input{width:18px;height:18px;flex:none;accent-color:var(--cyan)}
+.video-privacy-note,.video-limitations{padding:11px 13px;border:1px solid rgba(67,212,242,.17);border-radius:11px;background:rgba(67,212,242,.06);color:#a9c9df;font-size:11px;line-height:1.55}
+.video-analysis-card{display:grid;gap:13px;min-width:0}.video-card-heading{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.video-card-heading h3{margin:4px 0;font-size:17px}.video-card-heading small{color:#8fa7c2;font-size:11px}
+.video-analysis-player{width:100%;max-height:420px;background:#000;border-radius:13px}.video-result{display:grid;gap:12px}
+.video-summary,.video-result-section{padding:13px;border:1px solid rgba(100,150,190,.18);border-radius:12px;background:rgba(5,19,35,.62)}
+.video-summary>b,.video-result-section>b{display:block;margin-bottom:8px;color:#9de6ff;font-size:12px}
+.video-summary p,.video-result-section p{margin:5px 0;color:#c5d5e7;font-size:12px;line-height:1.6;white-space:pre-wrap}
+.video-result-section article{padding:9px 0;border-top:1px solid rgba(100,150,190,.13)}.video-result-section article:first-of-type{border-top:0}
+.video-result-section article strong{font-size:12px;color:#e5f1ff}.video-result-section article small{display:block;color:#9fb4cb;font-size:11px;line-height:1.5}
+.video-result-section ul{margin:5px 0;padding-left:20px;color:#c5d5e7;font-size:12px;line-height:1.7}.video-correction{color:#77dfb0!important}
+.video-review-form{display:grid;gap:9px;padding-top:12px;border-top:1px solid rgba(100,150,190,.17)}.video-review-form label{display:grid;gap:7px;color:#bcd0e5;font-size:12px;font-weight:800}
+.video-review-form textarea{width:100%;padding:10px;border:1px solid #2c4967;border-radius:10px;background:#07182b;color:#eef6ff}.video-review-form .btn{justify-self:start}
+.video-error{margin:0;padding:10px;border-radius:10px;background:rgba(255,130,100,.1);color:#ffb4a1;font-size:11px;line-height:1.5}.video-analysis-card>.btn{justify-self:start}
+@media(max-width:600px){.video-card-heading{display:grid}.video-review-form .btn,.video-analysis-card>.btn{width:100%}}
