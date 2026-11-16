@@ -1,10 +1,12 @@
 import { supabase } from '../core/supabase.js';
 import { validateBooking } from '../domain/tennis.js';
+import { isPrivateLessonDateAllowed } from '../domain/group-calendar.js';
 
 /** Toutes les mutations de réservation passent par des RPC atomiques côté PostgreSQL. */
 export const bookingService = {
   async request({ coachId, date, time, duration, court }) {
     validateBooking({ date, time, duration, court });
+    if (!isPrivateLessonDateAllowed(date)) throw new Error('Les cours particuliers sont suspendus pendant les vacances scolaires et les jours fériés (sauf le 8 mai).');
     const { data, error } = await supabase.rpc('request_private_booking', {
       p_coach_id: coachId,
       p_session_date: date,
