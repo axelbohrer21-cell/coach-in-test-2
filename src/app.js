@@ -7,6 +7,7 @@ import { pageMeta, renderPage } from './views/pages.js';
 import { bookingService } from './services/booking.js';
 import { notificationService } from './services/notifications.js';
 import { calculateAgeCategory, toLocalISO } from './domain/tennis.js';
+import { isTeachingDate, isPrivateLessonDateAllowed, GROUP_SEASON } from './domain/group-calendar.js';
 import { groupCriteria, recommendChallenge, hasEvaluationContent } from './domain/progression.js';
 import { buildSeriesOccurrences } from './domain/group-series.js';
 import { progressionService } from './services/progression.js';
@@ -382,10 +383,12 @@ $('#dialog-content').addEventListener('submit',async event=>{
       else{await dataService.createGroupSeries({coach_id:state.user.id,...seriesPayload});toast('Créneau annuel créé. Tu peux maintenant générer ses dates.');}
     } else if(form.id==='group-session-form'){
       if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
+      if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isTeachingDate(values.session_date,values.audience)) throw new Error('Ce cours collectif ne peut pas être programmé ce jour : vérifie le jour autorisé, les vacances Zone B et les jours fériés.');
       const groupPayload={title:values.title.trim(),theme:values.theme||'',session_date:values.session_date,start_time:values.start_time,end_time:values.end_time,court_number:Number(values.court_number),audience:values.audience};
       if(values.id){await dataService.updateGroupSession(values.id,groupPayload,state.user.id);toast('Cours collectif modifié.');}
       else{await dataService.createGroupSession({coach_id:state.user.id,...groupPayload,status:'scheduled'});toast('Cours collectif ajouté au planning.');}
     } else if(form.id==='session-form'){
+      if(!isPrivateLessonDateAllowed(values.session_date)) throw new Error('Les cours particuliers sont suspendus pendant les vacances scolaires et les jours fériés (sauf le 8 mai).');
       const payload={...values,player_id:values.player_id,created_by:state.user.id,duration_minutes:Number(values.duration_minutes),court_number:Number(values.court_number),status:'Prévue'};
       await dataService.createSession(payload);toast('Séance enregistrée.');
     } else if(form.id==='evaluation-form'){
