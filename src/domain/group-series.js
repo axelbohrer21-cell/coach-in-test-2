@@ -8,7 +8,10 @@ export function buildSeriesCounters(series, sessions, today = new Date().toISOSt
     const cancelled = rows.filter(row => row.status === 'cancelled').length;
     const pastUnrecorded = rows.filter(row => row.status === 'scheduled' && row.session_date < today).length;
     const target = Number(item.target_sessions || (item.audience === 'adultes' ? GROUP_SEASON.adultTarget : GROUP_SEASON.childTarget));
-    return { ...item, completed, planned, pastUnrecorded, cancelled, target, remaining: Math.max(0,target-completed), toSchedule: Math.max(0,target-completed-planned), reached: completed >= target };
+    const eligibleDates = generateTeachingDates({ start: item.season_start || GROUP_SEASON.start, end: item.season_end || GROUP_SEASON.end, audience: item.audience, weekday: Number(item.weekday) });
+    const expectedByNow = Math.min(target, eligibleDates.filter(date => date < today).length);
+    const paceGap = Math.max(0, expectedByNow - completed);
+    return { ...item, completed, planned, pastUnrecorded, cancelled, target, eligibleDates, expectedByNow, paceGap, remaining: Math.max(0,target-completed), toSchedule: Math.max(0,target-completed-planned), reached: completed >= target };
   });
 }
 
