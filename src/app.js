@@ -52,7 +52,7 @@ function render(page) {
   $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
   $('#page-content').innerHTML=renderPage(page);
   if(page==='planning') loadWeatherForecast();
-  if(page==='messages') subscribeToMessages();
+  if(page==='messages'){subscribeToMessages();markVisibleConversationRead();}
   else if(messageChannel){supabase.removeChannel(messageChannel);messageChannel=null;}
 }
 
@@ -134,9 +134,10 @@ $('#page-content').addEventListener('click', async event=>{
   const openNotification=event.target.closest('[data-open-notification]');
   if(openNotification){
     try{
-      await notificationService.markPlayerRead(openNotification.dataset.openNotification);
-      await refreshAndRender();
-      render(openNotification.dataset.targetPath==='reports'?'reports':'dashboard');
+      if(state.profile.role==='coach')await notificationService.markCoachRead(openNotification.dataset.openNotification);else await notificationService.markPlayerRead(openNotification.dataset.openNotification);
+      const path=['reports','messages','sessions','bookings','planning'].includes(openNotification.dataset.targetPath)?openNotification.dataset.targetPath:'dashboard';
+      if(path==='messages'&&openNotification.dataset.partnerId)state.messagePartnerId=openNotification.dataset.partnerId;
+      await refreshAndRender();render(path);
     }catch(error){toast(error.message||'Impossible d’ouvrir cette notification.','error');}
     return;
   }
@@ -382,7 +383,11 @@ $('#dialog-content').addEventListener('change',event=>{if(event.target.name==='a
 $('#dialog-content').addEventListener('submit',async event=>{
   event.preventDefault();const form=event.target;const values=Object.fromEntries(new FormData(form));
   try{
-    if(form.id==='message-form'){
+    if(form.id==='notification-preferences-form'){
+      const preferences=Object.fromEntries(['booking_requests','booking_decisions','booking_changes','reminders_24h','messages','progress','session_changes'].map(key=>[key,form.elements[key].checked]));
+      state.notificationPreferences=await notificationService.savePreferences(state.user.id,preferences);
+      toast('Préférences de notifications enregistrées.');
+    } else if(form.id==='message-form'){
       const file=form.elements.attachment.files[0]||null;
       await dataService.sendMessage({coachId:state.profile.role==='coach'?state.user.id:values.coach_id,playerId:state.profile.role==='coach'?values.player_id:state.user.id,senderId:state.user.id,body:values.body.trim(),file});
       toast('Message envoyé.');
@@ -493,6 +498,11 @@ async function cancelBooking(id){
 }
 async function markNotificationRead(id){
   try{if(state.profile.role==='coach')await notificationService.markCoachRead(id);else await notificationService.markPlayerRead(id);await refreshAndRender();render('notifications');}catch(e){toast(e.message,'error');}
+}
+async function markVisibleConversationRead(){
+  if(state.currentPage!=='messages'||!state.messagePartnerId)return;
+  const incoming=(state.messages||[]).filter(m=>m.sender_id!==state.user.id&&!m.read_at&&(state.profile.role==='coach'?m.player_id===state.messagePartnerId:m.coach_id===state.messagePartnerId));
+  for(const message of incoming){try{await dataService.markMessageRead(message.id);message.read_at=new Date().toISOString();}catch(error){toast(error.message||'Lecture du message impossible.','error');}}
 }
 function filterLibrary(){
   const normalize=value=>String(value||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
