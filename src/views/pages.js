@@ -314,7 +314,7 @@ function playerProgressPage() {
   const improvementCount = criteria.filter(row => row.criterion_type === 'improvement').length;
   const achievements = state.achievements;
   const coachName = id => {
-    const coach = state.playerCoaches.find(row => row.id === id);
+    const coach = [...(state.playerCoaches||[]),...(state.playerCoachHistory||[])].find(row => row.id === id);
     return coach ? ([coach.first_name, coach.last_name].filter(Boolean).join(' ') || coach.email || 'Coach') : 'Coach';
   };
   const themeCounts = new Map();
