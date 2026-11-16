@@ -1,0 +1,2 @@
+-- Replaces the two previously partial return-of-serve lists with the 45 coach-approved criteria.
+-- See the applied migration in production for the exact values.
