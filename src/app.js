@@ -253,6 +253,8 @@ async function submitVideoAnalysis(form){
   let analysisId=null,videoPath=null;
   try{
     const {duration,frames}=await extractVideoFrames(file);
+    const totalFrameBytes=frames.reduce((total,frame)=>total+frame.data_url.length,0);
+    if(totalFrameBytes>6500000)throw new Error('Les images extraites sont trop volumineuses pour une analyse fiable. Essaie une vidéo plus courte.');
     analysisId=crypto.randomUUID();
     const extension=file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4';
     videoPath=state.user.id+'/'+playerId+'/'+analysisId+'/original.'+extension;
@@ -263,9 +265,8 @@ async function submitVideoAnalysis(form){
     button.textContent='Analyse IA en cours…';
     const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,frames}});
     if(error||data?.error){
-      const message=data?.error||error?.message||'Le service IA n’a pas répondu.';
-      await supabase.from('coach_video_analyses').update({status:'failed',analysis_error:String(message).slice(0,500)}).eq('id',analysisId);
-      throw new Error(message);
+      const {data:latest}=await supabase.from('coach_video_analyses').select('status').eq('id',analysisId).maybeSingle();
+      if(latest?.status!=='completed')throw new Error(data?.error||error?.message||'Le service IA n’a pas répondu. Vérifie le statut avant de relancer.');
     }
     toast('Analyse terminée. Vérifie les observations avant de les transmettre au joueur.');
     await dataService.loadCoachWorkspace(state.user.id);render('videos');
