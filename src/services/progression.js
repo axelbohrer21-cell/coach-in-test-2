@@ -43,24 +43,57 @@ return evaluation;
   },
 
   async refreshAchievements(playerId, coachId) {
-    const history = await rows(supabase.from('evaluation_criteria').select('evaluation_id,criterion_id,criterion_type').eq('criterion_type','positive').not('criterion_id','is',null));
+    // Ne lire que les bilans de ce joueur créés par ce coach : les réussites
+    // restent ainsi strictement cloisonnées entre les différents coachs.
     const [playerEvaluations, existing] = await Promise.all([
       rows(supabase.from('evaluations').select('id').eq('player_id', playerId).eq('created_by', coachId)),
       rows(supabase.from('player_achievements').select('criterion_id').eq('player_id', playerId).eq('coach_id', coachId))
     ]);
-    const ids = new Set(playerEvaluations.map(x => x.id));
-    const playerRows = history.filter(x => ids.has(x.evaluation_id));
-    const earned = newlyUnlockedAchievements(playerRows, existing.map(x => x.criterion_id));
+
+    const evaluationIds = playerEvaluations.map(row => row.id);
+    if (!evaluationIds.length) return;
+
+    const history = await rows(
+      supabase.from('evaluation_criteria')
+        .select('evaluation_id,criterion_id,criterion_type')
+        .in('evaluation_id', evaluationIds)
+        .eq('criterion_type', 'positive')
+        .not('criterion_id', 'is', null)
+    );
+
+    // newlyUnlockedAchievements compte les bilans distincts, pas les clics :
+    // un même critère doit être positif dans au moins trois bilans différents.
+    const earned = newlyUnlockedAchievements(history, existing.map(row => row.criterion_id));
     if (!earned.length) return;
-    const catalogIds = earned.map(x => x.criterion_id);
-    const catalog = await rows(supabase.from('criteria_catalog').select('id,criterion').in('id',catalogIds));
-    const names = new Map(catalog.map(x => [x.id,x.criterion]));
-    const inserts = earned.map(x => ({ coach_id:coachId, player_id:playerId, criterion_id:x.criterion_id, criterion:names.get(x.criterion_id)||'Compétence validée', validation_count:x.validation_count }));
-    const { data: existingAfterCheck, error: checkError } = await supabase.from('player_achievements').select('criterion_id').eq('player_id',playerId).eq('coach_id',coachId).eq('coach_id',coachId);
+
+    const catalogIds = earned.map(row => row.criterion_id);
+    const catalog = await rows(
+      supabase.from('criteria_catalog').select('id,criterion').in('id', catalogIds)
+    );
+    const names = new Map(catalog.map(row => [row.id, row.criterion]));
+    const inserts = earned.map(row => ({
+      coach_id: coachId,
+      player_id: playerId,
+      criterion_id: row.criterion_id,
+      criterion: names.get(row.criterion_id) || 'Compétence validée',
+      validation_count: row.validation_count
+    }));
+
+    // Relecture juste avant insertion pour éviter de recréer une réussite déjà
+    // débloquée si deux enregistrements de bilan arrivent presque simultanément.
+    const { data: existingNow, error: checkError } = await supabase
+      .from('player_achievements')
+      .select('criterion_id')
+      .eq('player_id', playerId)
+      .eq('coach_id', coachId);
     if (checkError) throw checkError;
-    const known = new Set((existingAfterCheck||[]).map(x=>x.criterion_id));
-    const missing = inserts.filter(x=>!known.has(x.criterion_id));
-    if (missing.length) { const { error } = await supabase.from('player_achievements').insert(missing); if (error && error.code !== '23505') throw error; }
+
+    const known = new Set((existingNow || []).map(row => row.criterion_id));
+    const missing = inserts.filter(row => !known.has(row.criterion_id));
+    if (!missing.length) return;
+
+    const { error: insertError } = await supabase.from('player_achievements').insert(missing);
+    if (insertError && insertError.code !== '23505') throw insertError;
   },
 
   async updateActiveChallenge(playerId, coachId, selectedRows) {
