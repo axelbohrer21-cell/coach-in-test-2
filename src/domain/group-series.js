@@ -1,4 +1,4 @@
-import { GROUP_SEASON, generateTeachingDates } from './group-calendar.js';
+import { GROUP_SEASON, generateTeachingDates, isWithinTeachingWindow } from './group-calendar.js';
 
 export function buildSeriesCounters(series, sessions, today = new Date().toISOString().slice(0,10)) {
   return series.map(item => {
@@ -22,6 +22,7 @@ export function buildSeriesOccurrences(series, { start = GROUP_SEASON.start, end
   if (!series.start_time || !series.end_time || series.end_time <= series.start_time) throw new TypeError('Horaires du créneau invalides.');
   if (!Number.isInteger(Number(series.court_number)) || Number(series.court_number) < 1 || Number(series.court_number) > 4) throw new TypeError('Court invalide.');
   const dates = generateTeachingDates({ start: series.season_start || start, end: series.season_end || end, audience: series.audience, weekday: Number(series.weekday) });
+  if (dates.some(date => !isWithinTeachingWindow(date, series.start_time, series.end_time))) throw new RangeError('Les cours enfants doivent respecter les horaires du mercredi (9 h 30–18 h) ou du samedi (9 h 30–14 h 30).');
   return dates.map(session_date => ({
     coach_id: series.coach_id, series_id: series.id, title: series.title,
     theme: series.theme || '', session_date, start_time: series.start_time,
