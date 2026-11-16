@@ -323,9 +323,16 @@
     {
       "main_theme": "Service",
       "subtheme": "Service",
-      "criterion": "Lancer latéral prononcé",
+      "criterion": "Lancer trop loin sur le côté",
       "criterion_type": "improvement",
       "display_order": 3
+    },
+    {
+      "main_theme": "Service",
+      "subtheme": "Service",
+      "criterion": "Rythme irrégulier",
+      "criterion_type": "improvement",
+      "display_order": 4
     },
     {
       "main_theme": "Service",
@@ -704,6 +711,118 @@
       "criterion": "Vitesse de réaction",
       "criterion_type": "positive",
       "display_order": 14
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Concentration",
+      "criterion": "Baisse de concentration pendant le point",
+      "criterion_type": "improvement",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Concentration",
+      "criterion": "Difficulté à rester concentré entre les points",
+      "criterion_type": "improvement",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Concentration",
+      "criterion": "Distraction fréquente",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Concentration",
+      "criterion": "Difficulté à se recentrer",
+      "criterion_type": "improvement",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Concentration",
+      "criterion": "Concentration maintenue pendant le point",
+      "criterion_type": "positive",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Concentration",
+      "criterion": "Capacité à rester concentré entre les points",
+      "criterion_type": "positive",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Concentration",
+      "criterion": "Attention portée aux consignes",
+      "criterion_type": "positive",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Concentration",
+      "criterion": "Recentrage rapide après une distraction",
+      "criterion_type": "positive",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion des émotions",
+      "criterion": "Attitude négative après une erreur",
+      "criterion_type": "improvement",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion des émotions",
+      "criterion": "Frustration difficile à maîtriser",
+      "criterion_type": "improvement",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion des émotions",
+      "criterion": "Réactions excessives après un point perdu",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion des émotions",
+      "criterion": "Difficulté à gérer les moments difficiles",
+      "criterion_type": "improvement",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion des émotions",
+      "criterion": "Attitude positive après une erreur",
+      "criterion_type": "positive",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion des émotions",
+      "criterion": "Gestion maîtrisée de la frustration",
+      "criterion_type": "positive",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion des émotions",
+      "criterion": "Maîtrise des émotions dans les moments difficiles",
+      "criterion_type": "positive",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Mental",
+      "subtheme": "Gestion des émotions",
+      "criterion": "Réaction constructive après un point perdu",
+      "criterion_type": "positive",
+      "display_order": 4
     }
   ],
   "missing_exact_lists": [
