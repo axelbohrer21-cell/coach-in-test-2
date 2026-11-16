@@ -105,6 +105,7 @@ $('#page-content').addEventListener('click', async event=>{
   const revokeShare=event.target.closest('[data-revoke-coach-share]'); if(revokeShare) return revokeCoachShare(revokeShare.dataset.revokeCoachShare,revokeShare.dataset.playerId);
   const action=event.target.closest('[data-action]')?.dataset.action;
   if(action==='generate-session') return sessionBuilderDialog();
+  const deleteVideo=event.target.closest('[data-delete-video]'); if(deleteVideo)return showDialog('<div class="dialog-head"><div><p class="eyebrow">CONFIDENTIALITÉ</p><h2>Supprimer cette vidéo ?</h2><p class="tiny muted">La vidéo originale et son analyse seront définitivement supprimées.</p></div><button class="btn icon-btn" data-close>✕</button></div><div class="dialog-actions"><button class="btn subtle" data-close>Annuler</button><button class="btn danger" data-confirm-delete-video="'+deleteVideo.dataset.deleteVideo+'">Supprimer définitivement</button></div>');
   const shareVideo=event.target.closest('[data-share-video]'); if(shareVideo) return toggleVideoShare(shareVideo.dataset.shareVideo,shareVideo.dataset.shared==='true');
   if(action==='new-session') return sessionDialog();
   if(action==='add-availability') return availabilityDialog();
@@ -178,6 +179,8 @@ $('#dialog-content').addEventListener('click',async event=>{
     }
     return;
   }
+  const confirmVideoDelete=event.target.closest('[data-confirm-delete-video]');
+  if(confirmVideoDelete){confirmVideoDelete.disabled=true;await deleteVideoAnalysis(confirmVideoDelete.dataset.confirmDeleteVideo);return;}
   if(event.target.closest('[data-close]'))closeDialog();
 });
 $('#dialog-content').addEventListener('change',event=>{
@@ -279,6 +282,22 @@ async function toggleVideoShare(id,current){
   try{const {error}=await supabase.from('coach_video_analyses').update({shared_with_player:!current,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id);if(error)throw error;await dataService.loadCoachWorkspace(state.user.id);render('videos');toast(!current?'Analyse partagée avec le joueur.':'Partage retiré.');}
   catch(error){toast(error.message||'Impossible de modifier le partage.','error');}
 }
+async function deleteVideoAnalysis(id){
+  const row=(state.videoAnalyses||[]).find(item=>item.id===id);
+  if(!row){toast('Cette vidéo est introuvable.','error');return;}
+  try{
+    if(row.video_path){
+      const {error:storageError}=await supabase.storage.from('coach-in-videos').remove([row.video_path]);
+      if(storageError)throw storageError;
+    }
+    const {error}=await supabase.from('coach_video_analyses').delete().eq('id',id).eq('coach_id',state.user.id);
+    if(error)throw error;
+    closeDialog();
+    await dataService.loadCoachWorkspace(state.user.id);render('videos');
+    toast('Vidéo et analyse supprimées.');
+  }catch(error){toast(error.message||'Impossible de supprimer cette vidéo.','error');}
+}
+
 async function saveVideoReview(form){
   const id=form.elements.analysis_id.value,review=String(form.elements.coach_review.value||'').trim();
   try{const {error}=await supabase.from('coach_video_analyses').update({coach_review:review,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id);if(error)throw error;await dataService.loadCoachWorkspace(state.user.id);render('videos');toast('Commentaire coach enregistré.');}
