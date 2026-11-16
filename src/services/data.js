@@ -8,20 +8,22 @@ async function unwrap(query) {
   return data ?? [];
 }
 
+async function hydrateStorageUrls(rows, bucket, pathKey, urlKey) {
+  const source = rows || [];
+  const paths = [...new Set(source.map(row => row[pathKey]).filter(Boolean))];
+  if (!paths.length) return source;
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrls(paths, 3600);
+  const urls = new Map((data || []).map(item => [item.path, item.signedUrl || null]));
+  if (error) return source.map(row => row[pathKey] ? { ...row, [urlKey]: null } : row);
+  return source.map(row => row[pathKey] ? { ...row, [urlKey]: urls.get(row[pathKey]) || null } : row);
+}
+
 async function hydrateMessages(rows) {
-  return Promise.all((rows||[]).map(async row=>{
-    if(!row.attachment_path)return row;
-    const {data,error}=await supabase.storage.from('coach-in-attachments').createSignedUrl(row.attachment_path,3600);
-    return {...row,attachment_url:error?null:data?.signedUrl||null};
-  }));
+  return hydrateStorageUrls(rows, 'coach-in-attachments', 'attachment_path', 'attachment_url');
 }
 
 async function hydrateVideoAnalyses(rows) {
-  return Promise.all((rows||[]).map(async row=>{
-    if(!row.video_path)return row;
-    const {data,error}=await supabase.storage.from('coach-in-videos').createSignedUrl(row.video_path,3600);
-    return {...row,video_url:error?null:data?.signedUrl||null};
-  }));
+  return hydrateStorageUrls(rows, 'coach-in-videos', 'video_path', 'video_url');
 }
 
 export const dataService = {
@@ -52,7 +54,7 @@ export const dataService = {
       notificationService.listCoach(),
       notificationService.getPreferences(userId),
       unwrap(supabase.from('criteria_catalog').select('*').eq('coach_id', userId).order('display_order')),
-      playerIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', (await unwrap(supabase.from('evaluations').select('id').in('player_id', playerIds).eq('created_by', userId))).map(x => x.id))) : Promise.resolve([]),
+      Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('player_challenges').select('*').in('player_id', playerIds).eq('coach_id', userId).order('created_at', { ascending: false })) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('player_achievements').select('*').in('player_id', playerIds).eq('coach_id', userId).order('unlocked_at', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('coach_player_invitation_inbox').select('*').order('created_at', { ascending: false })),
@@ -61,6 +63,10 @@ export const dataService = {
       unwrap(supabase.from('coach_player_messages').select('*').eq('coach_id',userId).order('created_at')),
       unwrap(supabase.from('coach_video_analyses').select('*').eq('coach_id',userId).order('created_at',{ascending:false}))
     ]);
+    const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
+    const evaluationCriteria = evaluationIds.length
+      ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds))
+      : [];
     const notesBySession = new Map(privateNotes.map(row => [row.session_id, row.note]));
     const sessions = sessionRows.map(row => ({ ...row, coach_private_notes: notesBySession.get(row.id) || '' }));
     const hydratedMessages=await hydrateMessages(messages);
