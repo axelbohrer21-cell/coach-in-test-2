@@ -15,6 +15,55 @@
     {
       "main_theme": "Coup droit",
       "subtheme": "Coup droit",
+      "criterion": "Accompagnement insuffisant après l’impact",
+      "criterion_type": "improvement",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Coup droit",
+      "subtheme": "Coup droit",
+      "criterion": "Distance balle-corps mal ajustée",
+      "criterion_type": "improvement",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Coup droit",
+      "subtheme": "Coup droit",
+      "criterion": "Manque d’accélération à l’impact",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Coup droit",
+      "subtheme": "Coup droit",
+      "criterion": "Plan de frappe trop tardif",
+      "criterion_type": "improvement",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Coup droit",
+      "subtheme": "Coup droit",
+      "criterion": "Préparation de raquette tardive",
+      "criterion_type": "improvement",
+      "display_order": 5
+    },
+    {
+      "main_theme": "Coup droit",
+      "subtheme": "Coup droit",
+      "criterion": "Prise de balle trop basse",
+      "criterion_type": "improvement",
+      "display_order": 6
+    },
+    {
+      "main_theme": "Coup droit",
+      "subtheme": "Coup droit",
+      "criterion": "Transfert du poids du corps insuffisant",
+      "criterion_type": "improvement",
+      "display_order": 7
+    },
+    {
+      "main_theme": "Coup droit",
+      "subtheme": "Coup droit",
       "criterion": "Accélération de la tête de raquette",
       "criterion_type": "positive",
       "display_order": 1
@@ -88,55 +137,6 @@
       "criterion": "Variation des trajectoires et des hauteurs",
       "criterion_type": "positive",
       "display_order": 11
-    },
-    {
-      "main_theme": "Coup droit",
-      "subtheme": "Coup droit",
-      "criterion": "Accompagnement insuffisant après l’impact",
-      "criterion_type": "improvement",
-      "display_order": 1
-    },
-    {
-      "main_theme": "Coup droit",
-      "subtheme": "Coup droit",
-      "criterion": "Distance balle-corps mal ajustée",
-      "criterion_type": "improvement",
-      "display_order": 2
-    },
-    {
-      "main_theme": "Coup droit",
-      "subtheme": "Coup droit",
-      "criterion": "Manque d’accélération à l’impact",
-      "criterion_type": "improvement",
-      "display_order": 3
-    },
-    {
-      "main_theme": "Coup droit",
-      "subtheme": "Coup droit",
-      "criterion": "Plan de frappe trop tardif",
-      "criterion_type": "improvement",
-      "display_order": 4
-    },
-    {
-      "main_theme": "Coup droit",
-      "subtheme": "Coup droit",
-      "criterion": "Préparation de raquette tardive",
-      "criterion_type": "improvement",
-      "display_order": 5
-    },
-    {
-      "main_theme": "Coup droit",
-      "subtheme": "Coup droit",
-      "criterion": "Prise de balle trop basse",
-      "criterion_type": "improvement",
-      "display_order": 6
-    },
-    {
-      "main_theme": "Coup droit",
-      "subtheme": "Coup droit",
-      "criterion": "Transfert du poids du corps insuffisant",
-      "criterion_type": "improvement",
-      "display_order": 7
     },
     {
       "main_theme": "Revers",
@@ -307,95 +307,39 @@
       "display_order": 2
     },
     {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Adaptation du jeu au profil de l’adversaire",
+      "main_theme": "Service",
+      "subtheme": "Service",
+      "criterion": "Lancer trop devant",
+      "criterion_type": "improvement",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Service",
+      "subtheme": "Service",
+      "criterion": "Lancer trop derrière",
+      "criterion_type": "improvement",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Service",
+      "subtheme": "Service",
+      "criterion": "Lancer latéral prononcé",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Service",
+      "subtheme": "Service",
+      "criterion": "Coude haut",
       "criterion_type": "positive",
       "display_order": 1
     },
     {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Anticipation des intentions adverses",
+      "main_theme": "Service",
+      "subtheme": "Service",
+      "criterion": "Rythme de la préparation et de la frappe",
       "criterion_type": "positive",
       "display_order": 2
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Construction du point",
-      "criterion_type": "positive",
-      "display_order": 3
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Exploitation des espaces libres",
-      "criterion_type": "positive",
-      "display_order": 4
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Gestion des changements de rythme",
-      "criterion_type": "positive",
-      "display_order": 5
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Identification des points faibles adverses",
-      "criterion_type": "positive",
-      "display_order": 6
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Prise d’initiative",
-      "criterion_type": "positive",
-      "display_order": 7
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Utilisation des angles",
-      "criterion_type": "positive",
-      "display_order": 8
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Utilisation des zones de sécurité",
-      "criterion_type": "positive",
-      "display_order": 9
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Variation des directions",
-      "criterion_type": "positive",
-      "display_order": 10
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Variation des longueurs",
-      "criterion_type": "positive",
-      "display_order": 11
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Variation des trajectoires",
-      "criterion_type": "positive",
-      "display_order": 12
-    },
-    {
-      "main_theme": "Tactique",
-      "subtheme": "Tactique",
-      "criterion": "Variation des effets",
-      "criterion_type": "positive",
-      "display_order": 13
     },
     {
       "main_theme": "Tactique",
@@ -487,6 +431,181 @@
       "criterion": "Précipitation dans la construction du point",
       "criterion_type": "improvement",
       "display_order": 13
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Adaptation du jeu au profil de l’adversaire",
+      "criterion_type": "positive",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Anticipation des intentions adverses",
+      "criterion_type": "positive",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Construction du point",
+      "criterion_type": "positive",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Exploitation des espaces libres",
+      "criterion_type": "positive",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Gestion des changements de rythme",
+      "criterion_type": "positive",
+      "display_order": 5
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Identification des points faibles adverses",
+      "criterion_type": "positive",
+      "display_order": 6
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Prise d’initiative",
+      "criterion_type": "positive",
+      "display_order": 7
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Utilisation des angles",
+      "criterion_type": "positive",
+      "display_order": 8
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Utilisation des zones de sécurité",
+      "criterion_type": "positive",
+      "display_order": 9
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Variation des directions",
+      "criterion_type": "positive",
+      "display_order": 10
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Variation des longueurs",
+      "criterion_type": "positive",
+      "display_order": 11
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Variation des trajectoires",
+      "criterion_type": "positive",
+      "display_order": 12
+    },
+    {
+      "main_theme": "Tactique",
+      "subtheme": "Tactique",
+      "criterion": "Variation des effets",
+      "criterion_type": "positive",
+      "display_order": 13
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Accélération insuffisante",
+      "criterion_type": "improvement",
+      "display_order": 1
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Rapidité insuffisante dans les changements de direction",
+      "criterion_type": "improvement",
+      "display_order": 2
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Baisse d’intensité au fil du match",
+      "criterion_type": "improvement",
+      "display_order": 3
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Capacité limitée à répéter les efforts intenses",
+      "criterion_type": "improvement",
+      "display_order": 4
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Coordination générale insuffisante",
+      "criterion_type": "improvement",
+      "display_order": 5
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Coordination œil-main à améliorer",
+      "criterion_type": "improvement",
+      "display_order": 6
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Endurance insuffisante",
+      "criterion_type": "improvement",
+      "display_order": 7
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Explosivité des jambes limitée",
+      "criterion_type": "improvement",
+      "display_order": 8
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Mobilité articulaire limitée",
+      "criterion_type": "improvement",
+      "display_order": 9
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Puissance physique insuffisante",
+      "criterion_type": "improvement",
+      "display_order": 10
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Réactivité insuffisante",
+      "criterion_type": "improvement",
+      "display_order": 11
+    },
+    {
+      "main_theme": "Physique",
+      "subtheme": "Physique",
+      "criterion": "Récupération trop lente entre les efforts",
+      "criterion_type": "improvement",
+      "display_order": 12
     },
     {
       "main_theme": "Physique",
@@ -585,90 +704,6 @@
       "criterion": "Vitesse de réaction",
       "criterion_type": "positive",
       "display_order": 14
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Accélération insuffisante",
-      "criterion_type": "improvement",
-      "display_order": 1
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Rapidité insuffisante dans les changements de direction",
-      "criterion_type": "improvement",
-      "display_order": 2
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Baisse d’intensité au fil du match",
-      "criterion_type": "improvement",
-      "display_order": 3
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Capacité limitée à répéter les efforts intenses",
-      "criterion_type": "improvement",
-      "display_order": 4
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Coordination générale insuffisante",
-      "criterion_type": "improvement",
-      "display_order": 5
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Coordination œil-main à améliorer",
-      "criterion_type": "improvement",
-      "display_order": 6
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Endurance insuffisante",
-      "criterion_type": "improvement",
-      "display_order": 7
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Explosivité des jambes limitée",
-      "criterion_type": "improvement",
-      "display_order": 8
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Mobilité articulaire limitée",
-      "criterion_type": "improvement",
-      "display_order": 9
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Puissance physique insuffisante",
-      "criterion_type": "improvement",
-      "display_order": 10
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Réactivité insuffisante",
-      "criterion_type": "improvement",
-      "display_order": 11
-    },
-    {
-      "main_theme": "Physique",
-      "subtheme": "Physique",
-      "criterion": "Récupération trop lente entre les efforts",
-      "criterion_type": "improvement",
-      "display_order": 12
     }
   ],
   "missing_exact_lists": [
