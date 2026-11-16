@@ -16,6 +16,14 @@ async function hydrateMessages(rows) {
   }));
 }
 
+async function hydrateVideoAnalyses(rows) {
+  return Promise.all((rows||[]).map(async row=>{
+    if(!row.video_path)return row;
+    const {data,error}=await supabase.storage.from('coach-in-videos').createSignedUrl(row.video_path,3600);
+    return {...row,video_url:error?null:data?.signedUrl||null};
+  }));
+}
+
 export const dataService = {
   async loadAdminWorkspace() {
     const { data, error } = await supabase.from('profiles').select('id,email,first_name,last_name,created_at,archived_at,is_admin').eq('role','coach').order('last_name');
@@ -32,7 +40,7 @@ export const dataService = {
   async loadCoachWorkspace(userId) {
     const links = await unwrap(supabase.from('coach_players').select('player_id').eq('coach_id', userId));
     const playerIds = links.map(link => link.player_id);
-    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages] = await Promise.all([
+    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages, videoRows] = await Promise.all([
       playerIds.length ? unwrap(supabase.from('profiles').select('*').in('id', playerIds).eq('role', 'player').order('last_name')) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('training_sessions').select('*').in('player_id', playerIds).eq('created_by', userId).order('session_date', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('coach_session_notes').select('session_id,note').eq('coach_id', userId)),
@@ -50,16 +58,18 @@ export const dataService = {
       unwrap(supabase.from('coach_player_invitation_inbox').select('*').order('created_at', { ascending: false })),
       unwrap(supabase.from('coach_player_invitations').select('id,player_id,invited_coach_email,status,created_at').eq('inviter_coach_id',userId).in('status',['pending','accepted']).order('created_at',{ascending:false})),
       unwrap(supabase.from('coach_weekly_availability').select('*').eq('coach_id',userId).order('weekday').order('start_time')),
-      unwrap(supabase.from('coach_player_messages').select('*').eq('coach_id',userId).order('created_at'))
+      unwrap(supabase.from('coach_player_messages').select('*').eq('coach_id',userId).order('created_at')),
+      unwrap(supabase.from('coach_video_analyses').select('*').eq('coach_id',userId).order('created_at',{ascending:false}))
     ]);
     const notesBySession = new Map(privateNotes.map(row => [row.session_id, row.note]));
     const sessions = sessionRows.map(row => ({ ...row, coach_private_notes: notesBySession.get(row.id) || '' }));
     const hydratedMessages=await hydrateMessages(messages);
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages });
+    const videoAnalyses=await hydrateVideoAnalyses(videoRows);
+    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses });
   },
 
   async loadPlayerWorkspace() {
-    const [sessions, evaluations, requests, notifications, notificationPreferences, challenges, achievements, coachLinks] = await Promise.all([
+    const [sessions, evaluations, requests, notifications, notificationPreferences, challenges, achievements, coachLinks, videoRows] = await Promise.all([
       unwrap(supabase.from('player_sessions').select('*').order('session_date', { ascending: false })),
       unwrap(supabase.from('player_evaluations').select('*').order('evaluated_at', { ascending: false })),
       unwrap(supabase.from('booking_requests').select('*').order('session_date')),
@@ -67,7 +77,8 @@ export const dataService = {
       notificationService.getPreferences(state.user.id),
       unwrap(supabase.from('player_challenges').select('*').eq('player_id', state.user.id).order('created_at', { ascending: false })),
       unwrap(supabase.from('player_achievements').select('*').eq('player_id', state.user.id).order('unlocked_at', { ascending: false })),
-      unwrap(supabase.from('coach_players').select('coach_id').eq('player_id', state.user.id))
+      unwrap(supabase.from('coach_players').select('coach_id').eq('player_id', state.user.id)),
+      unwrap(supabase.from('coach_video_analyses').select('*').eq('player_id',state.user.id).eq('shared_with_player',true).order('created_at',{ascending:false}))
     ]);
     const coachIds = coachLinks.map(row => row.coach_id);
     const historicalCoachIds = [...new Set([
@@ -85,7 +96,8 @@ export const dataService = {
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const evaluationCriteria = evaluationIds.length ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : [];
     const hydratedMessages=await hydrateMessages(messages);
-    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, playerCoachHistory, weeklyAvailability, messages:hydratedMessages });
+    const videoAnalyses=await hydrateVideoAnalyses(videoRows);
+    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, playerCoachHistory, weeklyAvailability, messages:hydratedMessages, videoAnalyses });
   },
 
   async revokeCoachPlayerInvitation(invitationId) {
