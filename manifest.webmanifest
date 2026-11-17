@@ -1,0 +1,28 @@
+{
+  "id": "./",
+  "name": "Coach In — Tennis",
+  "short_name": "Coach In",
+  "description": "Ton espace tennis : séances, progression, réservations et vie du club.",
+  "lang": "fr-FR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#071326",
+  "theme_color": "#081426",
+  "categories": ["sports", "education", "productivity"],
+  "icons": [
+    {
+      "src": "./icons/coach-in.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/coach-in.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
