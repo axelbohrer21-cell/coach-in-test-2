@@ -207,6 +207,7 @@ $('#dialog-content').addEventListener('change',event=>{
     const form=event.target.closest('#evaluation-form');
     if(form){form.dataset.criteriaConfirmed='false';const confirm=form.querySelector('[data-confirm-criteria]');if(confirm){confirm.textContent='Valider les critères ✓';confirm.classList.remove('criteria-confirmed');}const title=form.querySelector('[data-validation-title]');if(title)title.textContent='Sélection à confirmer';const hint=form.querySelector('[data-validation-hint]');if(hint)hint.textContent='Ta sélection a changé : valide-la à nouveau.';updateEvaluationSelectionUI();}
   }
+  if(event.target.name==='player_id'&&event.target.form?.id==='session-builder-form')applySessionRecommendationToBuilder(event.target.value);
 });
 $('#page-content').addEventListener('submit',async event=>{
   const videoForm=event.target.closest('#video-analysis-form');
