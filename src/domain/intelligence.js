@@ -1,4 +1,5 @@
 /** Analyses déterministes de progression. Les données restent dans l'espace du coach connecté. */
+import { recommendSessionExercises } from './session-recommendations.js';
 const SCORE_FIELDS = [
   ['Technique', 'technical_score'],
   ['Tactique', 'tactical_score'],
@@ -144,5 +145,49 @@ export function buildCoachIntelligence({ players = [], evaluations = [], evaluat
     reportsToRefresh: insights.filter(row => row.reportAgeDays !== null && row.reportAgeDays > 30).length,
     playersWithPriority: insights.filter(row => row.priority).length,
     recurringThemes
+  };
+}
+
+
+/**
+ * Construit un cycle pédagogique de quatre semaines à partir des données réelles
+ * du joueur. Le programme reste une proposition coach, jamais une réservation automatique.
+ */
+export function buildAdaptiveTrainingProgram({ player, evaluations = [], evaluationCriteria = [], sessions = [], videoAnalyses = [], challenges = [], library = [], now = Date.now() } = {}) {
+  if (!player?.id) return { ready: false, reason: 'Joueur introuvable.', weeks: [] };
+  const analysis = analyzePlayerProgress({ player, evaluations, evaluationCriteria, sessions, videoAnalyses, challenges, now });
+  if (analysis.reportCount < 2 || analysis.fourWeekPlan.length !== 4) {
+    return {
+      ready: false,
+      reason: 'Il faut au moins deux bilans pour construire un cycle personnalisé fiable.',
+      analysis,
+      weeks: []
+    };
+  }
+  const recommendation = recommendSessionExercises({
+    playerId: player.id, evaluations, evaluationCriteria, library, sessions, challenges, videoAnalyses
+  });
+  const exercises = [recommendation?.exerciseOne, recommendation?.exerciseTwo].filter(Boolean);
+  const weeks = analysis.fourWeekPlan.map((phase, index) => ({
+    ...phase,
+    exercise: exercises.length ? exercises[index % exercises.length] : null,
+    focus: analysis.priority?.criterion || analysis.suggestedFocus,
+    stage: ['Repères', 'Variabilité', 'Décision', 'Transfert'][index],
+    coachAction: [
+      'Installer le geste et stabiliser la réussite.',
+      'Faire varier une seule contrainte à la fois.',
+      'Laisser le joueur lire la situation et choisir.',
+      'Vérifier le transfert en points et actualiser le bilan.'
+    ][index]
+  }));
+  return {
+    ready: true,
+    playerId: player.id,
+    playerName: analysis.playerName,
+    focus: analysis.priority?.criterion || analysis.suggestedFocus,
+    status: analysis.status,
+    reason: recommendation?.reason || 'Cycle construit à partir des bilans disponibles.',
+    activeChallenge: analysis.activeChallenge,
+    weeks
   };
 }
