@@ -2,6 +2,7 @@ import { state } from '../core/state.js';
 import { escapeHtml, formatDate } from '../core/dom.js';
 
 const safe = value => escapeHtml(String(value ?? ''));
+const safeHttpUrl = value => { try { const url = new URL(String(value||'')); return ['https:','http:'].includes(url.protocol) ? safe(url.href) : ''; } catch (_) { return ''; } };
 const localToday = () => {
   const date = new Date();
   return [date.getFullYear(), String(date.getMonth()+1).padStart(2,'0'), String(date.getDate()).padStart(2,'0')].join('-');
@@ -101,7 +102,7 @@ export function clubLifePage(isCoach=false) {
   const events=[...(state.clubEvents||[])].sort((a,b)=>String(a.starts_at).localeCompare(String(b.starts_at)));
   const upcoming=events.filter(row=>new Date(row.starts_at)>=new Date());
   const past=events.filter(row=>new Date(row.starts_at)<new Date());
-  const eventCard=row=>`<article class="club-event-card"><div class="club-event-date"><strong>${new Date(row.starts_at).toLocaleDateString('fr-FR',{day:'2-digit'})}</strong><span>${new Date(row.starts_at).toLocaleDateString('fr-FR',{month:'short'})}</span></div><div class="club-event-body"><span class="eyebrow">${safe(row.event_type||'Événement')}</span><h3>${safe(row.title)}</h3><p>${safe(row.description||'')}</p><small>◷ ${formatStamp(row.starts_at)} ${row.ends_at?' → '+new Date(row.ends_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''} · ◉ ${safe(row.location||'Lieu à confirmer')}</small>${row.signup_url?'<a class="btn subtle club-signup" href="'+safe(row.signup_url)+'" target="_blank" rel="noopener noreferrer">Informations / inscription ↗</a>':''}</div>${isCoach&&row.created_by===state.user?.id?'<button class="btn danger" data-delete-club-event="'+safe(row.id)+'">Supprimer</button>':''}</article>`;
+  const eventCard=row=>{const link=safeHttpUrl(row.signup_url);return `<article class="club-event-card"><div class="club-event-date"><strong>${new Date(row.starts_at).toLocaleDateString('fr-FR',{day:'2-digit'})}</strong><span>${new Date(row.starts_at).toLocaleDateString('fr-FR',{month:'short'})}</span></div><div class="club-event-body"><span class="eyebrow">${safe(row.event_type||'Événement')}</span><h3>${safe(row.title)}</h3><p>${safe(row.description||'')}</p><small>◷ ${formatStamp(row.starts_at)} ${row.ends_at?' → '+new Date(row.ends_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''} · ◉ ${safe(row.location||'Lieu à confirmer')}</small>${link?'<a class="btn subtle club-signup" href="'+link+'" target="_blank" rel="noopener noreferrer">Informations / inscription ↗</a>':''}</div>${isCoach&&row.created_by===state.user?.id?'<button class="btn danger" data-delete-club-event="'+safe(row.id)+'">Supprimer</button>':''}</article>`;};
   return `
     <section class="welcome-panel club-life-hero"><div><p class="eyebrow">MON CLUB · LA VIE DU CLUB</p><h2>Le tennis se vit aussi en dehors du court.</h2><p>Retrouve ici les tournois, animations, stages et rendez-vous proposés par le club.</p></div><div class="welcome-mark">♧</div></section>
     ${isCoach?`<section class="panel"><div class="section-heading"><div><p class="eyebrow">COMMUNICATION CLUB</p><h2>Publier un événement</h2></div><span class="tag">Visible par les joueurs</span></div><form id="club-event-form" class="form-grid">
