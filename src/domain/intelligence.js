@@ -115,7 +115,11 @@ export function analyzePlayerProgress({ player, evaluations = [], evaluationCrit
     trends,
     priority,
     suggestedFocus,
-    activeChallenge
+    activeChallenge,
+    fastestProgress,
+    stagnation,
+    decliningAreas,
+    fourWeekPlan
   };
 }
 
