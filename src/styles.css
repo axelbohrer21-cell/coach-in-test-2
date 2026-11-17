@@ -1269,3 +1269,28 @@ button,a,input,select,textarea{touch-action:manipulation}
 .player-coach-message small{color:var(--muted,#687780)}
 .player-recent-panel{margin-top:16px}
 @media(max-width:680px){.player-quick-actions,.player-next-empty{flex-direction:column;align-items:stretch}.player-quick-actions .btn,.player-next-empty .btn{width:100%}.player-next-session{align-items:flex-start;padding:14px;gap:12px}.player-next-date{width:54px;height:60px;flex-basis:54px}.player-next-mark{display:none}.player-goal-progress>div:first-child{align-items:flex-start;flex-direction:column;gap:3px}}
+
+
+/* Expérience joueur : passeport, journal de match et vie du club */
+.passport-hero{display:flex;align-items:center;gap:22px;padding:28px;border:1px solid #315477;border-radius:24px;background:linear-gradient(115deg,#123958,#20295a 68%,#37285f)}
+.passport-avatar{width:76px;height:76px;flex:none;display:grid;place-items:center;border:2px solid #77dcff;border-radius:24px;background:#174b69;font-size:25px;font-weight:950;box-shadow:0 8px 28px #07132688}
+.passport-identity{min-width:0;flex:1}.passport-identity h2{margin:0;font-size:clamp(24px,3vw,34px)}.passport-identity>p:not(.eyebrow){margin:6px 0 12px;color:#c2d4ed}
+.passport-tags{display:flex;gap:8px;flex-wrap:wrap}.passport-tags span{padding:7px 10px;border:1px solid #ffffff25;border-radius:9px;background:#07132655;color:#d6e8fb;font-size:11px}
+.passport-stamp{font-size:42px;font-weight:1000;letter-spacing:-5px;color:#ffffff28}.passport-stamp span{color:#50d2f2}
+.passport-skills{display:flex;gap:9px;flex-wrap:wrap}.passport-skill{padding:9px 12px;border:1px solid #315b50;border-radius:11px;background:#102e2c;color:#b8f2d8;font-size:12px;font-weight:750}
+.passport-highlight{margin:16px 0 0;padding:12px 14px;border-radius:11px;background:#173550;color:#d5edff;font-size:13px}
+.monthly-review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.monthly-review-grid article{display:grid;gap:7px;padding:16px;border:1px solid #2a4665;border-radius:15px;background:#0a1b30}
+.monthly-review-grid span{color:#a9bad1;font-size:11px;font-weight:800;text-transform:uppercase}.monthly-review-grid strong{font-size:29px}.monthly-review-grid small{color:var(--muted);font-size:11px}
+.monthly-review-notes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.monthly-review-notes>div{padding:14px;border-left:3px solid var(--cyan);border-radius:10px;background:#10243a}.monthly-review-notes b{font-size:12px}.monthly-review-notes p{margin:7px 0 0;color:#b9c9dd;font-size:12px;line-height:1.55}
+.match-journal-hero,.club-life-hero{min-height:150px}.match-journal-card{padding:17px;margin:12px 0;border:1px solid var(--line);border-radius:17px;background:#0a1b30}
+.match-journal-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.match-journal-top h3{margin:5px 0;font-size:17px}.match-journal-top h3 small{color:var(--muted);font-size:12px;font-weight:500}.match-score{display:block;margin:12px 0;color:#8de3ff;font-size:17px}
+.match-reflection-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.match-reflection-grid>div{padding:11px;border-radius:10px;background:#112640}.match-reflection-grid b{font-size:11px;color:#d9e9fa}.match-reflection-grid p{margin:6px 0 0;color:#aebfd5;font-size:12px;line-height:1.5;white-space:pre-wrap}
+.match-card-actions{display:flex;justify-content:flex-end;margin-top:10px;padding-top:10px;border-top:1px solid #203651}
+.club-event-card{display:flex;align-items:flex-start;gap:16px;padding:16px 4px;border-top:1px solid #203651}
+.club-event-date{width:62px;height:68px;flex:none;display:grid;place-content:center;text-align:center;border:1px solid #315477;border-radius:14px;background:#102c49}
+.club-event-date strong{font-size:23px;line-height:1.1}.club-event-date span{color:#8de3ff;font-size:11px;text-transform:uppercase}
+.club-event-body{flex:1;min-width:0}.club-event-body h3{margin:0 0 7px;font-size:17px}.club-event-body p{margin:0 0 8px;color:#b9c9dd;font-size:13px;line-height:1.55;white-space:pre-wrap}.club-event-body small{color:var(--muted);font-size:11px;line-height:1.5}.club-signup{display:inline-flex;margin-top:10px;text-decoration:none}
+.club-event-card>.btn{flex:none}
+@media(max-width:650px){.passport-hero{padding:18px;gap:13px}.passport-avatar{width:58px;height:58px;border-radius:18px;font-size:20px}.passport-stamp{display:none}.monthly-review-grid,.monthly-review-notes,.match-reflection-grid{grid-template-columns:1fr}.club-event-card{gap:10px}.club-event-date{width:52px;height:60px}.club-event-card>.btn{padding:8px;font-size:11px}.passport-tags span{font-size:10px}}
