@@ -13,10 +13,10 @@ export function buildSessionProgression(sessions = [], playerId, objective = '')
   const ratio = Number.isFinite(attempts) && attempts > 0 && Number.isFinite(successes) ? successes / attempts : null;
   const rating = Number(review.coach_rating);
   let direction = 'maintain', difficulty = 'progressive', label = 'Consolider', guidance = 'Garder la même difficulté et chercher une exécution plus régulière.';
-  if ((ratio !== null && ratio >= 0.75) || (Number.isFinite(rating) && rating >= 8)) {
+  if ((ratio !== null && ratio >= 0.75) || (ratio === null && Number.isFinite(rating) && rating >= 8)) {
     direction = 'increase'; difficulty = 'hard'; label = 'Augmenter le défi';
     guidance = 'La réussite est solide : réduire légèrement les zones, ajouter une lecture ou une décision et vérifier le transfert en points.';
-  } else if ((ratio !== null && ratio <= 0.45) || (Number.isFinite(rating) && rating <= 4)) {
+  } else if ((ratio !== null && ratio <= 0.45) || (ratio === null && Number.isFinite(rating) && rating <= 4)) {
     direction = 'decrease'; difficulty = 'easy'; label = 'Revenir aux repères';
     guidance = 'La réussite reste fragile : simplifier une seule contrainte, ralentir le rythme et sécuriser le geste avant de complexifier.';
   }
@@ -29,6 +29,7 @@ export function buildSessionProgression(sessions = [], playerId, objective = '')
     coachRating: Number.isFinite(rating) ? rating : null,
     sourceSessionId: previous.id,
     observed: String(review.observation || ''),
+    successCriterion: String(review.success_criterion || ''),
     nextAdjustment: String(review.next_adjustment || '')
   };
 }
