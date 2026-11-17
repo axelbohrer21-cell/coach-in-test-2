@@ -31,3 +31,10 @@ test('génère une séance complète dont les phases respectent la durée', () =
     assert.ok(session.exercise_2.includes('TRANSFERT MATCH'));
   }
 });
+
+test('intègre les résultats précédents quand la difficulté est automatique', () => {
+  const session = generateOriginalSession({ customObjective: 'Prise de balle tôt en revers', difficulty: 'auto', priorAdjustment: { hasHistory: true, difficulty: 'hard', label: 'Augmenter le défi', guidance: 'Réduire les zones et ajouter une décision.', successCriterion: 'Réussir 8 balles sur 10.' } });
+  assert.equal(session.difficulty, 'Exigeant');
+  assert.match(session.coaching_notes, /Augmenter le défi/);
+  assert.match(session.coaching_notes, /Réussir 8 balles sur 10/);
+});
