@@ -302,7 +302,8 @@ function planningPage() {
       const slotStart=hour*60,slotEnd=slotStart+60;
       const blockedByGroup=events.find(event=>event.kind==='group'&&event.status!=='cancelled'&&timeToMinutes(event.time)<slotEnd&&timeToMinutes(event.time)+event.duration>slotStart);
       const groupBlock=blockedByGroup&&!inSlot.some(event=>event.id===blockedByGroup.id)?'<div class="calendar-blocked-slot" aria-label="Indisponible : cours collectif">🔒 COURS COLLECTIF · INDISPONIBLE</div>':'';
-      const addButton=!disabled&&!blockedByGroup&&!inSlot.length&&isPrivateLessonDateAllowed(iso)?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'">＋ Cours particulier</button>':'';
+      const activeInSlot=inSlot.filter(event=>event.kind!=='group'||event.status!=='cancelled');
+      const addButton=!disabled&&!blockedByGroup&&!activeInSlot.length&&isPrivateLessonDateAllowed(iso)?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'">＋ Cours particulier</button>':'';
       return '<div class="calendar-hour-row"><span class="calendar-hour-label">'+time+'</span><div class="calendar-hour-content">'+cards+groupBlock+addButton+'</div></div>';
     }).join('');
     return '<div class="calendar-day '+(disabled?'calendar-day-disabled':'')+'"><div class="calendar-day-head"><strong>'+['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()]+'</strong><span>'+d.getDate()+'</span></div>'+(reason?'<p class="calendar-day-reason">'+escapeHtml(reason)+'</p>':'')+'<div class="calendar-hours">'+slots+'</div></div>';
