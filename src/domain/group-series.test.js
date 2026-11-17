@@ -10,7 +10,7 @@ test('un compteur est indépendant par créneau et exclut les annulations', () =
 });
 test('génération annuelle respecte les vacances et la cible',()=>{
  const rows=buildSeriesOccurrences(series);
- assert.equal(rows.length,26); assert.ok(rows.every(x=>x.series_id==='s1'&&x.start_time==='18:00'&&x.court_number===2));
+ assert.equal(rows.length,25); assert.ok(rows.every(x=>x.series_id==='s1'&&x.start_time==='18:00'&&x.court_number===2));
 });
 test('un créneau sans horaires exacts ne génère rien et est refusé',()=>{
  assert.throws(()=>buildSeriesOccurrences({...series,start_time:''}),/Horaires/);
@@ -28,4 +28,10 @@ test('un jour incompatible avec le public est refusé plutôt que de créer une 
 
 test('un public inconnu est refusé',()=>{
  assert.throws(()=>buildSeriesOccurrences({...series,audience:'ados'}),/Public/);
+});
+
+test('la génération de série saute le lundi 9 novembre annulé',()=>{
+ const rows=buildSeriesOccurrences(series);
+ assert.equal(rows.some(row=>row.session_date==='2026-11-09'),false);
+ assert.equal(rows.filter(row=>row.session_date==='2026-11-02').length,0);
 });
