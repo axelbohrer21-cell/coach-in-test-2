@@ -67,7 +67,15 @@ export const dataService = {
       ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds))
       : [];
     const notesBySession = new Map(privateNotes.map(row => [row.session_id, row.note]));
-    const sessions = sessionRows.map(row => ({ ...row, coach_private_notes: notesBySession.get(row.id) || '' }));
+    const sessions = sessionRows.map(row => {
+      const note = notesBySession.get(row.id) || '';
+      const match = note.match(/\\n?\\n?<!--COACH_IN_PROGRESS:([A-Za-z0-9+/=]+)-->/);
+      let progress_review = null;
+      if (match) {
+        try { progress_review = JSON.parse(decodeURIComponent(escape(atob(match[1])))); } catch (_) { progress_review = null; }
+      }
+      return { ...row, coach_private_notes: note.replace(/\\n?\\n?<!--COACH_IN_PROGRESS:[A-Za-z0-9+/=]+-->/, '').trim(), progress_review };
+    });
     const hydratedMessages=await hydrateMessages(messages);
     const videoAnalyses=await hydrateVideoAnalyses(videoRows);
     const videoCorrectionFollowups=playerIds.length?await unwrap(supabase.from('coach_video_correction_followups').select('*').eq('coach_id',userId).order('created_at',{ascending:false})):[];
@@ -135,6 +143,22 @@ export const dataService = {
       }
     }
     return data;
+  },
+  async saveSessionReview(sessionId, coachId, review) {
+    const marker = '<!--COACH_IN_PROGRESS:' + btoa(unescape(encodeURIComponent(JSON.stringify(review)))) + '-->';
+    const { data: existing, error: readError } = await supabase.from('coach_session_notes')
+      .select('session_id,note').eq('session_id', sessionId).eq('coach_id', coachId).maybeSingle();
+    if (readError) throw readError;
+    const base = String(existing?.note || '').replace(/\\n?\\n?<!--COACH_IN_PROGRESS:[A-Za-z0-9+/=]+-->/, '').trim();
+    const note = [base, marker].filter(Boolean).join('\\n\\n');
+    if (existing) {
+      const { error } = await supabase.from('coach_session_notes').update({ note }).eq('session_id', sessionId).eq('coach_id', coachId);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from('coach_session_notes').insert({ session_id: sessionId, coach_id: coachId, note });
+      if (error) throw error;
+    }
+    return review;
   },
   async createEvaluation(payload) {
     const { data, error } = await supabase.from('evaluations').insert(payload).select('id,player_id,session_id,evaluated_at,score,technical_score,tactical_score,physical_score,mental_score,player_visible_comment,created_by,created_at').single();
