@@ -159,6 +159,7 @@ $('#page-content').addEventListener('click', async event=>{
   const edit=event.target.closest('[data-edit-player]'); if(edit) return editPlayerDialog(edit.dataset.editPlayer);
   const booking=event.target.closest('[data-booking]'); if(booking) return updateBooking(booking.dataset.booking,booking.dataset.status);
   const cancel=event.target.closest('[data-cancel-booking]'); if(cancel) return cancelBooking(cancel.dataset.cancelBooking);
+  const completeGroup=event.target.closest('[data-complete-group]'); if(completeGroup) return completeGroupSession(completeGroup.dataset.completeGroup);
   const cancelGroup=event.target.closest('[data-cancel-group]'); if(cancelGroup) return cancelGroupSession(cancelGroup.dataset.cancelGroup);
   const calendarEvent=event.target.closest('[data-calendar-event]');
   if(calendarEvent){
@@ -948,8 +949,11 @@ async function generateGroupSeries(id){
     toast(`${missing.length} dates ajoutées au planning pour « ${series.title} ».`); await refreshAndRender();
   }catch(error){toast(error.message||'Impossible de générer les dates.','error');}
 }
+async function completeGroupSession(id){
+  try{const {error}=await supabase.from('group_sessions').update({status:'completed'}).eq('id',id).eq('coach_id',state.user.id).eq('status','scheduled');if(error)throw error;toast('Cours collectif marqué comme effectué : le compteur est mis à jour.');await refreshAndRender();}catch(e){toast(e.message,'error');}
+}
 async function cancelGroupSession(id){
-  try{const {error}=await supabase.from('group_sessions').update({status:'cancelled'}).eq('id',id).eq('coach_id',state.user.id);if(error)throw error;toast('Cours collectif annulé.');await refreshAndRender();}catch(e){toast(e.message,'error');}
+  try{const {error}=await supabase.from('group_sessions').update({status:'cancelled'}).eq('id',id).eq('coach_id',state.user.id).eq('status','scheduled');if(error)throw error;toast('Cours collectif annulé : il ne sera pas compté comme réalisé.');await refreshAndRender();}catch(e){toast(e.message,'error');}
 }
 async function cancelBooking(id){
   try{await bookingService.cancel(id);toast('Réservation annulée.');await refreshAndRender();}catch(e){toast(e.message,'error');}
