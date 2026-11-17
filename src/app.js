@@ -11,6 +11,7 @@ import { isTeachingDate, isWithinTeachingWindow, isPrivateLessonDateAllowed, GRO
 import { groupCriteria, recommendChallenge, hasEvaluationContent } from './domain/progression.js';
 import { buildSeriesOccurrences } from './domain/group-series.js';
 import { progressionService } from './services/progression.js';
+import { recommendSessionExercises, buildMatchTransfer } from './domain/session-recommendations.js';
 
 let signupMode = false;
 let weatherRequest = 0;
@@ -165,6 +166,8 @@ $('#page-content').addEventListener('click', async event=>{
 });
 $('#dialog-content').addEventListener('click',async event=>{
   if(event.target.closest('[data-generate-session]')){generateSessionPlan();return;}
+  const personalizedSession=event.target.closest('[data-personalized-session]');
+  if(personalizedSession){sessionBuilderDialog(personalizedSession.dataset.personalizedSession);return;}
   if(event.target.closest('[data-use-generated-session]')){if(!generatedSessionPlan)return;const plan=generatedSessionPlan;closeDialog();sessionDialog(plan.session_date,plan.session_time,plan);return;}
   const confirmCriteria=event.target.closest('[data-confirm-criteria]');
   if(confirmCriteria){
@@ -382,6 +385,7 @@ function libraryDialog(itemId='', seedItem=null){
 
 
 let generatedSessionPlan = null;
+let generatedSessionRecommendation = null;
 
 function updateSessionBuilderExerciseOptions(){
   const form=$('#session-builder-form');if(!form)return;
@@ -398,7 +402,7 @@ function updateSessionBuilderExerciseOptions(){
   else if(filtered.length>1)second.value=String(filtered.find(item=>String(item.id)!==first.value)?.id||'');
 }
 
-function sessionBuilderDialog(){
+function sessionBuilderDialog(playerId=null){
   if(!state.players.length){toast('Ajoute au moins un joueur à ton effectif avant de préparer une séance.','error');return;}
   const items=(state.library||[]).filter(item=>item.category==='particulier').sort((x,y)=>String(x.title||'').localeCompare(String(y.title||''),'fr'));
   if(!items.length){toast('Ajoute d’abord des exercices au format cours particulier dans ta bibliothèque.','error');render('library');return;}
@@ -406,19 +410,31 @@ function sessionBuilderDialog(){
   const options=items.map(item=>'<option value="'+escapeHtml(item.id)+'">'+escapeHtml(item.title||'Exercice')+' · '+escapeHtml(item.theme||'Sans thème')+' · '+escapeHtml(item.level||'Tous niveaux')+'</option>').join('');
   const today=toLocalISO(new Date());
   generatedSessionPlan=null;
+  generatedSessionRecommendation=playerId?recommendSessionExercises({playerId,evaluations:state.evaluations,evaluationCriteria:state.evaluationCriteria,library:state.library}):null;
   showDialog('<div class="dialog-head"><div><p class="eyebrow">COACH IN · PRÉPARATION GUIDÉE</p><h2>Composer une séance</h2><p class="muted">Construis une séance à partir de tes exercices enregistrés.</p></div><button class="btn icon-btn" data-close>✕</button></div>'+
     '<form id="session-builder-form" class="form-grid">'+
-    '<label class="span-2">Joueur<select name="player_id" required>'+state.players.map(player=>'<option value="'+player.id+'">'+escapeHtml(player.first_name)+' '+escapeHtml(player.last_name)+'</option>').join('')+'</select></label>'+
+    '<label class="span-2">Joueur<select name="player_id" required>'+state.players.map(player=>'<option value="'+player.id+'" '+(player.id===playerId?'selected':'')+'>'+escapeHtml(player.first_name)+' '+escapeHtml(player.last_name)+'</option>').join('')+'</select></label>'+
     '<label>Date<input name="session_date" type="date" required value="'+today+'"></label><label>Heure<input name="session_time" type="time" required value="17:00"></label>'+
     '<label>Durée<select name="duration_minutes"><option value="60">1 heure</option><option value="90" selected>1 h 30</option><option value="120">2 heures</option></select></label>'+
     '<label>Niveau de travail<select name="level"><option>Tous niveaux</option>'+[...new Set(items.map(item=>item.level).filter(level=>level&&level!=='Tous niveaux'))].sort((x,y)=>x.localeCompare(y,'fr')).map(level=>'<option>'+escapeHtml(level)+'</option>').join('')+'</select></label>'+
     '<label class="span-2">Thème principal<select name="theme"><option value="">Tous les thèmes</option>'+themes.map(theme=>'<option value="'+escapeHtml(theme)+'">'+escapeHtml(theme)+'</option>').join('')+'</select></label>'+
     '<label class="span-2">Exercice 1 · situation principale<select name="exercise_one" required>'+options+'</select></label>'+
     '<label class="span-2">Exercice 2 · variation ou transfert<select name="exercise_two"><option value="">Aucun · séance centrée sur un exercice</option>'+options+'</select></label>'+
-    '<div class="span-2 session-builder-tip"><strong>Comment la séance sera construite</strong><p>Échauffement progressif, deux situations issues de ta bibliothèque, puis retour au match pour réinvestir le thème. Les durées s’adaptent au format choisi.</p></div>'+
+    '<div class="span-2 session-builder-tip"><strong>'+(generatedSessionRecommendation?.priority?'Priorité détectée : '+escapeHtml(generatedSessionRecommendation.priority.criterion):'Comment la séance sera construite')+'</strong><p>'+(generatedSessionRecommendation?.reason?escapeHtml(generatedSessionRecommendation.reason):'Échauffement progressif, deux situations issues de ta bibliothèque, puis retour au match pour réinvestir le thème. Les durées s’adaptent au format choisi.')+'</p></div>'+
     '<div id="session-builder-preview" class="span-2"></div>'+
     '<div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button type="button" class="btn primary" data-generate-session>Générer la séance</button></div></form>');
   updateSessionBuilderExerciseOptions();
+  if(generatedSessionRecommendation?.exerciseOne){
+    const form=$('#session-builder-form');
+    const suggestedTheme=generatedSessionRecommendation.exerciseOne.theme||'';
+    if(suggestedTheme&&[...form.elements.theme.options].some(option=>option.value===suggestedTheme))form.elements.theme.value=suggestedTheme;
+    updateSessionBuilderExerciseOptions();
+    form.elements.exercise_one.value=String(generatedSessionRecommendation.exerciseOne.id);
+    if(generatedSessionRecommendation.exerciseTwo)form.elements.exercise_two.value=String(generatedSessionRecommendation.exerciseTwo.id);
+  } else if(playerId&&generatedSessionRecommendation?.reason){
+    const preview=$('#session-builder-preview');
+    if(preview)preview.innerHTML='<p class="tiny muted">'+escapeHtml(generatedSessionRecommendation.reason)+'</p>';
+  }
 }
 
 function sessionBuilderExerciseText(item){
@@ -443,15 +459,18 @@ function generateSessionPlan(){
   const duration=Number(values.duration_minutes);
   const split=duration===60?{warm:10,one:20,two:20,match:10}:duration===120?{warm:20,one:40,two:40,match:20}:{warm:15,one:30,two:30,match:15};
   const exerciseOne='ÉCHAUFFEMENT · '+split.warm+' min\nMise en route progressive : échanges à intensité modérée, mobilité et augmentation graduelle du rythme.\n\nEXERCICE 1 · '+split.one+' min\n'+sessionBuilderExerciseText(itemOne);
+  const transfer=buildMatchTransfer(generatedSessionRecommendation?.priority);
   const exerciseTwo=(itemTwo?'EXERCICE 2 · '+split.two+' min\n'+sessionBuilderExerciseText(itemTwo)+'\n\n':'')+
-    'RETOUR AU MATCH · '+(split.match+(itemTwo?0:split.two))+' min\nJeu à thème : réinvestir l’objectif de la séance en situation de points. Le coach observe la réussite et ajuste la consigne si nécessaire.';
+    'RETOUR AU MATCH · '+(split.match+(itemTwo?0:split.two))+' min\n'+transfer+' Le coach observe la réussite et ajuste la consigne si nécessaire.';
   generatedSessionPlan={
     generated:true,player_id:values.player_id,session_date:values.session_date,session_time:values.session_time,
     duration_minutes:duration,theme:values.theme||itemOne.theme||'Tennis',
-    exercise_1:exerciseOne,exercise_2:exerciseTwo,level:values.level
+    exercise_1:exerciseOne,exercise_2:exerciseTwo,level:values.level,
+    player_visible_summary:generatedSessionRecommendation?.priority?'Objectif de progression : '+generatedSessionRecommendation.priority.criterion+'. Réinvestissement prévu au retour au match.':'Séance construite à partir de la bibliothèque du coach.'
   };
   const preview=$('#session-builder-preview');
   if(preview)preview.innerHTML='<section class="session-builder-preview"><div class="session-builder-preview-head"><div><p class="eyebrow">SÉANCE GÉNÉRÉE</p><h3>'+escapeHtml(generatedSessionPlan.theme)+' · '+duration+' min</h3></div><span class="tag">'+escapeHtml(values.level)+'</span></div>'+
+    (generatedSessionRecommendation?.priority?'<div class="session-builder-focus"><strong>Priorité joueur</strong><span>'+escapeHtml(generatedSessionRecommendation.priority.criterion)+'</span><small>Critère observé dans '+generatedSessionRecommendation.priority.occurrences+' bilans récents</small></div>':'')+
     '<div class="session-builder-phase"><strong>01 · Échauffement + exercice 1</strong><small>'+split.warm+' min + '+split.one+' min</small><p>'+escapeHtml(itemOne.title)+' · '+escapeHtml(itemOne.objective||itemOne.theme||'Objectif issu de la bibliothèque')+'</p></div>'+
     (itemTwo?'<div class="session-builder-phase"><strong>02 · Exercice 2</strong><small>'+split.two+' min</small><p>'+escapeHtml(itemTwo.title)+' · '+escapeHtml(itemTwo.objective||itemTwo.theme||'Variation issue de la bibliothèque')+'</p></div>':'')+
     '<div class="session-builder-phase"><strong>0'+(itemTwo?3:2)+' · Retour au match</strong><small>'+(split.match+(itemTwo?0:split.two))+' min</small><p>Jeu à thème pour réinvestir les apprentissages.</p></div>'+
@@ -471,6 +490,7 @@ function applyLibraryItemToSessionForm(item){
     if(form.elements.theme)form.elements.theme.value=item.theme||'';
     if(form.elements.exercise_1)form.elements.exercise_1.value=item.exercise_1||'';
     if(form.elements.exercise_2)form.elements.exercise_2.value=item.exercise_2||'';
+    if(form.elements.player_visible_summary)form.elements.player_visible_summary.value=item.player_visible_summary||'';
     return;
   }
   if(form.elements.theme)form.elements.theme.value=item.theme||item.title||'';
@@ -608,7 +628,7 @@ function playerSheetDialog(playerId){
   const privateNotes=sessions.filter(s=>s.coach_private_notes?.trim()).map(s=>'<article class="journal-card"><div class="journal-date">'+formatDate(s.session_date,{day:'2-digit',month:'long',year:'numeric'})+' · '+escapeHtml(s.theme||'Séance de tennis')+'</div><p>'+escapeHtml(s.coach_private_notes)+'</p></article>').join('');
   showDialog('<div class="dialog-head player-profile-head"><div class="player-profile-identity"><div class="player-profile-avatar">'+escapeHtml((player.first_name||'?').slice(0,1))+escapeHtml((player.last_name||'').slice(0,1))+'</div><div class="player-profile-copy"><p class="eyebrow">DOSSIER JOUEUR · SUIVI INDIVIDUEL</p><h2>'+escapeHtml(player.first_name)+' '+escapeHtml(player.last_name)+'</h2><p class="muted">'+escapeHtml(player.fft_ranking||'Classement non renseigné')+' · '+escapeHtml(player.age_category||'Catégorie non renseignée')+' · '+escapeHtml(player.player_type||'Loisir')+'</p><small class="profile-coach-attribution">Suivi par '+escapeHtml(coachName)+'</small></div></div><button class="btn icon-btn" data-close aria-label="Fermer la fiche">✕</button></div>'+
   '<section class="profile-hero-stats"><div><span>ÂGE</span><strong>'+playerAge+'</strong></div><div><span>SÉANCES</span><strong>'+sessions.length+'</strong></div><div><span>BILANS</span><strong>'+reports.length+'</strong></div><div><span>TEMPS DE JEU</span><strong>'+Math.floor(totalMinutes/60)+' h '+(totalMinutes%60)+' min</strong></div></section>'+
-  '<section class="sheet-section player-personal-info"><div class="section-heading"><div><p class="eyebrow">IDENTITÉ SPORTIVE</p><h3>Informations du joueur</h3></div></div><div class="profile-info-grid"><div><small>Naissance</small><strong>'+(player.birth_date?formatDate(player.birth_date):'Non renseignée')+'</strong></div><div><small>Classement FFT</small><strong>'+escapeHtml(player.fft_ranking||'Non renseigné')+'</strong></div><div><small>Catégorie d’âge</small><strong>'+escapeHtml(player.age_category||'Non renseignée')+'</strong></div><div><small>Profil</small><strong>'+escapeHtml(player.player_type||'Loisir')+'</strong></div><div class="span-2"><small>E-mail</small><strong>'+escapeHtml(player.email||'Non renseigné')+'</strong></div></div></section>'+
+  '<section class="sheet-section session-intelligence-cta"><div><p class="eyebrow">COACH IN INTELLIGENCE</p><h3>Préparer la prochaine séance</h3><p class="tiny muted">Construire une séance à partir des derniers bilans et des exercices de ta bibliothèque.</p></div><button class="btn primary" data-personalized-session="'+playerId+'">✦ Générer une séance personnalisée</button></section>'+'<section class="sheet-section player-personal-info"><div class="section-heading"><div><p class="eyebrow">IDENTITÉ SPORTIVE</p><h3>Informations du joueur</h3></div></div><div class="profile-info-grid"><div><small>Naissance</small><strong>'+(player.birth_date?formatDate(player.birth_date):'Non renseignée')+'</strong></div><div><small>Classement FFT</small><strong>'+escapeHtml(player.fft_ranking||'Non renseigné')+'</strong></div><div><small>Catégorie d’âge</small><strong>'+escapeHtml(player.age_category||'Non renseignée')+'</strong></div><div><small>Profil</small><strong>'+escapeHtml(player.player_type||'Loisir')+'</strong></div><div class="span-2"><small>E-mail</small><strong>'+escapeHtml(player.email||'Non renseigné')+'</strong></div></div></section>'+
   '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">COLLABORATION MULTI-COACHS</p><h3>Accès partagés</h3></div><span class="tag">'+shares.length+'</span></div><p class="tiny muted">Chaque coach invité possède son propre planning, ses bilans, ses défis et ses notes confidentielles.</p><div class="list-stack">'+sharesMarkup+'</div></section>'+
   '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">DERNIER BILAN · '+(latest?formatDate(latest.evaluated_at||latest.created_at,{day:'2-digit',month:'short',year:'numeric'}):'EN ATTENTE')+'</p><h3>Profil de performance</h3></div><span class="tag">'+(averageLatest===null?'—':averageLatest.toFixed(1).replace('.',',')+'/20')+'</span></div><div class="player-sheet-analytics"><article class="dashboard-chart-card"><h3>Radar des compétences</h3>'+radar+'</article><article class="dashboard-chart-card"><h3>Dernières notes par secteur</h3><div class="profile-sector-list">'+sectorCards+'</div></article></div><div class="criterion-donut-row">'+(totalCriteria?'<div class="donut-chart" role="img" aria-label="'+positive+' réussites et '+improvement+' points à améliorer" style="background:conic-gradient(#66e0ad 0deg '+positiveAngle+'deg,#ffb36e '+positiveAngle+'deg 360deg)"><div><strong>'+totalCriteria+'</strong><small>observations</small></div></div><div class="chart-legend"><span><i class="legend-dot positive"></i><b>'+positive+'</b> réussites</span><span><i class="legend-dot improvement"></i><b>'+improvement+'</b> axes de travail</span></div>':'<p class="chart-empty">Les critères apparaîtront après les premiers bilans détaillés.</p>')+'</div></section>'+
   '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">POINTS D’APPUI</p><h3>Forces récurrentes</h3></div></div>'+criterionList(strengths,'strength')+'</section>'+
