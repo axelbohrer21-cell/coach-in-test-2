@@ -26,7 +26,7 @@ export const PUBLIC_HOLIDAYS_2026_2027 = Object.freeze([
 
 // Annulations exceptionnelles de cours collectifs confirmées pour la saison.
 export const CANCELLED_GROUP_DATES = Object.freeze({
-  '2026-11-09': 'Tous les cours collectifs annulés',
+  '2026-11-02': 'Tous les cours collectifs annulés',
   '2026-11-12': 'Tous les cours collectifs annulés'
 });
 
