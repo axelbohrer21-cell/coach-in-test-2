@@ -41,8 +41,8 @@ export function buildSessionProgression(sessions = [], playerId, objective = '',
   }
 
   const dimensions = ['technical_score', 'tactical_score', 'physical_score', 'mental_score']
-    .map(key => Number(latestEvaluation[key])).filter(value => Number.isFinite(value));
-  const score = Number.isFinite(Number(latestEvaluation.score)) ? Number(latestEvaluation.score)
+    .map(key => latestEvaluation[key] === null || latestEvaluation[key] === undefined || latestEvaluation[key] === '' ? NaN : Number(latestEvaluation[key])).filter(value => Number.isFinite(value));
+  const score = latestEvaluation.score !== null && latestEvaluation.score !== undefined && latestEvaluation.score !== '' && Number.isFinite(Number(latestEvaluation.score)) ? Number(latestEvaluation.score)
     : dimensions.length ? dimensions.reduce((sum, value) => sum + value, 0) / dimensions.length : null;
   const recentEvaluations = evaluations.filter(row => row.player_id === playerId)
     .sort((a, b) => String(b.evaluated_at || b.created_at || '').localeCompare(String(a.evaluated_at || a.created_at || ''))).slice(0, 3);
