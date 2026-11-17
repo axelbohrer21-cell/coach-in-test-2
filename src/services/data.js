@@ -97,7 +97,7 @@ export const dataService = {
       unwrap(supabase.from('player_challenges').select('*').eq('player_id', state.user.id).order('created_at', { ascending: false })),
       unwrap(supabase.from('player_achievements').select('*').eq('player_id', state.user.id).order('unlocked_at', { ascending: false })),
       unwrap(supabase.from('coach_players').select('coach_id').eq('player_id', state.user.id)),
-      unwrap(supabase.from('coach_video_analyses').select('*').eq('player_id',state.user.id).eq('shared_with_player',true).order('created_at',{ascending:false}))
+      unwrap(supabase.from('player_video_analyses').select('*').order('created_at',{ascending:false}))
     ]);
     const coachIds = coachLinks.map(row => row.coach_id);
     const historicalCoachIds = [...new Set([
