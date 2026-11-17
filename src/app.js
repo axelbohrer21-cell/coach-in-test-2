@@ -424,17 +424,28 @@ function sessionBuilderDialog(playerId=null){
     '<div id="session-builder-preview" class="span-2"></div>'+
     '<div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button type="button" class="btn primary" data-generate-session>Générer la séance</button></div></form>');
   updateSessionBuilderExerciseOptions();
+  if(playerId)applySessionRecommendationToBuilder(playerId);
+}
+
+function applySessionRecommendationToBuilder(playerId){
+  generatedSessionRecommendation=recommendSessionExercises({playerId,evaluations:state.evaluations,evaluationCriteria:state.evaluationCriteria,library:state.library});
+  const form=$('#session-builder-form');
+  if(!form)return;
   if(generatedSessionRecommendation?.exerciseOne){
-    const form=$('#session-builder-form');
     const suggestedTheme=generatedSessionRecommendation.exerciseOne.theme||'';
     if(suggestedTheme&&[...form.elements.theme.options].some(option=>option.value===suggestedTheme))form.elements.theme.value=suggestedTheme;
     updateSessionBuilderExerciseOptions();
     form.elements.exercise_one.value=String(generatedSessionRecommendation.exerciseOne.id);
     if(generatedSessionRecommendation.exerciseTwo)form.elements.exercise_two.value=String(generatedSessionRecommendation.exerciseTwo.id);
-  } else if(playerId&&generatedSessionRecommendation?.reason){
-    const preview=$('#session-builder-preview');
-    if(preview)preview.innerHTML='<p class="tiny muted">'+escapeHtml(generatedSessionRecommendation.reason)+'</p>';
   }
+  const tip=form.querySelector('.session-builder-tip');
+  if(tip){
+    const title=generatedSessionRecommendation?.priority?'Priorité détectée : '+generatedSessionRecommendation.priority.criterion:'Préparation guidée';
+    const detail=generatedSessionRecommendation?.reason||'Aucune priorité récurrente n’a été identifiée. Tu peux choisir librement les exercices.';
+    tip.innerHTML='<strong>'+escapeHtml(title)+'</strong><p>'+escapeHtml(detail)+'</p>';
+  }
+  const preview=$('#session-builder-preview');
+  if(preview)preview.innerHTML='';
 }
 
 function sessionBuilderExerciseText(item){
@@ -458,7 +469,8 @@ function generateSessionPlan(){
   if(!itemOne){toast('Sélectionne un exercice enregistré dans ta bibliothèque.','error');return;}
   const duration=Number(values.duration_minutes);
   const split=duration===60?{warm:10,one:20,two:20,match:10}:duration===120?{warm:20,one:40,two:40,match:20}:{warm:15,one:30,two:30,match:15};
-  const exerciseOne='ÉCHAUFFEMENT · '+split.warm+' min\nMise en route progressive : échanges à intensité modérée, mobilité et augmentation graduelle du rythme.\n\nEXERCICE 1 · '+split.one+' min\n'+sessionBuilderExerciseText(itemOne);
+  const focusLine=generatedSessionRecommendation?.priority?'\n\nOBJECTIF PRIORITAIRE · '+generatedSessionRecommendation.priority.criterion+'\nÀ observer pendant les répétitions puis à confirmer en situation de points.':'';
+  const exerciseOne='ÉCHAUFFEMENT · '+split.warm+' min\nMise en route progressive : échanges à intensité modérée, mobilité et augmentation graduelle du rythme.\n\nEXERCICE 1 · '+split.one+' min\n'+sessionBuilderExerciseText(itemOne)+focusLine;
   const transfer=buildMatchTransfer(generatedSessionRecommendation?.priority);
   const exerciseTwo=(itemTwo?'EXERCICE 2 · '+split.two+' min\n'+sessionBuilderExerciseText(itemTwo)+'\n\n':'')+
     'RETOUR AU MATCH · '+(split.match+(itemTwo?0:split.two))+' min\n'+transfer+' Le coach observe la réussite et ajuste la consigne si nécessaire.';
