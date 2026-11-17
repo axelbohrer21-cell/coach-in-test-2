@@ -24,9 +24,9 @@ let notificationRefreshPromise = null;
 let messageRefreshPromise = null;
 let notificationRetryCount = 0;
 let messageRetryCount = 0;
-const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
+const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
-const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['videos','Mes vidéos','▣'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'] ];
+const playerNav = [ ['dashboard','Accueil','⌂'], ['passport','Passeport','✦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
 
 function showAuth(message='') {
   $('#auth-view').classList.remove('hidden'); $('#app-view').classList.add('hidden');
@@ -115,6 +115,21 @@ $('#page-content').addEventListener('keydown', event=>{
 });
 
 $('#page-content').addEventListener('click', async event=>{
+  const deleteMatch=event.target.closest('[data-delete-match]');
+  if(deleteMatch){
+    if(!confirm('Supprimer ce match de ton journal personnel ?'))return;
+    try{const {error}=await supabase.from('player_match_journal').delete().eq('id',deleteMatch.dataset.deleteMatch).eq('player_id',state.user.id);if(error)throw error;await refreshAndRender();toast('Match supprimé du journal.');}
+    catch(error){toast(error.message||'Impossible de supprimer ce match.','error');}
+    return;
+  }
+  const deleteClubEvent=event.target.closest('[data-delete-club-event]');
+  if(deleteClubEvent){
+    if(!confirm('Supprimer cet événement du club ?'))return;
+    try{const {error}=await supabase.from('club_events').delete().eq('id',deleteClubEvent.dataset.deleteClubEvent).eq('created_by',state.user.id);if(error)throw error;await refreshAndRender();toast('Événement supprimé.');}
+    catch(error){toast(error.message||'Impossible de supprimer cet événement.','error');}
+    return;
+  }
+
   const go=event.target.closest('[data-go]'); if(go){render(go.dataset.go);return;}
   const planSlot=event.target.closest('[data-plan-slot]'); if(planSlot)return sessionDialog(planSlot.dataset.slotDate,planSlot.dataset.slotTime);
   const share=event.target.closest('[data-share-player]'); if(share) return sharePlayerDialog(share.dataset.sharePlayer);
@@ -215,6 +230,35 @@ $('#dialog-content').addEventListener('change',event=>{
   if(event.target.name==='creation_mode'&&event.target.form?.id==='session-builder-form')updateSessionBuilderMode();
 });
 $('#page-content').addEventListener('submit',async event=>{
+  const profileDetailsForm=event.target.closest('#player-profile-details-form');
+  if(profileDetailsForm){
+    event.preventDefault();
+    const formData=new FormData(profileDetailsForm);
+    const payload={player_id:state.user.id,objective:String(formData.get('objective')||'').trim(),motivation:String(formData.get('motivation')||'').trim(),strengths:String(formData.get('strengths')||'').trim(),focus:String(formData.get('focus')||'').trim(),updated_at:new Date().toISOString()};
+    try{const {data,error}=await supabase.from('player_profile_details').upsert(payload,{onConflict:'player_id'}).select().single();if(error)throw error;state.playerProfileDetails=data;render('passport');toast('Ton passeport joueur est à jour.');}
+    catch(error){toast(error.message||'Impossible d’enregistrer ton profil.','error');}
+    return;
+  }
+  const matchForm=event.target.closest('#player-match-form');
+  if(matchForm){
+    event.preventDefault();
+    const values=Object.fromEntries(new FormData(matchForm).entries());
+    const payload={player_id:state.user.id,match_date:values.match_date,opponent_name:String(values.opponent_name||'').trim(),opponent_ranking:String(values.opponent_ranking||'').trim(),competition:String(values.competition||'').trim(),score:String(values.score||'').trim(),result:values.result,feelings:String(values.feelings||'').trim(),worked_well:String(values.worked_well||'').trim(),to_improve:String(values.to_improve||'').trim()};
+    try{const {error}=await supabase.from('player_match_journal').insert(payload);if(error)throw error;await refreshAndRender();toast('Match ajouté à ton journal.');}
+    catch(error){toast(error.message||'Impossible d’enregistrer le match.','error');}
+    return;
+  }
+  const clubEventForm=event.target.closest('#club-event-form');
+  if(clubEventForm){
+    event.preventDefault();
+    const values=Object.fromEntries(new FormData(clubEventForm).entries());
+    if(values.ends_at&&new Date(values.ends_at)<new Date(values.starts_at)){toast('La fin de l’événement doit être après son début.','error');return;}
+    const payload={created_by:state.user.id,title:String(values.title||'').trim(),event_type:values.event_type,description:String(values.description||'').trim(),starts_at:new Date(values.starts_at).toISOString(),ends_at:values.ends_at?new Date(values.ends_at).toISOString():null,location:String(values.location||'').trim(),signup_url:String(values.signup_url||'').trim(),published:true};
+    try{const {error}=await supabase.from('club_events').insert(payload);if(error)throw error;await refreshAndRender();toast('Événement publié dans la vie du club.');}
+    catch(error){toast(error.message||'Impossible de publier cet événement.','error');}
+    return;
+  }
+
   const videoForm=event.target.closest('#video-analysis-form');
   if(videoForm){event.preventDefault();await submitVideoAnalysis(videoForm);return;}
   const reviewForm=event.target.closest('#video-review-form');
