@@ -4,6 +4,7 @@ import { emptyState, playerName, sessionCard, statCard } from './shared.js';
 import { toLocalISO, countDistinctValidations } from '../domain/tennis.js';
 import { recommendChallenge, radarPoints } from '../domain/progression.js';
 import { buildCoachIntelligence } from '../domain/intelligence.js';
+import { recommendSessionExercises } from '../domain/session-recommendations.js';
 import { buildDaySeriesOverview, getWeekProgram, GROUP_SEASON, isPublicHoliday, isPrivateLessonDateAllowed, ZONE_B_HOLIDAYS_2026_2027 } from '../domain/group-calendar.js';
 import { buildSeriesCounters } from '../domain/group-series.js';
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
@@ -133,9 +134,13 @@ function dashboard(isCoach) {
   }).join('') : '<div class="coach-empty-state"><strong>Aucune série annuelle configurée.</strong><span>Ajoute tes créneaux récurrents pour suivre les objectifs de 28 séances adultes et 30 séances enfants.</span><button class="btn subtle" data-go="group-calendar">Configurer la saison</button></div>';
   const upcomingHtml = nextEvents.length ? nextEvents.map(row => {
     const isGroup = row.kind === 'group';
-    const title = isGroup ? row.title : (playerById.get(row.player_id) ? `${playerById.get(row.player_id).first_name} ${playerById.get(row.player_id).last_name}` : 'Cours particulier');
+    const player = !isGroup ? playerById.get(row.player_id) : null;
+    const title = isGroup ? row.title : (player ? `${player.first_name} ${player.last_name}` : 'Cours particulier');
     const time = row.sortTime || '08:00';
-    return `<article class="coach-agenda-row"><div class="coach-agenda-date"><strong>${new Date(row.session_date+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit'})}</strong><span>${new Date(row.session_date+'T12:00:00').toLocaleDateString('fr-FR',{month:'short'})}</span></div><div class="coach-agenda-main"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(row.theme || (isGroup ? 'Cours collectif' : 'Cours particulier'))} · ${isGroup ? 'Collectif' : 'Individuel'}</span></div><time>${escapeHtml(formatTime(time))}</time></article>`;
+    const recommendation = !isGroup ? recommendSessionExercises({ playerId: row.player_id, evaluations: state.evaluations, evaluationCriteria: state.evaluationCriteria, library: state.library, sessions: state.sessions, challenges: state.challenges, videoAnalyses: state.videoAnalyses }) : null;
+    const focus = recommendation?.priority?.criterion || recommendation?.activeChallenge?.criterion || '';
+    const prepare = !isGroup && player ? `<button class="btn subtle" data-personalized-session="${escapeHtml(row.player_id)}" data-session-date="${escapeHtml(row.session_date)}" data-session-time="${escapeHtml(time)}" data-session-duration="${Number(row.duration_minutes || 90)}">✦ Préparer</button>` : '';
+    return `<article class="coach-agenda-row"><div class="coach-agenda-date"><strong>${new Date(row.session_date+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit'})}</strong><span>${new Date(row.session_date+'T12:00:00').toLocaleDateString('fr-FR',{month:'short'})}</span></div><div class="coach-agenda-main"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(row.theme || (isGroup ? 'Cours collectif' : 'Cours particulier'))} · ${isGroup ? 'Collectif' : 'Individuel'}</span>${focus ? `<small class="muted">Piste de travail : ${escapeHtml(focus)}</small>` : ''}</div><time>${escapeHtml(formatTime(time))}</time>${prepare}</article>`;
   }).join('') : '<div class="coach-empty-state"><strong>Aucun cours à venir.</strong><span>Ajoute un cours particulier ou programme une séance collective.</span></div>';
   const recentReports = [...(state.evaluations || [])].sort((a,b) => String(b.evaluated_at || b.created_at || '').localeCompare(String(a.evaluated_at || a.created_at || ''))).slice(0,4);
   const reportsHtml = recentReports.length ? recentReports.map(row => {
