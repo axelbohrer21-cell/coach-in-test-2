@@ -2,9 +2,16 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#081426">
   <meta name="description" content="Coach In — espace de suivi tennis coach et joueurs">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Coach In">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/coach-in.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/coach-in.svg">
   <title>Coach In</title>
   <link rel="stylesheet" href="./src/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -46,5 +53,12 @@
   </div>
   <dialog id="app-dialog" class="dialog"><div id="dialog-content"></div></dialog>
   <script type="module" src="./src/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(error => console.warn("Coach In : service worker indisponible", error));
+      });
+    }
+  </script>
 </body>
 </html>
