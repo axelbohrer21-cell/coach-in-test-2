@@ -34,3 +34,19 @@ test('isole les joueurs archivés et agrège les priorités par joueur', () => {
   assert.equal(result.playersWithPriority, 1);
   assert.equal(result.recurringThemes[0].playerCount, 1);
 });
+
+test('repère une stagnation, une progression rapide et construit un cycle de quatre semaines', () => {
+  const six = [
+    { id:'n3',player_id:'p1',evaluated_at:'2026-11-17',technical_score:12,tactical_score:15 },
+    { id:'n2',player_id:'p1',evaluated_at:'2026-11-10',technical_score:12,tactical_score:14 },
+    { id:'n1',player_id:'p1',evaluated_at:'2026-11-03',technical_score:12,tactical_score:13 },
+    { id:'o3',player_id:'p1',evaluated_at:'2026-10-27',technical_score:12,tactical_score:10 },
+    { id:'o2',player_id:'p1',evaluated_at:'2026-10-20',technical_score:12,tactical_score:10 },
+    { id:'o1',player_id:'p1',evaluated_at:'2026-10-13',technical_score:12,tactical_score:10 }
+  ];
+  const result = analyzePlayerProgress({ player, evaluations:six, now:Date.parse('2026-11-17T12:00:00') });
+  assert.ok(result.stagnation.includes('Technique'));
+  assert.equal(result.fastestProgress.label,'Tactique');
+  assert.equal(result.fourWeekPlan.length,4);
+  assert.match(result.fourWeekPlan[3].objective,/Tactique|Consolider/);
+});
