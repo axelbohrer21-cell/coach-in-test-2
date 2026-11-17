@@ -170,7 +170,7 @@ $('#page-content').addEventListener('click', async event=>{
 $('#dialog-content').addEventListener('click',async event=>{
   if(event.target.closest('[data-generate-session]')){generateSessionPlan();return;}
   const personalizedSession=event.target.closest('[data-personalized-session]');
-  if(personalizedSession){sessionBuilderDialog(personalizedSession.dataset.personalizedSession);return;}
+  if(personalizedSession){sessionBuilderDialog(personalizedSession.dataset.personalizedSession,personalizedSession.dataset.sessionDate,personalizedSession.dataset.sessionTime,Number(personalizedSession.dataset.sessionDuration)||90);return;}
   if(event.target.closest('[data-use-generated-session]')){if(!generatedSessionPlan)return;const plan=generatedSessionPlan;closeDialog();sessionDialog(plan.session_date,plan.session_time,plan);return;}
   const confirmCriteria=event.target.closest('[data-confirm-criteria]');
   if(confirmCriteria){
@@ -407,17 +407,17 @@ function updateSessionBuilderExerciseOptions(){
   else if(filtered.length>1)second.value=String(filtered.find(item=>String(item.id)!==first.value)?.id||'');
 }
 
-function sessionBuilderDialog(playerId=null){
+function sessionBuilderDialog(playerId=null, sessionDate=toLocalISO(new Date()), sessionTime='17:00', sessionDuration=90){
  if(!state.players.length){toast('Ajoute au moins un joueur à ton effectif avant de préparer une séance.','error');return;}
  const items=(state.library||[]).filter(x=>x.category==='particulier').sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'fr'));
  const options=items.map(x=>'<option value="'+escapeHtml(x.id)+'">'+escapeHtml(x.title||'Exercice')+' · '+escapeHtml(x.theme||'Sans thème')+'</option>').join('');
- const today=toLocalISO(new Date());generatedSessionPlan=null;
+ const today=sessionDate||toLocalISO(new Date());generatedSessionPlan=null;
  generatedSessionRecommendation=playerId?recommendSessionExercises({playerId,evaluations:state.evaluations,evaluationCriteria:state.evaluationCriteria,library:state.library,sessions:state.sessions,challenges:state.challenges,videoAnalyses:state.videoAnalyses}):null;
  const player=state.players.find(x=>x.id===playerId)||state.players[0],priority=generatedSessionRecommendation?.priority;
  showDialog('<div class="dialog-head"><div><p class="eyebrow">COACH IN · CRÉATION DE SÉANCE</p><h2>Composer une séance</h2><p class="muted">Création originale ou bibliothèque personnalisée.</p></div><button class="btn icon-btn" data-close>✕</button></div><form id="session-builder-form" class="form-grid">'+
  '<label class="span-2">Joueur<select name="player_id" required>'+state.players.map(p=>'<option value="'+p.id+'" '+(p.id===player?.id?'selected':'')+'>'+escapeHtml(p.first_name)+' '+escapeHtml(p.last_name)+'</option>').join('')+'</select></label>'+
- '<label>Date<input name="session_date" type="date" required value="'+today+'"></label><label>Heure<input name="session_time" type="time" required value="17:00"></label>'+
- '<label>Durée<select name="duration_minutes"><option value="60">1 heure</option><option value="90" selected>1 h 30</option><option value="120">2 heures</option></select></label>'+
+ '<label>Date<input name="session_date" type="date" required value="'+today+'"></label><label>Heure<input name="session_time" type="time" required value="'+(sessionTime||'17:00')+'"></label>'+
+ '<label>Durée<select name="duration_minutes"><option value="60" '+(Number(sessionDuration)===60?'selected':'')+'>1 heure</option><option value="90" '+(Number(sessionDuration)===90?'selected':'')+'>1 h 30</option><option value="120" '+(Number(sessionDuration)===120?'selected':'')+'>2 heures</option></select></label>'+
  '<label>Niveau<select name="level"><option>Débutant</option><option selected>Intermédiaire</option><option>Confirmé</option><option>Compétition</option></select></label>'+
  '<label class="span-2">Mode de création<select name="creation_mode"><option value="original" selected>Création originale · sans bibliothèque</option><option value="library">Utiliser ma bibliothèque</option></select></label>'+
  '<label class="span-2">Thème principal<select name="theme">'+['Service','Retour','Volée','Défense','Construction du point','Attaque','Déplacements et appuis','Mental'].map(v=>'<option value="'+escapeHtml(v)+'" '+(priority&&normTheme(v)===normTheme(priority.main_theme)?'selected':'')+'>'+escapeHtml(v)+'</option>').join('')+'</select></label>'+
