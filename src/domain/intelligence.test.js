@@ -15,6 +15,7 @@ test('détecte un point à travailler répété sur plusieurs bilans récents', 
   const result = analyzePlayerProgress({ player, evaluations, evaluationCriteria: criteria, now: Date.parse('2026-11-17T12:00:00') });
   assert.equal(result.priority.criterion, 'Revers en défense');
   assert.equal(result.status, 'Axe de progression identifié');
+  assert.equal(result.trends.find(row => row.label === 'Technique').delta, null);
 });
 
 test('ne compare pas les tendances sans historique précédent suffisant', () => {
