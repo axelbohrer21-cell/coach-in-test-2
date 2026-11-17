@@ -8,6 +8,7 @@ test('augmente la difficulté après une réussite élevée', () => {
   const result = buildSessionProgression([session({ attempts: 10, successes: 8, coach_rating: 7 })], 'p1');
   assert.equal(result.direction, 'increase');
   assert.equal(result.difficulty, 'hard');
+  assert.equal(result.successCriterion, '8 sur 10');
 });
 
 test('simplifie la contrainte après une réussite faible', () => {
