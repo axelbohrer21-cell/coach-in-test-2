@@ -20,7 +20,7 @@ let notificationRefreshPromise = null;
 let messageRefreshPromise = null;
 let notificationRetryCount = 0;
 let messageRetryCount = 0;
-const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
+const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Mon espace','⌂'], ['sessions','Mes séances','◎'], ['videos','Mes vidéos','▣'], ['reports','Mon parcours','✦'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'] ];
 
