@@ -79,8 +79,12 @@ export const dataService = {
     const hydratedMessages=await hydrateMessages(messages);
     const videoAnalyses=await hydrateVideoAnalyses(videoRows);
     const videoCorrectionFollowups=playerIds.length?await unwrap(supabase.from('coach_video_correction_followups').select('*').eq('coach_id',userId).order('created_at',{ascending:false})):[];
-    const clubEvents = await unwrap(supabase.from('club_events').select('*').order('starts_at'));
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents });
+    const [clubEvents, profileDetailsRows] = await Promise.all([
+      unwrap(supabase.from('club_events').select('*').order('starts_at')),
+      playerIds.length ? unwrap(supabase.from('player_profile_details').select('*').in('player_id',playerIds)) : Promise.resolve([])
+    ]);
+    const playerProfileDetailsById = Object.fromEntries(profileDetailsRows.map(row=>[row.player_id,row]));
+    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
   },
 
   async loadPlayerWorkspace() {
