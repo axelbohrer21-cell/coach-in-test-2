@@ -1294,3 +1294,12 @@ button,a,input,select,textarea{touch-action:manipulation}
 .club-event-body{flex:1;min-width:0}.club-event-body h3{margin:0 0 7px;font-size:17px}.club-event-body p{margin:0 0 8px;color:#b9c9dd;font-size:13px;line-height:1.55;white-space:pre-wrap}.club-event-body small{color:var(--muted);font-size:11px;line-height:1.5}.club-signup{display:inline-flex;margin-top:10px;text-decoration:none}
 .club-event-card>.btn{flex:none}
 @media(max-width:650px){.passport-hero{padding:18px;gap:13px}.passport-avatar{width:58px;height:58px;border-radius:18px;font-size:20px}.passport-stamp{display:none}.monthly-review-grid,.monthly-review-notes,.match-reflection-grid{grid-template-columns:1fr}.club-event-card{gap:10px}.club-event-date{width:52px;height:60px}.club-event-card>.btn{padding:8px;font-size:11px}.passport-tags span{font-size:10px}}
+
+
+/* Collective lessons reserve the coach's entire time slot */
+.calendar-blocked-slot{display:flex;align-items:center;gap:7px;min-height:34px;margin:5px 0;padding:8px 10px;border:1px dashed rgba(167,139,250,.55);border-radius:9px;background:rgba(167,139,250,.10);color:#d9ceff;font-size:10px;font-weight:900;letter-spacing:.35px}
+.calendar-event.event-completed{opacity:.78;border-color:rgba(102,224,173,.48)}
+.calendar-event.event-cancelled{opacity:.62}
+.calendar-event-actions{display:flex;gap:5px;flex-wrap:wrap}
+.calendar-event-actions .btn{white-space:nowrap}
+@media(max-width:760px){.calendar-blocked-slot{font-size:9px;padding:7px}.calendar-event-actions{gap:4px}}
