@@ -11,7 +11,7 @@ import { isTeachingDate, isWithinTeachingWindow, isPrivateLessonDateAllowed, GRO
 import { groupCriteria, recommendChallenge, hasEvaluationContent } from './domain/progression.js';
 import { buildSeriesOccurrences } from './domain/group-series.js';
 import { progressionService } from './services/progression.js';
-import { recommendSessionExercises, buildMatchTransfer } from './domain/session-recommendations.js';
+import { recommendSessionExercises, buildMatchTransfer, buildSessionCoachingPlan } from './domain/session-recommendations.js';
 
 let signupMode = false;
 let weatherRequest = 0;
@@ -429,7 +429,7 @@ function sessionBuilderDialog(playerId=null){
 }
 
 function applySessionRecommendationToBuilder(playerId){
-  generatedSessionRecommendation=recommendSessionExercises({playerId,evaluations:state.evaluations,evaluationCriteria:state.evaluationCriteria,library:state.library});
+  generatedSessionRecommendation=recommendSessionExercises({playerId,evaluations:state.evaluations,evaluationCriteria:state.evaluationCriteria,library:state.library,sessions:state.sessions,challenges:state.challenges,videoAnalyses:state.videoAnalyses});
   const form=$('#session-builder-form');
   if(!form)return;
   if(generatedSessionRecommendation?.exerciseOne){
@@ -479,11 +479,11 @@ function generateSessionPlan(){
     generated:true,player_id:values.player_id,session_date:values.session_date,session_time:values.session_time,
     duration_minutes:duration,theme:values.theme||itemOne.theme||'Tennis',
     exercise_1:exerciseOne,exercise_2:exerciseTwo,level:values.level,
-    player_visible_summary:generatedSessionRecommendation?.priority?'Objectif de progression : '+generatedSessionRecommendation.priority.criterion+'. Réinvestissement prévu au retour au match.':'Séance construite à partir de la bibliothèque du coach.'
+    player_visible_summary:coachingPlan.objective+' Réinvestissement prévu au retour au match.'
   };
   const preview=$('#session-builder-preview');
   if(preview)preview.innerHTML='<section class="session-builder-preview"><div class="session-builder-preview-head"><div><p class="eyebrow">SÉANCE GÉNÉRÉE</p><h3>'+escapeHtml(generatedSessionPlan.theme)+' · '+duration+' min</h3></div><span class="tag">'+escapeHtml(values.level)+'</span></div>'+
-    (generatedSessionRecommendation?.priority?'<div class="session-builder-focus"><strong>Priorité joueur</strong><span>'+escapeHtml(generatedSessionRecommendation.priority.criterion)+'</span><small>Critère observé dans '+generatedSessionRecommendation.priority.occurrences+' bilans récents</small></div>':'')+
+    (generatedSessionRecommendation?.priority?'<div class="session-builder-focus"><strong>Priorité joueur</strong><span>'+escapeHtml(generatedSessionRecommendation.priority.criterion)+'</span><small>Critère observé dans '+generatedSessionRecommendation.priority.occurrences+' bilans récents</small></div>':'')+'<div class="session-builder-phase"><strong>Cap pédagogique</strong><p>'+escapeHtml(coachingPlan.objective)+'</p><small>'+escapeHtml(coachingPlan.cue)+'</small><small>Réussite : '+escapeHtml(coachingPlan.success)+'</small></div>'+
     '<div class="session-builder-phase"><strong>01 · Échauffement + exercice 1</strong><small>'+split.warm+' min + '+split.one+' min</small><p>'+escapeHtml(itemOne.title)+' · '+escapeHtml(itemOne.objective||itemOne.theme||'Objectif issu de la bibliothèque')+'</p></div>'+
     (itemTwo?'<div class="session-builder-phase"><strong>02 · Exercice 2</strong><small>'+split.two+' min</small><p>'+escapeHtml(itemTwo.title)+' · '+escapeHtml(itemTwo.objective||itemTwo.theme||'Variation issue de la bibliothèque')+'</p></div>':'')+
     '<div class="session-builder-phase"><strong>0'+(itemTwo?3:2)+' · Retour au match</strong><small>'+(split.match+(itemTwo?0:split.two))+' min</small><p>Jeu à thème pour réinvestir les apprentissages.</p></div>'+
