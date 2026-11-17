@@ -3,6 +3,7 @@ import { escapeHtml, formatDate, formatTime } from '../core/dom.js';
 import { emptyState, playerName, sessionCard, statCard } from './shared.js';
 import { toLocalISO, countDistinctValidations } from '../domain/tennis.js';
 import { recommendChallenge, radarPoints } from '../domain/progression.js';
+import { buildCoachIntelligence } from '../domain/intelligence.js';
 import { buildDaySeriesOverview, getWeekProgram, GROUP_SEASON, isPublicHoliday, isPrivateLessonDateAllowed, ZONE_B_HOLIDAYS_2026_2027 } from '../domain/group-calendar.js';
 import { buildSeriesCounters } from '../domain/group-series.js';
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
@@ -16,6 +17,7 @@ function playerAccent(playerId) {
 
 export const pageMeta = {
   dashboard: ['Vue d’ensemble', 'Tableau de bord', 'Le résumé de ton activité tennis.'],
+  intelligence: ['Coach In Intelligence', 'Intelligence', 'Des observations fondées sur tes bilans, tes séances et les données de ton effectif.'],
   players: ['Effectif', 'Mes joueurs', 'Retrouve les profils et les informations de ton effectif.'],
   planning: ['Organisation', 'Planning', 'Visualise les séances et les créneaux à organiser.'],
   'group-calendar': ['Saison 2026–2027', 'Cours collectifs', 'Calendrier annuel, objectifs de séances et programme pédagogique.'],
@@ -35,6 +37,7 @@ export function renderPage(page) {
   const isAdmin = state.profile.is_admin === true || state.profile.role === 'admin';
   if (isAdmin && page === 'coaches') return adminCoachesPage();
   if (page === 'dashboard') return dashboard(isCoach);
+  if (page === 'intelligence' && isCoach) return intelligencePage();
   if (page === 'players') return playersPage();
   if (page === 'planning') return planningPage();
   if (page === 'availability') return availabilityPage();
@@ -152,6 +155,25 @@ function dashboard(isCoach) {
 }
 
 
+function intelligencePage() {
+  const report = buildCoachIntelligence({ players: state.players || [], evaluations: state.evaluations || [], evaluationCriteria: state.evaluationCriteria || [], sessions: state.sessions || [], videoAnalyses: state.videoAnalyses || [], challenges: state.challenges || [] });
+  const cards = report.insights.map(item => {
+    const strengths = item.strengths.map(row => '<span class="tag tag-green">' + escapeHtml(row.criterion) + ' · ' + row.occurrences + '/3</span>').join('');
+    const difficulties = item.difficulties.map(row => '<span class="tag tag-orange">' + escapeHtml(row.criterion) + ' · ' + row.occurrences + '/3</span>').join('');
+    const trends = item.trends.filter(row => row.current !== null).map(row => {
+      const delta = row.delta === null ? 'Historique insuffisant' : (row.delta > 0 ? '+' : '') + row.delta.toFixed(1).replace('.', ',') + ' pts';
+      const trendClass = row.delta === null ? '' : row.delta > 0 ? 'positive' : row.delta < 0 ? 'negative' : '';
+      return '<span class="intelligence-trend ' + trendClass + '">' + escapeHtml(row.label) + ' <b>' + row.current.toFixed(1).replace('.', ',') + '/20</b><small>' + escapeHtml(delta) + '</small></span>';
+    }).join('');
+    return '<article class="intelligence-player-card"><div class="intelligence-player-head"><div><p class="eyebrow">' + escapeHtml(item.status) + '</p><h3>' + escapeHtml(item.playerName) + '</h3><p class="tiny muted">' + escapeHtml(item.statusReason) + '</p></div><button class="btn subtle" data-player-sheet="' + escapeHtml(item.playerId) + '">Fiche joueur</button></div><div class="intelligence-metrics"><span>' + item.reportCount + ' bilan(s)</span><span>' + item.sessionCount + ' séance(s)</span><span>' + item.videoCount + ' vidéo(s)</span></div><div class="intelligence-block"><strong>Réussites confirmées</strong><div class="intelligence-tags">' + (strengths || '<span class="tiny muted">Pas encore de récurrence confirmée sur plusieurs bilans récents.</span>') + '</div></div><div class="intelligence-block"><strong>Points à travailler</strong><div class="intelligence-tags">' + (difficulties || '<span class="tiny muted">Aucune difficulté récurrente détectée dans les bilans récents.</span>') + '</div></div><div class="intelligence-block"><strong>Scores récents</strong><div class="intelligence-trends">' + (trends || '<span class="tiny muted">Pas de score exploitable pour le moment.</span>') + '</div></div><div class="intelligence-recommendation"><span class="eyebrow">PISTE POUR LE COACH</span><strong>' + escapeHtml(item.suggestedFocus) + '</strong>' + (item.activeChallenge ? '<small>Défi en cours : ' + escapeHtml(item.activeChallenge.objective || item.activeChallenge.criterion || 'Suivi actif') + '</small>' : '') + '</div></article>';
+  }).join('');
+  const common = report.recurringThemes.slice(0, 5).map(row => '<div class="intelligence-common-row"><strong>' + escapeHtml(row.criterion) + '</strong><span>' + row.playerCount + ' joueur(s)</span></div>').join('');
+  return '<section class="panel intelligence-intro"><div><p class="eyebrow">ASSISTANT PÉDAGOGIQUE · VERSION 1</p><h2>Comprendre avant de conseiller.</h2><p>Coach In repère les tendances présentes dans tes bilans et tes séances. Les recommandations sont des pistes de travail à valider par toi, jamais des décisions automatiques.</p></div><div class="intelligence-intro-mark">CI<span>✦</span></div></section>' +
+    '<div class="stats-grid intelligence-stats">' + statCard('Joueurs analysés', report.insights.length, 'blue', 'Effectif actif') + statCard('Premiers bilans à faire', report.playersWithoutReport, 'orange', 'Aucune évaluation') + statCard('Bilans à actualiser', report.reportsToRefresh, 'purple', 'Plus de 30 jours') + statCard('Priorités identifiées', report.playersWithPriority, 'green', 'Points récurrents') + '</div>' +
+    '<section class="panel"><div class="section-heading"><div><p class="eyebrow">LECTURE COLLECTIVE</p><h2>Difficultés récurrentes de l’effectif</h2></div><span class="tag">Données observées</span></div>' + (common || '<p class="muted">Les tendances collectives apparaîtront lorsque plusieurs joueurs auront des critères récurrents dans leurs bilans récents.</p>') + '</section>' +
+    '<section class="panel"><div class="section-heading"><div><p class="eyebrow">SUIVI INDIVIDUEL</p><h2>Analyse par joueur</h2></div><span class="tag">' + report.insights.length + ' profil(s)</span></div><div class="intelligence-player-grid">' + (cards || '<div class="empty-state"><h3>Aucun joueur actif</h3><p>Ajoute ou associe des joueurs pour commencer le suivi intelligent.</p></div>') + '</div></section>' +
+    '<p class="tiny muted">Méthode : les critères sont considérés comme récurrents s’ils apparaissent dans au moins deux des trois derniers bilans disponibles. Les comparaisons de scores nécessitent un historique précédent suffisant. Aucune donnée manquante n’est estimée. Les données sont limitées à ton espace coach.</p>';
+}
 function playersPage() {
   const q = (state.filters.search || '').toLowerCase();
 
