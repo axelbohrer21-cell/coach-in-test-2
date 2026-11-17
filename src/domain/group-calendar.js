@@ -24,6 +24,12 @@ export const PUBLIC_HOLIDAYS_2026_2027 = Object.freeze([
   '2027-04-05', '2027-05-01', '2027-05-06', '2027-05-08', '2027-05-17'
 ]);
 
+// Annulations exceptionnelles de cours collectifs confirmées pour la saison.
+export const CANCELLED_GROUP_DATES = Object.freeze({
+  '2026-11-02': 'Tous les cours collectifs annulés',
+  '2026-11-12': 'Tous les cours collectifs annulés'
+});
+
 const DAY_LABELS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 function parseISO(value) { const [y,m,d] = value.split('-').map(Number); return new Date(Date.UTC(y,m-1,d,12)); }
 function isoUTC(date) { return date.toISOString().slice(0,10); }
@@ -49,6 +55,7 @@ export function isWithinTeachingWindow(dateISO, startTime, endTime) {
 
 export function isTeachingDate(dateISO, audience, options = {}) {
   const { holidays = ZONE_B_HOLIDAYS_2026_2027, publicHolidays = PUBLIC_HOLIDAYS_2026_2027 } = options;
+  if (Object.prototype.hasOwnProperty.call(CANCELLED_GROUP_DATES, dateISO)) return false;
   const day = parseISO(dateISO).getUTCDay();
   const weekdays = GROUP_SEASON.weekdays[audience];
   if (!weekdays?.includes(day)) return false;
