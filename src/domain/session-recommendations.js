@@ -57,7 +57,7 @@ export function recommendSessionExercises({ playerId, evaluations = [], evaluati
     .map(item => {
       const repeat = isRecentRepeat(item, sessions, playerId);
       const videoMatch = videoFocus.some(token => tokens([item.title,item.theme,item.subtheme,item.objective,item.instructions].join(' ')).includes(token));
-      return { item, score: itemScore(item, priority, focusTokens) + (videoMatch ? 2 : 0) - (repeat ? 5 : 0), repeat, videoMatch };
+      return { item, score: itemScore(item, priority, focusTokens) + (videoMatch ? 2 : 0) - (repeat ? 16 : 0), repeat, videoMatch };
     })
     .filter(row => row.score > 0)
     .sort((a,b) => b.score-a.score || String(a.item.title).localeCompare(String(b.item.title),'fr'));
