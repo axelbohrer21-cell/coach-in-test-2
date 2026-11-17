@@ -16,8 +16,12 @@ function distinctEvaluationCount(rows) {
   return new Set(rows.map(row => row.evaluation_id).filter(Boolean)).size;
 }
 
+function scoreValues(rows, key) {
+  return rows.map(row => Number(row[key])).filter(value => Number.isFinite(value) && value >= 0 && value <= 20);
+}
+
 function average(rows, key) {
-  const values = rows.map(row => Number(row[key])).filter(value => Number.isFinite(value) && value >= 0 && value <= 20);
+  const values = scoreValues(rows, key);
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
 }
 
@@ -47,7 +51,8 @@ export function analyzePlayerProgress({ player, evaluations = [], evaluationCrit
   const trends = SCORE_FIELDS.map(([label, key]) => {
     const current = average(recent, key);
     const prior = average(previous, key);
-    return { label, current, previous: prior, delta: current === null || prior === null ? null : Number((current - prior).toFixed(1)) };
+    const enoughHistory = scoreValues(recent, key).length >= 2 && scoreValues(previous, key).length >= 2;
+    return { label, current, previous: prior, delta: current === null || prior === null || !enoughHistory ? null : Number((current - prior).toFixed(1)) };
   });
   const priority = difficulties[0] || null;
   const playerSessions = sessions.filter(row => row.player_id === player.id).sort((a, b) => String(b.session_date || '').localeCompare(String(a.session_date || '')));
