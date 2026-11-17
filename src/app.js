@@ -11,7 +11,8 @@ import { isTeachingDate, isWithinTeachingWindow, isPrivateLessonDateAllowed, GRO
 import { groupCriteria, recommendChallenge, hasEvaluationContent } from './domain/progression.js';
 import { buildSeriesOccurrences } from './domain/group-series.js';
 import { progressionService } from './services/progression.js';
-import { recommendSessionExercises, buildMatchTransfer, buildSessionCoachingPlan } from './domain/session-recommendations.js';\nimport { generateOriginalSession } from './domain/session-generator.js';
+import { recommendSessionExercises, buildMatchTransfer, buildSessionCoachingPlan } from './domain/session-recommendations.js';
+import { generateOriginalSession } from './domain/session-generator.js';
 import { buildSessionProgression } from './domain/session-progression.js';
 
 let signupMode = false;
@@ -489,9 +490,11 @@ function sessionReviewDialog(sessionId){
   if(!session||state.profile?.role!=='coach')return;
   const review=session.progress_review||{};
   const player=state.players.find(row=>row.id===session.player_id);
+  const targetMatch=String(session.exercise_2||'').match(/(?:Critère de réussite|RÉUSSITE)\\s*[·:]\\s*([^\\n]+)/i);
+  const successTarget=targetMatch?.[1]||'Objectif à préciser avec le coach';
   showDialog('<div class="dialog-head"><div><p class="eyebrow">BOUCLE DE PROGRESSION</p><h2>Bilan de séance</h2><p class="muted">'+escapeHtml(player?[player.first_name,player.last_name].filter(Boolean).join(' '):'Joueur')+' · '+escapeHtml(session.theme||'Séance')+'</p></div><button class="btn icon-btn" data-close>✕</button></div>'+
     '<form id="session-review-form" class="form-grid"><input type="hidden" name="session_id" value="'+escapeHtml(session.id)+'">'+
-    '<div class="span-2 session-builder-tip"><strong>Objectif travaillé</strong><p>'+escapeHtml(session.theme||'Objectif à préciser')+'</p><small>Le bilan reste privé dans ton espace coach et servira à adapter la prochaine séance.</small></div>'+
+    '<div class="span-2 session-builder-tip"><strong>Objectif travaillé</strong><p>'+escapeHtml(session.theme||'Objectif à préciser')+'</p><strong>Critère de réussite prévu</strong><p>'+escapeHtml(successTarget)+'</p><small>Compare les tentatives réelles au critère prévu. Le bilan reste privé dans ton espace coach.</small></div>'+
     '<label>Réussites<input name="successes" type="number" min="0" max="50" required value="'+(review.successes??'')+'" placeholder="Ex. 7"></label>'+
     '<label>Tentatives<input name="attempts" type="number" min="1" max="50" required value="'+(review.attempts??10)+'"></label>'+
     '<label class="span-2">Ma perception de la séance<select name="coach_rating" required>'+Array.from({length:10},(_,i)=>i+1).map(n=>'<option value="'+n+'" '+(Number(review.coach_rating||6)===n?'selected':'')+'>'+n+'/10</option>').join('')+'</select></label>'+
@@ -717,7 +720,7 @@ $('#dialog-content').addEventListener('submit',async event=>{
       const attempts=Number(values.attempts),successes=Number(values.successes),rating=Number(values.coach_rating);
       if(!Number.isInteger(attempts)||attempts<1||attempts>50||!Number.isInteger(successes)||successes<0||successes>attempts)throw new Error('Les réussites doivent être comprises entre 0 et le nombre de tentatives.');
       if(!Number.isInteger(rating)||rating<1||rating>10)throw new Error('Choisis une note entre 1 et 10.');
-      const review={objective:session.theme||'Séance',successes,attempts,coach_rating:rating,observation:String(values.observation||'').trim(),next_adjustment:String(values.next_adjustment||'').trim(),reviewed_at:new Date().toISOString()};
+      const targetMatch=String(session.exercise_2||'').match(/(?:Critère de réussite|RÉUSSITE)\\s*[·:]\\s*([^\\n]+)/i);const review={objective:session.theme||'Séance',success_criterion:targetMatch?.[1]||'',successes,attempts,coach_rating:rating,observation:String(values.observation||'').trim(),next_adjustment:String(values.next_adjustment||'').trim(),reviewed_at:new Date().toISOString()};
       await dataService.saveSessionReview(session.id,state.user.id,review);
       toast('Bilan enregistré. La prochaine séance sera adaptée à ces résultats.');
     } else if(form.id==='notification-preferences-form'){
