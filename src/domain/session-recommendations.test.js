@@ -44,3 +44,8 @@ test('produit un objectif, une consigne, une contrainte et un indicateur mesurab
 test('retour match reprend le critère observé', () => {
   assert.match(buildMatchTransfer({criterion:'Prise de balle tôt'}),/Prise de balle tôt/);
 });
+
+import { generateOriginalSession } from './session-generator.js';
+test('crée une séance originale sans bibliothèque',()=>{const p=generateOriginalSession({theme:'service',playerName:'Alex',level:'Intermédiaire',duration:90});assert.equal(p.generation_mode,'original');assert.equal(p.theme,'Service');assert.match(p.exercise_1,/lancer/i);assert.match(p.exercise_2,/première frappe/i);assert.equal(p.phases.reduce((n,x)=>n+x.minutes,0),90);});
+test('intègre priorité, défi et historique',()=>{const p=generateOriginalSession({theme:'defense',priority:{criterion:'Défense revers'},challenge:{objective:'Jouer haut et long'},recentSessions:[{theme:'Défense'}],duration:60});assert.match(p.coaching_notes,/Défense revers/);assert.match(p.coaching_notes,/Jouer haut et long/);assert.match(p.coaching_notes,/séances récentes/);assert.equal(p.phases.reduce((n,x)=>n+x.minutes,0),60);});
+test('adapte la charge aux jeunes débutants',()=>{const p=generateOriginalSession({theme:'construction',age:10,level:'Débutant'});assert.equal(p.adaptation,'Progression accessible');assert.match(p.coaching_notes,/Séries de 4 à 6 balles/);});
