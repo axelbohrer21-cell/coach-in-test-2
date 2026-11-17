@@ -25,7 +25,7 @@ function focusForRequest(value){
  return rules.find(rule=>rule.match.some(word=>text.includes(norm(word))))||null;
 }
 
-export function generateOriginalSession({theme='construction',customObjective='',playerName='le joueur',level='Intermédiaire',difficulty='progressive',age=null,playerType='Loisir',duration=90,priority=null,challenge=null,recentSessions=[]}={}){
+export function generateOriginalSession({theme='construction',customObjective='',playerName='le joueur',level='Intermédiaire',difficulty='progressive',priorAdjustment=null,age=null,playerType='Loisir',duration=90,priority=null,challenge=null,recentSessions=[]}={}){
  const request=String(customObjective||'').trim();
  const combined=request||String(theme||'');
  const t=themes.find(x=>x.key===theme)||themes.find(x=>has(combined,x.words))||themes.find(x=>has(priority?.main_theme||priority?.criterion,x.words))||themes[4];
@@ -35,14 +35,14 @@ export function generateOriginalSession({theme='construction',customObjective=''
  const recent=recentSessions.slice(0,3).some(x=>has(x.theme,t.words));
  const objective=request?'Objectif personnalisé : '+request+'.':priority?.criterion?'Priorité individualisée : '+priority.criterion+'. '+t.objective+'.':t.objective+'.';
  const challengeText=challenge?.objective||challenge?.criterion||'';
- const progression=difficulty==='easy'?{label:'Accessible',rule:'Rapprocher le joueur, ralentir le rythme et élargir les cibles.'}:difficulty==='hard'?{label:'Exigeant',rule:'Réduire les cibles, augmenter l’incertitude et ajouter un score sous pression.'}:{label:'Progressif',rule:'Commencer avec une cible large, puis ajouter une variable après plusieurs réussites.'};
+ const selectedDifficulty=difficulty==='auto'&&priorAdjustment?.hasHistory?priorAdjustment.difficulty:difficulty;const progression=selectedDifficulty==='easy'?{label:'Accessible',rule:'Rapprocher le joueur, ralentir le rythme et élargir les cibles.'} :selectedDifficulty==='hard'?{label:'Exigeant',rule:'Réduire les cibles, augmenter l’incertitude et ajouter un score sous pression.'}:{label:'Progressif',rule:'Commencer avec une cible large, puis ajouter une variable après plusieurs réussites.'};
  const cue=focus?.cue||t.cue,success=focus?.success||t.success;
- const notes=['Joueur : '+playerName+' · Profil : '+playerType+' · Niveau : '+level,'Objectif : '+objective,'Consigne : '+cue,'Installation : '+t.setup,'Adaptation : '+a.change,'Difficulté : '+progression.label+' — '+progression.rule,'Charge : '+a.load,'Réussite : '+success,challengeText?'Défi actif : '+challengeText:'',recent?'Le thème apparaît dans les séances récentes : varier trajectoires, zones ou contraintes.':''].filter(Boolean).join('\n');
+ const progressionNote=priorAdjustment?.hasHistory?'Adaptation depuis la séance précédente : '+priorAdjustment.label+'. '+priorAdjustment.guidance:'';const notes=['Joueur : '+playerName+' · Profil : '+playerType+' · Niveau : '+level,'Objectif : '+objective,'Consigne : '+cue,'Installation : '+t.setup,'Adaptation : '+a.change,'Difficulté : '+progression.label+' — '+progression.rule,progressionNote,priorAdjustment?.observed?'Observation précédente : '+priorAdjustment.observed:'',priorAdjustment?.nextAdjustment?'Ajustement demandé : '+priorAdjustment.nextAdjustment:'','Charge : '+a.load,'Réussite : '+success,challengeText?'Défi actif : '+challengeText:'',recent?'Le thème apparaît dans les séances récentes : varier trajectoires, zones ou contraintes.':''].filter(Boolean).join('\n');
  const warm='ÉCHAUFFEMENT · '+times[0]+' min\nÉchanges progressifs dans les deux diagonales, mobilité dynamique et montée graduelle de l’intensité. Terminer par 2 minutes avec une intention liée au thème.';
  return {generated:true,generation_mode:'original',theme:focus?.label||t.label,focus:focus?.label||null,duration_minutes:mins,objective,coaching_notes:notes,
  exercise_1:warm+'\n\nATELIER 1 · '+times[1]+' min · Répétition guidée\n'+t.a+'\n\nOrganisation : '+t.setup+'\n\nConsigne individualisée : '+cue+'\n\nCharge : '+a.load,
  exercise_2:'ATELIER 2 · '+times[2]+' min · Variation et décision\n'+t.b+'\n\nAdaptation : '+a.change+'\n\nDifficulté : '+progression.rule+'\n\nTRANSFERT MATCH · '+times[3]+' min\n'+t.game+'\n\nCritère de réussite : '+success,
  player_visible_summary:objective+' Nous travaillerons ce thème à travers des ateliers progressifs et des points à thème.',
- success_criteria:success,adaptation:a.label,difficulty:progression.label,difficulty_rule:progression.rule,
+ success_criteria:success,adaptation:a.label,difficulty:progression.label,difficulty_rule:progression.rule,progression:priorAdjustment||null,
  phases:[{name:'Échauffement',minutes:times[0]},{name:'Atelier 1',minutes:times[1]},{name:'Atelier 2',minutes:times[2]},{name:'Transfert match',minutes:times[3]}]};
 }
