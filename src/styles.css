@@ -1200,3 +1200,32 @@ button,a,input,select,textarea{touch-action:manipulation}
 @media(prefers-reduced-motion:reduce){
   html:focus-within{scroll-behavior:auto}
 }
+
+
+/* Coach In Intelligence */
+.intelligence-intro{display:flex;align-items:center;justify-content:space-between;gap:24px;overflow:hidden;background:linear-gradient(120deg,rgba(17,43,56,.98),rgba(21,66,69,.94));color:#f2fbf8;border:1px solid rgba(114,230,181,.22)}
+.intelligence-intro h2{margin:6px 0 8px;font-size:clamp(1.35rem,3vw,2rem)}
+.intelligence-intro p:not(.eyebrow){max-width:720px;color:#c4d9d5;margin:0}
+.intelligence-intro .eyebrow{color:#72e6b5}
+.intelligence-intro-mark{font-size:2.4rem;font-weight:850;letter-spacing:-.08em;color:#f2fbf8;white-space:nowrap}
+.intelligence-intro-mark span{color:#72e6b5}
+.intelligence-player-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.intelligence-player-card{min-width:0;padding:18px;border:1px solid var(--border,#dce5e8);border-radius:16px;background:var(--surface,#fff);display:flex;flex-direction:column;gap:14px}
+.intelligence-player-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.intelligence-player-head h3{margin:3px 0 5px}
+.intelligence-player-head p{margin:0}
+.intelligence-metrics,.intelligence-tags,.intelligence-trends{display:flex;flex-wrap:wrap;gap:8px}
+.intelligence-metrics span{font-size:.78rem;color:var(--muted,#687780);padding:5px 8px;border-radius:8px;background:var(--surface-soft,#f2f6f7)}
+.intelligence-block{display:grid;gap:8px}
+.intelligence-block>strong{font-size:.84rem}
+.intelligence-trend{display:grid;gap:2px;padding:8px 10px;border-radius:10px;background:var(--surface-soft,#f2f6f7);font-size:.78rem}
+.intelligence-trend b{font-size:.9rem}
+.intelligence-trend small{color:var(--muted,#687780)}
+.intelligence-trend.positive small{color:#16845d}
+.intelligence-trend.negative small{color:#bd5a3a}
+.intelligence-recommendation{display:grid;gap:5px;padding:12px;border-radius:12px;background:rgba(102,224,173,.11);border:1px solid rgba(102,224,173,.24)}
+.intelligence-recommendation .eyebrow{margin:0;color:#27845f}
+.intelligence-recommendation small{color:var(--muted,#687780)}
+.intelligence-common-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border,#dce5e8)}
+.intelligence-common-row:last-child{border-bottom:0}
+@media(max-width:760px){.intelligence-player-grid{grid-template-columns:1fr}.intelligence-intro{align-items:flex-start}.intelligence-intro-mark{font-size:1.8rem}.intelligence-player-head{flex-direction:column}.intelligence-player-head .btn{width:100%}}
