@@ -8,6 +8,7 @@ import { recommendSessionExercises } from '../domain/session-recommendations.js'
 import { buildDaySeriesOverview, getWeekProgram, GROUP_SEASON, isPublicHoliday, isPrivateLessonDateAllowed, ZONE_B_HOLIDAYS_2026_2027 } from '../domain/group-calendar.js';
 import { buildSeriesCounters } from '../domain/group-series.js';
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
+import { playerTennisPage, playerMatchesPage, clubLifePage } from './player-experience.js';
 
 const PLAYER_ACCENTS = ['#42c7f5','#a78bfa','#54d6a0','#ffad66','#fb7185','#facc15','#2dd4bf','#c084fc'];
 function playerAccent(playerId) {
@@ -30,7 +31,10 @@ export const pageMeta = {
   notifications: ['Actualités', 'Notifications', 'Retrouve les informations liées à ton activité.'],
   coaches: ['Administration', 'Gestion des coachs', 'Consulte les comptes coachs et leur statut.'],
   availability: ['Organisation', 'Mes disponibilités', 'Définis les plages pendant lesquelles les joueurs peuvent demander un cours.'],
-  messages: ['Communication', 'Messages', 'Échange des messages, photos, vidéos et documents avec tes coachs ou tes joueurs.']
+  messages: ['Communication', 'Messages', 'Échange des messages, photos, vidéos et documents avec tes coachs ou tes joueurs.'],
+  passport: ['Mon tennis', 'Passeport tennis', 'Ton identité de joueur, tes acquis et ton bilan mensuel.'],
+  matches: ['Mon tennis', 'Journal de match', 'Garde une trace de tes matchs, de tes sensations et de tes axes de travail.'],
+  club: ['Vie du club', 'Mon club', 'Retrouve les tournois, stages et animations du club.']
 };
 
 export function renderPage(page) {
@@ -38,6 +42,9 @@ export function renderPage(page) {
   const isAdmin = state.profile.is_admin === true || state.profile.role === 'admin';
   if (isAdmin && page === 'coaches') return adminCoachesPage();
   if (page === 'dashboard') return dashboard(isCoach);
+  if (page === 'passport' && !isCoach) return playerTennisPage();
+  if (page === 'matches' && !isCoach) return playerMatchesPage();
+  if (page === 'club') return clubLifePage(isCoach);
   if (page === 'intelligence' && isCoach) return intelligencePage();
   if (page === 'players') return playersPage();
   if (page === 'planning') return planningPage();
