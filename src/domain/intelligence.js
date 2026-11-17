@@ -84,6 +84,19 @@ export function analyzePlayerProgress({ player, evaluations = [], evaluationCrit
     : trends.filter(row => row.current !== null).sort((a, b) => a.current - b.current)[0]?.label
       ? 'Consolider le secteur : ' + trends.filter(row => row.current !== null).sort((a, b) => a.current - b.current)[0].label
       : 'Réaliser un bilan pour établir une première priorité';
+  const fastestProgress = trends.filter(row => row.delta !== null && row.delta > 0)
+    .sort((a,b) => b.delta-a.delta)[0] || null;
+  const stagnation = trends.filter(row => row.delta !== null && Math.abs(row.delta) < 0.5)
+    .map(row => row.label);
+  const decliningAreas = trends.filter(row => row.delta !== null && row.delta < -0.5)
+    .sort((a,b)=>a.delta-b.delta);
+  const planFocus = priority?.criterion || (decliningAreas[0] ? decliningAreas[0].label : suggestedFocus.replace('Travailler : ',''));
+  const fourWeekPlan = reports.length >= 2 ? [
+    { week: 1, title: 'Reconstruction des repères', objective: 'Stabiliser '+planFocus+' avec une situation fermée et une seule consigne observable.', success: 'Réussir au moins 6 répétitions sur 10 avec une qualité gestuelle stable.' },
+    { week: 2, title: 'Variabilité contrôlée', objective: 'Faire évoluer une seule variable : direction, hauteur, rythme ou déplacement.', success: 'Conserver au moins 6 réussites sur 10 malgré la variation.' },
+    { week: 3, title: 'Lecture et décision', objective: 'Introduire une information à lire et laisser le joueur choisir sa réponse.', success: 'Faire le bon choix sur au moins 6 situations sur 10.' },
+    { week: 4, title: 'Transfert et validation', objective: 'Réinvestir '+planFocus+' dans des points à thème puis comparer au prochain bilan.', success: 'Retrouver le comportement ciblé dans au moins 6 points sur 10 et actualiser le bilan.' }
+  ] : [];
 
   return {
     playerId: player.id,
