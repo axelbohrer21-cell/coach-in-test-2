@@ -12,6 +12,7 @@ import { groupCriteria, recommendChallenge, hasEvaluationContent } from './domai
 import { buildSeriesOccurrences } from './domain/group-series.js';
 import { progressionService } from './services/progression.js';
 import { recommendSessionExercises, buildMatchTransfer, buildSessionCoachingPlan } from './domain/session-recommendations.js';\nimport { generateOriginalSession } from './domain/session-generator.js';
+import { buildSessionProgression } from './domain/session-progression.js';
 
 let signupMode = false;
 let weatherRequest = 0;
@@ -119,6 +120,7 @@ $('#page-content').addEventListener('click', async event=>{
   const revokeShare=event.target.closest('[data-revoke-coach-share]'); if(revokeShare) return revokeCoachShare(revokeShare.dataset.revokeCoachShare,revokeShare.dataset.playerId);
   const action=event.target.closest('[data-action]')?.dataset.action;
   if(action==='generate-session') return sessionBuilderDialog();
+  const reviewSession=event.target.closest('[data-review-session]'); if(reviewSession) return sessionReviewDialog(reviewSession.dataset.reviewSession);
   const deleteVideo=event.target.closest('[data-delete-video]'); if(deleteVideo)return showDialog('<div class="dialog-head"><div><p class="eyebrow">CONFIDENTIALITÉ</p><h2>Supprimer cette vidéo ?</h2><p class="tiny muted">La vidéo originale et son analyse seront définitivement supprimées.</p></div><button class="btn icon-btn" data-close>✕</button></div><div class="dialog-actions"><button class="btn subtle" data-close>Annuler</button><button class="btn danger" data-confirm-delete-video="'+deleteVideo.dataset.deleteVideo+'">Supprimer définitivement</button></div>');
   const shareVideo=event.target.closest('[data-share-video]'); if(shareVideo) return toggleVideoShare(shareVideo.dataset.shareVideo,shareVideo.dataset.shared==='true');
   if(action==='new-session') return sessionDialog();
@@ -418,7 +420,7 @@ function sessionBuilderDialog(playerId=null){
  '<label class="span-2">Mode de création<select name="creation_mode"><option value="original" selected>Création originale · sans bibliothèque</option><option value="library">Utiliser ma bibliothèque</option></select></label>'+
  '<label class="span-2">Thème principal<select name="theme">'+['Service','Retour','Volée','Défense','Construction du point','Attaque','Déplacements et appuis','Mental'].map(v=>'<option value="'+escapeHtml(v)+'" '+(priority&&normTheme(v)===normTheme(priority.main_theme)?'selected':'')+'>'+escapeHtml(v)+'</option>').join('')+'</select></label>'+
  '<label class="span-2">Objectif personnalisé (facultatif)<input name="custom_objective" placeholder="Ex. prise de balle tôt en revers, varier les effets au service…"></label>'+
- '<label class="span-2">Niveau de difficulté<select name="difficulty"><option value="easy">Accessible · sécuriser le geste</option><option value="progressive" selected>Progressif · faire évoluer la contrainte</option><option value="hard">Exigeant · pression et décision</option></select></label>'+
+ '<label class="span-2">Niveau de difficulté<select name="difficulty"><option value="auto" selected>Automatique · selon le dernier bilan</option><option value="easy">Accessible · sécuriser le geste</option><option value="progressive">Progressif · faire évoluer la contrainte</option><option value="hard">Exigeant · pression et décision</option></select></label>'+
  '<div id="session-library-fields" class="span-2 hidden"><label>Exercice 1<select name="exercise_one">'+(options||'<option value="">Aucun exercice</option>')+'</select></label><label>Exercice 2<select name="exercise_two"><option value="">Aucun</option>'+options+'</select></label></div>'+
  '<div class="span-2 session-builder-tip"><strong>'+(priority?'Priorité du joueur : '+escapeHtml(priority.criterion):'Création pédagogique autonome')+'</strong><p>Coach In crée ateliers, consignes, adaptations et situations de match sans utiliser ta bibliothèque.</p></div>'+
  '<div id="session-builder-preview" class="span-2"></div><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button type="button" class="btn primary" data-generate-session>Générer la séance</button></div></form>');
@@ -474,13 +476,28 @@ function generateSessionPlan(){
  }else{
   const recent=state.sessions.filter(x=>x.player_id===values.player_id).sort((a,b)=>String(b.session_date||'').localeCompare(String(a.session_date||'')));
   const custom=String(values.custom_objective||'').trim(),age=player.date_of_birth?Math.floor((Date.now()-new Date(player.date_of_birth).getTime())/31557600000):player.age||null;
-  const generated=generateOriginalSession({theme:values.theme||generatedSessionRecommendation?.priority?.main_theme||'Construction du point',customObjective:custom,difficulty:values.difficulty||'progressive',playerName:[player.first_name,player.last_name].filter(Boolean).join(' ')||'le joueur',level:values.level||'Intermédiaire',age,playerType:player.player_type||'Loisir',duration,priority:generatedSessionRecommendation?.priority||null,challenge:generatedSessionRecommendation?.activeChallenge||null,recentSessions:recent});
+  const priorAdjustment=buildSessionProgression(recent,values.player_id,custom||values.theme);const generated=generateOriginalSession({theme:values.theme||generatedSessionRecommendation?.priority?.main_theme||'Construction du point',customObjective:custom,difficulty:values.difficulty||'auto',priorAdjustment,playerName:[player.first_name,player.last_name].filter(Boolean).join(' ')||'le joueur',level:values.level||'Intermédiaire',age,playerType:player.player_type||'Loisir',duration,priority:generatedSessionRecommendation?.priority||null,challenge:generatedSessionRecommendation?.activeChallenge||null,recentSessions:recent});
   exerciseOne=generated.exercise_1+'\n\nNOTES COACH\n'+generated.coaching_notes+'\n\nNIVEAU DE DIFFICULTÉ · '+generated.difficulty+'\n'+generated.difficulty_rule;exerciseTwo=generated.exercise_2;theme=generated.theme;visibleSummary=generated.player_visible_summary;coachingPlan={objective:generated.objective,success:generated.success_criteria};phases=generated.phases;
  }
- generatedSessionPlan={generated:true,player_id:values.player_id,session_date:values.session_date,session_time:values.session_time,duration_minutes:duration,theme,exercise_1:exerciseOne,exercise_2:exerciseTwo,level:values.level,player_visible_summary:visibleSummary,generation_mode:mode};
+ generatedSessionPlan={generated:true,player_id:values.player_id,session_date:values.session_date,session_time:values.session_time,duration_minutes:duration,theme,exercise_1:exerciseOne,exercise_2:exerciseTwo,level:values.level,player_visible_summary:visibleSummary,generation_mode:mode,progression:mode==='original'?buildSessionProgression(state.sessions.filter(x=>x.player_id===values.player_id),values.player_id,values.custom_objective||values.theme):null};
  const preview=$('#session-builder-preview');if(preview)preview.innerHTML='<section class="session-builder-preview"><div class="session-builder-preview-head"><div><p class="eyebrow">SÉANCE GÉNÉRÉE · '+(mode==='original'?'CRÉATION ORIGINALE':'BIBLIOTHÈQUE')+'</p><h3>'+escapeHtml(theme)+' · '+duration+' min</h3></div><span class="tag">'+escapeHtml(values.level)+'</span></div>'+
  (generatedSessionRecommendation?.priority?'<div class="session-builder-focus"><strong>Priorité joueur</strong><span>'+escapeHtml(generatedSessionRecommendation.priority.criterion)+'</span></div>':'')+'<div class="session-builder-phase"><strong>Objectif pédagogique</strong><p>'+escapeHtml(coachingPlan?.objective||visibleSummary)+'</p><small>'+escapeHtml(coachingPlan?.success||'Réussite à observer en jeu')+'</small></div>'+
  (phases.length?phases.map((p,i)=>'<div class="session-builder-phase"><strong>0'+(i+1)+' · '+escapeHtml(p.name)+'</strong><small>'+p.minutes+' min</small></div>').join(''):'<div class="session-builder-phase"><strong>Exercices sélectionnés</strong><p>Contenus issus de ta bibliothèque.</p></div>')+'<div class="session-builder-actions"><button type="button" class="btn primary" data-use-generated-session>Utiliser cette séance →</button></div></section>';
+}
+function sessionReviewDialog(sessionId){
+  const session=state.sessions.find(row=>row.id===sessionId);
+  if(!session||state.profile?.role!=='coach')return;
+  const review=session.progress_review||{};
+  const player=state.players.find(row=>row.id===session.player_id);
+  showDialog('<div class="dialog-head"><div><p class="eyebrow">BOUCLE DE PROGRESSION</p><h2>Bilan de séance</h2><p class="muted">'+escapeHtml(player?[player.first_name,player.last_name].filter(Boolean).join(' '):'Joueur')+' · '+escapeHtml(session.theme||'Séance')+'</p></div><button class="btn icon-btn" data-close>✕</button></div>'+
+    '<form id="session-review-form" class="form-grid"><input type="hidden" name="session_id" value="'+escapeHtml(session.id)+'">'+
+    '<div class="span-2 session-builder-tip"><strong>Objectif travaillé</strong><p>'+escapeHtml(session.theme||'Objectif à préciser')+'</p><small>Le bilan reste privé dans ton espace coach et servira à adapter la prochaine séance.</small></div>'+
+    '<label>Réussites<input name="successes" type="number" min="0" max="50" required value="'+(review.successes??'')+'" placeholder="Ex. 7"></label>'+
+    '<label>Tentatives<input name="attempts" type="number" min="1" max="50" required value="'+(review.attempts??10)+'"></label>'+
+    '<label class="span-2">Ma perception de la séance<select name="coach_rating" required>'+Array.from({length:10},(_,i)=>i+1).map(n=>'<option value="'+n+'" '+(Number(review.coach_rating||6)===n?'selected':'')+'>'+n+'/10</option>').join('')+'</select></label>'+
+    '<label class="span-2">Ce que tu as observé<textarea name="observation" rows="3" placeholder="Ex. contact plus tôt, mais équilibre encore instable…">'+escapeHtml(review.observation||'')+'</textarea></label>'+
+    '<label class="span-2">Ajustement à prévoir<textarea name="next_adjustment" rows="2" placeholder="Ex. réduire la vitesse et élargir la cible avant de remettre de la pression…">'+escapeHtml(review.next_adjustment||'')+'</textarea></label>'+
+    '<div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer le bilan</button></div></form>');
 }
 function sessionDialog(date=toLocalISO(new Date()), time='17:00', libraryItem=null){
   if(!state.players.length){toast('Associe d’abord un compte joueur à ton effectif.','error');return;}
@@ -694,7 +711,16 @@ $('#dialog-content').addEventListener('submit',async event=>{
   submitButtons.forEach(button=>{button.dataset.originalText=button.textContent;button.disabled=true;button.textContent='Enregistrement…';});
   const values=Object.fromEntries(new FormData(form));
   try{
-    if(form.id==='notification-preferences-form'){
+    if(form.id==='session-review-form'){
+      const session=state.sessions.find(row=>row.id===values.session_id);
+      if(!session)throw new Error('Séance introuvable. Actualise la page.');
+      const attempts=Number(values.attempts),successes=Number(values.successes),rating=Number(values.coach_rating);
+      if(!Number.isInteger(attempts)||attempts<1||attempts>50||!Number.isInteger(successes)||successes<0||successes>attempts)throw new Error('Les réussites doivent être comprises entre 0 et le nombre de tentatives.');
+      if(!Number.isInteger(rating)||rating<1||rating>10)throw new Error('Choisis une note entre 1 et 10.');
+      const review={objective:session.theme||'Séance',successes,attempts,coach_rating:rating,observation:String(values.observation||'').trim(),next_adjustment:String(values.next_adjustment||'').trim(),reviewed_at:new Date().toISOString()};
+      await dataService.saveSessionReview(session.id,state.user.id,review);
+      toast('Bilan enregistré. La prochaine séance sera adaptée à ces résultats.');
+    } else if(form.id==='notification-preferences-form'){
       const preferences=Object.fromEntries(['booking_requests','booking_decisions','booking_changes','reminders_24h','messages','progress','session_changes'].map(key=>[key,form.elements[key].checked]));
       state.notificationPreferences=await notificationService.savePreferences(state.user.id,preferences);
       toast('Préférences de notifications enregistrées.');
