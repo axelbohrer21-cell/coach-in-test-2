@@ -69,12 +69,12 @@ export const dataService = {
     const notesBySession = new Map(privateNotes.map(row => [row.session_id, row.note]));
     const sessions = sessionRows.map(row => {
       const note = notesBySession.get(row.id) || '';
-      const match = note.match(/\\n?\\n?<!--COACH_IN_PROGRESS:([A-Za-z0-9+/=]+)-->/);
+      const match = note.match(/\n?\n?<!--COACH_IN_PROGRESS:([A-Za-z0-9+/=]+)-->/);
       let progress_review = null;
       if (match) {
         try { progress_review = JSON.parse(decodeURIComponent(escape(atob(match[1])))); } catch (_) { progress_review = null; }
       }
-      return { ...row, coach_private_notes: note.replace(/\\n?\\n?<!--COACH_IN_PROGRESS:[A-Za-z0-9+/=]+-->/, '').trim(), progress_review };
+      return { ...row, coach_private_notes: note.replace(/\n?\n?<!--COACH_IN_PROGRESS:[A-Za-z0-9+/=]+-->/, '').trim(), progress_review };
     });
     const hydratedMessages=await hydrateMessages(messages);
     const videoAnalyses=await hydrateVideoAnalyses(videoRows);
@@ -149,8 +149,8 @@ export const dataService = {
     const { data: existing, error: readError } = await supabase.from('coach_session_notes')
       .select('session_id,note').eq('session_id', sessionId).eq('coach_id', coachId).maybeSingle();
     if (readError) throw readError;
-    const base = String(existing?.note || '').replace(/\\n?\\n?<!--COACH_IN_PROGRESS:[A-Za-z0-9+/=]+-->/, '').trim();
-    const note = [base, marker].filter(Boolean).join('\\n\\n');
+    const base = String(existing?.note || '').replace(/\n?\n?<!--COACH_IN_PROGRESS:[A-Za-z0-9+/=]+-->/, '').trim();
+    const note = [base, marker].filter(Boolean).join('\n\n');
     if (existing) {
       const { error } = await supabase.from('coach_session_notes').update({ note }).eq('session_id', sessionId).eq('coach_id', coachId);
       if (error) throw error;
