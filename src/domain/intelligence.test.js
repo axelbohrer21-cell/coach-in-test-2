@@ -52,7 +52,7 @@ test('repère une stagnation, une progression rapide et construit un cycle de qu
 });
 
 
-test('programme un cycle adaptatif en quatre étapes avec des exercices de la bibliothèque', () => {
+test('programme un cycle adaptatif de dix séances avec des exercices de la bibliothèque', () => {
   const six = [
     { id:'n3',player_id:'p1',evaluated_at:'2026-11-17',technical_score:12,tactical_score:15 },
     { id:'n2',player_id:'p1',evaluated_at:'2026-11-10',technical_score:12,tactical_score:14 },
@@ -68,14 +68,15 @@ test('programme un cycle adaptatif en quatre étapes avec des exercices de la bi
   ];
   const result = buildAdaptiveTrainingProgram({ player, evaluations:six, evaluationCriteria:criteria, library, now:Date.parse('2026-11-17T12:00:00') });
   assert.equal(result.ready, true);
-  assert.equal(result.weeks.length, 4);
-  assert.equal(result.weeks[0].exercise.id, 'x1');
-  assert.equal(result.weeks[1].exercise.id, 'x2');
-  assert.match(result.weeks[3].objective, /transférer|réinvestir/i);
+  assert.equal(result.sessions.length, 10);
+  assert.equal(result.sessions[0].exercise.id, 'x1');
+  assert.equal(result.sessions[1].exercise.id, 'x2');
+  assert.equal(result.sessions[9].stage, 'Bilan de cycle');
+  assert.match(result.sessions[8].objective, /Réinvestir|transfert/i);
 });
 
 test('ne programme pas un cycle présenté comme fiable avec moins de deux bilans', () => {
   const result = buildAdaptiveTrainingProgram({ player, evaluations:evaluations.slice(0,1) });
   assert.equal(result.ready, false);
-  assert.equal(result.weeks.length, 0);
+  assert.equal(result.sessions.length, 0);
 });
