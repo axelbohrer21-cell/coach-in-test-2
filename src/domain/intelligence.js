@@ -154,40 +154,53 @@ export function buildCoachIntelligence({ players = [], evaluations = [], evaluat
  * du joueur. Le programme reste une proposition coach, jamais une réservation automatique.
  */
 export function buildAdaptiveTrainingProgram({ player, evaluations = [], evaluationCriteria = [], sessions = [], videoAnalyses = [], challenges = [], library = [], now = Date.now() } = {}) {
-  if (!player?.id) return { ready: false, reason: 'Joueur introuvable.', weeks: [] };
+  if (!player?.id) return { ready: false, reason: 'Joueur introuvable.', sessions: [] };
   const analysis = analyzePlayerProgress({ player, evaluations, evaluationCriteria, sessions, videoAnalyses, challenges, now });
-  if (analysis.reportCount < 2 || analysis.fourWeekPlan.length !== 4) {
+  if (analysis.reportCount < 2) {
     return {
       ready: false,
       reason: 'Il faut au moins deux bilans pour construire un cycle personnalisé fiable.',
       analysis,
-      weeks: []
+      sessions: []
     };
   }
   const recommendation = recommendSessionExercises({
     playerId: player.id, evaluations, evaluationCriteria, library, sessions, challenges, videoAnalyses
   });
   const exercises = [recommendation?.exerciseOne, recommendation?.exerciseTwo].filter(Boolean);
-  const weeks = analysis.fourWeekPlan.map((phase, index) => ({
-    ...phase,
+  const focus = analysis.priority?.criterion || analysis.suggestedFocus;
+  const stages = [
+    { title: 'État des lieux et repères', objective: 'Observer le comportement ciblé et installer une première référence stable.', action: 'Faire réaliser des séries courtes sans multiplier les consignes.', success: 'Établir un niveau de réussite de départ sur 10 tentatives.', stage: 'Diagnostic' },
+    { title: 'Répétition maîtrisée', objective: 'Stabiliser '+focus+' dans une situation simple et reproductible.', action: 'Garder une seule consigne technique et un rythme contrôlé.', success: 'Atteindre au moins 6 réussites sur 10 tentatives.', stage: 'Stabilisation' },
+    { title: 'Régularité sous contrôle', objective: 'Répéter le comportement avec une qualité constante.', action: 'Allonger les séries sans augmenter la difficulté.', success: 'Conserver au moins 6 réussites sur 10 sur deux séries.', stage: 'Stabilisation' },
+    { title: 'Première variation', objective: 'Faire évoluer une seule variable : direction, hauteur, rythme ou déplacement.', action: 'Introduire une variation à la fois et revenir au repère si nécessaire.', success: 'Réussir au moins 6 situations sur 10 malgré la variation.', stage: 'Variabilité' },
+    { title: 'Variation et déplacement', objective: 'Maintenir '+focus+' avec un déplacement ou une balle différente.', action: 'Alterner une situation connue et une situation nouvelle.', success: 'Retrouver le comportement ciblé dans 6 situations sur 10.', stage: 'Variabilité' },
+    { title: 'Lecture de trajectoire', objective: 'Identifier l’information utile avant de déclencher la réponse.', action: 'Faire verbaliser la lecture puis laisser le joueur agir.', success: 'Faire un choix adapté dans au moins 6 situations sur 10.', stage: 'Prise de décision' },
+    { title: 'Choix tactique', objective: 'Choisir quand et comment utiliser '+focus+' selon la situation de jeu.', action: 'Proposer deux réponses possibles et faire justifier le choix.', success: 'Choisir la bonne intention dans 6 situations sur 10.', stage: 'Prise de décision' },
+    { title: 'Enchaînement et construction', objective: 'Relier le comportement travaillé à la frappe ou décision suivante.', action: 'Construire des séquences de deux à trois frappes avec une intention claire.', success: 'Construire au moins 5 séquences cohérentes sur 8.', stage: 'Enchaînement' },
+    { title: 'Transfert en points à thème', objective: 'Réinvestir '+focus+' dans des points avec une contrainte tactique.', action: 'Laisser jouer, observer et ne corriger qu’après la séquence.', success: 'Retrouver le comportement dans au moins 6 points sur 10.', stage: 'Transfert match' },
+    { title: 'Validation et nouveau cap', objective: 'Mesurer les acquis, identifier ce qui est transféré et définir la prochaine priorité.', action: 'Comparer les observations au point de départ puis réaliser un bilan actualisé.', success: 'Valider les acquis observables et choisir le prochain axe de travail.', stage: 'Bilan de cycle' }
+  ];
+  const plannedSessions = stages.map((phase, index) => ({
+    number: index + 1,
+    title: phase.title,
+    objective: phase.objective,
+    coachAction: phase.action,
+    success: phase.success,
+    stage: phase.stage,
+    focus,
     exercise: exercises.length ? exercises[index % exercises.length] : null,
-    focus: analysis.priority?.criterion || analysis.suggestedFocus,
-    stage: ['Repères', 'Variabilité', 'Décision', 'Transfert'][index],
-    coachAction: [
-      'Installer le geste et stabiliser la réussite.',
-      'Faire varier une seule contrainte à la fois.',
-      'Laisser le joueur lire la situation et choisir.',
-      'Vérifier le transfert en points et actualiser le bilan.'
-    ][index]
+    challenge: analysis.activeChallenge?.objective || analysis.activeChallenge?.criterion || null
   }));
   return {
     ready: true,
     playerId: player.id,
     playerName: analysis.playerName,
-    focus: analysis.priority?.criterion || analysis.suggestedFocus,
+    focus,
     status: analysis.status,
     reason: recommendation?.reason || 'Cycle construit à partir des bilans disponibles.',
     activeChallenge: analysis.activeChallenge,
-    weeks
+    completedSessionCount: sessions.filter(row => row.player_id === player.id && row.status !== 'cancelled').length,
+    sessions: plannedSessions
   };
 }
