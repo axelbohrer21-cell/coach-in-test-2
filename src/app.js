@@ -470,8 +470,10 @@ function generateSessionPlan(){
   if(!itemOne){toast('Sélectionne un exercice enregistré dans ta bibliothèque.','error');return;}
   const duration=Number(values.duration_minutes);
   const split=duration===60?{warm:10,one:20,two:20,match:10}:duration===120?{warm:20,one:40,two:40,match:20}:{warm:15,one:30,two:30,match:15};
+  const coachingPlan=buildSessionCoachingPlan(generatedSessionRecommendation,duration);
+  const coachingLine='\n\nCAP PÉDAGOGIQUE · '+coachingPlan.objective+'\nCONSIGNE COACH · '+coachingPlan.cue+'\nADAPTATION · '+coachingPlan.constraint+'\nINDICATEUR DE RÉUSSITE · '+coachingPlan.success+(coachingPlan.challenge?'\nDÉFI EN COURS · '+coachingPlan.challenge:'');
   const focusLine=generatedSessionRecommendation?.priority?'\n\nOBJECTIF PRIORITAIRE · '+generatedSessionRecommendation.priority.criterion+'\nÀ observer pendant les répétitions puis à confirmer en situation de points.':'';
-  const exerciseOne='ÉCHAUFFEMENT · '+split.warm+' min\nMise en route progressive : échanges à intensité modérée, mobilité et augmentation graduelle du rythme.\n\nEXERCICE 1 · '+split.one+' min\n'+sessionBuilderExerciseText(itemOne)+focusLine;
+  const exerciseOne='ÉCHAUFFEMENT · '+split.warm+' min\nMise en route progressive : échanges à intensité modérée, mobilité et augmentation graduelle du rythme.\n\nEXERCICE 1 · '+split.one+' min\n'+sessionBuilderExerciseText(itemOne)+focusLine+coachingLine;
   const transfer=buildMatchTransfer(generatedSessionRecommendation?.priority);
   const exerciseTwo=(itemTwo?'EXERCICE 2 · '+split.two+' min\n'+sessionBuilderExerciseText(itemTwo)+'\n\n':'')+
     'RETOUR AU MATCH · '+(split.match+(itemTwo?0:split.two))+' min\n'+transfer+' Le coach observe la réussite et ajuste la consigne si nécessaire.';
