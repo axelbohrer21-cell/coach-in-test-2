@@ -53,13 +53,31 @@ npm test
 
 Pour tester l'interface localement, ouvre le dossier avec un serveur statique local (ne pas ouvrir directement `index.html` en `file://`, car les modules ES nécessitent HTTP).
 
-## Déploiement GitHub / Vercel
+## Hébergement principal — Cloudflare Pages
 
-1. Sauvegarde le dépôt et la base actuels.
-2. Crée une branche `refonte-coach-in` ou un projet Vercel de préproduction.
-3. Copie l'intégralité du dossier en conservant l'arborescence.
-4. Dans Vercel : Framework Preset `Other`, Build Command vide, Output Directory `.`.
-5. Déploie en Preview et vérifie l'URL avant de basculer le domaine de production.
+Coach In est une application statique sans étape de compilation (modules ES natifs).
+
+Configuration Cloudflare Pages à utiliser :
+- Source : GitHub, dépôt `axelbohrer21-cell/coach-in-test-2`.
+- Branche de production : `main` (à sélectionner après validation de la préproduction).
+- Framework preset : `None` / `Other`.
+- Build command : laisser vide.
+- Build output directory : `.` (racine du dépôt).
+- Root directory : laisser vide / racine.
+- Variables d'environnement : aucune requise pour le build actuel ; la configuration Supabase publique est déjà dans `src/config.js`. Ne jamais ajouter de clé `service_role`, mot de passe ou secret privé.
+- `_headers` applique les en-têtes de sécurité de base.
+- `_redirects` assure le fallback de l'application vers `index.html`.
+
+Migration préparée sur la branche `migration/cloudflare-pages`. Étapes de mise en ligne :
+1. Dans Cloudflare Dashboard, Workers & Pages → Create → Pages → Connect to Git.
+2. Autoriser Cloudflare à accéder au dépôt GitHub Coach In.
+3. Choisir la branche `migration/cloudflare-pages` pour un premier déploiement de préproduction.
+4. Configurer les paramètres ci-dessus et lancer le premier deploy.
+5. Vérifier l'URL Cloudflare : chargement, connexion coach/joueur, rôles, planning, réservations, messages et données.
+6. Après validation, basculer la branche de production sur `main` (ou fusionner la branche de préparation après revue) et lancer le déploiement de production.
+7. Garder Vercel en secours ; ne pas supprimer le projet ni ses paramètres.
+
+Les données, comptes, authentification, règles RLS et tables Supabase ne sont pas migrés ni modifiés par le changement d'hébergeur.
 
 ## Configuration Supabase
 
