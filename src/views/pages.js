@@ -5,6 +5,7 @@ import { toLocalISO, countDistinctValidations } from '../domain/tennis.js';
 import { recommendChallenge, radarPoints } from '../domain/progression.js';
 import { buildCoachIntelligence } from '../domain/intelligence.js';
 import { recommendSessionExercises } from '../domain/session-recommendations.js';
+import { generateOriginalSession } from '../domain/session-generator.js';
 import { buildDaySeriesOverview, getWeekProgram, GROUP_SEASON, isPublicHoliday, isPrivateLessonDateAllowed, ZONE_B_HOLIDAYS_2026_2027, CANCELLED_GROUP_DATES } from '../domain/group-calendar.js';
 import { buildSeriesCounters } from '../domain/group-series.js';
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
@@ -452,13 +453,43 @@ export function libraryCard(item) {
   return '<article class="library-item-card '+(isTemplate?'library-program-template':'')+'"><div class="library-item-main"><div class="library-item-title-row"><strong>'+escapeHtml(item.title||'Exercice sans titre')+'</strong><span class="library-category-pill '+(item.category==='collectif'?'is-group':'is-private')+'">'+category+'</span></div><div class="library-item-meta"><span>'+escapeHtml(item.theme||'Sans thème')+'</span>'+(item.subtheme?'<span>· '+escapeHtml(item.subtheme)+'</span>':'')+'<span>· '+escapeHtml(item.level||'Tous niveaux')+'</span>'+(item.duration_minutes?'<span>· '+Number(item.duration_minutes)+' min</span>':'')+(item.source_week?'<span>· Semaine '+Number(item.source_week)+'</span>':'')+'</div>'+(item.objective?'<p class="library-item-objective">'+escapeHtml(item.objective)+'</p>':'')+'</div>'+(sections.length?'<details class="library-item-details"><summary>Voir le contenu pédagogique <span>'+sections.length+' rubrique(s)</span></summary><div>'+sections.map(([label,value])=>'<section><b>'+label+'</b><p>'+escapeHtml(value)+'</p></section>').join('')+'</div></details>':'')+'<div class="library-item-actions">'+(isTemplate?'<button class="btn primary" data-add-program-item="'+item.id+'">＋ Ajouter à ma bibliothèque</button>':'<button class="btn subtle" data-edit-library="'+item.id+'">Modifier</button>'+(item.category==='particulier'?'<button class="btn primary" data-use-library="'+item.id+'">Préparer une séance</button>':''))+'</div></article>';
 }
 export function libraryItemsForCoach() {
+  const privateThemes=[
+    ['attaque','Séance type — Attaque'],
+    ['construction','Séance type — Construction du point'],
+    ['defense','Séance type — Défense'],
+    ['footwork','Séance type — Déplacements et appuis'],
+    ['mental','Séance type — Mental et routine'],
+    ['return','Séance type — Retour de service'],
+    ['service','Séance type — Service'],
+    ['volley','Séance type — Volée']
+  ];
+  const privateTemplates=privateThemes.map(([key,title])=>{
+    const generated=generateOriginalSession({theme:key,level:'Intermédiaire',difficulty:'progressive',duration:90});
+    return {
+      id:'private-template-'+key,is_program_template:true,category:'particulier',title,
+      theme:generated.theme,subtheme:'Séance complète',level:'Tous niveaux',
+      objective:generated.objective,
+      equipment:'Raquettes, balles et plots ou cibles selon les ateliers.',
+      setup:'Installer les zones et positions décrites dans les ateliers. Adapter l’alimentation au niveau du joueur.',
+      instructions:generated.exercise_1+'\n\n'+generated.exercise_2,
+      rotations:'Alterner les rôles de joueur et de partenaire après chaque série.',
+      variations:generated.difficulty_rule+'\n\nCritère de réussite : '+generated.success_criteria,
+      keywords:[key,generated.theme,'cours particulier','séance type'],
+      source_week:null,duration_minutes:90
+    };
+  });
   const programItems=(groupProgram.weeks||[]).flatMap(week=>(week.courts||[]).map((instructions,index)=>{
     const text=String(instructions||'').trim(); if(!text)return null;
     const theme=String(week.theme||'').replace(/^SEMAINE\s+\d+\s*:\s*/i,'').trim();
     return {id:'program-'+week.week+'-'+(index+1),is_program_template:true,category:'collectif',title:'S'+String(week.week).padStart(2,'0')+' · Atelier '+(index+1)+' — '+theme,theme:theme||'Programme collectif',subtheme:'Atelier terrain '+(index+1),level:'Tous niveaux',objective:'',equipment:'',setup:'',instructions:text,rotations:'',variations:'',keywords:[theme,'programme annuel','collectif'].filter(Boolean),source_week:Number(week.week),duration_minutes:null};
   }).filter(Boolean));
   const savedKeys=new Set((state.library||[]).map(item=>String(item.source_week||'')+'|'+String(item.title||'')));
-  return [...(state.library||[]),...programItems.filter(item=>!savedKeys.has(String(item.source_week)+'|'+String(item.title)))];
+  const savedPrivateTitles=new Set((state.library||[]).filter(item=>item.category==='particulier').map(item=>String(item.title||'')));
+  return [
+    ...(state.library||[]),
+    ...privateTemplates.filter(item=>!savedPrivateTitles.has(item.title)),
+    ...programItems.filter(item=>!savedKeys.has(String(item.source_week)+'|'+String(item.title)))
+  ];
 }
 function libraryPage() {
   const items=libraryItemsForCoach().sort((a,b)=>String(a.title).localeCompare(String(b.title),'fr'));
