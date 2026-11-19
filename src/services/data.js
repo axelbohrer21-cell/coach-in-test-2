@@ -42,7 +42,7 @@ export const dataService = {
   async loadCoachWorkspace(userId) {
     const links = await unwrap(supabase.from('coach_players').select('player_id').eq('coach_id', userId));
     const playerIds = links.map(link => link.player_id);
-    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, notifications, notificationPreferences, criteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages, videoRows] = await Promise.all([
+    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives, notifications, notificationPreferences, criteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages, videoRows] = await Promise.all([
       playerIds.length ? unwrap(supabase.from('profiles').select('*').in('id', playerIds).eq('role', 'player').order('last_name')) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('training_sessions').select('*').in('player_id', playerIds).eq('created_by', userId).order('session_date', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('coach_session_notes').select('session_id,note').eq('coach_id', userId)),
@@ -53,6 +53,7 @@ export const dataService = {
       unwrap(supabase.from('booking_requests').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('session_library').select('*').eq('coach_id', userId).order('title')),
       unwrap(supabase.from('coach_session_exercises').select('*').eq('coach_id', userId).eq('active',true).order('theme').order('title')),
+      unwrap(supabase.from('coach_session_objectives').select('*').eq('coach_id', userId).eq('active',true).order('display_order')),
       notificationService.listCoach(),
       notificationService.getPreferences(userId),
       unwrap(supabase.from('criteria_catalog').select('*').eq('coach_id', userId).order('display_order')),
@@ -97,7 +98,7 @@ export const dataService = {
       playerIds.length ? unwrap(supabase.from('player_profile_details').select('*').in('player_id',playerIds)) : Promise.resolve([])
     ]);
     const playerProfileDetailsById = Object.fromEntries(profileDetailsRows.map(row=>[row.player_id,row]));
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
+    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
   },
 
   async loadPlayerWorkspace() {
@@ -193,6 +194,7 @@ export const dataService = {
     if (error) throw error;
     return data;
   },
+  async updateCoachSessionObjective(id,changes) { const {data,error}=await supabase.from('coach_session_objectives').update({...changes,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id).select().single(); if(error)throw error; return data; },
   async createCoachSessionExercise(payload) { const {data,error}=await supabase.from('coach_session_exercises').insert({...payload,coach_id:state.user.id}).select().single(); if(error)throw error; return data; },
   async updateCoachSessionExercise(id,changes) { const {data,error}=await supabase.from('coach_session_exercises').update({...changes,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id).select().single(); if(error)throw error; return data; },
   async deleteCoachSessionExercise(id) { const {error}=await supabase.from('coach_session_exercises').delete().eq('id',id).eq('coach_id',state.user.id); if(error)throw error; },
