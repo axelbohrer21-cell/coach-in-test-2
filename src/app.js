@@ -1060,7 +1060,7 @@ supabase.auth.getSession().then(({data,error})=>{if(error)return showAuth(error.
 async function loadWeatherForecast(){
  const panel=$('#weather-panel'); if(!panel)return;
  const request=++weatherRequest;
- const summary=$('#weather-summary'); if(summary)summary.textContent='Chargement des prévisions de pluie…';
+ const summary=$('#weather-summary'); if(summary)summary.textContent='Chargement des prévisions…';
  try{
   const url='https://api.open-meteo.com/v1/forecast?latitude=43.282&longitude=5.516&current=temperature_2m,weather_code&hourly=precipitation_probability,precipitation,weather_code&forecast_days=2&timezone=Europe%2FParis';
   const response=await fetch(url); if(!response.ok)throw new Error('Prévisions indisponibles');
@@ -1071,10 +1071,18 @@ async function loadWeatherForecast(){
   const fmt=time=>new Date(time).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   const current=data.current||{};
   const title=$('#weather-title'); if(title)title.textContent=(current.temperature_2m??'—')+' °C · '+weatherDescription(current.weather_code);
+  const icon=$('#weather-icon'); if(icon)icon.textContent=weatherIcon(current.weather_code);
   if(summary)summary.textContent=next.length?('Sur les 8 prochaines heures : risque maximal de pluie '+max.prob+' %'+(max.time?' vers '+fmt(max.time):'')+'. '+(max.rain>0?'Précipitations prévues : '+max.rain.toFixed(1)+' mm sur l’heure la plus arrosée.':'Pas de pluie horaire significative indiquée.')):'Prévisions horaires indisponibles pour les prochaines heures.';
+  const riskValue=$('#weather-risk-value'); if(riskValue)riskValue.textContent=next.length?max.prob+' %':'— %';
+  const riskBar=$('#weather-risk-bar'); if(riskBar)riskBar.style.width=(next.length?Math.max(0,Math.min(100,max.prob)):0)+'%';
+  const riskLabel=$('#weather-risk-label');
+  const vigilance=$('#weather-vigilance');
+  if(vigilance)vigilance.dataset.level=max.prob>=60?'high':max.prob>=30?'moderate':'low';
+  if(riskLabel)riskLabel.textContent=!next.length?'Données indisponibles':max.prob>=60?'Risque élevé · anticipe les terrains':max.prob>=30?'Risque modéré · reste attentif':'Risque faible · conditions plutôt favorables';
  }catch(error){if(request===weatherRequest&&state.currentPage==='planning'&&summary)summary.textContent='La météo ne peut pas être chargée pour le moment. Le planning reste disponible.';}
 }
-function weatherDescription(code){const c=Number(code);if(c===0)return'ciel dégagé';if([1,2,3].includes(c))return'nuageux';if([45,48].includes(c))return'brouillard';if([51,53,55,56,57].includes(c))return'bruine';if([61,63,65,66,67,80,81,82].includes(c))return'pluie';if([71,73,75,77,85,86].includes(c))return'neige';if([95,96,99].includes(c))return'orage';return'conditions météo';}
+function weatherDescription(code){const c=Number(code);if(c===0)return'ciel dégagé';if([1,2,3].includes(c))return'partiellement nuageux';if([45,48].includes(c))return'brouillard';if([51,53,55,56,57].includes(c))return'bruine';if([61,63,65,66,67,80,81,82].includes(c))return'pluie';if([71,73,75,77,85,86].includes(c))return'neige';if([95,96,99].includes(c))return'orage';return'conditions météo';}
+function weatherIcon(code){const c=Number(code);if(c===0)return'☀️';if([1,2].includes(c))return'🌤️';if([3,45,48].includes(c))return'☁️';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'🌧️';if([71,73,75,77,85,86].includes(c))return'🌨️';if([95,96,99].includes(c))return'⛈️';return'🌤️';}
 
 
 function subscribeToNotifications(){
