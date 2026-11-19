@@ -4,9 +4,19 @@ export const GROUP_SEASON = Object.freeze({
   zone: 'B',
   adultTarget: 28,
   childTarget: 30,
-  weekdays: Object.freeze({ adultes: [1, 2, 4, 5], enfants: [3, 6] }),
-  // Les horaires adultes sont à renseigner bloc par bloc depuis le planning source.
-  // Les plages enfants sont celles confirmées : mercredi 9 h 30–18 h, samedi 9 h 30–14 h 30.
+  weekdays: Object.freeze({ adultes: [1, 2, 3, 4, 5], enfants: [3, 6] }),
+  // Planning collectif hebdomadaire confirmé par le coach.
+  weeklySchedule: Object.freeze([
+    { key:'adultes-lundi', audience:'adultes', weekday:1, start:'17:00', end:'21:00', courts:[1,2] },
+    { key:'adultes-mardi', audience:'adultes', weekday:2, start:'17:30', end:'20:30', courts:[1,2,3] },
+    { key:'enfants-mercredi', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courts:[1,2,3] },
+    { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courts:[1,2,3] },
+    { key:'adultes-jeudi', audience:'adultes', weekday:4, start:'17:30', end:'19:00', courts:[1,2] },
+    { key:'adultes-vendredi', audience:'adultes', weekday:5, start:'17:30', end:'20:00', courts:[1,2] },
+    { key:'enfants-samedi', audience:'enfants', weekday:6, start:'09:30', end:'14:30', courts:[1,2,3] }
+  ]),
+  holidayStage: Object.freeze({ start:'09:30', end:'16:30', courts:[1,2,3], weekdays:[1,2,3,4,5] }),
+  // Fenêtres historiques utilisées par le contrôle des demandes de cours particuliers.
   availabilityWindows: Object.freeze({3:[['09:30','18:00']],6:[['09:30','14:30']]})
 });
 
@@ -46,10 +56,12 @@ export function isPrivateLessonDateAllowed(dateISO, options = {}) {
   const { holidays = ZONE_B_HOLIDAYS_2026_2027, publicHolidays = PUBLIC_HOLIDAYS_2026_2027 } = options;
   return parseISO(dateISO).getUTCDay() !== 0 && !isSchoolHoliday(dateISO, holidays) && (!isPublicHoliday(dateISO, publicHolidays) || dateISO === '2027-05-08');
 }
-export function isWithinTeachingWindow(dateISO, startTime, endTime) {
+export function isWithinTeachingWindow(dateISO, startTime, endTime, audience = 'enfants') {
   const day = parseISO(dateISO).getUTCDay();
-  const windows = GROUP_SEASON.availabilityWindows[day];
-  if (!windows) return true;
+  const windows = audience === 'adultes'
+    ? GROUP_SEASON.weeklySchedule.filter(row => row.audience === 'adultes' && row.weekday === day).map(row => [row.start, row.end])
+    : GROUP_SEASON.availabilityWindows[day];
+  if (!windows?.length) return false;
   return windows.some(([start, end]) => startTime >= start && endTime <= end && endTime > startTime);
 }
 
@@ -81,6 +93,7 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
   const definitions = [
     { key:'adultes-lundi', audience:'adultes', weekday:1, target:GROUP_SEASON.adultTarget },
     { key:'adultes-mardi', audience:'adultes', weekday:2, target:GROUP_SEASON.adultTarget },
+    { key:'adultes-mercredi', audience:'adultes', weekday:3, target:GROUP_SEASON.adultTarget },
     { key:'adultes-jeudi', audience:'adultes', weekday:4, target:GROUP_SEASON.adultTarget },
     { key:'adultes-vendredi', audience:'adultes', weekday:5, target:GROUP_SEASON.adultTarget },
     { key:'enfants-mercredi', audience:'enfants', weekday:3, target:GROUP_SEASON.childTarget },

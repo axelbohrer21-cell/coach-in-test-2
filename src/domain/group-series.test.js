@@ -21,8 +21,10 @@ test('le quatrième court est accepté',()=>{
  assert.ok(rows.length>0); assert.equal(rows[0].court_number,4);
 });
 
-test('un jour incompatible avec le public est refusé plutôt que de créer une série vide',()=>{
- assert.throws(()=>buildSeriesOccurrences({...series,weekday:3}),/Jour incompatible/);
+test('le mercredi adulte est accepté et un jour incompatible enfant est refusé',()=>{
+ const wednesday=buildSeriesOccurrences({...series,title:'Adultes mercredi',weekday:3,start_time:'18:00',end_time:'19:30'});
+ assert.ok(wednesday.length>0);
+ assert.ok(wednesday.every(row=>row.audience==='adultes'&&row.start_time==='18:00'));
  assert.throws(()=>buildSeriesOccurrences({...series,audience:'enfants',weekday:1}),/Jour incompatible/);
 });
 
