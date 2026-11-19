@@ -6,10 +6,13 @@ test('cours enfants : mercredi et samedi, hors vacances Zone B', () => {
   const wednesdays = generateTeachingDates({ audience:'enfants', weekday:3 });
   const saturdays = generateTeachingDates({ audience:'enfants', weekday:6 });
   assert.equal(wednesdays.length,32);
-  assert.equal(saturdays.length,28);
+  assert.equal(saturdays.length,32);
   assert.equal(wednesdays.includes('2026-11-11'),true); // jour férié autorisé aux enfants
   assert.equal(saturdays.includes('2027-05-08'),true);
-  assert.equal(saturdays.includes('2027-04-24'),false); // vacances de printemps
+  assert.equal(saturdays.includes('2027-04-17'),true); // premier samedi des vacances de printemps
+  assert.equal(saturdays.includes('2027-04-24'),false); // autres samedis des vacances exclus
+  assert.equal(saturdays.includes('2026-10-17'),true); // premier samedi de la Toussaint
+  assert.equal(saturdays.includes('2026-10-24'),false); // autres samedis des vacances exclus
 });
 
 test('cours adultes : lundi à vendredi selon le planning confirmé', () => {
@@ -44,7 +47,7 @@ test('compteurs à jour au 19 novembre : dates écoulées comptées par défaut,
   const counts = Object.fromEntries(rows.map(row=>[row.key,row.completed]));
   assert.deepEqual(counts,{
     'adultes-lundi':8,'adultes-mardi':8,'adultes-mercredi':7,'adultes-jeudi':7,'adultes-vendredi':7,
-    'enfants-mercredi':8,'enfants-samedi':6
+    'enfants-mercredi':8,'enfants-samedi':7
   });
 });
 
