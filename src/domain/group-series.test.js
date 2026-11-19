@@ -45,3 +45,13 @@ test('compteur de série : les séances passées sont acquises automatiquement s
  assert.equal(row.cancelled,1);
  assert.equal(row.pastUnrecorded,0);
 });
+
+test('série enfants du samedi : ajoute le premier samedi de chaque vacances Zone B',()=>{
+ const childSeries={...series,id:'kids-sat',title:'Enfants samedi',audience:'enfants',weekday:6,start_time:'09:30',end_time:'14:30',target_sessions:30};
+ const rows=buildSeriesOccurrences(childSeries);
+ assert.ok(rows.some(row=>row.session_date==='2026-10-17'));
+ assert.ok(rows.some(row=>row.session_date==='2026-12-19'));
+ assert.ok(rows.some(row=>row.session_date==='2027-02-20'));
+ assert.ok(rows.some(row=>row.session_date==='2027-04-17'));
+ assert.equal(rows.some(row=>row.session_date==='2026-10-24'),false);
+});
