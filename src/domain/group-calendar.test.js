@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CANCELLED_GROUP_DATES, generateTeachingDates, isTeachingDate, buildDaySeriesOverview } from './group-calendar.js';
+import { CANCELLED_GROUP_DATES, generateTeachingDates, isTeachingDate, buildDaySeriesOverview, GROUP_SEASON } from './group-calendar.js';
 
 test('cours enfants : mercredi et samedi, hors vacances Zone B', () => {
   const wednesdays = generateTeachingDates({ audience:'enfants', weekday:3 });
@@ -12,12 +12,14 @@ test('cours enfants : mercredi et samedi, hors vacances Zone B', () => {
   assert.equal(saturdays.includes('2027-04-24'),false); // vacances de printemps
 });
 
-test('cours adultes : lundi, mardi, jeudi et vendredi, hors vacances et jours fériés', () => {
+test('cours adultes : lundi à vendredi selon le planning confirmé', () => {
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:1 }).length,26);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:2 }).length,32);
+  assert.equal(generateTeachingDates({ audience:'adultes', weekday:3 }).length,31);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:4 }).length,30);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:5 }).length,32);
   assert.equal(isTeachingDate('2027-05-06','adultes'),false); // Ascension
+  assert.deepEqual(GROUP_SEASON.weeklySchedule.find(row=>row.key==='adultes-mercredi'), { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courts:null });
 });
 
 test('compteurs : annulés exclus, réalisés et prévus comptés séparément', () => {
