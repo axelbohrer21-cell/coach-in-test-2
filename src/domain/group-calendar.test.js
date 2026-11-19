@@ -33,9 +33,9 @@ test('compteurs : les dates passées sont réalisées par défaut et les annulat
     { audience:'adultes', session_date:'2026-09-28', status:'cancelled' }
   ];
   const monday = buildDaySeriesOverview({ groupSessions:rows, now:'2026-09-22' })[0];
-  assert.equal(monday.completed,1);
+  assert.equal(monday.completed,2);
   assert.equal(monday.planned,0);
-  assert.equal(monday.remaining,27);
+  assert.equal(monday.remaining,26);
   assert.equal(monday.pastUnrecorded,0);
 });
 
