@@ -9,11 +9,11 @@ export const GROUP_SEASON = Object.freeze({
   weeklySchedule: Object.freeze([
     { key:'adultes-lundi', audience:'adultes', weekday:1, start:'17:00', end:'21:00', courts:[1,2] },
     { key:'adultes-mardi', audience:'adultes', weekday:2, start:'17:30', end:'20:30', courts:[1,2,3] },
-    { key:'enfants-mercredi', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courts:null },
-    { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courts:null },
+    { key:'enfants-mercredi', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courts:[1,2,3] },
+    { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courts:[1,2,3] },
     { key:'adultes-jeudi', audience:'adultes', weekday:4, start:'17:30', end:'19:00', courts:[1,2] },
     { key:'adultes-vendredi', audience:'adultes', weekday:5, start:'17:30', end:'20:00', courts:[1,2] },
-    { key:'enfants-samedi', audience:'enfants', weekday:6, start:'09:30', end:'14:30', courts:null }
+    { key:'enfants-samedi', audience:'enfants', weekday:6, start:'09:30', end:'14:30', courts:[1,2,3] }
   ]),
   holidayStage: Object.freeze({ start:'09:30', end:'16:30', courts:[1,2,3], weekdays:[1,2,3,4,5] }),
   // Fenêtres historiques utilisées par le contrôle des demandes de cours particuliers.
