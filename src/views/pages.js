@@ -11,6 +11,11 @@ import { buildSeriesCounters } from '../domain/group-series.js';
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
 import { playerTennisPage, playerMatchesPage, clubLifePage } from './player-experience.js';
 
+function timeToMinutes(value) {
+  const [hours, minutes] = String(value || '00:00').split(':').map(Number);
+  return hours * 60 + (minutes || 0);
+}
+
 const PLAYER_ACCENTS = ['#42c7f5','#a78bfa','#54d6a0','#ffad66','#fb7185','#facc15','#2dd4bf','#c084fc'];
 function playerAccent(playerId) {
   let hash = 0;
