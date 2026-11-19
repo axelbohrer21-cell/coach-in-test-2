@@ -230,6 +230,31 @@ $('#dialog-content').addEventListener('change',event=>{
   if(event.target.name==='player_id'&&event.target.form?.id==='session-builder-form')applySessionRecommendationToBuilder(event.target.value);
   if(event.target.name==='creation_mode'&&event.target.form?.id==='session-builder-form')updateSessionBuilderMode();
 });
+$('#page-content').addEventListener('change',async event=>{
+  const input=event.target.closest('[data-group-rain-day]');
+  if(!input)return;
+  const rainy=input.checked;
+  input.disabled=true;
+  try{
+    const saved=await dataService.setGroupCourseRainDay({
+      coachId:state.user.id,
+      sessionDate:input.dataset.sessionDate,
+      audience:input.dataset.audience,
+      weekday:Number(input.dataset.weekday),
+      rainy
+    });
+    const rows=state.groupCourseCancellations||[];
+    state.groupCourseCancellations=rainy
+      ? [...rows.filter(row=>!(row.session_date===input.dataset.sessionDate&&row.audience===input.dataset.audience)),saved]
+      : rows.filter(row=>!(row.session_date===input.dataset.sessionDate&&row.audience===input.dataset.audience));
+    render('group-calendar');
+    toast(rainy?'Jour de pluie exclu du compteur.':'Date réintégrée dans le compteur.');
+  }catch(error){
+    input.checked=!rainy;
+    input.disabled=false;
+    toast(error.message||'Impossible d’enregistrer ce jour de pluie.','error');
+  }
+});
 $('#page-content').addEventListener('submit',async event=>{
   const profileDetailsForm=event.target.closest('#player-profile-details-form');
   if(profileDetailsForm){
