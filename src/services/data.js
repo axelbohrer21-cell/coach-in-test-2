@@ -78,7 +78,18 @@ export const dataService = {
     });
     const hydratedMessages=await hydrateMessages(messages);
     const videoAnalyses=await hydrateVideoAnalyses(videoRows);
-    const videoCorrectionFollowups=playerIds.length?await unwrap(supabase.from('coach_video_correction_followups').select('*').eq('coach_id',userId).order('created_at',{ascending:false})):[];
+    let videoCorrectionFollowups=[];
+    if(playerIds.length){
+      const {data:followupsData,error:followupsError}=await supabase.from('coach_video_correction_followups').select('*').eq('coach_id',userId).order('created_at',{ascending:false});
+      if(followupsError){
+        // La table de suivi vidéo est facultative pour le chargement général du tableau de bord.
+        // Ne bloque pas toute la connexion si l'API PostgREST ne l'a pas encore publiée dans son cache.
+        if(!['PGRST205','42P01'].includes(followupsError.code)) throw followupsError;
+        console.warn('Coach In: suivi des corrections vidéo temporairement indisponible',followupsError.message);
+      } else {
+        videoCorrectionFollowups=data||[];
+      }
+    }
     const [clubEvents, profileDetailsRows] = await Promise.all([
       unwrap(supabase.from('club_events').select('*').order('starts_at')),
       playerIds.length ? unwrap(supabase.from('player_profile_details').select('*').in('player_id',playerIds)) : Promise.resolve([])
