@@ -65,9 +65,11 @@ function render(page) {
   if (!navItems.some(item => item[0] === page)) page = 'dashboard';
   state.currentPage = page;
   subscribeToNotifications();
-  const primaryKeys = isCoach
-    ? ['dashboard','players','planning','sessions','reports']
-    : ['dashboard','passport','sessions','reports','messages'];
+  const primaryKeys = isAdmin && !isCoach
+    ? navItems.map(item => item[0])
+    : isCoach
+      ? ['dashboard','players','planning','sessions','reports']
+      : ['dashboard','passport','sessions','reports','messages'];
   const primaryItems = navItems.filter(item => primaryKeys.includes(item[0]));
   const moreItems = navItems.filter(item => !primaryKeys.includes(item[0]));
   const navButton = ([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}</button>`;
