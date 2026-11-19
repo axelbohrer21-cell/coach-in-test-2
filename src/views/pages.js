@@ -298,7 +298,7 @@ function planningPage() {
     const events=[
       ...state.sessions.filter(s=>s.session_date===iso).map(s=>({time:s.session_time||'08:00',kind:'session',id:s.id,playerId:s.player_id,title:playerName(s.player_id),detail:s.theme||'Cours particulier',duration:Number(s.duration_minutes||60),court:s.court_number})),
       ...state.groupSessions.filter(s=>s.session_date===iso).map(s=>({time:s.start_time||'08:00',date:s.session_date,kind:'group',id:s.id,title:s.title,detail:s.status==='cancelled'?'ANNULÉ':s.status==='completed'?'Cours collectif · effectué':'Cours collectif',duration:Math.max(0,timeToMinutes(s.end_time)-timeToMinutes(s.start_time)),court:s.court_number,status:s.status})),
-      ...GROUP_SEASON.weeklySchedule.filter(row=>row.audience==='adultes'&&row.weekday===d.getDay()&&isTeachingDate(iso,'adultes')&&!state.groupSessions.some(s=>s.session_date===iso&&(s.start_time||'').slice(0,5)===row.start)).map(row=>({time:row.start,date:iso,kind:'recurring-group',id:'recurring-'+row.key+'-'+iso,title:'Cours collectif adultes',detail:'Créneau collectif récurrent',duration:timeToMinutes(row.end)-timeToMinutes(row.start),courts:row.courts,status:'scheduled'})),
+      ...GROUP_SEASON.weeklySchedule.filter(row=>row.weekday===d.getDay()&&isTeachingDate(iso,row.audience)&&!state.groupSessions.some(s=>s.session_date===iso&&(s.start_time||'').slice(0,5)===row.start)).map(row=>({time:row.start,date:iso,kind:'recurring-group',id:'recurring-'+row.key+'-'+iso,title:row.audience==='enfants'?'Cours collectif enfants':'Cours collectif adultes',detail:'Créneau collectif récurrent',duration:timeToMinutes(row.end)-timeToMinutes(row.start),courts:row.courts,status:'scheduled'})),
       ...buildHolidayStageOccurrences({startDate:iso,endDate:iso}).flatMap(stage=>stage.courts.map(court=>({time:stage.start_time,date:iso,kind:'stage',id:stage.id+'-court-'+court,title:stage.title,detail:'Stage enfants · vacances scolaires',duration:420,court,status:'scheduled'})))
     ];
     const slots=Array.from({length:28},(_,slotIndex)=>{
@@ -311,13 +311,20 @@ function planningPage() {
         const durationLabel=event.duration?(`${Math.floor(event.duration/60)} h${event.duration%60? ` ${event.duration%60}` : ''}`):'';
         return '<div class="calendar-event '+(event.kind==='session'?'player-event':'group-event')+(event.kind==='recurring-group'?' recurring-group-event':'')+(event.status==='cancelled'?' event-cancelled':event.status==='completed'?' event-completed':'')+'" data-calendar-event data-event-id="'+escapeHtml(event.id||'')+'" tabindex="0" role="button" aria-pressed="false" aria-label="Sélectionner '+escapeHtml(event.title)+' à '+clock(event.time)+'" style="--event-accent:'+accent+'"><div class="calendar-event-main"><b>'+clock(event.time)+'</b><strong>'+escapeHtml(event.title)+'</strong><small>'+escapeHtml(event.detail)+(durationLabel?' · '+durationLabel:'')+(event.courts?' · Terrains '+event.courts.join(', '):event.court?' · Court '+event.court:'')+'</small></div>'+(event.kind==='group'&&event.status==='scheduled'?'<div class="calendar-event-actions"><button class="btn subtle" data-edit-group="'+event.id+'">Modifier</button>'+(event.date<=toLocalISO(new Date())?'<button class="btn primary" data-complete-group="'+event.id+'">Effectué</button>':'')+'<button class="btn danger" data-cancel-group="'+event.id+'">Annuler</button></div>':event.kind==='group'&&event.status==='completed'?'<span class="tag tag-green">EFFECTUÉ</span>':event.kind==='group'&&event.status==='cancelled'?'<span class="tag">ANNULÉ</span>':'')+'</div>';
       }).join('');
-      const blockedByGroup=events.find(event=>(event.kind==='group'||event.kind==='stage'||event.kind==='recurring-group')&&event.status!=='cancelled'&&timeToMinutes(event.time)<slotEnd&&timeToMinutes(event.time)+event.duration>slotStart);
-      const blockedStart=blockedByGroup?timeToMinutes(blockedByGroup.time):0;
-      const blockedEnd=blockedByGroup?blockedStart+blockedByGroup.duration:0;
+      const groupEvents=events.filter(event=>(event.kind==='group'||event.kind==='stage'||event.kind==='recurring-group')&&event.status!=='cancelled').map(event=>({ ...event, start:timeToMinutes(event.time), end:timeToMinutes(event.time)+event.duration })).sort((a,b)=>a.start-b.start);
+      const groupBlocks=groupEvents.reduce((blocks,event)=>{
+        const last=blocks[blocks.length-1];
+        if(last&&event.start<=last.end){last.end=Math.max(last.end,event.end);last.kinds.add(event.kind);}
+        else blocks.push({ ...event, end:event.end, kinds:new Set([event.kind]) });
+        return blocks;
+      },[]);
+      const blockedByGroup=groupBlocks.find(event=>event.start<slotEnd&&event.end>slotStart);
+      const blockedStart=blockedByGroup?blockedByGroup.start:0;
+      const blockedEnd=blockedByGroup?blockedByGroup.end:0;
       const occupiedStart=Boolean(blockedByGroup&&blockedStart>=slotStart&&blockedStart<slotEnd);
       const occupiedEnd=Boolean(blockedByGroup&&blockedEnd>slotStart&&blockedEnd<=slotEnd);
       const occupiedClass=blockedByGroup?(occupiedStart?'is-group-start':occupiedEnd?'is-group-end':'is-group-middle'):'';
-      const groupLabel=blockedByGroup?'<div class="calendar-group-frame-label"><span class="calendar-lock" aria-hidden="true">🔒</span><span>'+ (blockedByGroup.kind==='stage'?'STAGE ENFANTS':'COURS COLLECTIF')+'</span><small>'+clock(blockedByGroup.time)+'–'+clock(String(Math.floor(blockedEnd/60)).padStart(2,'0')+':'+String(blockedEnd%60).padStart(2,'0'))+'</small></div>':'';
+      const groupLabel=blockedByGroup&&occupiedStart?'<div class="calendar-group-frame-label"><span class="calendar-lock" aria-hidden="true">🔒</span><span>'+ (blockedByGroup.kinds.has('stage')?'STAGE ENFANTS':'COURS COLLECTIF')+'</span><small>'+clock(String(Math.floor(blockedStart/60)).padStart(2,'0')+':'+String(blockedStart%60).padStart(2,'0'))+'–'+clock(String(Math.floor(blockedEnd/60)).padStart(2,'0')+':'+String(blockedEnd%60).padStart(2,'0'))+'</small></div>':'';
       const groupFrame=blockedByGroup?'<div class="calendar-group-frame '+occupiedClass+'">'+groupLabel+'</div>':cards;
       const activeInSlot=inSlot.filter(event=>(event.kind!=='group'&&event.kind!=='stage')||event.status!=='cancelled');
       const addButton=!disabled&&!blockedByGroup&&!activeInSlot.length&&isPrivateLessonDateAllowed(iso)?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'">＋ Cours particulier</button>':'';
