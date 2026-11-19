@@ -35,7 +35,7 @@ test('un public inconnu est refusé',()=>{
 test('la génération de série inclut toutes les dates de cours, y compris celles de pluie à confirmer',()=>{
  const rows=buildSeriesOccurrences(series);
  assert.equal(rows.some(row=>row.session_date==='2026-11-09'),true);
- assert.equal(rows.filter(row=>row.session_date==='2026-11-02').length,0);
+ assert.equal(rows.filter(row=>row.session_date==='2026-11-02').length,1);
 });
 
 
