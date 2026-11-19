@@ -45,3 +45,21 @@ test('compteur de série : les séances passées sont acquises automatiquement s
  assert.equal(row.cancelled,1);
  assert.equal(row.pastUnrecorded,0);
 });
+
+test('série enfants du samedi : ajoute le premier samedi de chaque vacances Zone B',()=>{
+ const childSeries={...series,id:'kids-sat',title:'Enfants samedi',audience:'enfants',weekday:6,start_time:'09:30',end_time:'14:30',target_sessions:30};
+ const rows=buildSeriesOccurrences(childSeries);
+ assert.ok(rows.some(row=>row.session_date==='2026-10-17'));
+ assert.ok(rows.some(row=>row.session_date==='2026-12-19'));
+ assert.ok(rows.some(row=>row.session_date==='2027-02-20'));
+ assert.ok(rows.some(row=>row.session_date==='2027-04-17'));
+ assert.equal(rows.some(row=>row.session_date==='2026-10-24'),false);
+});
+
+test('compteur enfants samedi : les samedis ajoutés aux vacances sont comptés et la pluie est déduite',()=>{
+ const childSeries={...series,id:'kids-sat',title:'Enfants samedi',audience:'enfants',weekday:6,start_time:'09:30',end_time:'14:30',target_sessions:30};
+ const row=buildSeriesCounters([childSeries],[],'2026-10-18',[{audience:'enfants',weekday:6,session_date:'2026-10-17'}])[0];
+ assert.equal(row.eligibleDates.includes('2026-10-17'),true);
+ assert.equal(row.completed,4);
+ assert.equal(row.cancelled,1);
+});
