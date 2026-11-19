@@ -1,8 +1,8 @@
 /** Configuration publique de l'application. La clé publishable/anon est prévue pour le navigateur. */
 export const CONFIG = Object.freeze({
-  supabaseUrl: 'https://hniguulywwoakfqfxgrh.supabase.co',
+  supabaseUrl: 'https://whyylgiscrpqoahdzdkv.supabase.co',
   // Clé publishable publique du projet de production. Ne jamais placer une clé service_role ici.
-  supabaseAnonKey: 'sb_publishable_O_QIPod-Vwgf8q79BPtNgw_aEmLRVw_',
+  supabaseAnonKey: 'sb_publishable_C-ZG8_bqBAwAPb9gW6cRZg_lhfsIMr',
   appName: 'Coach In',
   timezone: 'Europe/Paris',
   coachEmail: 'Axel.bohrer21@gmail.com'
