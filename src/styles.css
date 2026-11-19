@@ -1466,3 +1466,5 @@ body{font-size:16px;line-height:1.55}
  .player-card-compact .player-card-actions .btn{width:100%}
  .calendar-day>summary{padding:12px 10px}
 }
+
+@media(max-width:760px){.calendar-week{grid-template-columns:1fr;overflow:visible}.calendar-day{min-height:0}.calendar-day .calendar-hours{display:grid;grid-template-columns:1fr;gap:5px}.calendar-day .calendar-hour-row{grid-template-columns:52px minmax(0,1fr)}}
