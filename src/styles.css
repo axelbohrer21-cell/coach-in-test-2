@@ -1382,3 +1382,32 @@ body{font-size:16px;line-height:1.55}
   .player-next-session{padding:14px}
   .player-next-main h3{font-size:16px}
 }
+
+
+/* Player pages — progressive disclosure: show essentials first */
+.player-simple-intro{padding:5px 2px 0}
+.player-simple-intro h2{margin:3px 0 5px;font-size:clamp(23px,3vw,30px);letter-spacing:-.6px}
+.player-simple-intro p:not(.eyebrow){margin:0;color:var(--muted);font-size:14px}
+.passport-summary-line{margin:0;padding:11px 14px;border-radius:12px;background:rgba(66,199,245,.07);color:#bfd0e3;font-size:13px}
+.passport-summary-line strong{color:#f4f7ff;font-size:15px}
+.player-detail-panel{padding:0;overflow:hidden}
+.player-detail-panel>summary{list-style:none;cursor:pointer}
+.player-detail-panel>summary::-webkit-details-marker{display:none}
+.player-detail-summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 19px}
+.player-detail-summary>span:first-child{display:grid;gap:3px}
+.player-detail-summary small{color:var(--cyan);font-size:10px;font-weight:850;letter-spacing:1px;text-transform:uppercase}
+.player-detail-summary strong{font-size:15px}
+.player-detail-summary:after{content:"＋";color:var(--cyan);font-size:20px;font-weight:500}
+.player-detail-panel[open] .player-detail-summary:after{content:"−"}
+.player-detail-content{padding:0 19px 19px;border-top:1px solid rgba(145,176,196,.12)}
+.player-detail-content>.form-grid{padding-top:16px}
+.player-detail-content>.monthly-review-grid{padding-top:16px}
+.player-detail-content>.monthly-review-notes{padding-bottom:8px}
+.player-detail-content .player-sector-evolution{margin-top:10px}
+.player-progress-focus .challenge-strip{margin-top:10px}
+.player-progress-focus .challenge-strip:first-child{margin-top:0}
+@media(max-width:650px){
+  .player-detail-summary{padding:15px}
+  .player-detail-content{padding:0 14px 15px}
+  .player-detail-summary strong{font-size:14px}
+}
