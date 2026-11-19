@@ -1,3 +1,4 @@
+import { buildCurriculumActivities } from './session-curriculum.js';
 const norm=v=>String(v||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const has=(v,words)=>words.some(w=>norm(v).includes(norm(w)));
 const themes=[
@@ -33,7 +34,8 @@ function focusForRequest(value){
 function activity(name,minutes,objective,setup,procedure,scoring,coachCue){
  return {name,minutes,objective,setup,procedure,scoring,coachCue};
 }
-function buildActivities(t,focus,mins){
+function buildActivities(t,focus,mins,selectedObjective=null){
+ if(selectedObjective){return buildCurriculumActivities(selectedObjective,mins);}
  const secondServe=focus?.kind==='second-serve';
  if(t.key==='service'&&secondServe){
   const feed=activity('Envoi du coach · fenêtre de frappe et rotation',mins===60?12:mins===90?12:12,
@@ -135,14 +137,14 @@ function buildActivities(t,focus,mins){
 function formatActivity(item,index){
  return 'EXERCICE '+(index+1)+' · '+item.name.toUpperCase()+' · '+item.minutes+' min\nOBJECTIF : '+item.objective+'\nMISE EN PLACE : '+item.setup+'\nDÉROULEMENT : '+item.procedure+'\nBARÈME / RÉUSSITE : '+item.scoring+'\nREPÈRE COACH : '+item.coachCue;
 }
-export function generateOriginalSession({theme='construction',customObjective='',playerName='le joueur',level='Intermédiaire',difficulty='progressive',priorAdjustment=null,age=null,playerType='Loisir',duration=90,priority=null,challenge=null,recentSessions=[]}={}){
+export function generateOriginalSession({theme='construction',selectedObjective=null,customObjective='',playerName='le joueur',level='Intermédiaire',difficulty='progressive',priorAdjustment=null,age=null,playerType='Loisir',duration=90,priority=null,challenge=null,recentSessions=[]}={}){
  const request=String(customObjective||'').trim(),combined=request||String(theme||'');
  const t=themes.find(x=>norm(x.key)===norm(theme)||norm(x.label)===norm(theme))||themes.find(x=>has(combined,x.words))||themes.find(x=>has(priority?.main_theme||priority?.criterion,x.words))||themes[4];
- const focus=focusForRequest(request),a=adaptation(level,age),mins=[60,90,120].includes(Number(duration))?Number(duration):90;
- const activities=buildActivities(t,focus,mins);
+ const focus=selectedObjective?{label:selectedObjective.label,cue:selectedObjective.intent,success:selectedObjective.success}:focusForRequest(request),a=adaptation(level,age),mins=[60,90,120].includes(Number(duration))?Number(duration):90;
+ const activities=buildActivities(t,focus,mins,selectedObjective);
  const selectedDifficulty=difficulty==='auto'&&priorAdjustment?.hasHistory?priorAdjustment.difficulty:difficulty;
  const progression=selectedDifficulty==='easy'?{label:'Accessible',rule:'Rapprocher le joueur, ralentir le rythme et élargir les cibles.'}:selectedDifficulty==='hard'?{label:'Exigeant',rule:'Réduire les cibles, augmenter l’incertitude et ajouter un score sous pression.'}:{label:'Progressif',rule:'Commencer avec une cible large, puis ajouter une variable après plusieurs réussites.'};
- const objective=request?'Objectif personnalisé : '+request+'.':priority?.criterion?'Priorité individualisée : '+priority.criterion+'. '+t.objective+'.':t.objective+'.';
+ const objective=selectedObjective?selectedObjective.label+' : '+selectedObjective.intent:request?'Objectif personnalisé : '+request+'.':priority?.criterion?'Priorité individualisée : '+priority.criterion+'. '+t.objective+'.':t.objective+'.';
  const challengeText=challenge?.objective||challenge?.criterion||'';
  const progressionNote=priorAdjustment?.hasHistory?'Adaptation depuis la séance précédente : '+priorAdjustment.label+'. '+priorAdjustment.guidance:'';
  const notes=['Joueur : '+playerName+' · Profil : '+playerType+' · Niveau : '+level,'Objectif : '+objective,'Consigne technique : '+(focus?.cue||t.cue),'Adaptation : '+a.change,'Difficulté : '+progression.label+' — '+progression.rule,progressionNote,priorAdjustment?.successCriterion?'Critère précédent : '+priorAdjustment.successCriterion:'',priorAdjustment?.observed?'Observation précédente : '+priorAdjustment.observed:'',priorAdjustment?.nextAdjustment?'Ajustement demandé : '+priorAdjustment.nextAdjustment:'','Charge : '+a.load,'Réussite globale : '+(focus?.success||activities.at(-1).scoring),challengeText?'Défi actif : '+challengeText:'',recentSessions.slice(0,3).some(x=>has(x.theme,t.words))?'Le thème apparaît dans les séances récentes : varier la cible ou la contrainte.':''].filter(Boolean).join('\n');
