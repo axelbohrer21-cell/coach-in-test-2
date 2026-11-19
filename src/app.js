@@ -309,7 +309,7 @@ $('#page-content').addEventListener('submit',async event=>{
     if(unknown.length){toast('Critères absents de ta banque d’évaluation : '+unknown.join(', '),'error');return;}
     try{
       const saved=await dataService.updateCoachSessionObjective(values.id,{label:String(values.label||'').trim(),intent:String(values.intent||'').trim(),success:String(values.success||'').trim(),criteria});
-      state.sessionObjectives=(state.sessionObjectives||[]).map(row=>row.id===values.id?saved:row);
+      state.sessionObjectives=(state.sessionObjectives||[]).map(row=>row.id===values.id?{...saved,id:saved.objective_id,db_id:saved.id}:row);
       closeDialog();render('library');toast('Objectif pédagogique mis à jour.');
     }catch(error){toast(error.message||'Impossible de modifier cet objectif.','error');}
     return;
