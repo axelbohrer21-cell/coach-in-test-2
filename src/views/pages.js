@@ -324,7 +324,8 @@ function planningPage() {
       const occupiedStart=Boolean(blockedByGroup&&blockedStart>=slotStart&&blockedStart<slotEnd);
       const occupiedEnd=Boolean(blockedByGroup&&blockedEnd>slotStart&&blockedEnd<=slotEnd);
       const occupiedClass=blockedByGroup?(occupiedStart?'is-group-start':occupiedEnd?'is-group-end':'is-group-middle'):'';
-      const groupLabel=blockedByGroup&&occupiedStart?'<div class="calendar-group-frame-label"><span class="calendar-lock" aria-hidden="true">🔒</span><span>'+ (blockedByGroup.kinds.has('stage')?'STAGE ENFANTS':'COURS COLLECTIF')+'</span><small>'+clock(String(Math.floor(blockedStart/60)).padStart(2,'0')+':'+String(blockedStart%60).padStart(2,'0'))+'–'+clock(String(Math.floor(blockedEnd/60)).padStart(2,'0')+':'+String(blockedEnd%60).padStart(2,'0'))+'</small></div>':'';
+      const groupFrameHeight=Math.max(29,Math.ceil((blockedEnd-blockedStart)/30)*29);
+      const groupLabel=blockedByGroup&&occupiedStart?'<div class="calendar-group-frame-label" style="--group-frame-height:'+groupFrameHeight+'px"><span class="calendar-lock" aria-hidden="true">🔒</span><span>'+ (blockedByGroup.kinds.has('stage')?'STAGE ENFANTS':'COURS COLLECTIF')+'</span><small>'+clock(String(Math.floor(blockedStart/60)).padStart(2,'0')+':'+String(blockedStart%60).padStart(2,'0'))+'–'+clock(String(Math.floor(blockedEnd/60)).padStart(2,'0')+':'+String(blockedEnd%60))+'</small></div>':'';
       const groupFrame=blockedByGroup?'<div class="calendar-group-frame '+occupiedClass+'">'+groupLabel+'</div>':cards;
       const activeInSlot=inSlot.filter(event=>(event.kind!=='group'&&event.kind!=='stage')||event.status!=='cancelled');
       const addButton=!disabled&&!blockedByGroup&&!activeInSlot.length&&isPrivateLessonDateAllowed(iso)?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'">＋ Cours particulier</button>':'';
