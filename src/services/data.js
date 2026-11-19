@@ -42,13 +42,14 @@ export const dataService = {
   async loadCoachWorkspace(userId) {
     const links = await unwrap(supabase.from('coach_players').select('player_id').eq('coach_id', userId));
     const playerIds = links.map(link => link.player_id);
-    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages, videoRows] = await Promise.all([
+    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, notifications, notificationPreferences, criteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages, videoRows] = await Promise.all([
       playerIds.length ? unwrap(supabase.from('profiles').select('*').in('id', playerIds).eq('role', 'player').order('last_name')) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('training_sessions').select('*').in('player_id', playerIds).eq('created_by', userId).order('session_date', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('coach_session_notes').select('session_id,note').eq('coach_id', userId)),
       playerIds.length ? unwrap(supabase.from('evaluations').select('id,player_id,session_id,evaluated_at,score,technical_score,tactical_score,physical_score,mental_score,player_visible_comment,created_by,created_at').in('player_id', playerIds).eq('created_by', userId).order('evaluated_at', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('group_sessions').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('group_course_series').select('*').eq('coach_id', userId).order('weekday').order('start_time')),
+      unwrap(supabase.from('group_course_cancellations').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('booking_requests').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('session_library').select('*').eq('coach_id', userId).order('title')),
       notificationService.listCoach(),
@@ -95,7 +96,7 @@ export const dataService = {
       playerIds.length ? unwrap(supabase.from('player_profile_details').select('*').in('player_id',playerIds)) : Promise.resolve([])
     ]);
     const playerProfileDetailsById = Object.fromEntries(profileDetailsRows.map(row=>[row.player_id,row]));
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
+    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
   },
 
   async loadPlayerWorkspace() {
@@ -241,5 +242,16 @@ export const dataService = {
     const { data, error } = await supabase.from('group_sessions').insert(payload).select();
     if (error) throw error;
     return data || [];
+  },
+  async setGroupCourseRainDay({ coachId, sessionDate, audience, weekday, rainy }) {
+    const query = supabase.from('group_course_cancellations');
+    if (rainy) {
+      const { data, error } = await query.upsert({ coach_id:coachId, session_date:sessionDate, audience, weekday, reason:'Pluie' }, { onConflict:'coach_id,session_date,audience' }).select().single();
+      if (error) throw error;
+      return data;
+    }
+    const { error } = await query.delete().eq('coach_id',coachId).eq('session_date',sessionDate).eq('audience',audience);
+    if (error) throw error;
+    return null;
   }
 };

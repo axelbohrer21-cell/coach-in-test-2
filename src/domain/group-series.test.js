@@ -10,7 +10,7 @@ test('un compteur est indépendant par créneau et exclut les annulations', () =
 });
 test('génération annuelle respecte les vacances et la cible',()=>{
  const rows=buildSeriesOccurrences(series);
- assert.equal(rows.length,29); assert.ok(rows.every(x=>x.series_id==='s1'&&x.start_time==='18:00'&&x.court_number===2));
+ assert.equal(rows.length,30); assert.ok(rows.every(x=>x.series_id==='s1'&&x.start_time==='18:00'&&x.court_number===2));
 });
 test('un créneau sans horaires exacts ne génère rien et est refusé',()=>{
  assert.throws(()=>buildSeriesOccurrences({...series,start_time:''}),/Horaires/);
@@ -32,15 +32,15 @@ test('un public inconnu est refusé',()=>{
  assert.throws(()=>buildSeriesOccurrences({...series,audience:'ados'}),/Public/);
 });
 
-test('la génération de série respecte le lundi 2 novembre de reprise annulé pour pluie et le 9 novembre normal',()=>{
+test('la génération de série inclut toutes les dates de cours, y compris celles de pluie à confirmer',()=>{
  const rows=buildSeriesOccurrences(series);
  assert.equal(rows.some(row=>row.session_date==='2026-11-09'),true);
- assert.equal(rows.filter(row=>row.session_date==='2026-11-02').length,0);
+ assert.equal(rows.filter(row=>row.session_date==='2026-11-02').length,1);
 });
 
 
 test('compteur de série : les séances passées sont acquises automatiquement sauf annulation',()=>{
- const row=buildSeriesCounters([series],[{series_id:'s1',status:'cancelled',session_date:'2026-11-02'}],'2026-11-19')[0];
+ const row=buildSeriesCounters([series],[],'2026-11-19',[{audience:'adultes',weekday:1,session_date:'2026-11-02'}])[0];
  assert.equal(row.completed,7);
  assert.equal(row.cancelled,1);
  assert.equal(row.pastUnrecorded,0);

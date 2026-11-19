@@ -13,13 +13,13 @@ test('cours enfants : mercredi et samedi, hors vacances Zone B', () => {
 });
 
 test('cours adultes : lundi à vendredi selon le planning confirmé', () => {
-  assert.equal(generateTeachingDates({ audience:'adultes', weekday:1 }).length,29);
+  assert.equal(generateTeachingDates({ audience:'adultes', weekday:1 }).length,30);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:2 }).length,32);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:3 }).length,31);
-  assert.equal(generateTeachingDates({ audience:'adultes', weekday:4 }).length,30);
+  assert.equal(generateTeachingDates({ audience:'adultes', weekday:4 }).length,31);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:5 }).length,32);
   assert.equal(isTeachingDate('2027-05-06','adultes'),false); // Ascension
-  assert.equal(isTeachingDate('2026-11-02','adultes'),false); // reprise officielle, mais pluie au club
+  assert.equal(isTeachingDate('2026-11-02','adultes'),true); // date affichée, pluie cochable manuellement
   assert.equal(isTeachingDate('2027-01-04','adultes'),true); // reprise après Noël
   assert.deepEqual(GROUP_SEASON.weeklySchedule.find(row=>row.key==='adultes-mercredi'), { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courts:[1,2,3] });
   assert.deepEqual(GROUP_SEASON.weeklySchedule.find(row=>row.key==='enfants-mercredi').courts,[1,2,3]);
@@ -39,36 +39,36 @@ test('compteurs : les dates passées sont réalisées par défaut et les annulat
   assert.equal(monday.pastUnrecorded,0);
 });
 
-test('compteurs à jour au 19 novembre : dates écoulées comptées, pluie et vacances exclues', () => {
+test('compteurs à jour au 19 novembre : dates écoulées comptées par défaut, vacances exclues', () => {
   const rows = buildDaySeriesOverview({ now:'2026-11-19' });
   const counts = Object.fromEntries(rows.map(row=>[row.key,row.completed]));
   assert.deepEqual(counts,{
-    'adultes-lundi':7,'adultes-mardi':8,'adultes-mercredi':7,'adultes-jeudi':6,'adultes-vendredi':7,
+    'adultes-lundi':8,'adultes-mardi':8,'adultes-mercredi':7,'adultes-jeudi':7,'adultes-vendredi':7,
     'enfants-mercredi':8,'enfants-samedi':6
   });
 });
 
-test('les annulations du 2 et du 12 novembre sont exclues des cours adultes', () => {
+test('toutes les dates ouvrées restent visibles et les jours de pluie sont cochables', () => {
   const mondays = generateTeachingDates({ audience:'adultes', weekday:1 });
   const thursdays = generateTeachingDates({ audience:'adultes', weekday:4 });
-  assert.deepEqual(Object.keys(CANCELLED_GROUP_DATES).sort(), ['2026-11-02','2026-11-12']);
-  assert.equal(isTeachingDate('2026-11-02','adultes'), false);
+  assert.deepEqual(Object.keys(CANCELLED_GROUP_DATES), []);
+  assert.equal(isTeachingDate('2026-11-02','adultes'), true);
   assert.equal(isTeachingDate('2026-11-09','adultes'), true);
-  assert.equal(isTeachingDate('2026-11-12','adultes'), false);
-  assert.equal(mondays.includes('2026-11-02'), false);
+  assert.equal(isTeachingDate('2026-11-12','adultes'), true);
+  assert.equal(mondays.includes('2026-11-02'), true);
   assert.equal(mondays.includes('2026-11-09'), true);
-  assert.equal(thursdays.includes('2026-11-12'), false);
+  assert.equal(thursdays.includes('2026-11-12'), true);
 });
 
-test('les compteurs annuels retirent les deux journées annulées des attentes', () => {
-  const overview = buildDaySeriesOverview({ now:'2026-11-17' });
+test('les compteurs retirent uniquement les jours cochés manuellement comme pluie', () => {
+  const overview = buildDaySeriesOverview({ now:'2026-11-17', manualCancellations:[{audience:'adultes',weekday:1,session_date:'2026-11-02'},{audience:'adultes',weekday:4,session_date:'2026-11-12'}] });
   const monday = overview.find(row => row.key === 'adultes-lundi');
   const thursday = overview.find(row => row.key === 'adultes-jeudi');
-  assert.equal(monday.eligibleDates.includes('2026-11-02'), false);
+  assert.equal(monday.eligibleDates.includes('2026-11-02'), true);
   assert.equal(monday.eligibleDates.includes('2026-11-09'), true);
-  assert.equal(thursday.eligibleDates.includes('2026-11-12'), false);
-  assert.equal(monday.expectedByNow, monday.eligibleDates.filter(date => date < '2026-11-17').length);
-  assert.equal(thursday.expectedByNow, thursday.eligibleDates.filter(date => date < '2026-11-17').length);
+  assert.equal(thursday.eligibleDates.includes('2026-11-12'), true);
+  assert.equal(monday.expectedByNow, monday.completed);
+  assert.equal(thursday.expectedByNow, thursday.completed);
 });
 
 test('stages vacances : du lundi au vendredi, 9 h 30–16 h 30 sur les terrains 1, 2 et 3', () => {

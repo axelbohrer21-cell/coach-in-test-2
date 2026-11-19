@@ -34,11 +34,8 @@ export const PUBLIC_HOLIDAYS_2026_2027 = Object.freeze([
   '2027-04-05', '2027-05-01', '2027-05-06', '2027-05-08', '2027-05-17'
 ]);
 
-// Journées de pluie confirmées : elles sont exclues du calendrier et des compteurs.
-export const CANCELLED_GROUP_DATES = Object.freeze({
-  '2026-11-02': 'Pluie',
-  '2026-11-12': 'Pluie'
-});
+// Les jours de pluie sont désormais gérés manuellement dans le calendrier annuel.
+export const CANCELLED_GROUP_DATES = Object.freeze({});
 
 const DAY_LABELS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 function parseISO(value) { const [y,m,d] = value.split('-').map(Number); return new Date(Date.UTC(y,m-1,d,12)); }
@@ -67,7 +64,6 @@ export function isWithinTeachingWindow(dateISO, startTime, endTime, audience = '
 
 export function isTeachingDate(dateISO, audience, options = {}) {
   const { holidays = ZONE_B_HOLIDAYS_2026_2027, publicHolidays = PUBLIC_HOLIDAYS_2026_2027 } = options;
-  if (Object.prototype.hasOwnProperty.call(CANCELLED_GROUP_DATES, dateISO)) return false;
   const day = parseISO(dateISO).getUTCDay();
   const weekdays = GROUP_SEASON.weekdays[audience];
   if (!weekdays?.includes(day)) return false;
@@ -121,7 +117,7 @@ export function buildHolidayStageOccurrences({ holidays = ZONE_B_HOLIDAYS_2026_2
   return occurrences;
 }
 
-export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' } = {}) {
+export function buildDaySeriesOverview({ groupSessions = [], manualCancellations = [], now = '2026-09-14' } = {}) {
   const definitions = [
     { key:'adultes-lundi', audience:'adultes', weekday:1, target:GROUP_SEASON.adultTarget },
     { key:'adultes-mardi', audience:'adultes', weekday:2, target:GROUP_SEASON.adultTarget },
@@ -134,8 +130,11 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
   return definitions.map(def => {
     const eligibleDates = generateTeachingDates({ audience:def.audience, weekday:def.weekday });
     const matchingSessions = groupSessions.filter(s => s.audience === def.audience && parseISO(s.session_date).getUTCDay() === def.weekday);
-    const cancelledDates = new Set(matchingSessions.filter(s => s.status === 'cancelled').map(s => s.session_date));
-    // Les dates de cours passées sont présumées réalisées, sauf annulation explicite (pluie ou autre).
+    const cancelledDates = new Set([
+      ...matchingSessions.filter(s => s.status === 'cancelled').map(s => s.session_date),
+      ...manualCancellations.filter(row => row.audience === def.audience && Number(row.weekday) === def.weekday).map(row => row.session_date)
+    ]);
+    // Les dates passées comptent par défaut ; seules les pluies/annulations cochées sont retirées.
     const pastDates = eligibleDates.filter(date => date < now);
     const completed = pastDates.filter(date => !cancelledDates.has(date)).length;
     const planned = matchingSessions.filter(s => s.status === 'scheduled' && s.session_date >= now).length;
