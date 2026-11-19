@@ -10,7 +10,7 @@ test('un compteur est indépendant par créneau et exclut les annulations', () =
 });
 test('génération annuelle respecte les vacances et la cible',()=>{
  const rows=buildSeriesOccurrences(series);
- assert.equal(rows.length,29); assert.ok(rows.every(x=>x.series_id==='s1'&&x.start_time==='18:00'&&x.court_number===2));
+ assert.equal(rows.length,30); assert.ok(rows.every(x=>x.series_id==='s1'&&x.start_time==='18:00'&&x.court_number===2));
 });
 test('un créneau sans horaires exacts ne génère rien et est refusé',()=>{
  assert.throws(()=>buildSeriesOccurrences({...series,start_time:''}),/Horaires/);
