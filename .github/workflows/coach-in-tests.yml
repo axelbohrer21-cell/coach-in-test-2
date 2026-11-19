@@ -1,0 +1,30 @@
+name: Coach In - tests automatises
+
+on:
+  push:
+    branches:
+      - migration/cloudflare-pages
+  pull_request:
+    branches:
+      - migration/cloudflare-pages
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  domain-tests:
+    name: Tests metier (Node.js)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Executer les tests automatises
+        run: node --test src/domain/*.test.js
