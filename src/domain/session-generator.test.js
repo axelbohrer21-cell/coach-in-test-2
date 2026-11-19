@@ -15,9 +15,9 @@ test('construit une séance deuxième balle de service avec des contenus spécif
 });
 
 test('respecte exactement la structure demandée selon la durée', () => {
-  const oneHour = generateOriginalSession({ theme: 'service', customObjective: '2e balle de service', duration: 60 });
-  const ninety = generateOriginalSession({ theme: 'service', customObjective: '2e balle de service', duration: 90 });
-  const twoHours = generateOriginalSession({ theme: 'service', customObjective: '2e balle de service', duration: 120 });
+  const oneHour = generateOriginalSession({ theme: 'service', customObjective: '2e balle', duration: 60 });
+  const ninety = generateOriginalSession({ theme: 'service', customObjective: '2e balle', duration: 90 });
+  const twoHours = generateOriginalSession({ theme: 'service', customObjective: '2e balle', duration: 120 });
   assert.equal(oneHour.phases.length, 3);
   assert.equal(ninety.phases.length, 4);
   assert.equal(twoHours.phases.length, 5);

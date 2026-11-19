@@ -137,7 +137,7 @@ function formatActivity(item,index){
 }
 export function generateOriginalSession({theme='construction',customObjective='',playerName='le joueur',level='Intermédiaire',difficulty='progressive',priorAdjustment=null,age=null,playerType='Loisir',duration=90,priority=null,challenge=null,recentSessions=[]}={}){
  const request=String(customObjective||'').trim(),combined=request||String(theme||'');
- const t=themes.find(x=>x.key===theme)||themes.find(x=>has(combined,x.words))||themes.find(x=>has(priority?.main_theme||priority?.criterion,x.words))||themes[4];
+ const t=themes.find(x=>norm(x.key)===norm(theme)||norm(x.label)===norm(theme))||themes.find(x=>has(combined,x.words))||themes.find(x=>has(priority?.main_theme||priority?.criterion,x.words))||themes[4];
  const focus=focusForRequest(request),a=adaptation(level,age),mins=[60,90,120].includes(Number(duration))?Number(duration):90;
  const activities=buildActivities(t,focus,mins);
  const selectedDifficulty=difficulty==='auto'&&priorAdjustment?.hasHistory?priorAdjustment.difficulty:difficulty;
