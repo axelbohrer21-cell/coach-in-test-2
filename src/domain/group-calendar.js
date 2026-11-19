@@ -20,12 +20,12 @@ export const GROUP_SEASON = Object.freeze({
   availabilityWindows: Object.freeze({3:[['09:30','18:00']],6:[['09:30','14:30']]})
 });
 
-// Vacances scolaires Zone B 2026-2027 (dates inclusives).
+// Vacances scolaires Zone B 2026-2027 : fin la veille de la reprise officielle.
 export const ZONE_B_HOLIDAYS_2026_2027 = Object.freeze([
-  { start: '2026-10-17', end: '2026-11-02', label: 'Toussaint' },
-  { start: '2026-12-19', end: '2027-01-04', label: 'Noël' },
-  { start: '2027-02-20', end: '2027-03-08', label: 'Hiver' },
-  { start: '2027-04-17', end: '2027-05-03', label: 'Printemps' }
+  { start: '2026-10-17', end: '2026-11-01', label: 'Toussaint' },
+  { start: '2026-12-19', end: '2027-01-03', label: 'Noël' },
+  { start: '2027-02-20', end: '2027-03-07', label: 'Hiver' },
+  { start: '2027-04-17', end: '2027-05-02', label: 'Printemps' }
 ]);
 
 // Jours fériés nationaux rencontrés pendant la saison.
@@ -34,10 +34,10 @@ export const PUBLIC_HOLIDAYS_2026_2027 = Object.freeze([
   '2027-04-05', '2027-05-01', '2027-05-06', '2027-05-08', '2027-05-17'
 ]);
 
-// Annulations exceptionnelles de cours collectifs confirmées pour la saison.
+// Journées de pluie confirmées : elles sont exclues du calendrier et des compteurs.
 export const CANCELLED_GROUP_DATES = Object.freeze({
-  '2026-11-02': 'Tous les cours collectifs annulés',
-  '2026-11-12': 'Tous les cours collectifs annulés'
+  '2026-11-02': 'Pluie',
+  '2026-11-12': 'Pluie'
 });
 
 const DAY_LABELS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
@@ -133,13 +133,16 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
   ];
   return definitions.map(def => {
     const eligibleDates = generateTeachingDates({ audience:def.audience, weekday:def.weekday });
-    const sessions = groupSessions.filter(s => s.audience === def.audience && parseISO(s.session_date).getUTCDay() === def.weekday && s.status !== 'cancelled');
-    const completed = sessions.filter(s => s.status === 'completed').length;
-    const planned = sessions.filter(s => s.status === 'scheduled' && s.session_date >= now).length;
-    const pastUnrecorded = sessions.filter(s => s.status === 'scheduled' && s.session_date < now).length;
+    const matchingSessions = groupSessions.filter(s => s.audience === def.audience && parseISO(s.session_date).getUTCDay() === def.weekday);
+    const cancelledDates = new Set(matchingSessions.filter(s => s.status === 'cancelled').map(s => s.session_date));
+    // Les dates de cours passées sont présumées réalisées, sauf annulation explicite (pluie ou autre).
+    const pastDates = eligibleDates.filter(date => date < now);
+    const completed = pastDates.filter(date => !cancelledDates.has(date)).length;
+    const planned = matchingSessions.filter(s => s.status === 'scheduled' && s.session_date >= now).length;
+    const pastUnrecorded = 0;
     const remaining = Math.max(0, def.target - completed);
     const catchUp = Math.max(0, def.target - completed - planned);
-    const expectedByNow = Math.min(def.target, eligibleDates.filter(date => date < now).length);
+    const expectedByNow = Math.min(def.target, completed);
     const paceGap = Math.max(0, expectedByNow - completed);
     return {
       ...def,
@@ -159,10 +162,17 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
   });
 }
 
-export function getWeekProgram(program, seasonStart = GROUP_SEASON.start) {
+export function getWeekProgram(program, seasonStart = GROUP_SEASON.start, seasonEnd = GROUP_SEASON.end) {
+  const teachingWeeks = [];
   const start = parseISO(seasonStart);
+  for (let monday = start; isoUTC(monday) <= seasonEnd; monday = addDays(monday, 7)) {
+    const hasCollectiveCourses = Array.from({length:6}, (_,index) => addDays(monday,index))
+      .some(date => !isSchoolHoliday(isoUTC(date)) && date.getUTCDay() !== 0);
+    if (hasCollectiveCourses) teachingWeeks.push(monday);
+  }
   return (program?.weeks || []).map((week,index) => {
-    const monday = addDays(start,index*7);
+    const monday = teachingWeeks[index];
+    if (!monday) return { ...week, startDate:null, endDate:null };
     const sunday = addDays(monday,6);
     return { ...week, startDate:isoUTC(monday), endDate:isoUTC(sunday) };
   });

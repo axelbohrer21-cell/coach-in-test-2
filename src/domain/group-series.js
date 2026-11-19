@@ -3,13 +3,15 @@ import { GROUP_SEASON, generateTeachingDates, isWithinTeachingWindow } from './g
 export function buildSeriesCounters(series, sessions, today = new Date().toISOString().slice(0,10)) {
   return series.map(item => {
     const rows = sessions.filter(row => row.series_id === item.id);
-    const completed = rows.filter(row => row.status === 'completed').length;
-    const planned = rows.filter(row => row.status === 'scheduled' && row.session_date >= today).length;
-    const cancelled = rows.filter(row => row.status === 'cancelled').length;
-    const pastUnrecorded = rows.filter(row => row.status === 'scheduled' && row.session_date < today).length;
     const target = Number(item.target_sessions || (item.audience === 'adultes' ? GROUP_SEASON.adultTarget : GROUP_SEASON.childTarget));
     const eligibleDates = generateTeachingDates({ start: item.season_start || GROUP_SEASON.start, end: item.season_end || GROUP_SEASON.end, audience: item.audience, weekday: Number(item.weekday) });
-    const expectedByNow = Math.min(target, eligibleDates.filter(date => date < today).length);
+    const cancelledDates = new Set(rows.filter(row => row.status === 'cancelled' && row.session_date).map(row => row.session_date));
+    // Une date passée compte comme effectuée par défaut ; seules les annulations enregistrées sont déduites.
+    const completed = eligibleDates.filter(date => date < today && !cancelledDates.has(date)).length;
+    const planned = rows.filter(row => row.status === 'scheduled' && row.session_date >= today).length;
+    const cancelled = cancelledDates.size;
+    const pastUnrecorded = 0;
+    const expectedByNow = Math.min(target, completed);
     const paceGap = Math.max(0, expectedByNow - completed);
     return { ...item, completed, planned, pastUnrecorded, cancelled, target, eligibleDates, expectedByNow, paceGap, remaining: Math.max(0,target-completed), toSchedule: Math.max(0,target-completed-planned), reached: completed >= target };
   });
