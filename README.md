@@ -2,7 +2,7 @@
 
 Cette livraison est un projet web statique modulaire, prévu pour être versionné sur GitHub et hébergé sur Vercel. Elle ne nécessite pas d'étape de compilation : les modules JavaScript natifs sont chargés par le navigateur.
 
-> **Statut : préproduction.** Le code a été réorganisé et plusieurs flux sont maintenant branchés. Le projet n'a pas été connecté en direct à Supabase, la migration SQL n'a pas été exécutée et aucun déploiement Vercel n'a été effectué. Il faut valider la migration sur une base de test avant toute mise en production.
+> **État opérationnel au 19/11/2026.** Coach In est déployé sur Vercel en production depuis la branche `main`. Supabase production et préproduction sont connectés. Les migrations applicatives sont appliquées sur les deux bases. Le catalogue validé de 328 critères est maintenant initialisé séparément pour chaque coach actif. Les fonctions `manage-coaches` et `analyze-tennis-video` sont actives sur les deux projets. Les rappels 24 h sont planifiés par `pg_cron`. La préproduction Vercel utilise la branche `qa/preproduction-vercel-2026-11-19` et la base de test.
 
 ## Structure
 
@@ -55,11 +55,10 @@ Pour tester l'interface localement, ouvre le dossier avec un serveur statique lo
 
 ## Déploiement GitHub / Vercel
 
-1. Sauvegarde le dépôt et la base actuels.
-2. Crée une branche `refonte-coach-in` ou un projet Vercel de préproduction.
-3. Copie l'intégralité du dossier en conservant l'arborescence.
-4. Dans Vercel : Framework Preset `Other`, Build Command vide, Output Directory `.`.
-5. Déploie en Preview et vérifie l'URL avant de basculer le domaine de production.
+- La branche `main` est reliée au projet Vercel `coach-in-test-2` et déclenche le déploiement de production après chaque commit.
+- Les branches `qa/**` déclenchent la campagne GitHub Actions (tests Node 20/22 et vérification syntaxique).
+- La branche `qa/preproduction-vercel-2026-11-19` utilise la configuration publique du projet Supabase de test ; son déploiement Vercel est une Preview, jamais une mise en production.
+- Les migrations SQL sont versionnées dans `supabase/migrations/`. Toujours vérifier le projet cible et sauvegarder avant toute nouvelle migration.
 
 ## Configuration Supabase
 
@@ -75,21 +74,30 @@ Installation sur un projet Supabase neuf (préproduction uniquement) :
 6. Exécute `005_preproduction_smoke_test.sql` et vérifie les résultats.
 7. Arrête au premier message d'erreur ; ne passe pas au fichier suivant avant analyse.
 
-Le guide détaillé est dans `supabase/ORDRE_INSTALLATION.md`. Les scripts n'ont pas encore été exécutés contre le serveur Supabase : les tests RLS avec plusieurs comptes restent obligatoires. Ne jamais lancer cette séquence directement en production.
+Le guide détaillé est dans `supabase/ORDRE_INSTALLATION.md`. Les deux projets Coach In existants ont déjà reçu leurs migrations. Cette séquence d'installation ne concerne que la création d'un nouveau projet ; ne pas la rejouer sur une base déjà initialisée. Les tests RLS et les essais de connexion multi-comptes doivent être conservés à chaque évolution.
 
-## Limites connues à traiter avant production
+## État des fonctionnalités et points restant à valider
 
-- **Disponibilités de réservation :** le joueur peut proposer date/heure/court ; la base refuse les chevauchements connus. Il manque encore le paramétrage des plages horaires autorisées par le coach . Un refus de conflit ne prouve pas que le court est libre dans un éventuel système externe.
-- **Rappels 24 h :** il faut déployer une Edge Function et une tâche planifiée Supabase. Le code ne déclenche pas encore de rappels automatiques.
-- **Séries récurrentes :** modèle et interface de gestion complète (édition d'une occurrence / série entière) non finalisés.
-- **Programme annuel collectif :** les 30 semaines sont importées. Les créneaux annuels peuvent être paramétrés un par un, puis leurs dates générées selon la saison, les vacances Zone B et les règles de jours fériés. Les compteurs sont indépendants par créneau. Les créneaux horaires exacts doivent être saisis depuis le planning validé du club ; aucun horaire n'est prérempli. Les semaines marquées MATCH sans contenu dans le classeur restent vides : aucun exercice n'a été inventé.
-- **Créneaux orange du planning source :** ne pas les programmer tant que les horaires précis n'ont pas été vérifiés sur les captures/vidéos originales.
-- **Critères tennis :** la structure de stockage existe, mais le catalogue exhaustif validé doit encore être importé sans reformulation ni suppression des doublons. Les formulaires d'évaluation multi-critères et le radar ne sont pas finalisés.
-- **Défis et réussites :** les tables et règles métier de base existent, mais l'automatisation complète des déblocages en base et l'affichage du carnet joueur restent à terminer.
-- **Catégories FFT :** le calcul fourni dans le module métier est indicatif ; il ne doit pas être utilisé comme classement officiel sans intégrer le barème FFT de la saison concernée.
-- **Météo :** non connectée à ce stade. La synchronisation avec un logiciel externe est abandonnée ; le planning Coach In fonctionne de manière autonome.
-- **Tests réels :** aucune connexion réelle coach/joueur, aucun test mobile sur appareil, aucun test RLS PostgreSQL et aucun test de restauration n'ont été exécutés ici.
+### Fonctionnalités actives
+- Planning, cours collectifs et cours particuliers, demandes de réservation et disponibilités hebdomadaires.
+- Calendrier saisonnier Zone B, règles de jours fériés et rappels internes 24 h (job Supabase actif toutes les 15 minutes).
+- Bibliothèque : programme collectif de 30 semaines et huit modèles de séances particulières générées, ajoutables à la bibliothèque privée du coach.
+- Bilans multi-critères, radars, défis mesurables et réussites par coach.
+- Catalogue de 328 critères, copié séparément sur chaque compte coach actif sans partager leurs suivis.
+- Messagerie privée, pièces jointes, notifications, analyse vidéo IA, suivi privé des corrections, passeport joueur, journal de match et vie du club.
+- Prévisions météo intégrées au planning.
+- Espace administrateur et gestion des comptes coachs en production.
 
+### Points restant à terminer
+- **Recette utilisateur réelle :** vérifier les connexions Coach A, Coach B et joueur sur un appareil mobile, puis tester les parcours réservation, messagerie, bilan et notifications avec les comptes de test.
+- **Administrateur en préproduction :** le compte administrateur existe en production ; il n'est pas encore créé dans la base de test. Ne pas promouvoir un compte joueur en administrateur pour contourner ce point.
+- **Analyse vidéo IA en préproduction :** la fonction Edge est déployée, mais la présence du secret `OPENAI_API_KEY` dans le projet de test reste à confirmer. Le secret ne doit jamais être placé dans le navigateur ou dans GitHub.
+- **Protection des mots de passe compromis :** Supabase Auth signale que la vérification contre les mots de passe compromis est désactivée. À activer dans les paramètres Auth des deux projets.
+- **Revue de sécurité :** les RPC `SECURITY DEFINER` sont réservées aux utilisateurs authentifiés, l'exécution anonyme est révoquée et les contrôles `auth.uid()` ont été vérifiés. Les avertissements de linter correspondants demandent néanmoins une revue régulière.
+- **Performance :** les index des clés étrangères signalées ont été ajoutés. Il reste des avertissements de plan RLS et de politiques permissives multiples à examiner ; les index non encore utilisés sont attendus sur une base de faible activité.
+- **Planning club :** les horaires orange et les créneaux historiques dont les heures exactes ne sont pas confirmées ne doivent pas être générés automatiquement.
+
+Les éléments ci-dessus distinguent les fonctionnalités déployées des vérifications qui nécessitent une connexion utilisateur ou une configuration secrète non accessible depuis le dépôt.
 ## Sécurité
 
 Les actions de réservation sensibles passent par des fonctions PostgreSQL `SECURITY DEFINER` qui vérifient l'identité et les droits. Les données restent soumises aux politiques RLS. Le navigateur ne constitue jamais une barrière de sécurité. Ne déploie pas avant revue du SQL et tests croisés des comptes.
