@@ -14,6 +14,7 @@ import { progressionService } from './services/progression.js';
 import { recommendSessionExercises, buildMatchTransfer, buildSessionCoachingPlan } from './domain/session-recommendations.js';
 import { generateOriginalSession } from './domain/session-generator.js';
 import { OBJECTIVES, objectivesForTheme, findObjective } from './domain/session-curriculum.js';
+const coachObjectives=()=>state.sessionObjectives?.length?state.sessionObjectives:OBJECTIVES;
 import { buildSessionProgression } from './domain/session-progression.js';
 import { buildAdaptiveTrainingProgram } from './domain/intelligence.js';
 
@@ -152,6 +153,7 @@ $('#page-content').addEventListener('click', async event=>{
   if(action==='new-evaluation') return evaluationDialog();
   if(action==='new-library-item') return libraryDialog();
   if(action==='new-coach-exercise') return coachExerciseDialog();
+  const editCoachObjective=event.target.closest('[data-edit-coach-objective]'); if(editCoachObjective)return coachObjectiveDialog(editCoachObjective.dataset.editCoachObjective);
   const editCoachExercise=event.target.closest('[data-edit-coach-exercise]'); if(editCoachExercise)return coachExerciseDialog(editCoachExercise.dataset.editCoachExercise);
   const deleteCoachExercise=event.target.closest('[data-delete-coach-exercise]'); if(deleteCoachExercise){if(!confirm('Supprimer cet exercice de ta banque personnelle ?'))return;try{await dataService.deleteCoachSessionExercise(deleteCoachExercise.dataset.deleteCoachExercise);state.customSessionExercises=(state.customSessionExercises||[]).filter(row=>row.id!==deleteCoachExercise.dataset.deleteCoachExercise);render('library');toast('Exercice supprimé de ta banque.');}catch(error){toast(error.message||'Suppression impossible.','error');}return;}
   const editLibrary=event.target.closest('[data-edit-library]'); if(editLibrary) return libraryDialog(editLibrary.dataset.editLibrary);
@@ -231,7 +233,7 @@ $('#dialog-content').addEventListener('change',event=>{
     const form=event.target.closest('#evaluation-form');
     if(form){form.dataset.criteriaConfirmed='false';const confirm=form.querySelector('[data-confirm-criteria]');if(confirm){confirm.textContent='Valider les critères ✓';confirm.classList.remove('criteria-confirmed');}const title=form.querySelector('[data-validation-title]');if(title)title.textContent='Sélection à confirmer';const hint=form.querySelector('[data-validation-hint]');if(hint)hint.textContent='Ta sélection a changé : valide-la à nouveau.';updateEvaluationSelectionUI();}
   }
-  if(event.target.name==='player_id'&&event.target.form?.id==='session-builder-form'){applySessionRecommendationToBuilder(event.target.value);const form=event.target.form;const rec=state.players.find(p=>p.id===event.target.value);const recommendation=rec?recommendSessionExercises({playerId:rec.id,evaluations:state.evaluations,evaluationCriteria:state.evaluationCriteria,library:state.library,sessions:state.sessions,challenges:state.challenges,videoAnalyses:state.videoAnalyses}):null;const goal=OBJECTIVES.find(item=>item.criteria.some(c=>normTheme(c)===normTheme(recommendation?.priority?.criterion)))||OBJECTIVES.find(item=>normTheme(item.theme)===normTheme(recommendation?.priority?.main_theme));if(goal){form.elements.theme.value=goal.theme;updateSessionObjectiveOptions();form.elements.objective_id.value=goal.id;}}
+  if(event.target.name==='player_id'&&event.target.form?.id==='session-builder-form'){applySessionRecommendationToBuilder(event.target.value);const form=event.target.form;const rec=state.players.find(p=>p.id===event.target.value);const recommendation=rec?recommendSessionExercises({playerId:rec.id,evaluations:state.evaluations,evaluationCriteria:state.evaluationCriteria,library:state.library,sessions:state.sessions,challenges:state.challenges,videoAnalyses:state.videoAnalyses}):null;const goal=coachObjectives().find(item=>item.criteria.some(c=>normTheme(c)===normTheme(recommendation?.priority?.criterion)))||OBJECTIVES.find(item=>normTheme(item.theme)===normTheme(recommendation?.priority?.main_theme));if(goal){form.elements.theme.value=goal.theme;updateSessionObjectiveOptions();form.elements.objective_id.value=goal.id;}}
   if(event.target.name==='creation_mode'&&event.target.form?.id==='session-builder-form')updateSessionBuilderMode();
   if(event.target.name==='theme'&&event.target.form?.id==='session-builder-form'){updateSessionObjectiveOptions();updateSessionBuilderExerciseOptions();}
   if(event.target.name==='objective_id'&&event.target.form?.id==='session-builder-form'){const goal=findObjective(event.target.value);const custom=event.target.form.elements.custom_objective;if(goal&&custom)custom.value='';}
@@ -297,6 +299,21 @@ $('#page-content').addEventListener('submit',async event=>{
   if(reviewForm){event.preventDefault();await saveVideoReview(reviewForm);return;}
   const followupForm=event.target.closest('.video-followup-form');
   if(followupForm){event.preventDefault();await saveVideoCorrectionFollowup(followupForm);return;}
+  const coachObjectiveForm=event.target.closest('#coach-objective-form');
+  if(coachObjectiveForm){
+    event.preventDefault();
+    const values=Object.fromEntries(new FormData(coachObjectiveForm).entries());
+    const criteria=String(values.criteria||'').split(/\\n|;/).map(x=>x.trim()).filter(Boolean);
+    const validCriteria=new Set((state.evaluationCriteria||[]).map(row=>row.criterion||row.label).filter(Boolean));
+    const unknown=criteria.filter(value=>validCriteria.size&&!validCriteria.has(value));
+    if(unknown.length){toast('Critères absents de ta banque d’évaluation : '+unknown.join(', '),'error');return;}
+    try{
+      const saved=await dataService.updateCoachSessionObjective(values.id,{label:String(values.label||'').trim(),intent:String(values.intent||'').trim(),success:String(values.success||'').trim(),criteria});
+      state.sessionObjectives=(state.sessionObjectives||[]).map(row=>row.id===values.id?saved:row);
+      closeDialog();render('library');toast('Objectif pédagogique mis à jour.');
+    }catch(error){toast(error.message||'Impossible de modifier cet objectif.','error');}
+    return;
+  }
   const coachExerciseForm=event.target.closest('#coach-exercise-form');
   if(coachExerciseForm){
     event.preventDefault();
@@ -479,11 +496,17 @@ function libraryDialog(itemId='', seedItem=null){
 }
 
 
+function coachObjectiveDialog(id=''){
+ const item=coachObjectives().find(row=>row.id===id);
+ if(!item){toast('Objectif introuvable.','error');return;}
+ showDialog('<div class="dialog-head"><div><p class="eyebrow">CATALOGUE PÉDAGOGIQUE · COURS PARTICULIERS</p><h2>Modifier l’objectif</h2><p class="tiny muted">'+escapeHtml(item.theme)+' · '+escapeHtml(item.objective_id)+'</p></div><button class="btn icon-btn" data-close>✕</button></div><form id="coach-objective-form" class="form-grid"><input type="hidden" name="id" value="'+escapeHtml(item.id)+'"><label class="span-2">Intitulé<input name="label" required maxlength="180" value="'+escapeHtml(item.label)+'"></label><label class="span-2">Intention pédagogique<textarea name="intent" rows="3" required>'+escapeHtml(item.intent)+'</textarea></label><label class="span-2">Critère de réussite mesurable<textarea name="success" rows="2" required>'+escapeHtml(item.success)+'</textarea></label><label class="span-2">Critères d’évaluation associés (un par ligne)<textarea name="criteria" rows="5" required>'+escapeHtml((item.criteria||[]).join('\n'))+'</textarea><small>Conserve les intitulés exacts de ta banque d’évaluation pour garder le lien avec les bilans.</small></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer l’objectif</button></div></form>');
+}
+
 function coachExerciseDialog(id=''){
  const item=(state.customSessionExercises||[]).find(row=>row.id===id)||{};
  const editing=Boolean(id);
- const themes=['Coup droit','Revers','Service','Retour de service','Volée','Smash','Jeu de jambes/déplacements','Tactique','Physique','Mental'];
- showDialog('<div class="dialog-head"><div><p class="eyebrow">BANQUE TACTIQUE PERSONNELLE</p><h2>'+(editing?'Modifier un exercice':'Ajouter un exercice')+'</h2><p class="tiny muted">Cet exercice sera privé à ton compte coach et proposé pour les cours particuliers.</p></div><button class="btn icon-btn" data-close>✕</button></div><form id="coach-exercise-form" class="form-grid"><input type="hidden" name="id" value="'+escapeHtml(item.id||'')+'"><label>Thème<select name="theme" required>'+themes.map(theme=>'<option value="'+escapeHtml(theme)+'" '+(item.theme===theme?'selected':'')+'>'+escapeHtml(theme)+'</option>').join('')+'</select></label><label>Niveau<select name="level">'+['Tous niveaux','Débutant','Intermédiaire','Confirmé','Compétition'].map(level=>'<option '+((item.level||'Tous niveaux')===level?'selected':'')+'>'+level+'</option>').join('')+'</select></label><label class="span-2">Objectif associé<select name="objective_id"><option value="">Tous les objectifs du thème</option>'+OBJECTIVES.map(goal=>'<option value="'+goal.id+'" '+(item.objective_id===goal.id?'selected':'')+'>'+escapeHtml(goal.theme+' · '+goal.label)+'</option>').join('')+'</select></label><label class="span-2">Nom de l’exercice<input name="title" required maxlength="140" value="'+escapeHtml(item.title||'')+'" placeholder="Ex. Défense haute puis reprise de terrain"></label><label class="span-2">Mise en place<textarea name="setup" rows="2" required>'+escapeHtml(item.setup||'')+'</textarea></label><label class="span-2">Déroulement et consignes tactiques<textarea name="instructions" rows="4" required>'+escapeHtml(item.instructions||'')+'</textarea></label><label class="span-2">Critère de réussite mesurable<textarea name="success_criteria" rows="2" required>'+escapeHtml(item.success_criteria||'')+'</textarea></label><label class="span-2">Point de vigilance coach<textarea name="coaching_cue" rows="2">'+escapeHtml(item.coaching_cue||'')+'</textarea></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">'+(editing?'Enregistrer les modifications':'Ajouter à ma banque')+'</button></div></form>');
+ const themes=[...new Set(coachObjectives().map(goal=>goal.theme))];
+ showDialog('<div class="dialog-head"><div><p class="eyebrow">BANQUE TACTIQUE PERSONNELLE</p><h2>'+(editing?'Modifier un exercice':'Ajouter un exercice')+'</h2><p class="tiny muted">Cet exercice sera privé à ton compte coach et proposé pour les cours particuliers.</p></div><button class="btn icon-btn" data-close>✕</button></div><form id="coach-exercise-form" class="form-grid"><input type="hidden" name="id" value="'+escapeHtml(item.id||'')+'"><label>Thème<select name="theme" required>'+themes.map(theme=>'<option value="'+escapeHtml(theme)+'" '+(item.theme===theme?'selected':'')+'>'+escapeHtml(theme)+'</option>').join('')+'</select></label><label>Niveau<select name="level">'+['Tous niveaux','Débutant','Intermédiaire','Confirmé','Compétition'].map(level=>'<option '+((item.level||'Tous niveaux')===level?'selected':'')+'>'+level+'</option>').join('')+'</select></label><label class="span-2">Objectif associé<select name="objective_id"><option value="">Tous les objectifs du thème</option>'+coachObjectives().map(goal=>'<option value="'+goal.id+'" '+(item.objective_id===goal.id?'selected':'')+'>'+escapeHtml(goal.theme+' · '+goal.label)+'</option>').join('')+'</select></label><label class="span-2">Nom de l’exercice<input name="title" required maxlength="140" value="'+escapeHtml(item.title||'')+'" placeholder="Ex. Défense haute puis reprise de terrain"></label><label class="span-2">Mise en place<textarea name="setup" rows="2" required>'+escapeHtml(item.setup||'')+'</textarea></label><label class="span-2">Déroulement et consignes tactiques<textarea name="instructions" rows="4" required>'+escapeHtml(item.instructions||'')+'</textarea></label><label class="span-2">Critère de réussite mesurable<textarea name="success_criteria" rows="2" required>'+escapeHtml(item.success_criteria||'')+'</textarea></label><label class="span-2">Point de vigilance coach<textarea name="coaching_cue" rows="2">'+escapeHtml(item.coaching_cue||'')+'</textarea></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">'+(editing?'Enregistrer les modifications':'Ajouter à ma banque')+'</button></div></form>');
 }
 
 let generatedSessionPlan = null;
@@ -508,7 +531,7 @@ function updateSessionBuilderExerciseOptions(){
 function updateSessionObjectiveOptions(){
  const form=$('#session-builder-form');if(!form)return;
  const select=form.elements.objective_id;if(!select)return;
- const current=select.value,goals=objectivesForTheme(form.elements.theme.value);
+ const current=select.value,goals=coachObjectives().filter(item=>item.theme===form.elements.theme.value);
  select.innerHTML='<option value="">Choisir un objectif…</option>'+goals.map(x=>'<option value="'+x.id+'">'+escapeHtml(x.label)+'</option>').join('');
  if(goals.some(x=>x.id===current))select.value=current;
 }
@@ -526,7 +549,7 @@ function sessionBuilderDialog(playerId=null, sessionDate=toLocalISO(new Date()),
  '<fieldset class="duration-choice span-2"><legend>Durée du cours</legend><div class="duration-choice-options"><label><input type="radio" name="duration_minutes" value="60" '+(Number(sessionDuration||60)===60?'checked':'')+'><span>1 heure</span></label><label><input type="radio" name="duration_minutes" value="90" '+(Number(sessionDuration)===90?'checked':'')+'><span>1 h 30</span></label><label><input type="radio" name="duration_minutes" value="120" '+(Number(sessionDuration)===120?'checked':'')+'><span>2 heures</span></label></div></fieldset>'+
  '<label>Niveau<select name="level"><option>Débutant</option><option selected>Intermédiaire</option><option>Confirmé</option><option>Compétition</option></select></label>'+
  '<label class="span-2">Mode de création<select name="creation_mode"><option value="original" selected>Création originale · sans bibliothèque</option><option value="library">Utiliser ma bibliothèque</option></select></label>'+
- '<label class="span-2">Thématique de la séance<select name="theme" required>'+['Coup droit','Revers','Service','Retour de service','Volée','Smash','Jeu de jambes/déplacements','Tactique','Physique','Mental'].map(v=>'<option value="'+escapeHtml(v)+'" '+(priority&&normTheme(v)===normTheme(priority.main_theme)?'selected':'')+'>'+escapeHtml(v)+'</option>').join('')+'</select></label>'+ '<label class="span-2">Objectif pédagogique précis<select name="objective_id" id="session-objective-select"><option value="">Choisir un objectif…</option>'+objectivesForTheme(priority?.main_theme||'Coup droit').map(x=>'<option value="'+x.id+'">'+escapeHtml(x.label)+'</option>').join('')+'</select><small>Les objectifs sont reliés aux critères de ta banque d’évaluation.</small></label>'+
+ '<label class="span-2">Thématique de la séance<select name="theme" required>'+[...new Set(coachObjectives().map(item=>item.theme))].map(v=>'<option value="'+escapeHtml(v)+'" '+(priority&&normTheme(v)===normTheme(priority.main_theme)?'selected':'')+'>'+escapeHtml(v)+'</option>').join('')+'</select></label>'+ '<label class="span-2">Objectif pédagogique précis<select name="objective_id" id="session-objective-select"><option value="">Choisir un objectif…</option>'+coachObjectives().filter(x=>x.theme===(priority?.main_theme||'Coup droit')).map(x=>'<option value="'+x.id+'">'+escapeHtml(x.label)+'</option>').join('')+'</select><small>Les objectifs sont reliés aux critères de ta banque d’évaluation.</small></label>'+
  '<label class="span-2">Objectif personnalisé (facultatif)<input name="custom_objective" placeholder="Ex. prise de balle tôt en revers, varier les effets au service…"></label>'+
  '<label class="span-2">Niveau de difficulté<select name="difficulty"><option value="auto" selected>Automatique · selon le dernier bilan</option><option value="easy">Accessible · sécuriser le geste</option><option value="progressive">Progressif · faire évoluer la contrainte</option><option value="hard">Exigeant · pression et décision</option></select></label>'+
  '<div id="session-library-fields" class="span-2 hidden"><label>Exercice 1<select name="exercise_one">'+(options||'<option value="">Aucun exercice</option>')+'</select></label><label>Exercice 2<select name="exercise_two"><option value="">Aucun</option>'+options+'</select></label></div>'+
