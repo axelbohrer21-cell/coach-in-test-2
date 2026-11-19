@@ -303,8 +303,8 @@ $('#page-content').addEventListener('submit',async event=>{
   if(coachObjectiveForm){
     event.preventDefault();
     const values=Object.fromEntries(new FormData(coachObjectiveForm).entries());
-    const criteria=String(values.criteria||'').split(/\\n|;/).map(x=>x.trim()).filter(Boolean);
-    const validCriteria=new Set((state.evaluationCriteria||[]).map(row=>row.criterion||row.label).filter(Boolean));
+    const criteria=String(values.criteria||'').split(/\n|;/).map(x=>x.trim()).filter(Boolean);
+    const validCriteria=new Set((state.criteria||[]).map(row=>row.criterion).filter(Boolean));
     const unknown=criteria.filter(value=>validCriteria.size&&!validCriteria.has(value));
     if(unknown.length){toast('Critères absents de ta banque d’évaluation : '+unknown.join(', '),'error');return;}
     try{
