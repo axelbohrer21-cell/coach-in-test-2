@@ -1,0 +1,63 @@
+/**
+ * Variantes tactiques ciblées — cours particuliers uniquement.
+ * Chaque atelier associe une intention de jeu, une organisation et un indicateur observable.
+ * Les variantes sont sélectionnées selon l'objectif travaillé.
+ */
+export const TACTICAL_ACTIVITY_VARIANTS = {
+ 'cd-depth': [
+  ['Gamme · diagonale croisée longue au bassin','Deux joueurs du fond, cible profonde croisée matérialisée dans chaque diagonale.','Échanger uniquement en coup droit croisé pendant 6 balles puis en revers croisé pendant 6 balles. Attendre le rebond à hauteur du bassin, préparer en boucle, frapper devant soi et choisir appui ouvert, semi-ouvert ou en ligne selon la distance. Repartir vers la zone de replacement après chaque frappe.','8 balles sur 10 dans la zone profonde, avec contact devant et équilibre conservé.'],
+  ['Gamme · construire avant de déplacer','Deux cibles profondes croisées et une cible centrale de sécurité.','Construire 3 balles croisées longues en alternant coup droit et revers. Ne changer de direction que si la balle adverse devient courte ou laisse une vraie ouverture.','Sur 8 séquences, conserver la diagonale sur les balles neutres et ne changer que sur 6 balles favorables minimum.'],
+  ['Gamme · croisé long sous déplacement','Départ au centre, plots latéraux et deux cibles croisées profondes.','Le coach distribue alternativement sur coup droit et revers, avec un écartement progressif. Le joueur récupère en appui ouvert, frappe croisé long devant lui puis se replace rapidement.','Réussir 7 frappes profondes sur 10 après déplacement, sans perdre la qualité du replacement.']
+ ],
+ 'rev-cross': [
+  ['Gamme · revers croisé profond en rythme','Deux joueurs en diagonale revers, zone longue matérialisée à 1,5 m de la ligne de fond.','Enchaîner 10 revers croisés. Préparer en boucle, attendre la balle au niveau du bassin et frapper devant soi. Alterner appuis ouverts, semi-ouverts et en ligne selon la trajectoire.','8 revers sur 10 dans la zone profonde, avec hauteur de sécurité au-dessus du filet.'],
+  ['Gamme · tenir la diagonale puis accélérer','Deux joueurs en diagonale revers, une cible profonde croisée et une cible d’attaque.','Jouer croisé long tant que la balle reste neutre. À la première balle courte et équilibrée, accélérer à plat vers le long de ligne ou court croisé selon le placement adverse.','Choisir correctement le moment de l’accélération sur 7 situations sur 10.']
+ ],
+ 'cd-line': [
+  ['Gamme · attaque long de ligne à plat','Le coach distribue des balles courtes côté coup droit ; couloir long de ligne matérialisé.','Avancer dans le terrain, prendre la balle autour de la hauteur d’épaule et accélérer à plat sans chercher à sur-lifter. Frapper devant soi, pousser avec les jambes dans la direction visée et suivre vers l’avant.','6 attaques sur 10 dans le couloir avec une trajectoire tendue et une marge de sécurité.'],
+  ['Gamme · choisir long de ligne ou court croisé','Deux cibles : couloir long de ligne et zone courte croisée ; coach mobile en position de défense.','Sur balle favorable, observer la position du défenseur. Jouer long de ligne s’il protège le court croisé ; jouer court croisé s’il est reculé ou décalé. Ne pas forcer si l’équilibre est insuffisant.','Faire le bon choix tactique sur 8 balles sur 10 et réussir 5 attaques.'],
+  ['Gamme · accélérer dans l’espace libre','Le coach alterne balle courte et balle mi-courte, puis change son placement avant la frappe.','Prendre la balle dans le terrain à hauteur d’épaule. Accélérer à plat vers le joueur s’il est en retard, ou dans l’espace libre s’il est déjà décalé.','La cible correspond au placement adverse sur 7 situations sur 10.']
+ ],
+ 'tac-dno': [
+  ['Gamme · défendre haut et long','Départ volontairement décalé, coach au panier et deux cibles profondes au centre et en croisé.','Sur balle difficile ou éloignée, utiliser l’appui ouvert pour récupérer, jouer haut et long au centre ou croisé, puis revenir rapidement sur la zone de couverture.','7 défenses sur 10 dépassent la ligne de service et le joueur est replacé avant la frappe suivante.'],
+  ['Gamme · passer de défense à construction','Le coach alterne balles très écartées, balles neutres et balles courtes.','Balle défensive : hauteur et longueur au centre ou croisé. Balle neutre : reprendre la construction croisée longue en coup droit ou revers. Balle courte et équilibrée : avancer et attaquer à plat.','8 décisions adaptées sur 10 ; la qualité du choix prime sur la vitesse.'],
+  ['Gamme · couverture après défense','Deux cibles profondes et une zone de replacement matérialisée par une pastille.','Le coach envoie une balle dans un angle. Le joueur défend en appui ouvert, joue haut et long, puis récupère vers la position qui couvre le mieux le terrain avant la balle suivante.','Réussir 6 séquences défense–replacement sur 8.']
+ ],
+ 'tac-length': [
+  ['Gamme · trois balles longues avant ouverture','Deux joueurs du fond, cible croisée profonde et cible dans l’espace opposé.','Jouer trois balles croisées longues, en alternant coup droit et revers. Dès que l’adversaire est repoussé ou décalé, jouer dans l’espace libre avec une accélération contrôlée.','Respecter la construction sur 7 séquences sur 10 et exploiter l’ouverture au bon moment.'],
+  ['Gamme · fixer au centre puis écarter','Cible centrale profonde et deux cibles latérales.','Jouer une balle longue au centre pour réduire les angles adverses, puis déplacer en croisé lorsque la balle revient plus courte.','Créer un déplacement adverse sur 6 points sur 10.']
+ ],
+ 'vol-approach': [
+  ['Gamme · volée d’approche longue pour fixer','Joueur au filet, coach à la ligne de fond, cibles longues dans les deux côtés.','Sur la première volée éloignée, fixer le défenseur avec une volée longue dans un côté. Avancer après la frappe, garder la raquette au-dessus de la main et effectuer une préparation très brève.','6 premières volées sur 8 sont longues et permettent d’avancer sans ouvrir un angle facile.'],
+  ['Gamme · approche longue puis finition courte croisée','Joueur au filet face à un défenseur ; une cible longue latérale et une cible courte croisée.','Jouer d’abord une volée longue dans un côté pour fixer et avancer. Sur la balle suivante, lire le déplacement du défenseur et jouer court croisé dans l’espace qu’il ne peut plus couvrir. Plan de frappe devant, épaules peu orientées et raquette au-dessus de la main.','Réussir 5 enchaînements approche longue–finition courte croisée sur 8.'],
+  ['Gamme · volée d’approche sous incertitude','Le coach varie la hauteur et la direction de la balle ainsi que la position du défenseur.','Préparation courte et tamis au-dessus de la main. Si la balle est éloignée, jouer long pour fixer et avancer ; si le défenseur est déjà parti, finir court croisé.','Choisir la bonne volée sur 7 situations sur 10.']
+ ],
+ 'vol-finish': [
+  ['Gamme · lire le déplacement et finir court croisé','Joueur au filet, défenseur au fond, cible courte croisée.','Le coach envoie une volée accessible puis déplace le défenseur avant la seconde balle. Fixer si nécessaire avec une première volée longue, puis finir court croisé à l’opposé de son déplacement.','Placer 7 finitions sur 10 hors de portée, sans chercher uniquement la puissance.'],
+  ['Gamme · préparation compacte et plan devant','Deux joueurs au filet, panier de balles à mi-court.','Réaliser une préparation très brève, une orientation d’épaules réduite et un contact devant soi. Garder la raquette au-dessus de la main et orienter le tamis vers la cible.','8 contacts sur 10 devant le corps avec contrôle de direction.']
+ ],
+ 'srv-second': [
+  ['Gamme · slice extérieur côté égalité','Cible extérieure côté égalité, relanceur placé en position réelle.','Servir une deuxième balle slicée en visant largement à droite du relanceur pour le sortir du court et le faire frapper sur sa droite. Jouer ensuite dans l’espace libéré.','Atteindre la zone extérieure 6 fois sur 10 et exploiter l’ouverture au coup suivant.'],
+  ['Gamme · slice au T côté avantage','Cible au T côté avantage, relanceur mobile.','Servir slicé vers le T pour surprendre et prendre de vitesse le relanceur. Conserver une marge et enchaîner avec une première frappe adaptée à son retour.','Toucher la zone du T 5 fois sur 10 et obtenir une réponse moins confortable.'],
+  ['Gamme · kick avec lancer derrière l’épaule','Départ sans vitesse, puis ligne de fond ; cible haute et profonde dans le carré.','Lancer juste derrière l’épaule gauche, garder le coude haut et plié, laisser la raquette descendre le long du dos puis accélérer le bras vers le haut pour brosser la balle. Chercher une trajectoire bombée et un rebond haut.','Produire une rotation visible et placer 7 services sur 10 dans le carré.']
+ ],
+ 'srv-slice': [
+  ['Gamme · slice extérieur et coup + 1','Cible extérieure et zone ouverte matérialisées ; relanceur en position de retour.','Servir slicé largement à droite du relanceur pour l’excentrer. Dès la frappe, se replacer et jouer la première balle dans le court libéré.','Réussir 6 séquences service + 1 sur 10.'],
+  ['Gamme · slice au T pour surprendre','Cible au T, relanceur légèrement décalé vers l’extérieur.','Servir slicé au T pour prendre le relanceur à contre-pied et réduire son temps de préparation. Lire le retour avant de choisir la première frappe.','Obtenir une réponse courte ou centrale exploitable sur 6 services sur 10.']
+ ],
+ 'srv-first': [
+  ['Gamme · première balle à plat et transfert','Cible T et cible extérieure, repères de lancer devant le corps.','Avec prise marteau, lancer bien devant soi, pousser avec les jambes vers la frappe et accélérer la tête de raquette. Rechercher une frappe à plat avec pronation de l’avant-bras et accompagner le mouvement dans la direction visée.','Atteindre la zone annoncée 6 fois sur 10 avec un lancer devant et un transfert vers l’avant.'],
+  ['Gamme · service + 1 selon la zone','Cibles au T, extérieur et corps ; coach joue le retour.','Servir à plat dans la zone annoncée, observer la réponse du relanceur et choisir le coup + 1 vers l’espace réellement disponible.','Faire le bon choix de première frappe sur 7 points sur 10.']
+ ],
+ 'rev-slice': [
+  ['Gamme · slice de revers bas et long','Cible longue croisée et repère de rebond bas.','Se mettre de profil, transférer le poids du corps vers l’avant, incliner le tamis vers le ciel et cisailler la balle. Jouer bas et long pour gêner le rebond et repousser ou neutraliser l’adversaire.','6 slices sur 10 sont bas, longs et contrôlés.'],
+  ['Gamme · slice puis reprise de terrain','Cible longue dans une diagonale et balle courte simulée par le coach.','Jouer un slice bas et profond, avancer seulement si la réponse adverse devient courte, puis reprendre une position de couverture équilibrée.','Réussir 5 séquences slice–avancée sur 8 sans monter sur une balle défavorable.']
+ ],
+ 'move-lateral': [
+  ['Gamme · défense en appui ouvert et replacement','Départ au centre, deux couloirs latéraux et cibles longues au centre ou croisé.','Le coach alterne droite et gauche. À chaque déplacement, ouvrir les appuis pour récupérer la balle, jouer haut et long au centre ou croisé, puis pousser sur les premiers appuis pour revenir couvrir le terrain.','6 séquences complètes sur 8 avec frappe défensive longue et replacement rapide.'],
+  ['Gamme · défendre le grand angle sans subir','Départ volontairement décalé, coach distribue dans l’angle opposé.','Démarrer dès la lecture, courir en pas adaptés, freiner en appui ouvert, jouer haut et long croisé ou au centre selon la marge disponible puis récupérer vers la bissectrice de couverture.','Récupérer une position de couverture avant la frappe adverse sur 7 balles sur 10.']
+ ],
+ 'move-recover': [
+  ['Gamme · frappe puis replacement sur la bissectrice','Pastille de replacement et cibles dans les deux diagonales.','Après chaque frappe, revenir vers la position qui couvre les angles possibles. Si la balle jouée est très croisée, le replacement se décale ; si elle est au centre, rester plus central.','Être replacé avant la frappe adverse sur 8 séquences sur 10.']
+ ]
+};
