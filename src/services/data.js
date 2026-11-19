@@ -1,6 +1,7 @@
 import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
 import { notificationService } from './notifications.js';
+import { OBJECTIVES } from '../domain/session-curriculum.js';
 
 async function unwrap(query) {
   const { data, error } = await query;
@@ -65,6 +66,11 @@ export const dataService = {
       unwrap(supabase.from('coach_player_messages').select('*').eq('coach_id',userId).order('created_at')),
       unwrap(supabase.from('coach_video_analyses').select('*').eq('coach_id',userId).order('created_at',{ascending:false}))
     ]);
+    let loadedSessionObjectives=sessionObjectives;
+    if(!loadedSessionObjectives.length){
+      const defaults=OBJECTIVES.map((item,index)=>({coach_id:userId,objective_id:item.id,theme:item.theme,label:item.label,profile:item.profile,criteria:item.criteria,intent:item.intent,success:item.success,display_order:index+1,active:true}));
+      loadedSessionObjectives=await unwrap(supabase.from('coach_session_objectives').insert(defaults).select('*'));
+    }
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const evaluationCriteria = evaluationIds.length
       ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds))
@@ -98,7 +104,7 @@ export const dataService = {
       playerIds.length ? unwrap(supabase.from('player_profile_details').select('*').in('player_id',playerIds)) : Promise.resolve([])
     ]);
     const playerProfileDetailsById = Object.fromEntries(profileDetailsRows.map(row=>[row.player_id,row]));
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:sessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
+    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:loadedSessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
   },
 
   async loadPlayerWorkspace() {
