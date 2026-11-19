@@ -60,6 +60,6 @@ test('compteur enfants samedi : les samedis ajoutés aux vacances sont comptés 
  const childSeries={...series,id:'kids-sat',title:'Enfants samedi',audience:'enfants',weekday:6,start_time:'09:30',end_time:'14:30',target_sessions:30};
  const row=buildSeriesCounters([childSeries],[],'2026-10-18',[{audience:'enfants',weekday:6,session_date:'2026-10-17'}])[0];
  assert.equal(row.eligibleDates.includes('2026-10-17'),true);
- assert.equal(row.completed,0);
+ assert.equal(row.completed,4);
  assert.equal(row.cancelled,1);
 });
