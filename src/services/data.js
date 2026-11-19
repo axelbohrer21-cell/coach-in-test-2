@@ -42,7 +42,7 @@ export const dataService = {
   async loadCoachWorkspace(userId) {
     const links = await unwrap(supabase.from('coach_players').select('player_id').eq('coach_id', userId));
     const playerIds = links.map(link => link.player_id);
-    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:sessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages, videoRows] = await Promise.all([
+    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives, notifications, notificationPreferences, criteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages, videoRows] = await Promise.all([
       playerIds.length ? unwrap(supabase.from('profiles').select('*').in('id', playerIds).eq('role', 'player').order('last_name')) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('training_sessions').select('*').in('player_id', playerIds).eq('created_by', userId).order('session_date', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('coach_session_notes').select('session_id,note').eq('coach_id', userId)),
