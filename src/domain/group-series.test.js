@@ -4,8 +4,8 @@ import { buildSeriesCounters, buildSeriesOccurrences } from './group-series.js';
 
 const series = { id:'s1', coach_id:'c1', title:'Adultes lundi', audience:'adultes', weekday:1, start_time:'18:00', end_time:'19:30', court_number:2, target_sessions:28 };
 test('un compteur est indépendant par créneau et exclut les annulations', () => {
- const rows=[{series_id:'s1',status:'completed'},{series_id:'s1',status:'scheduled',session_date:'2027-01-10'},{series_id:'s1',status:'cancelled'},{series_id:'other',status:'completed'}];
- const row=buildSeriesCounters([series],rows,'2026-11-11')[0];
+ const rows=[{series_id:'s1',status:'scheduled',session_date:'2027-01-10'},{series_id:'s1',status:'cancelled',session_date:'2026-09-21'},{series_id:'other',status:'completed',session_date:'2026-09-14'}];
+ const row=buildSeriesCounters([series],rows,'2026-09-22')[0];
  assert.equal(row.completed,1); assert.equal(row.planned,1); assert.equal(row.cancelled,1); assert.equal(row.toSchedule,26);
 });
 test('génération annuelle respecte les vacances et la cible',()=>{
@@ -36,4 +36,12 @@ test('la génération de série respecte le lundi 2 novembre férié de vacances
  const rows=buildSeriesOccurrences(series);
  assert.equal(rows.some(row=>row.session_date==='2026-11-09'),true);
  assert.equal(rows.filter(row=>row.session_date==='2026-11-02').length,0);
+});
+
+
+test('compteur de série : les séances passées sont acquises automatiquement sauf annulation',()=>{
+ const row=buildSeriesCounters([series],[{series_id:'s1',status:'cancelled',session_date:'2026-11-02'}],'2026-11-19')[0];
+ assert.equal(row.completed,7);
+ assert.equal(row.cancelled,1);
+ assert.equal(row.pastUnrecorded,0);
 });
