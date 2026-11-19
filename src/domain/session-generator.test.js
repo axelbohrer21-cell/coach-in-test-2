@@ -7,7 +7,7 @@ test('construit une séance deuxième balle de service avec des contenus spécif
     const session = generateOriginalSession({ theme: 'service', customObjective: '2eme balle de service', duration });
     assert.equal(session.focus, 'Deuxième balle de service');
     assert.equal(session.phases.reduce((sum, phase) => sum + phase.minutes, 0), duration);
-    assert.ok(session.exercise_1.includes('Envoi du coach'));
+    assert.match(session.exercise_1, /ENVOI DU COACH/i);
     assert.match(session.exercise_1 + session.exercise_2, /rotation/i);
     assert.match(session.exercise_1 + session.exercise_2, /deuxième balle/i);
     assert.match(session.exercise_1 + session.exercise_2, /Points · commencer chaque échange sur une deuxième balle/i);
