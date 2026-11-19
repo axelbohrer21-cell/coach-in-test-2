@@ -1062,7 +1062,7 @@ async function loadWeatherForecast(){
  const request=++weatherRequest;
  const summary=$('#weather-summary'); if(summary)summary.textContent='Chargement des prévisions…';
  try{
-  const url='https://api.open-meteo.com/v1/forecast?latitude=43.282&longitude=5.516&current=temperature_2m,weather_code&hourly=precipitation_probability,precipitation,weather_code&forecast_days=2&timezone=Europe%2FParis';
+  const url='https://api.open-meteo.com/v1/forecast?latitude=43.282&longitude=5.516&current=temperature_2m,weather_code,wind_speed_10m&hourly=precipitation_probability,precipitation,weather_code,wind_speed_10m&forecast_days=2&timezone=Europe%2FParis';
   const response=await fetch(url); if(!response.ok)throw new Error('Prévisions indisponibles');
   const data=await response.json(); if(request!==weatherRequest||state.currentPage!=='planning')return;
   const now=Date.now(); const times=data.hourly.time||[];
@@ -1072,7 +1072,10 @@ async function loadWeatherForecast(){
   const current=data.current||{};
   const title=$('#weather-title'); if(title)title.textContent=(current.temperature_2m??'—')+' °C · '+weatherDescription(current.weather_code);
   const icon=$('#weather-icon'); if(icon)icon.textContent=weatherIcon(current.weather_code);
-  if(summary)summary.textContent=next.length?('Sur les 8 prochaines heures : risque maximal de pluie '+max.prob+' %'+(max.time?' vers '+fmt(max.time):'')+'. '+(max.rain>0?'Précipitations prévues : '+max.rain.toFixed(1)+' mm sur l’heure la plus arrosée.':'Pas de pluie horaire significative indiquée.')):'Prévisions horaires indisponibles pour les prochaines heures.';
+  const windRows=next.map(row=>Number(data.hourly.wind_speed_10m?.[row.index]??0));
+  const wind=Math.round(Number(current.wind_speed_10m??(windRows.length?windRows.reduce((sum,value)=>sum+value,0)/windRows.length:0)));
+  const rainText=!next.length?'Prévisions horaires indisponibles.':max.prob===0?'Aucune pluie prévue sur les 8 prochaines heures.':'Risque de pluie '+max.prob+' %'+(max.time?' vers '+fmt(max.time):'')+'.';
+  if(summary)summary.textContent=rainText+' Vent : '+wind+' km/h.'+(max.rain>0?' Cumul horaire le plus élevé : '+max.rain.toFixed(1)+' mm.':'');
   const riskValue=$('#weather-risk-value'); if(riskValue)riskValue.textContent=next.length?max.prob+' %':'— %';
   const riskBar=$('#weather-risk-bar'); if(riskBar)riskBar.style.width=(next.length?Math.max(0,Math.min(100,max.prob)):0)+'%';
   const riskLabel=$('#weather-risk-label');
