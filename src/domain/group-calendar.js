@@ -41,6 +41,12 @@ const DAY_LABELS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi
 function parseISO(value) { const [y,m,d] = value.split('-').map(Number); return new Date(Date.UTC(y,m-1,d,12)); }
 function isoUTC(date) { return date.toISOString().slice(0,10); }
 function addDays(date, amount) { const copy = new Date(date); copy.setUTCDate(copy.getUTCDate()+amount); return copy; }
+function firstSaturdayOfHoliday(period) {
+  for (let date = parseISO(period.start); isoUTC(date) <= period.end; date = addDays(date, 1)) {
+    if (date.getUTCDay() === 6) return isoUTC(date);
+  }
+  return null;
+}
 
 export function isSchoolHoliday(dateISO, holidays = ZONE_B_HOLIDAYS_2026_2027) {
   return holidays.some(period => dateISO >= period.start && dateISO <= period.end);
@@ -67,7 +73,10 @@ export function isTeachingDate(dateISO, audience, options = {}) {
   const day = parseISO(dateISO).getUTCDay();
   const weekdays = GROUP_SEASON.weekdays[audience];
   if (!weekdays?.includes(day)) return false;
-  if (isSchoolHoliday(dateISO, holidays)) return false;
+  // Le premier samedi de chaque période de vacances reste un cours collectif enfants.
+  const firstHolidaySaturday = audience === 'enfants' && day === 6
+    && holidays.some(period => firstSaturdayOfHoliday(period) === dateISO);
+  if (isSchoolHoliday(dateISO, holidays) && !firstHolidaySaturday) return false;
   if (audience === 'adultes' && isPublicHoliday(dateISO, publicHolidays) && dateISO !== '2027-05-08') return false;
   return true;
 }
