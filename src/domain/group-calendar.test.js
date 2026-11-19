@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CANCELLED_GROUP_DATES, generateTeachingDates, isTeachingDate, buildDaySeriesOverview, GROUP_SEASON } from './group-calendar.js';
+import { CANCELLED_GROUP_DATES, generateTeachingDates, isTeachingDate, buildDaySeriesOverview, buildHolidayStageOccurrences, GROUP_SEASON } from './group-calendar.js';
 
 test('cours enfants : mercredi et samedi, hors vacances Zone B', () => {
   const wednesdays = generateTeachingDates({ audience:'enfants', weekday:3 });
@@ -58,4 +58,23 @@ test('les compteurs annuels retirent les deux journées annulées des attentes',
   assert.equal(thursday.eligibleDates.includes('2026-11-12'), false);
   assert.equal(monday.expectedByNow, monday.eligibleDates.filter(date => date < '2026-11-17').length);
   assert.equal(thursday.expectedByNow, thursday.eligibleDates.filter(date => date < '2026-11-17').length);
+});
+
+test('stages vacances : du lundi au vendredi, 9 h 30–16 h 30 sur les terrains 1, 2 et 3', () => {
+  const stages = buildHolidayStageOccurrences({ startDate:'2026-10-19', endDate:'2026-10-24' });
+  assert.equal(stages.length,5);
+  assert.deepEqual(stages.map(row=>row.session_date),[
+    '2026-10-19','2026-10-20','2026-10-21','2026-10-22','2026-10-23'
+  ]);
+  for (const row of stages) {
+    assert.equal(row.start_time,'09:30');
+    assert.equal(row.end_time,'16:30');
+    assert.deepEqual(row.courts,[1,2,3]);
+    assert.equal(row.audience,'enfants');
+  }
+});
+
+test('stages vacances : aucune occurrence le week-end ni hors vacances', () => {
+  assert.equal(buildHolidayStageOccurrences({startDate:'2026-10-24',endDate:'2026-10-25'}).length,0);
+  assert.equal(buildHolidayStageOccurrences({startDate:'2026-11-03',endDate:'2026-11-06'}).length,0);
 });
