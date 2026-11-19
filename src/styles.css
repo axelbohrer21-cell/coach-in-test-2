@@ -1303,3 +1303,64 @@ button,a,input,select,textarea{touch-action:manipulation}
 .calendar-event-actions{display:flex;gap:5px;flex-wrap:wrap}
 .calendar-event-actions .btn{white-space:nowrap}
 @media(max-width:760px){.calendar-blocked-slot{font-size:9px;padding:7px}.calendar-event-actions{gap:4px}}
+
+
+/* Coach In — planning unifié et commandes pluie tactiles */
+.group-rain-dates{margin-top:14px;border:1px solid rgba(113,223,208,.18);border-radius:15px;background:rgba(7,22,38,.55);overflow:hidden}
+.group-rain-dates summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 15px;cursor:pointer;list-style:none;color:#dceafa;font-size:12px;font-weight:850}
+.group-rain-dates summary::-webkit-details-marker{display:none}
+.group-rain-dates summary:after{content:"＋";display:grid;place-items:center;width:26px;height:26px;border-radius:9px;background:rgba(113,223,208,.12);color:#8de8d8;font-size:17px}
+.group-rain-dates[open] summary:after{content:"−"}
+.group-rain-date-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 10px 10px}
+.group-rain-date{position:relative;display:flex;align-items:center;gap:10px;min-width:0;min-height:66px;padding:9px 10px;border:1px solid rgba(135,166,193,.18);border-radius:13px;background:linear-gradient(145deg,rgba(19,43,65,.96),rgba(10,27,45,.96));cursor:pointer;transition:border-color .18s,background .18s,transform .18s}
+.group-rain-date:hover{border-color:rgba(113,223,208,.5);transform:translateY(-1px)}
+.rain-date-badge{width:42px;height:44px;flex:0 0 42px;display:grid;align-content:center;justify-items:center;border-radius:10px;background:rgba(113,223,208,.12);color:#b9f3e9}
+.rain-date-badge b{font-size:17px;line-height:1.05;font-variant-numeric:tabular-nums}
+.rain-date-badge small{font-size:8px;font-weight:900;letter-spacing:.8px}
+.rain-date-copy{display:grid;gap:4px;min-width:0;flex:1}
+.rain-date-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#edf5ff;font-size:11px;text-transform:capitalize}
+.rain-date-copy small{color:#8ea7c0;font-size:9px;line-height:1.25}
+.rain-toggle{position:relative;display:grid;place-items:center;flex:0 0 auto;min-width:55px;min-height:35px;padding:0 8px;border:1px solid rgba(113,223,208,.28);border-radius:10px;background:rgba(113,223,208,.10);color:#a9eddf;font-size:10px;font-weight:900;letter-spacing:.2px}
+.rain-toggle input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.rain-toggle i{font-style:normal;pointer-events:none}
+.rain-toggle:has(input:checked){border-color:rgba(255,159,122,.65);background:linear-gradient(135deg,rgba(185,79,59,.32),rgba(119,49,48,.42));color:#ffd1c1}
+.group-rain-date:has(.rain-toggle input:checked){border-color:rgba(255,159,122,.5);background:linear-gradient(120deg,rgba(100,48,45,.38),rgba(22,37,54,.98))}
+.group-rain-date:has(.rain-toggle input:checked) .rain-date-badge{background:rgba(255,159,122,.16);color:#ffd0bd}
+.rain-toggle input:focus-visible+i{outline:2px solid #c8f36a;outline-offset:4px;border-radius:5px}
+.calendar-week{align-items:start;scroll-snap-type:x proximity;padding:3px 2px 12px}
+.calendar-day{min-width:0;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.12);transition:border-color .18s,transform .18s}
+.calendar-day:hover{border-color:rgba(113,223,208,.32)}
+.calendar-day-head{align-items:center;gap:8px;padding:4px 2px 11px}
+.calendar-day-head strong{font-size:11px;letter-spacing:.5px;text-transform:uppercase}
+.calendar-day-head span{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:rgba(113,223,208,.12);color:#a9f0e4;font-size:13px}
+.calendar-hour-row{grid-template-columns:40px minmax(0,1fr);gap:6px;min-height:42px}
+.calendar-hour-label{padding-top:9px;font-size:10px;font-weight:800}
+.calendar-hour-content{min-height:38px;padding:2px 0;border-bottom-color:rgba(126,157,184,.12)}
+.calendar-hour-slot{display:flex;align-items:center;gap:7px;min-height:36px;padding:7px 9px;border:1px dashed rgba(113,223,208,.24);border-radius:10px;background:rgba(113,223,208,.035);color:#9db6c9;font-size:10px;font-weight:750;transition:background .18s,border-color .18s,transform .18s}
+.calendar-hour-slot:before{content:"＋";display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:rgba(113,223,208,.13);color:#9cebdd;font-size:13px}
+.calendar-hour-slot:hover,.calendar-hour-slot:focus-visible{border-style:solid;border-color:#71dfd0;background:rgba(113,223,208,.13);color:#d9fff8;transform:translateY(-1px);outline:none}
+.calendar-event{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-height:38px;padding:8px 9px!important;border:1px solid color-mix(in srgb,var(--event-accent,#71dfd0) 34%,transparent);border-left:3px solid var(--event-accent,#71dfd0)!important;border-radius:11px!important;background:linear-gradient(135deg,color-mix(in srgb,var(--event-accent,#71dfd0) 17%,#0d2034),rgba(8,25,42,.96))!important;color:#f1f7ff;font-size:10px!important;cursor:pointer;transition:transform .16s,box-shadow .16s,border-color .16s}
+.calendar-event:hover,.calendar-event.is-selected{transform:translateY(-1px);border-color:var(--event-accent,#71dfd0)!important;box-shadow:0 6px 18px rgba(0,0,0,.22)}
+.calendar-event.is-selected{outline:2px solid color-mix(in srgb,var(--event-accent,#71dfd0) 50%,transparent);outline-offset:1px}
+.calendar-event-main{display:grid;gap:3px;min-width:0}
+.calendar-event-main>b{color:var(--event-accent,#71dfd0);font-size:10px;font-variant-numeric:tabular-nums}
+.calendar-event-main>strong{font-size:10px;line-height:1.25}
+.calendar-event small{color:#b4c7d8!important;line-height:1.35}
+.calendar-event.recurring-group-event{border-left-color:#c3a7ff!important;background:linear-gradient(135deg,rgba(124,91,190,.23),rgba(20,29,56,.97))!important;cursor:default}
+.calendar-blocked-slot{min-height:36px;margin:3px 0;padding:8px 9px;border:1px dashed rgba(195,167,255,.38);border-radius:10px;background:rgba(124,91,190,.09);color:#d9ccff;font-size:9px;line-height:1.35}
+.calendar-day-disabled{filter:saturate(.55)}
+@media(max-width:760px){
+ .group-rain-date-list{grid-template-columns:1fr}
+ .group-rain-date{min-height:70px;padding:10px}
+ .rain-date-copy strong{font-size:12px}
+ .rain-date-copy small{font-size:10px}
+ .rain-toggle{min-width:66px;min-height:40px;font-size:11px}
+ .calendar-week{grid-template-columns:repeat(7,minmax(235px,1fr));gap:10px}
+ .calendar-day{scroll-snap-align:start;padding:11px}
+ .calendar-hour-row{grid-template-columns:43px minmax(0,1fr);min-height:46px}
+ .calendar-hour-label{font-size:11px}
+ .calendar-hour-slot{min-height:40px;font-size:11px}
+ .calendar-event{min-height:42px;padding:9px!important}
+ .calendar-event-main>strong{font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){.group-rain-date,.calendar-day,.calendar-hour-slot,.calendar-event{transition:none;transform:none}}
