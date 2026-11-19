@@ -1411,3 +1411,58 @@ body{font-size:16px;line-height:1.55}
   .player-detail-content{padding:0 14px 15px}
   .player-detail-summary strong{font-size:14px}
 }
+
+
+/* Coach In — surfaces simplifiées pour les tâches quotidiennes */
+.coach-dashboard-simple{min-height:0;padding:22px 24px}
+.coach-dashboard-simple h2{font-size:clamp(22px,2.6vw,30px)}
+.coach-dashboard-simple p:not(.eyebrow){margin:6px 0 0}
+.coach-dashboard-simple .coach-quick-actions{margin-top:16px}
+.coach-dashboard-glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.coach-dashboard-glance>article{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;border:1px solid var(--line);border-radius:15px;background:var(--surface)}
+.coach-dashboard-glance strong{font-size:25px;line-height:1;color:var(--cyan)}
+.coach-dashboard-glance span{color:var(--muted);font-size:12px}
+.coach-dashboard-glance .btn{margin-left:auto;padding:7px 10px;font-size:11px}
+.coach-dashboard-more{padding:0;overflow:hidden}
+.coach-dashboard-more>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;cursor:pointer;list-style:none}
+.coach-dashboard-more>summary::-webkit-details-marker{display:none}
+.coach-dashboard-more>summary>span:first-child{display:grid;gap:4px}
+.coach-dashboard-more>summary b{font-size:14px}
+.coach-dashboard-more>summary small{color:var(--muted);font-size:12px}
+.coach-dashboard-more>summary:after{content:"＋";color:var(--cyan);font-size:19px}
+.coach-dashboard-more[open]>summary:after{content:"−"}
+.coach-dashboard-more-content{padding:0 18px 18px;border-top:1px solid var(--line)}
+.coach-dashboard-more-content>.btn{margin-top:12px}
+.roster-summary{display:flex;align-items:center;gap:18px;margin-bottom:15px}
+.roster-summary>div{display:grid;gap:2px;min-width:70px}
+.roster-summary>div strong{font-size:24px;line-height:1.1}
+.roster-summary>div span,.roster-summary p{font-size:12px;color:var(--muted)}
+.roster-summary p{margin:0 0 0 auto;max-width:280px}
+.player-card-compact{grid-template-columns:48px minmax(0,1fr);grid-template-areas:"avatar info" "details details" "actions actions";gap:10px 13px;padding:15px}
+.player-card-compact .player-avatar{width:48px;height:48px}
+.player-card-compact .player-card-info h3{margin-bottom:5px}
+.player-card-meta{display:flex;gap:7px 12px;flex-wrap:wrap;margin-bottom:5px;color:var(--muted);font-size:12px}
+.player-card-compact .player-card-actions{grid-area:actions;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.player-card-compact .player-card-actions .btn{padding:8px 11px;font-size:12px}
+.player-card-details{grid-area:details;border-top:1px solid color-mix(in srgb,var(--player-accent) 25%,var(--line));padding-top:8px}
+.player-card-details summary{cursor:pointer;color:var(--muted);font-size:11px}
+.player-card-details>div{display:flex;gap:8px 18px;flex-wrap:wrap;padding-top:8px;color:var(--muted);font-size:11px}
+.calendar-day{padding:0;overflow:hidden}
+.calendar-day>summary{list-style:none;cursor:pointer;align-items:center;gap:8px;padding:11px;background:#09192d}
+.calendar-day>summary::-webkit-details-marker{display:none}
+.calendar-day>summary small{margin-left:auto;color:var(--muted);font-size:10px}
+.calendar-day[open]>summary{border-bottom:1px solid #233b58}
+.calendar-day .calendar-day-reason,.calendar-day .calendar-hours{margin-left:10px;margin-right:10px}
+.calendar-day .calendar-hours{padding-bottom:10px}
+@media(max-width:760px){
+ .coach-dashboard-glance{grid-template-columns:1fr}
+ .coach-dashboard-glance>article{padding:12px 14px}
+ .roster-summary{gap:12px;flex-wrap:wrap}
+ .roster-summary p{flex-basis:100%;max-width:none}
+ .player-card-compact{grid-template-columns:44px minmax(0,1fr);padding:13px}
+ .player-card-compact .player-avatar{width:44px;height:44px}
+ .player-card-compact .player-card-actions{display:grid;grid-template-columns:1fr 1fr}
+ .player-card-compact .player-card-actions [data-player-sheet]{grid-column:1/-1}
+ .player-card-compact .player-card-actions .btn{width:100%}
+ .calendar-day>summary{padding:12px 10px}
+}
