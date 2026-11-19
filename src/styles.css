@@ -1435,3 +1435,28 @@ button,a,input,select,textarea{touch-action:manipulation}
 .calendar-group-frame-label{flex:1;min-height:25px;width:100%;justify-content:center;gap:7px;padding:3px 6px;background:transparent;border-radius:0;font-size:9px}
 .calendar-group-frame-label>span:nth-child(2){flex:1;text-align:center;letter-spacing:.45px}
 .calendar-group-frame-label small{margin-left:0}
+
+
+/* Libellé unique étendu sur toute la hauteur du bloc collectif */
+.calendar-group-frame.is-group-start{z-index:6}
+.calendar-group-frame-label{
+  position:absolute;
+  z-index:7;
+  top:0;
+  left:0;
+  width:100%;
+  height:var(--group-frame-height,29px);
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:12px 6px;
+  border-radius:7px;
+  background:rgba(124,91,190,.22);
+  color:#eee7ff;
+  text-align:center;
+}
+.calendar-group-frame-label>span:nth-child(2){flex:none;width:100%;text-align:center;letter-spacing:.55px}
+.calendar-group-frame-label small{margin:0;color:#e0d6ff;font-size:10px;white-space:nowrap}
