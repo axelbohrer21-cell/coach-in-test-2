@@ -65,7 +65,15 @@ function render(page) {
   if (!navItems.some(item => item[0] === page)) page = 'dashboard';
   state.currentPage = page;
   subscribeToNotifications();
-  $('#navigation').innerHTML = navItems.map(([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}</button>`).join('');
+  const primaryKeys = isCoach
+    ? ['dashboard','players','planning','sessions','reports']
+    : ['dashboard','passport','sessions','reports','messages'];
+  const primaryItems = navItems.filter(item => primaryKeys.includes(item[0]));
+  const moreItems = navItems.filter(item => !primaryKeys.includes(item[0]));
+  const navButton = ([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}</button>`;
+  $('#navigation').innerHTML = primaryItems.map(navButton).join('') + (moreItems.length
+    ? `<details class="nav-more" ${moreItems.some(item=>item[0]===page)?'open':''}><summary class="nav-item ${moreItems.some(item=>item[0]===page)?'active':''}"><span>•••</span>Plus</summary><div class="nav-more-menu">${moreItems.map(navButton).join('')}</div></details>`
+    : '');
   const [kicker,title,description] = pageMeta[page];
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
   $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
