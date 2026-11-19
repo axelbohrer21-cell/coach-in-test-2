@@ -32,7 +32,7 @@ test('un public inconnu est refusé',()=>{
  assert.throws(()=>buildSeriesOccurrences({...series,audience:'ados'}),/Public/);
 });
 
-test('la génération de série respecte le lundi 2 novembre de reprise annulé pour pluie et le 9 novembre normal',()=>{
+test('la génération de série inclut toutes les dates de cours, y compris celles de pluie à confirmer',()=>{
  const rows=buildSeriesOccurrences(series);
  assert.equal(rows.some(row=>row.session_date==='2026-11-09'),true);
  assert.equal(rows.filter(row=>row.session_date==='2026-11-02').length,0);
@@ -40,7 +40,7 @@ test('la génération de série respecte le lundi 2 novembre de reprise annulé 
 
 
 test('compteur de série : les séances passées sont acquises automatiquement sauf annulation',()=>{
- const row=buildSeriesCounters([series],[{series_id:'s1',status:'cancelled',session_date:'2026-11-02'}],'2026-11-19')[0];
+ const row=buildSeriesCounters([series],[],'2026-11-19',[{audience:'adultes',weekday:1,session_date:'2026-11-02'}])[0];
  assert.equal(row.completed,7);
  assert.equal(row.cancelled,1);
  assert.equal(row.pastUnrecorded,0);
