@@ -87,7 +87,7 @@ export const dataService = {
         if(!['PGRST205','42P01'].includes(followupsError.code)) throw followupsError;
         console.warn('Coach In: suivi des corrections vidéo temporairement indisponible',followupsError.message);
       } else {
-        videoCorrectionFollowups=data||[];
+        videoCorrectionFollowups=followupsData||[];
       }
     }
     const [clubEvents, profileDetailsRows] = await Promise.all([
