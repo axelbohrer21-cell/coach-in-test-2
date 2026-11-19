@@ -4,10 +4,23 @@ export const GROUP_SEASON = Object.freeze({
   zone: 'B',
   adultTarget: 28,
   childTarget: 30,
-  weekdays: Object.freeze({ adultes: [1, 2, 4, 5], enfants: [3, 6] }),
-  // Les horaires adultes sont à renseigner bloc par bloc depuis le planning source.
-  // Les plages enfants sont celles confirmées : mercredi 9 h 30–18 h, samedi 9 h 30–14 h 30.
-  availabilityWindows: Object.freeze({3:[['09:30','18:00']],6:[['09:30','14:30']]})
+  weekdays: Object.freeze({ adultes: [1, 2, 3, 4, 5], enfants: [3, 6] }),
+  // Planning collectif hebdomadaire confirmé par le coach.
+  weeklySchedule: Object.freeze([
+    { key:'adultes-lundi', audience:'adultes', weekday:1, start:'17:00', end:'21:00', courts:[1,2] },
+    { key:'adultes-mardi', audience:'adultes', weekday:2, start:'17:30', end:'20:30', courts:[1,2,3] },
+    { key:'enfants-mercredi', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courts:null },
+    { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courts:null },
+    { key:'adultes-jeudi', audience:'adultes', weekday:4, start:'17:30', end:'19:00', courts:[1,2] },
+    { key:'adultes-vendredi', audience:'adultes', weekday:5, start:'17:30', end:'20:00', courts:[1,2] },
+    { key:'enfants-samedi', audience:'enfants', weekday:6, start:'09:30', end:'14:30', courts:null }
+  ]),
+  holidayStage: Object.freeze({ start:'09:30', end:'16:30', courts:[1,2,3], weekdays:[1,2,3,4,5] }),
+  availabilityWindows: Object.freeze({
+    1:[['17:00','21:00']], 2:[['17:30','20:30']],
+    3:[['09:30','21:00']], 4:[['17:30','19:00']],
+    5:[['17:30','20:00']], 6:[['09:30','14:30']]
+  })
 });
 
 // Vacances scolaires Zone B 2026-2027 (dates inclusives).
@@ -81,6 +94,7 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
   const definitions = [
     { key:'adultes-lundi', audience:'adultes', weekday:1, target:GROUP_SEASON.adultTarget },
     { key:'adultes-mardi', audience:'adultes', weekday:2, target:GROUP_SEASON.adultTarget },
+    { key:'adultes-mercredi', audience:'adultes', weekday:3, target:GROUP_SEASON.adultTarget },
     { key:'adultes-jeudi', audience:'adultes', weekday:4, target:GROUP_SEASON.adultTarget },
     { key:'adultes-vendredi', audience:'adultes', weekday:5, target:GROUP_SEASON.adultTarget },
     { key:'enfants-mercredi', audience:'enfants', weekday:3, target:GROUP_SEASON.childTarget },
