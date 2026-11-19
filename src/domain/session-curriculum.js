@@ -1,3 +1,4 @@
+import { TACTICAL_ACTIVITY_VARIANTS } from './session-tactical-bank.js';
 /**
  * Coach In — curriculum expert réservé aux cours particuliers.
  * Les critères associés sont les libellés exacts du catalogue d'évaluation confirmé.
@@ -99,8 +100,10 @@ decision:{
 export function objectivesForTheme(theme){return OBJECTIVES.filter(x=>norm(x.theme)===norm(theme));}
 export function findObjective(id){return OBJECTIVES.find(x=>x.id===id)||null;}
 export function buildCurriculumActivities(goal,duration=90){
- const d=D[goal?.profile]||D.decision,mins=Number(duration)===60?[12,20,28]:Number(duration)===120?[12,18,18,20,52]:[12,18,18,42];
- const selected=Number(duration)===60?[d.feed,d.drills[0],d.point]:Number(duration)===120?[d.feed,...d.drills,d.point]:[d.feed,d.drills[0],d.drills[1],d.point];
- return selected.map((row,i)=>{const feed=i===0,point=i===selected.length-1;return {name:row[0],minutes:mins[i],objective:goal.intent,setup:feed?row[1]:'Deux joueurs sur un terrain complet ; matérialiser les zones mentionnées et alterner les rôles à chaque série.',procedure:feed?row[2]:point?row[1]:row[1],scoring:feed?row[3]:point?row[2]:row[2],coachCue:goal.intent};});
+ const d=D[goal?.profile]||D.decision;
+ const variants=TACTICAL_ACTIVITY_VARIANTS[goal?.id]||d.drills;
+ const mins=Number(duration)===60?[12,20,28]:Number(duration)===120?[12,18,18,20,52]:[12,18,18,42];
+ const selected=Number(duration)===60?[d.feed,variants[0],d.point]:Number(duration)===120?[d.feed,...variants.slice(0,3),d.point]:[d.feed,...variants.slice(0,2),d.point];
+ return selected.map((row,i)=>{const feed=i===0,point=i===selected.length-1;return {name:row[0],minutes:mins[i],objective:goal.intent,setup:row[1],procedure:row[2],scoring:row[3],coachCue:goal.intent};});
 }
 function norm(v){return String(v||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
