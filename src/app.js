@@ -151,6 +151,9 @@ $('#page-content').addEventListener('click', async event=>{
   if(action==='request-booking') return bookingDialog();
   if(action==='new-evaluation') return evaluationDialog();
   if(action==='new-library-item') return libraryDialog();
+  if(action==='new-coach-exercise') return coachExerciseDialog();
+  const editCoachExercise=event.target.closest('[data-edit-coach-exercise]'); if(editCoachExercise)return coachExerciseDialog(editCoachExercise.dataset.editCoachExercise);
+  const deleteCoachExercise=event.target.closest('[data-delete-coach-exercise]'); if(deleteCoachExercise){if(!confirm('Supprimer cet exercice de ta banque personnelle ?'))return;try{await dataService.deleteCoachSessionExercise(deleteCoachExercise.dataset.deleteCoachExercise);state.customSessionExercises=(state.customSessionExercises||[]).filter(row=>row.id!==deleteCoachExercise.dataset.deleteCoachExercise);render('library');toast('Exercice supprimé de ta banque.');}catch(error){toast(error.message||'Suppression impossible.','error');}return;}
   const editLibrary=event.target.closest('[data-edit-library]'); if(editLibrary) return libraryDialog(editLibrary.dataset.editLibrary);
   const addProgramItem=event.target.closest('[data-add-program-item]'); if(addProgramItem){const template=libraryItemsForCoach().find(item=>item.id===addProgramItem.dataset.addProgramItem);if(template)return libraryDialog('',template);}
   const useLibrary=event.target.closest('[data-use-library]'); if(useLibrary){const item=state.library.find(row=>row.id===useLibrary.dataset.useLibrary);if(item)return sessionDialog(undefined,undefined,item);}
@@ -294,6 +297,19 @@ $('#page-content').addEventListener('submit',async event=>{
   if(reviewForm){event.preventDefault();await saveVideoReview(reviewForm);return;}
   const followupForm=event.target.closest('.video-followup-form');
   if(followupForm){event.preventDefault();await saveVideoCorrectionFollowup(followupForm);return;}
+  const coachExerciseForm=event.target.closest('#coach-exercise-form');
+  if(coachExerciseForm){
+    event.preventDefault();
+    const values=Object.fromEntries(new FormData(coachExerciseForm).entries());
+    const objective=OBJECTIVES.find(goal=>goal.id===values.objective_id);
+    const payload={objective_id:values.objective_id||null,theme:objective?.theme||values.theme,title:String(values.title||'').trim(),setup:String(values.setup||'').trim(),instructions:String(values.instructions||'').trim(),success_criteria:String(values.success_criteria||'').trim(),coaching_cue:String(values.coaching_cue||'').trim(),level:values.level||'Tous niveaux',active:true};
+    try{
+      const saved=values.id?await dataService.updateCoachSessionExercise(values.id,payload):await dataService.createCoachSessionExercise(payload);
+      state.customSessionExercises=values.id?(state.customSessionExercises||[]).map(row=>row.id===values.id?saved:row):[...(state.customSessionExercises||[]),saved];
+      closeDialog();render('library');toast(values.id?'Exercice mis à jour.':'Exercice ajouté à ta banque.');
+    }catch(error){toast(error.message||'Impossible d’enregistrer cet exercice.','error');}
+    return;
+  }
   const form=event.target.closest('#notification-preferences-form'); if(!form)return;
   event.preventDefault();
   const preferences=Object.fromEntries(['booking_requests','booking_decisions','booking_changes','reminders_24h','messages','progress','session_changes'].map(key=>[key,form.elements[key].checked]));
@@ -463,6 +479,13 @@ function libraryDialog(itemId='', seedItem=null){
 }
 
 
+function coachExerciseDialog(id=''){
+ const item=(state.customSessionExercises||[]).find(row=>row.id===id)||{};
+ const editing=Boolean(id);
+ const themes=['Coup droit','Revers','Service','Retour de service','Volée','Smash','Jeu de jambes/déplacements','Tactique','Physique','Mental'];
+ showDialog('<div class="dialog-head"><div><p class="eyebrow">BANQUE TACTIQUE PERSONNELLE</p><h2>'+(editing?'Modifier un exercice':'Ajouter un exercice')+'</h2><p class="tiny muted">Cet exercice sera privé à ton compte coach et proposé pour les cours particuliers.</p></div><button class="btn icon-btn" data-close>✕</button></div><form id="coach-exercise-form" class="form-grid"><input type="hidden" name="id" value="'+escapeHtml(item.id||'')+'"><label>Thème<select name="theme" required>'+themes.map(theme=>'<option value="'+escapeHtml(theme)+'" '+(item.theme===theme?'selected':'')+'>'+escapeHtml(theme)+'</option>').join('')+'</select></label><label>Niveau<select name="level">'+['Tous niveaux','Débutant','Intermédiaire','Confirmé','Compétition'].map(level=>'<option '+((item.level||'Tous niveaux')===level?'selected':'')+'>'+level+'</option>').join('')+'</select></label><label class="span-2">Objectif associé<select name="objective_id"><option value="">Tous les objectifs du thème</option>'+OBJECTIVES.map(goal=>'<option value="'+goal.id+'" '+(item.objective_id===goal.id?'selected':'')+'>'+escapeHtml(goal.theme+' · '+goal.label)+'</option>').join('')+'</select></label><label class="span-2">Nom de l’exercice<input name="title" required maxlength="140" value="'+escapeHtml(item.title||'')+'" placeholder="Ex. Défense haute puis reprise de terrain"></label><label class="span-2">Mise en place<textarea name="setup" rows="2" required>'+escapeHtml(item.setup||'')+'</textarea></label><label class="span-2">Déroulement et consignes tactiques<textarea name="instructions" rows="4" required>'+escapeHtml(item.instructions||'')+'</textarea></label><label class="span-2">Critère de réussite mesurable<textarea name="success_criteria" rows="2" required>'+escapeHtml(item.success_criteria||'')+'</textarea></label><label class="span-2">Point de vigilance coach<textarea name="coaching_cue" rows="2">'+escapeHtml(item.coaching_cue||'')+'</textarea></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">'+(editing?'Enregistrer les modifications':'Ajouter à ma banque')+'</button></div></form>');
+}
+
 let generatedSessionPlan = null;
 let generatedSessionRecommendation = null;
 
@@ -503,7 +526,7 @@ function sessionBuilderDialog(playerId=null, sessionDate=toLocalISO(new Date()),
  '<fieldset class="duration-choice span-2"><legend>Durée du cours</legend><div class="duration-choice-options"><label><input type="radio" name="duration_minutes" value="60" '+(Number(sessionDuration||60)===60?'checked':'')+'><span>1 heure</span></label><label><input type="radio" name="duration_minutes" value="90" '+(Number(sessionDuration)===90?'checked':'')+'><span>1 h 30</span></label><label><input type="radio" name="duration_minutes" value="120" '+(Number(sessionDuration)===120?'checked':'')+'><span>2 heures</span></label></div></fieldset>'+
  '<label>Niveau<select name="level"><option>Débutant</option><option selected>Intermédiaire</option><option>Confirmé</option><option>Compétition</option></select></label>'+
  '<label class="span-2">Mode de création<select name="creation_mode"><option value="original" selected>Création originale · sans bibliothèque</option><option value="library">Utiliser ma bibliothèque</option></select></label>'+
- '<label class="span-2">Thématique de la séance<select name="theme" required>'+['Coup droit','Revers','Service','Retour de service','Volée','Jeu de jambes/déplacements','Tactique','Physique','Mental'].map(v=>'<option value="'+escapeHtml(v)+'" '+(priority&&normTheme(v)===normTheme(priority.main_theme)?'selected':'')+'>'+escapeHtml(v)+'</option>').join('')+'</select></label>'+ '<label class="span-2">Objectif pédagogique précis<select name="objective_id" id="session-objective-select"><option value="">Choisir un objectif…</option>'+objectivesForTheme(priority?.main_theme||'Coup droit').map(x=>'<option value="'+x.id+'">'+escapeHtml(x.label)+'</option>').join('')+'</select><small>Les objectifs sont reliés aux critères de ta banque d’évaluation.</small></label>'+
+ '<label class="span-2">Thématique de la séance<select name="theme" required>'+['Coup droit','Revers','Service','Retour de service','Volée','Smash','Jeu de jambes/déplacements','Tactique','Physique','Mental'].map(v=>'<option value="'+escapeHtml(v)+'" '+(priority&&normTheme(v)===normTheme(priority.main_theme)?'selected':'')+'>'+escapeHtml(v)+'</option>').join('')+'</select></label>'+ '<label class="span-2">Objectif pédagogique précis<select name="objective_id" id="session-objective-select"><option value="">Choisir un objectif…</option>'+objectivesForTheme(priority?.main_theme||'Coup droit').map(x=>'<option value="'+x.id+'">'+escapeHtml(x.label)+'</option>').join('')+'</select><small>Les objectifs sont reliés aux critères de ta banque d’évaluation.</small></label>'+
  '<label class="span-2">Objectif personnalisé (facultatif)<input name="custom_objective" placeholder="Ex. prise de balle tôt en revers, varier les effets au service…"></label>'+
  '<label class="span-2">Niveau de difficulté<select name="difficulty"><option value="auto" selected>Automatique · selon le dernier bilan</option><option value="easy">Accessible · sécuriser le geste</option><option value="progressive">Progressif · faire évoluer la contrainte</option><option value="hard">Exigeant · pression et décision</option></select></label>'+
  '<div id="session-library-fields" class="span-2 hidden"><label>Exercice 1<select name="exercise_one">'+(options||'<option value="">Aucun exercice</option>')+'</select></label><label>Exercice 2<select name="exercise_two"><option value="">Aucun</option>'+options+'</select></label></div>'+
@@ -561,7 +584,7 @@ function generateSessionPlan(){
  }else{
   const recent=state.sessions.filter(x=>x.player_id===values.player_id).sort((a,b)=>String(b.session_date||'').localeCompare(String(a.session_date||'')));
   const custom=String(values.custom_objective||'').trim(),age=player.date_of_birth?Math.floor((Date.now()-new Date(player.date_of_birth).getTime())/31557600000):player.age||null;
-  const priorAdjustment=buildSessionProgression(recent,values.player_id,custom||selectedObjective?.label||values.theme,state.evaluations,state.evaluationCriteria);const generated=generateOriginalSession({theme:selectedObjective?.theme||values.theme||generatedSessionRecommendation?.priority?.main_theme||'Construction du point',selectedObjective,customObjective:custom,difficulty:values.difficulty||'auto',priorAdjustment,playerName:[player.first_name,player.last_name].filter(Boolean).join(' ')||'le joueur',level:values.level||'Intermédiaire',age,playerType:player.player_type||'Loisir',duration,priority:generatedSessionRecommendation?.priority||null,challenge:generatedSessionRecommendation?.activeChallenge||null,recentSessions:recent});
+  const priorAdjustment=buildSessionProgression(recent,values.player_id,custom||selectedObjective?.label||values.theme,state.evaluations,state.evaluationCriteria);const generated=generateOriginalSession({theme:selectedObjective?.theme||values.theme||generatedSessionRecommendation?.priority?.main_theme||'Construction du point',selectedObjective,customObjective:custom,difficulty:values.difficulty||'auto',priorAdjustment,playerName:[player.first_name,player.last_name].filter(Boolean).join(' ')||'le joueur',level:values.level||'Intermédiaire',age,playerType:player.player_type||'Loisir',duration,priority:generatedSessionRecommendation?.priority||null,challenge:generatedSessionRecommendation?.activeChallenge||null,recentSessions:recent,customExercises:state.customSessionExercises||[]});
   exerciseOne=generated.exercise_1+'\n\nNOTES COACH\n'+generated.coaching_notes+'\n\nNIVEAU DE DIFFICULTÉ · '+generated.difficulty+'\n'+generated.difficulty_rule;exerciseTwo=generated.exercise_2;theme=generated.theme;visibleSummary=generated.player_visible_summary;coachingPlan={objective:generated.objective,success:generated.success_criteria};phases=generated.phases;
  }
  generatedSessionPlan={generated:true,player_id:values.player_id,session_date:values.session_date,session_time:values.session_time,duration_minutes:duration,theme,exercise_1:exerciseOne,exercise_2:exerciseTwo,level:values.level,player_visible_summary:visibleSummary,generation_mode:mode,progression:mode==='original'?buildSessionProgression(state.sessions.filter(x=>x.player_id===values.player_id),values.player_id,values.custom_objective||values.theme,state.evaluations,state.evaluationCriteria):null};
