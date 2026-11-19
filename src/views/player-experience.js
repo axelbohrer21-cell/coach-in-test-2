@@ -32,44 +32,40 @@ export function playerTennisPage() {
   return `
     <section class="passport-hero">
       <div class="passport-avatar">${safe(initials(profile))}</div>
-      <div class="passport-identity"><p class="eyebrow">PASSEPORT TENNIS · COACH IN</p><h2>${safe(profile.first_name)} ${safe(profile.last_name)}</h2><p>${safe(profile.player_type||'Profil joueur')} · ${safe(profile.age_category||'Catégorie non renseignée')}</p><div class="passport-tags"><span>Classement FFT : <b>${safe(profile.fft_ranking||'Non renseigné')}</b></span><span>Depuis le ${formatDate(profile.created_at,{month:'long',year:'numeric'})}</span></div></div>
-      <span class="passport-stamp">CI<span>+</span></span>
+      <div class="passport-identity"><p class="eyebrow">PASSEPORT TENNIS</p><h2>${safe(profile.first_name)} ${safe(profile.last_name)}</h2><p>${safe(profile.player_type||'Profil joueur')} · ${safe(profile.age_category||'Catégorie non renseignée')}</p><div class="passport-tags"><span>Classement : <b>${safe(profile.fft_ranking||'Non renseigné')}</b></span></div></div>
     </section>
-    <div class="stats-grid passport-stats">
-      <article class="stat-card blue"><span>Séances réalisées</span><strong>${sessions.length}</strong><small>${Math.round(sessions.reduce((sum,row)=>sum+Number(row.duration_minutes||0),0)/60)} h sur le terrain</small></article>
-      <article class="stat-card purple"><span>Bilans partagés</span><strong>${reports.length}</strong><small>Évaluations accessibles</small></article>
-      <article class="stat-card green"><span>Compétences validées</span><strong>${achievements.length}</strong><small>Réussites débloquées</small></article>
-      <article class="stat-card orange"><span>Matchs renseignés</span><strong>${matches.length}</strong><small>${wins} victoire(s) dans ton journal</small></article>
-    </div>
-    <section class="panel">
-      <div class="section-heading"><div><p class="eyebrow">TON IDENTITÉ DE JOUEUR</p><h2>Ce qui te motive</h2></div><span class="tag">Modifiable par toi</span></div>
-      <form id="player-profile-details-form" class="form-grid">
+    <p class="passport-summary-line"><strong>${sessions.length}</strong> séances · <strong>${achievements.length}</strong> réussites · <strong>${wins}</strong> victoire(s) renseignée(s)</p>
+    <details class="panel player-detail-panel">
+      <summary class="player-detail-summary"><span><small>MON PROFIL</small><strong>Mes objectifs et mes envies</strong></span><span class="tag">Modifier</span></summary>
+      <div class="player-detail-content"><form id="player-profile-details-form" class="form-grid">
         <label class="span-2">Mon objectif principal<textarea name="objective" rows="2" maxlength="500" placeholder="Ex. : gagner en régularité, passer un classement…">${safe(details.objective)}</textarea></label>
         <label>Ce qui me motive<textarea name="motivation" rows="2" maxlength="500" placeholder="Ce qui me donne envie de jouer…">${safe(details.motivation)}</textarea></label>
         <label>Mes points forts<textarea name="strengths" rows="2" maxlength="500" placeholder="Mes qualités sur le court…">${safe(details.strengths)}</textarea></label>
         <label class="span-2">Mon prochain axe de travail<textarea name="focus" rows="2" maxlength="500" placeholder="Ce que je veux améliorer…">${safe(details.focus)}</textarea></label>
         <div class="span-2 dialog-actions"><button class="btn primary" type="submit">Enregistrer mon profil</button></div>
-      </form>
-    </section>
-    <section class="panel">
-      <div class="section-heading"><div><p class="eyebrow">MES ACQUIS</p><h2>Les compétences gagnées</h2></div><span class="tag tag-green">${achievements.length} palier(s)</span></div>
-      <div class="passport-skills">${skills||'<p class="chart-empty">Tes réussites validées par tes coachs apparaîtront ici. Elles ne sont jamais ajoutées automatiquement.</p>'}</div>
-      ${bestRecent?'<p class="passport-highlight">🏆 Dernière victoire renseignée : <b>'+safe(bestRecent.opponent_name||'Adversaire')+'</b> · '+safe(bestRecent.score||'Score non renseigné')+'</p>':''}
-    </section>
-    <section class="panel monthly-review">
-      <div class="section-heading"><div><p class="eyebrow">BILAN AUTOMATIQUE</p><h2>Ton mois de ${safe(monthLabel)}</h2></div><span class="tag">Données réelles</span></div>
-      <div class="monthly-review-grid">
-        <article><span>Séances</span><strong>${monthSessions.length}</strong><small>${Math.floor(monthMinutes/60)} h ${monthMinutes%60} min de tennis</small></article>
-        <article><span>Bilans partagés</span><strong>${monthReports.length}</strong><small>${avgScore===null?'Pas de score ce mois-ci':'Moyenne des scores : '+avgScore.toFixed(1).replace('.',',')+'/20'}</small></article>
-        <article><span>Réussites</span><strong>${monthAchievements.length}</strong><small>Débloquées ce mois-ci</small></article>
+      </form></div>
+    </details>
+    <details class="panel player-detail-panel">
+      <summary class="player-detail-summary"><span><small>MES ACQUIS</small><strong>Mes compétences gagnées</strong></span><span class="tag tag-green">${achievements.length} réussite(s)</span></summary>
+      <div class="player-detail-content"><div class="passport-skills">${skills||'<p class="chart-empty">Tes réussites validées par tes coachs apparaîtront ici.</p>'}</div>
+      ${bestRecent?'<p class="passport-highlight">🏆 Dernière victoire renseignée : <b>'+safe(bestRecent.opponent_name||'Adversaire')+'</b> · '+safe(bestRecent.score||'Score non renseigné')+'</p>':''}</div>
+    </details>
+    <details class="panel player-detail-panel">
+      <summary class="player-detail-summary"><span><small>MON BILAN</small><strong>${safe(monthLabel)}</strong></span><span class="tag">${monthSessions.length} séance(s)</span></summary>
+      <div class="player-detail-content">
+        <div class="monthly-review-grid">
+          <article><span>Séances</span><strong>${monthSessions.length}</strong><small>${Math.floor(monthMinutes/60)} h ${monthMinutes%60} min de tennis</small></article>
+          <article><span>Bilans partagés</span><strong>${monthReports.length}</strong><small>${avgScore===null?'Pas de score ce mois-ci':'Moyenne : '+avgScore.toFixed(1).replace('.',',')+'/20'}</small></article>
+          <article><span>Réussites</span><strong>${monthAchievements.length}</strong><small>Débloquées ce mois-ci</small></article>
+        </div>
+        <div class="monthly-review-notes">
+          <div><b>Ce qui a été travaillé</b><p>${monthSessions.length?[...new Set(monthSessions.map(row=>row.theme).filter(Boolean))].map(safe).join(' · ')||'Séances enregistrées sans thème précisé':'Aucune séance enregistrée ce mois-ci.'}</p></div>
+          <div><b>Le regard de tes coachs</b><p>${monthReports.map(row=>row.player_visible_comment).filter(Boolean).slice(0,2).map(safe).join(' · ')||'Aucun commentaire partagé ce mois-ci.'}</p></div>
+          <div><b>Ton prochain cap</b><p>${latestChallenge?safe(latestChallenge.criterion)+' — '+safe(latestChallenge.objective||'Défi en cours'):'Ton prochain objectif sera affiché ici dès qu’un défi sera défini avec ton coach.'}</p></div>
+        </div>
+        <p class="tiny muted">Ce bilan résume les informations enregistrées pendant le mois.</p>
       </div>
-      <div class="monthly-review-notes">
-        <div><b>Ce qui a été travaillé</b><p>${monthSessions.length?[...new Set(monthSessions.map(row=>row.theme).filter(Boolean))].map(safe).join(' · ')||'Séances enregistrées sans thème précisé':'Aucune séance enregistrée ce mois-ci.'}</p></div>
-        <div><b>Le regard de tes coachs</b><p>${monthReports.map(row=>row.player_visible_comment).filter(Boolean).slice(0,2).map(safe).join(' · ')||'Aucun commentaire partagé ce mois-ci.'}</p></div>
-        <div><b>Ton prochain cap</b><p>${latestChallenge?safe(latestChallenge.criterion)+' — '+safe(latestChallenge.objective||'Défi en cours'):'Ton prochain objectif sera affiché ici dès qu’un défi sera défini avec ton coach.'}</p></div>
-      </div>
-      <p class="tiny muted">Ce bilan résume les séances, scores, commentaires et réussites enregistrés pendant le mois. Il ne remplace pas l’analyse pédagogique de ton coach.</p>
-    </section>`;
+    </details>`;
 }
 
 export function playerMatchesPage() {
@@ -77,10 +73,11 @@ export function playerMatchesPage() {
   const wins=rows.filter(row=>row.result==='Victoire').length;
   const losses=rows.filter(row=>row.result==='Défaite').length;
   return `
-    <section class="welcome-panel match-journal-hero"><div><p class="eyebrow">MON TENNIS · JOURNAL DE MATCH</p><h2>Chaque match t’apprend quelque chose.</h2><p>Note tes résultats, tes sensations et ce que tu veux retrouver à l’entraînement. Ce journal reste privé : seul ton compte joueur y accède.</p></div><div class="welcome-mark">✎</div></section>
-    <div class="stats-grid"><article class="stat-card green"><span>Victoires</span><strong>${wins}</strong><small>Matchs renseignés</small></article><article class="stat-card orange"><span>Défaites</span><strong>${losses}</strong><small>Matchs renseignés</small></article><article class="stat-card blue"><span>Matchs</span><strong>${rows.length}</strong><small>Dans ton journal personnel</small></article><article class="stat-card purple"><span>Taux de victoire</span><strong>${rows.length?Math.round(wins/rows.length*100)+'%':'—'}</strong><small>Sur les résultats renseignés</small></article></div>
-    <section class="panel"><div class="section-heading"><div><p class="eyebrow">APRÈS TON MATCH</p><h2>Ajouter un match</h2></div><span class="tag">Carnet personnel</span></div>
-      <form id="player-match-form" class="form-grid">
+    <section class="player-simple-intro"><p class="eyebrow">MON TENNIS</p><h2>Mon journal de match</h2><p>Garde une trace de tes matchs et de tes sensations. Ce journal reste privé.</p></section>
+    <p class="passport-summary-line"><strong>${rows.length}</strong> match(s) · <strong>${wins}</strong> victoire(s) · <strong>${losses}</strong> défaite(s)</p>
+    <details class="panel player-detail-panel">
+      <summary class="player-detail-summary"><span><small>APRÈS TON MATCH</small><strong>Ajouter un résultat</strong></span><span class="tag">＋ Ajouter</span></summary>
+      <div class="player-detail-content"><form id="player-match-form" class="form-grid">
         <label>Date du match<input type="date" name="match_date" value="${localToday()}" required></label>
         <label>Résultat<select name="result" required><option value="Victoire">Victoire</option><option value="Défaite">Défaite</option><option value="Égalité">Égalité</option></select></label>
         <label>Adversaire<input name="opponent_name" maxlength="100" placeholder="Nom de l’adversaire" required></label>
@@ -90,9 +87,9 @@ export function playerMatchesPage() {
         <label class="span-2">Comment je me suis senti<textarea name="feelings" rows="2" maxlength="800" placeholder="Énergie, confiance, stress, concentration…"></textarea></label>
         <label>Ce qui a bien fonctionné<textarea name="worked_well" rows="3" maxlength="1000" placeholder="Mes réussites du jour…"></textarea></label>
         <label>Ce que je veux améliorer<textarea name="to_improve" rows="3" maxlength="1000" placeholder="Un point à retravailler…"></textarea></label>
-        <div class="span-2 dialog-actions"><button class="btn primary" type="submit">＋ Enregistrer mon match</button></div>
-      </form>
-    </section>
+        <div class="span-2 dialog-actions"><button class="btn primary" type="submit">Enregistrer mon match</button></div>
+      </form></div>
+    </details>
     <section class="panel"><div class="section-heading"><div><p class="eyebrow">MON HISTORIQUE</p><h2>Mes matchs</h2></div><span class="tag">${rows.length} enregistré(s)</span></div>
       ${rows.map(row=>`<article class="match-journal-card"><div class="match-journal-top"><div><span class="journal-date">${formatDate(row.match_date,{day:'2-digit',month:'long',year:'numeric'})} · ${safe(row.competition||'Match')}</span><h3>${safe(row.opponent_name||'Adversaire')} <small>${safe(row.opponent_ranking||'')}</small></h3></div><span class="tag ${row.result==='Victoire'?'tag-green':row.result==='Défaite'?'tag-orange':''}">${safe(row.result)}</span></div><strong class="match-score">${safe(row.score||'Score non renseigné')}</strong><div class="match-reflection-grid"><div><b>Mes sensations</b><p>${safe(row.feelings||'Non renseigné')}</p></div><div><b>Ce qui a marché</b><p>${safe(row.worked_well||'Non renseigné')}</p></div><div><b>À retravailler</b><p>${safe(row.to_improve||'Non renseigné')}</p></div></div><div class="match-card-actions"><button class="btn danger" data-delete-match="${safe(row.id)}">Supprimer</button></div></article>`).join('')||'<div class="empty-state"><div class="empty-icon">✎</div><h3>Ton journal commence ici</h3><p>Ajoute ton prochain match pour garder une trace de tes sensations et de tes progrès.</p></div>'}
     </section>`;
