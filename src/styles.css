@@ -1429,3 +1429,9 @@ button,a,input,select,textarea{touch-action:manipulation}
 .calendar-lock{font-size:12px}
 .calendar-group-frame .calendar-event{margin:0;padding:4px 5px}
 @media(max-width:520px){.weather-main{gap:12px}.weather-illustration{flex-basis:64px;width:64px;height:64px;font-size:38px;border-radius:18px}.weather-copy h2{font-size:18px}.calendar-hour-row{grid-template-columns:43px minmax(0,1fr)}}
+
+/* Cadre collectif : libellé visible sur toute la hauteur du créneau */
+.calendar-group-frame{min-height:29px;justify-content:stretch;padding:0 5px}
+.calendar-group-frame-label{flex:1;min-height:25px;width:100%;justify-content:center;gap:7px;padding:3px 6px;background:transparent;border-radius:0;font-size:9px}
+.calendar-group-frame-label>span:nth-child(2){flex:1;text-align:center;letter-spacing:.45px}
+.calendar-group-frame-label small{margin-left:0}
