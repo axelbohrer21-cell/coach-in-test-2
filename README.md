@@ -1,8 +1,8 @@
 # Coach In — refonte technique v2
 
-Cette livraison est un projet web statique modulaire, prévu pour être versionné sur GitHub et hébergé sur Vercel. Elle ne nécessite pas d'étape de compilation : les modules JavaScript natifs sont chargés par le navigateur.
+Cette livraison est un projet web statique modulaire, prévu pour être versionné sur GitHub et hébergé sur Cloudflare Pages. Elle ne nécessite pas d'étape de compilation : les modules JavaScript natifs sont chargés par le navigateur.
 
-> **Statut : préproduction.** Le code a été réorganisé et plusieurs flux sont maintenant branchés. Le projet n'a pas été connecté en direct à Supabase, la migration SQL n'a pas été exécutée et aucun déploiement Vercel n'a été effectué. Il faut valider la migration sur une base de test avant toute mise en production.
+> **Statut : préproduction.** Le code a été réorganisé et plusieurs flux sont maintenant branchés. Le projet n'a pas été connecté en direct à Supabase, la migration SQL n'a pas été exécutée et aucun déploiement de production Cloudflare Pages n'a encore été confirmé. Il faut valider la migration sur une base de test avant toute mise en production.
 
 ## Structure
 
@@ -53,7 +53,7 @@ npm test
 
 Pour tester l'interface localement, ouvre le dossier avec un serveur statique local (ne pas ouvrir directement `index.html` en `file://`, car les modules ES nécessitent HTTP).
 
-## Hébergement principal — Cloudflare Pages
+## Hébergement — Cloudflare Pages (cible principale)
 
 Coach In est une application statique sans étape de compilation (modules ES natifs).
 
@@ -75,7 +75,7 @@ Migration préparée sur la branche `migration/cloudflare-pages`. Étapes de mis
 4. Configurer les paramètres ci-dessus et lancer le premier deploy.
 5. Vérifier l'URL Cloudflare : chargement, connexion coach/joueur, rôles, planning, réservations, messages et données.
 6. Après validation, basculer la branche de production sur `main` (ou fusionner la branche de préparation après revue) et lancer le déploiement de production.
-7. Garder Vercel en secours ; ne pas supprimer le projet ni ses paramètres.
+7. Vercel est abandonné comme hébergeur cible. Ne pas y effectuer de nouveaux déploiements ; conserver uniquement le dépôt GitHub et Supabase.
 
 Les données, comptes, authentification, règles RLS et tables Supabase ne sont pas migrés ni modifiés par le changement d'hébergeur.
 
