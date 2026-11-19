@@ -16,11 +16,8 @@ export const GROUP_SEASON = Object.freeze({
     { key:'enfants-samedi', audience:'enfants', weekday:6, start:'09:30', end:'14:30', courts:null }
   ]),
   holidayStage: Object.freeze({ start:'09:30', end:'16:30', courts:[1,2,3], weekdays:[1,2,3,4,5] }),
-  availabilityWindows: Object.freeze({
-    1:[['17:00','21:00']], 2:[['17:30','20:30']],
-    3:[['09:30','21:00']], 4:[['17:30','19:00']],
-    5:[['17:30','20:00']], 6:[['09:30','14:30']]
-  })
+  // Fenêtres historiques utilisées par le contrôle des demandes de cours particuliers.
+  availabilityWindows: Object.freeze({3:[['09:30','18:00']],6:[['09:30','14:30']]})
 });
 
 // Vacances scolaires Zone B 2026-2027 (dates inclusives).
