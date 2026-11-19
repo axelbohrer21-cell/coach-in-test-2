@@ -3,6 +3,8 @@ name: Coach In QA campaign
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: ['qa/**']
   workflow_dispatch:
 
 permissions:
