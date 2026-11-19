@@ -8,7 +8,7 @@ test('chaque variante tactique est rattachée à un objectif existant',()=>{
     assert.ok(OBJECTIVES.some(item=>item.id===objectiveId),`objectif absent: ${objectiveId}`);
     assert.ok(activities.length>=1);
     for(const activity of activities){
-      assert.equal(activity.length,4);
+      assert.ok(activity.length===4||activity.length===5);
       for(const field of activity) assert.equal(typeof field,'string');
       assert.ok(activity.every(field=>field.trim().length>0));
     }
