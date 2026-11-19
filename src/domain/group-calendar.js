@@ -89,6 +89,38 @@ export function generateTeachingDates({ start = GROUP_SEASON.start, end = GROUP_
   return dates;
 }
 
+
+/**
+ * Construit les occurrences visuelles des stages enfants pendant les vacances Zone B.
+ * Ces occurrences sont calculées à l'affichage et ne créent pas de lignes en base.
+ */
+export function buildHolidayStageOccurrences({ holidays = ZONE_B_HOLIDAYS_2026_2027, startDate, endDate } = {}) {
+  const stage = GROUP_SEASON.holidayStage;
+  const occurrences = [];
+  for (const period of holidays) {
+    const firstDay = startDate && startDate > period.start ? startDate : period.start;
+    const lastDay = endDate && endDate < period.end ? endDate : period.end;
+    if (firstDay > lastDay) continue;
+    for (let date = parseISO(firstDay); isoUTC(date) <= lastDay; date = addDays(date, 1)) {
+      const dateISO = isoUTC(date);
+      const weekday = date.getUTCDay();
+      if (!stage.weekdays.includes(weekday)) continue;
+      occurrences.push({
+        id: `holiday-stage-${dateISO}`,
+        session_date: dateISO,
+        weekday,
+        audience: 'enfants',
+        title: `Stage enfants · ${period.label}`,
+        start_time: stage.start,
+        end_time: stage.end,
+        courts: [...stage.courts],
+        status: 'scheduled'
+      });
+    }
+  }
+  return occurrences;
+}
+
 export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' } = {}) {
   const definitions = [
     { key:'adultes-lundi', audience:'adultes', weekday:1, target:GROUP_SEASON.adultTarget },
