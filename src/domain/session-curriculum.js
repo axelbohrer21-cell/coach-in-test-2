@@ -41,7 +41,10 @@ export const OBJECTIVES = [
 {id:'men-routine',theme:'Mental',label:'Installer une routine stable entre les points',profile:'decision',criteria:['Respect des routines entre les points','Manque de respect des routines'],intent:'Retrouver une organisation simple entre chaque point pour choisir une intention claire.',success:'Routine complète sur 8 points sur 10.'},
 {id:'men-pressure',theme:'Mental',label:'Jouer les points importants avec un plan clair',profile:'decision',criteria:['Capacité à jouer les points importants','Difficulté à jouer les points importants','Prise de décision lucide sous pression'],intent:'Maintenir une intention tactique et une décision cohérente sous pression du score.',success:'Prendre une décision cohérente sur 7 points importants sur 10.'},
 {id:'men-reset',theme:'Mental',label:'Se recentrer après une erreur ou un point perdu',profile:'decision',criteria:['Attitude positive après une erreur','Réaction constructive après un point perdu','Difficulté à se recentrer'],intent:'Réduire le temps de réaction émotionnelle et repartir avec une consigne utile.',success:'Revenir dans sa routine dès le point suivant dans 8 cas sur 10.'},
-{id:'men-fight',theme:'Mental',label:'Maintenir engagement et combativité sur chaque point',profile:'decision',criteria:['Combativité sur chaque point','Engagement physique constant','Baisse d’engagement pendant le match'],intent:'Maintenir l’intensité d’engagement du premier au dernier point.',success:'Respecter l’objectif d’engagement sur 8 points sur 10.'}
+{id:'men-fight',theme:'Mental',label:'Maintenir engagement et combativité sur chaque point',profile:'decision',criteria:['Combativité sur chaque point','Engagement physique constant','Baisse d’engagement pendant le match'],intent:'Maintenir l’intensité d’engagement du premier au dernier point.',success:'Respecter l’objectif d’engagement sur 8 points sur 10.'},
+{id:'smash-control',theme:'Smash',label:'Se placer sous le lob et finir le smash avec contrôle',profile:'volleyfinish',criteria:['Jeu de jambes adapté à la trajectoire','Prise de balle tôt','Contrôle de la direction'],intent:'Lire le lob, se déplacer en pas croisés puis ajuster en petits pas pour frapper le smash au-dessus et légèrement devant soi, vers une zone libre.',success:'Réussir 7 smashs sur 10 avec replacement et cible choisie.'},
+{id:'move-direction',theme:'Jeu de jambes/déplacements',label:'Enchaîner déplacement, freinage, frappe et replacement',profile:'movement',criteria:['Rapidité dans les changements de direction','Qualité de la reprise d’appuis','Replacement rapide'],intent:'Adapter les appuis à la trajectoire, freiner avant la frappe et récupérer vers la zone qui couvre les angles adverses.',success:'Réaliser 7 séquences complètes sur 10 avec frappe équilibrée et replacement.'},
+{id:'match-pattern',theme:'Tactique',label:'Construire un point selon le score et la position adverse',profile:'decision',criteria:['Construction du point','Choix de zone inadapté','Prise de décision lucide sous pression'],intent:'Lire simultanément la qualité de balle, la position adverse et le score pour choisir entre défense, construction, attaque ou montée.',success:'Prendre une décision tactique adaptée sur 8 points scénarisés sur 10.'}
 ];
 const D = {
 early:{
@@ -99,10 +102,11 @@ decision:{
 };
 export function objectivesForTheme(theme){return OBJECTIVES.filter(x=>norm(x.theme)===norm(theme));}
 export function findObjective(id){return OBJECTIVES.find(x=>x.id===id)||null;}
-export function buildCurriculumActivities(goal,duration=90){
+export function buildCurriculumActivities(goal,duration=90,customExercises=[]){
  const d=D[goal?.profile]||D.decision;
+ const customRows=(customExercises||[]).filter(x=>x.active!==false&&(x.objective_id===goal?.id||(!x.objective_id&&x.theme===goal?.theme))).map(x=>[x.title,x.setup,x.instructions,x.success_criteria,x.coaching_cue]);
  const customVariants=TACTICAL_ACTIVITY_VARIANTS[goal?.id];
- const variants=customVariants||d.drills;
+ const variants=[...customRows,...(customVariants||d.drills)];
  const mins=Number(duration)===60?[12,20,28]:Number(duration)===120?[12,18,18,20,52]:[12,18,18,42];
  const selected=Number(duration)===60?[d.feed,variants[0],d.point]:Number(duration)===120?[d.feed,...variants.slice(0,3),d.point]:[d.feed,...variants.slice(0,2),d.point];
  return selected.map((row,i)=>{
@@ -112,7 +116,7 @@ export function buildCurriculumActivities(goal,duration=90){
    setup:feed?row[1]:point?'Deux joueurs sur un terrain complet ; matérialiser les zones mentionnées et alterner les rôles à chaque série.':custom?row[1]:'Deux joueurs sur un terrain complet ; matérialiser les zones mentionnées et alterner les rôles à chaque série.',
    procedure:feed?row[2]:point?row[1]:custom?row[2]:row[1],
    scoring:feed?row[3]:point?row[2]:custom?row[3]:row[2],
-   coachCue:goal.intent
+   coachCue:(custom&&row[4])||goal.intent
   };
  });
 }
