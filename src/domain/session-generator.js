@@ -137,11 +137,11 @@ function buildActivities(t,focus,mins,selectedObjective=null){
 function formatActivity(item,index){
  return 'EXERCICE '+(index+1)+' · '+item.name.toUpperCase()+' · '+item.minutes+' min\nOBJECTIF : '+item.objective+'\nMISE EN PLACE : '+item.setup+'\nDÉROULEMENT : '+item.procedure+'\nBARÈME / RÉUSSITE : '+item.scoring+'\nREPÈRE COACH : '+item.coachCue;
 }
-export function generateOriginalSession({theme='construction',selectedObjective=null,customObjective='',playerName='le joueur',level='Intermédiaire',difficulty='progressive',priorAdjustment=null,age=null,playerType='Loisir',duration=90,priority=null,challenge=null,recentSessions=[]}={}){
+export function generateOriginalSession({theme='construction',selectedObjective=null,customObjective='',playerName='le joueur',level='Intermédiaire',difficulty='progressive',priorAdjustment=null,age=null,playerType='Loisir',duration=90,priority=null,challenge=null,recentSessions=[],customExercises=[]}={}){
  const request=String(customObjective||'').trim(),combined=request||String(theme||'');
  const t=themes.find(x=>norm(x.key)===norm(theme)||norm(x.label)===norm(theme))||themes.find(x=>has(combined,x.words))||themes.find(x=>has(priority?.main_theme||priority?.criterion,x.words))||themes[4];
  const focus=selectedObjective?{label:selectedObjective.label,cue:selectedObjective.intent,success:selectedObjective.success}:focusForRequest(request),a=adaptation(level,age),mins=[60,90,120].includes(Number(duration))?Number(duration):90;
- const activities=buildActivities(t,focus,mins,selectedObjective);
+ const activities=selectedObjective?buildCurriculumActivities(selectedObjective,mins,customExercises):buildActivities(t,focus,mins,selectedObjective);
  const selectedDifficulty=difficulty==='auto'&&priorAdjustment?.hasHistory?priorAdjustment.difficulty:difficulty;
  const progression=selectedDifficulty==='easy'?{label:'Accessible',rule:'Rapprocher le joueur, ralentir le rythme et élargir les cibles.'}:selectedDifficulty==='hard'?{label:'Exigeant',rule:'Réduire les cibles, augmenter l’incertitude et ajouter un score sous pression.'}:{label:'Progressif',rule:'Commencer avec une cible large, puis ajouter une variable après plusieurs réussites.'};
  const objective=selectedObjective?selectedObjective.label+' : '+selectedObjective.intent:request?'Objectif personnalisé : '+request+'.':priority?.criterion?'Priorité individualisée : '+priority.criterion+'. '+t.objective+'.':t.objective+'.';
