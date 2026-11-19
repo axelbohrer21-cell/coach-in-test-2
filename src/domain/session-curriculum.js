@@ -110,7 +110,7 @@ export function buildCurriculumActivities(goal,duration=90,customExercises=[]){
  const mins=Number(duration)===60?[12,20,28]:Number(duration)===120?[12,18,18,20,52]:[12,18,18,42];
  const selected=Number(duration)===60?[d.feed,variants[0],d.point]:Number(duration)===120?[d.feed,...variants.slice(0,3),d.point]:[d.feed,...variants.slice(0,2),d.point];
  return selected.map((row,i)=>{
-  const feed=i===0,point=i===selected.length-1,custom=!feed&&!point&&Boolean(customVariants);
+  const feed=i===0,point=i===selected.length-1,custom=!feed&&!point&&(i-1)<customRows.length;
   return {
    name:row[0],minutes:mins[i],objective:goal.intent,
    setup:feed?row[1]:point?'Deux joueurs sur un terrain complet ; matérialiser les zones mentionnées et alterner les rôles à chaque série.':custom?row[1]:'Deux joueurs sur un terrain complet ; matérialiser les zones mentionnées et alterner les rôles à chaque série.',
