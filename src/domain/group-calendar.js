@@ -56,10 +56,12 @@ export function isPrivateLessonDateAllowed(dateISO, options = {}) {
   const { holidays = ZONE_B_HOLIDAYS_2026_2027, publicHolidays = PUBLIC_HOLIDAYS_2026_2027 } = options;
   return parseISO(dateISO).getUTCDay() !== 0 && !isSchoolHoliday(dateISO, holidays) && (!isPublicHoliday(dateISO, publicHolidays) || dateISO === '2027-05-08');
 }
-export function isWithinTeachingWindow(dateISO, startTime, endTime) {
+export function isWithinTeachingWindow(dateISO, startTime, endTime, audience = 'enfants') {
   const day = parseISO(dateISO).getUTCDay();
-  const windows = GROUP_SEASON.availabilityWindows[day];
-  if (!windows) return true;
+  const windows = audience === 'adultes'
+    ? GROUP_SEASON.weeklySchedule.filter(row => row.audience === 'adultes' && row.weekday === day).map(row => [row.start, row.end])
+    : GROUP_SEASON.availabilityWindows[day];
+  if (!windows?.length) return false;
   return windows.some(([start, end]) => startTime >= start && endTime <= end && endTime > startTime);
 }
 
