@@ -229,13 +229,13 @@ function playersPage() {
     <div class="roster-summary"><div><strong>${activeCount}</strong><span>joueurs actifs</span></div><div><strong>${filtered.length}</strong><span>affichés</span></div><p>Retrouve rapidement un joueur, puis ouvre sa fiche pour accéder à son suivi.</p></div>
     <div class="toolbar roster-toolbar">
       <input id="player-search" class="search-input" placeholder="Rechercher un joueur…" value="${escapeHtml(state.filters.search)}">
-      <select id="player-type-filter" class="select-input"><option value="all">Tous les profils</option><option value="Loisir">Loisir</option><option value="Compétition">Compétition</option></select>
+      <select id="player-type-filter" class="select-input"><option value="all">Tous les profils</option><option value="Loisir" ${state.filters.playerType === "Loisir" ? "selected" : ""}>Loisir</option><option value="Compétition" ${state.filters.playerType === "Compétition" ? "selected" : ""}>Compétition</option></select>
     </div>
     <div class="player-grid">
       ${filtered.map(player => {
         const color=playerAccent(player.id);
         const name=`${player.first_name||''} ${player.last_name||''}`.trim();
-        return `<article class="player-card player-card-compact" style="--player-accent:${color}">
+        return `<article class="player-card player-card-compact" data-player-search="${escapeHtml([player.first_name, player.last_name, player.email].filter(Boolean).join(" ").toLocaleLowerCase("fr"))}" data-player-type="${escapeHtml(player.player_type || "Loisir")}" style="--player-accent:${color}">
           <div class="player-avatar">${escapeHtml((player.first_name||'?').slice(0,1))}${escapeHtml((player.last_name||'').slice(0,1))}</div>
           <div class="player-card-info"><h3>${escapeHtml(name||'Joueur')}</h3><div class="player-card-meta"><span>${escapeHtml(player.fft_ranking||'Classement à renseigner')}</span><span>${escapeHtml(player.age_category||'Catégorie à renseigner')}</span></div><span class="tag ${player.player_type==='Compétition'?'tag-purple':'tag-blue'}">${escapeHtml(player.player_type||'Loisir')}</span></div>
           <div class="player-card-actions"><button class="btn primary" data-player-sheet="${player.id}">Ouvrir la fiche</button><button class="btn icon-btn" data-edit-player="${player.id}" aria-label="Modifier ${escapeHtml(name)}">Modifier</button><button class="btn subtle" data-share-player="${player.id}">Partager</button></div>
