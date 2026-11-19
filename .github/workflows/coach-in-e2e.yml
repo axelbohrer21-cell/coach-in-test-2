@@ -1,0 +1,48 @@
+name: Coach In browser QA
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: ['qa/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-e2e:
+    name: Playwright browser checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      COACH_IN_BASE_URL: https://coach-in-test-2-git-qa-preproduction-isol-e79332-coaching-axel1.vercel.app
+      COACH_IN_TEST_EMAIL: ${{ secrets.COACH_IN_TEST_EMAIL }}
+      COACH_IN_TEST_PASSWORD: ${{ secrets.COACH_IN_TEST_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: npm install --no-save @playwright/test@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run browser tests
+        run: npx playwright test
+      - name: Explain skipped authenticated test
+        if: always() && (env.COACH_IN_TEST_EMAIL == '' || env.COACH_IN_TEST_PASSWORD == '')
+        run: echo "Authenticated player test is skipped until COACH_IN_TEST_EMAIL and COACH_IN_TEST_PASSWORD are configured as GitHub Actions secrets. No credentials are stored in the repository."
+      - name: Upload Playwright report and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coach-in-playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
