@@ -1,11 +1,14 @@
 import { GROUP_SEASON, generateTeachingDates, isWithinTeachingWindow } from './group-calendar.js';
 
-export function buildSeriesCounters(series, sessions, today = new Date().toISOString().slice(0,10)) {
+export function buildSeriesCounters(series, sessions, today = new Date().toISOString().slice(0,10), manualCancellations = []) {
   return series.map(item => {
     const rows = sessions.filter(row => row.series_id === item.id);
     const target = Number(item.target_sessions || (item.audience === 'adultes' ? GROUP_SEASON.adultTarget : GROUP_SEASON.childTarget));
     const eligibleDates = generateTeachingDates({ start: item.season_start || GROUP_SEASON.start, end: item.season_end || GROUP_SEASON.end, audience: item.audience, weekday: Number(item.weekday) });
-    const cancelledDates = new Set(rows.filter(row => row.status === 'cancelled' && row.session_date).map(row => row.session_date));
+    const cancelledDates = new Set([
+      ...rows.filter(row => row.status === 'cancelled' && row.session_date).map(row => row.session_date),
+      ...manualCancellations.filter(row => row.audience === item.audience && Number(row.weekday) === Number(item.weekday)).map(row => row.session_date)
+    ]);
     // Une date passée compte comme effectuée par défaut ; seules les annulations enregistrées sont déduites.
     const completed = eligibleDates.filter(date => date < today && !cancelledDates.has(date)).length;
     const planned = rows.filter(row => row.status === 'scheduled' && row.session_date >= today).length;
