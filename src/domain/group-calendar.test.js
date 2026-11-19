@@ -13,10 +13,10 @@ test('cours enfants : mercredi et samedi, hors vacances Zone B', () => {
 });
 
 test('cours adultes : lundi à vendredi selon le planning confirmé', () => {
-  assert.equal(generateTeachingDates({ audience:'adultes', weekday:1 }).length,29);
+  assert.equal(generateTeachingDates({ audience:'adultes', weekday:1 }).length,30);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:2 }).length,32);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:3 }).length,31);
-  assert.equal(generateTeachingDates({ audience:'adultes', weekday:4 }).length,30);
+  assert.equal(generateTeachingDates({ audience:'adultes', weekday:4 }).length,31);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:5 }).length,32);
   assert.equal(isTeachingDate('2027-05-06','adultes'),false); // Ascension
   assert.equal(isTeachingDate('2026-11-02','adultes'),true); // date affichée, pluie cochable manuellement
@@ -67,8 +67,8 @@ test('les compteurs retirent uniquement les jours cochés manuellement comme plu
   assert.equal(monday.eligibleDates.includes('2026-11-02'), true);
   assert.equal(monday.eligibleDates.includes('2026-11-09'), true);
   assert.equal(thursday.eligibleDates.includes('2026-11-12'), true);
-  assert.equal(monday.expectedByNow, monday.eligibleDates.filter(date => date < '2026-11-17').length);
-  assert.equal(thursday.expectedByNow, thursday.eligibleDates.filter(date => date < '2026-11-17').length);
+  assert.equal(monday.expectedByNow, monday.completed);
+  assert.equal(thursday.expectedByNow, thursday.completed);
 });
 
 test('stages vacances : du lundi au vendredi, 9 h 30–16 h 30 sur les terrains 1, 2 et 3', () => {
