@@ -7,8 +7,8 @@ const normalize = value => String(value || '')
 function classifyFocus(value) {
   const text = normalize(value);
   const has = (...terms) => terms.some(term => text.includes(normalize(term)));
-  if (has('service','mise en jeu','lancer','premiere balle','deuxieme balle','slice au service')) return 'service';
   if (has('retour','relance')) return 'retour';
+  if (has('service','mise en jeu','lancer','premiere balle','deuxieme balle','slice au service')) return 'service';
   if (has('volee','volley','filet','smash','smatch')) return 'volley';
   if (has('revers','backhand')) return 'revers';
   if (has('coup droit','cd','forehand')) return 'coup-droit';
@@ -131,7 +131,7 @@ function criterionSpecificPlan(selectedCriterion, fallbackPlan, focus) {
  const criterion=String(selectedCriterion.criterion),theme=normalize(selectedCriterion.main_theme||''),sub=normalize(selectedCriterion.subtheme||''),key=normalize(criterion);
  const has=(...words)=>words.some(word=>key.includes(normalize(word)));
  let drills,objective='Travailler précisément « '+criterion+' » dans des situations progressives et transférables au match.';
- if(theme.includes('service')){
+ if(theme.includes('service')&&!theme.includes('retour')){
   drills=has('lancer','latéral')?[
    ['Lancer dans une fenêtre','Réaliser 10 lancers sans frapper vers une fenêtre matérialisée légèrement devant et sur le côté. Relever les lancers qui permettent un contact confortable.'],
    ['Lancer puis frappe','Enchaîner lancer et service à intensité modérée. Le coach vérifie la zone de chute et l’équilibre du joueur.'],
