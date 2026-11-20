@@ -260,27 +260,20 @@ $('#page-content').addEventListener('change',async event=>{
     const normalize=value=>String(value||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
     const key=normalize(theme);
     const criterionSelect=form?.elements.video_criterion;
-    const objective=form?.elements.video_objective;
     const catalog=(state.criteria||[]).filter(row=>normalize(row.subtheme)===key||normalize(row.main_theme)===key);
     const unique=new Map(catalog.map(row=>[String(row.id),row]));
     const rows=[...unique.values()].sort((a,b)=>String(a.subtheme||'').localeCompare(String(b.subtheme||''),'fr')||String(a.criterion||'').localeCompare(String(b.criterion||''),'fr'));
     if(criterionSelect){
-      const positives=rows.filter(row=>row.criterion_type==='positive');
-      const improvements=rows.filter(row=>row.criterion_type==='improvement');
-      const options=(items)=>items.map(row=>'<option value="'+escapeHtml(String(row.id))+'">'+escapeHtml(row.criterion)+'</option>').join('');
+      const options=rows.map(row=>{
+        const subtheme=String(row.subtheme||'').trim();
+        const criterion=String(row.criterion||'').trim();
+        const label=subtheme&&normalize(subtheme)!==key?subtheme+' · '+criterion:criterion;
+        return '<option value="'+escapeHtml(String(row.id))+'">'+escapeHtml(label)+'</option>';
+      }).join('');
       criterionSelect.disabled=!theme||!rows.length;
-      criterionSelect.innerHTML='<option value="">'+(theme?(rows.length?'Choisir un critère précis…':'Aucun critère d’évaluation associé à cette thématique'):'Choisis d’abord une thématique')+'</option>'+
-        (positives.length?'<optgroup label="✓ Réussites">'+options(positives)+'</optgroup>':'')+
-        (improvements.length?'<optgroup label="↗ À améliorer">'+options(improvements)+'</optgroup>':'');
+      criterionSelect.innerHTML='<option value="">'+(theme?(rows.length?'Choisir un geste observé…':'Aucun geste associé à cette thématique'):'Choisis d’abord une thématique')+'</option>'+options;
       const hint=form.querySelector('[data-video-criterion-hint]');
-      if(hint)hint.textContent=rows.length+' critère(s) issus de ton bilan de séance pour « '+theme+' ».';
-    }
-    if(objective){
-      const goals=coachObjectives().filter(goal=>goal.theme===theme);
-      objective.disabled=!theme;
-      objective.innerHTML='<option value="">Analyse générale du thème</option>'+goals.map(goal=>'<option value="'+escapeHtml(goal.label)+'">'+escapeHtml(goal.label)+'</option>').join('');
-      const hint=form.querySelector('[data-video-objective-hint]');
-      if(hint)hint.textContent=goals.length+' objectif(s) pédagogique(s) disponible(s) pour cette thématique.';
+      if(hint)hint.textContent=rows.length+' geste(s) disponible(s), réunis dans une seule liste.';
     }
     const strokeByTheme={'coup droit':'forehand','revers':'backhand','service':'service','retour':'return','retour de service':'return','volée':'volley','déplacements':'footwork'};
     if(form?.elements.stroke_type)form.elements.stroke_type.value=strokeByTheme[normalize(theme)]||'general';
@@ -542,7 +535,7 @@ async function extractVideoFrames(file){
 }
 async function submitVideoAnalysis(form,{fromCamera=false}={}){
   const button=form.querySelector('button[type=submit]'),file=form.elements.video.files?.[0];
-  const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value,theme=String(form.elements.video_theme?.value||'').trim(),criterionId=String(form.elements.video_criterion?.value||'').trim(),selectedCriterion=(state.criteria||[]).find(row=>String(row.id)===criterionId),objectiveLabel=String(form.elements.video_objective?.value||'').trim(),selectedObjective=objectiveLabel?coachObjectives().find(goal=>goal.theme===theme&&goal.label===objectiveLabel):null,objective=[ 'Thématique analysée : '+theme, selectedCriterion?'Critère d’observation issu de l’évaluation : '+selectedCriterion.criterion+'. Sous-thème : '+(selectedCriterion.subtheme||theme)+'. Type : '+(selectedCriterion.criterion_type==='positive'?'réussite':'point à améliorer') : '', selectedObjective?selectedObjective.label+'. Intention pédagogique : '+selectedObjective.intent+'. Critères complémentaires : '+(selectedObjective.criteria||[]).join('; ')+'. Indicateur de réussite : '+selectedObjective.success : '' ].filter(Boolean).join(' ');
+  const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value,theme=String(form.elements.video_theme?.value||'').trim(),criterionId=String(form.elements.video_criterion?.value||'').trim(),selectedCriterion=(state.criteria||[]).find(row=>String(row.id)===criterionId),objective=[ 'Thématique analysée : '+theme, selectedCriterion?'Geste observé : '+selectedCriterion.criterion+'. Sous-thème : '+(selectedCriterion.subtheme||theme) : '' ].filter(Boolean).join(' ');
   if(!file||!title||!playerId||!theme||!criterionId||!selectedCriterion){toast('Renseigne le joueur, le titre, la thématique, le critère observé et la vidéo.','error');return;}
   const videoMime=file.type.split(';')[0].trim();
   if(!['video/mp4','video/quicktime','video/webm'].includes(videoMime)){toast('Format accepté : MP4, MOV ou WEBM.','error');return;}
