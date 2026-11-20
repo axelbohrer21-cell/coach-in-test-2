@@ -125,6 +125,7 @@ $('#page-content').addEventListener('click', async event=>{
   if(event.target.closest('[data-camera-start]')){await startVideoCamera();return;}
   if(event.target.closest('[data-camera-record]')){startVideoRecording();return;}
   if(event.target.closest('[data-camera-stop]')){stopVideoRecording();return;}
+  if(event.target.closest('[data-camera-close]')){stopVideoCamera();const status=$('#camera-status');if(status)status.textContent='Caméra inactive';const record=$('[data-camera-record]');if(record)record.disabled=true;const start=$('[data-camera-start]');if(start)start.textContent='Ouvrir la caméra';return;}
   const deleteMatch=event.target.closest('[data-delete-match]');
   if(deleteMatch){
     if(!confirm('Supprimer ce match de ton journal personnel ?'))return;
