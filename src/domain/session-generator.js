@@ -386,6 +386,7 @@ export function generateOriginalSession({
     evidenceLabel,
     'Objectif : ' + plan.objective,
     sourceLabel,
+    'Principes de conception : contrôle technique, répétition de qualité, ajout progressif de lecture et de décision, puis transfert en opposition ; précision avant vitesse (repères pédagogiques FFT et USTA).',
     recentHistoryLabel,
     challenge?.objective ? 'Défi actif à réinvestir : ' + challenge.objective : '',
     Number(age) > 0 && Number(age) <= 12 && /débutant|initiation/i.test(level) ? 'Séries de 4 à 6 balles, cible large, pauses fréquentes et consigne unique.' : '',
