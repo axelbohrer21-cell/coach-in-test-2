@@ -346,7 +346,9 @@ export function generateOriginalSession({
   const sourceLabel = sourceWeek
     ? 'Inspiration complémentaire : Cours de l’année.xlsx · Semaine ' + sourceWeek.week + ' · ' + String(sourceWeek.theme).replace(/^SEMAINE\s+\d+\s*:\s*/i,'')
     : 'Aucune semaine source directement comparable ; situations construites à partir du critère et du référentiel pédagogique.';
-  const recentHistoryLabel = recentSessions.length ? 'Historique des séances récentes pris en compte : ' + recentSessions.slice(0,2).map(row => row.title || row.theme || ('semaine ' + (row.source_week || '?'))).join(' · ') + '. Varier la situation proposée pour éviter une répétition immédiate.' : 'Aucun historique récent transmis : la séance est construite sans hypothèse de répétition.';\n  const adaptationLabel = Number(age) > 0 && Number(age) <= 12 && /débutant|initiation/i.test(level) ? 'Progression accessible' : 'Progression adaptée au niveau déclaré';\n  const evidenceLabel = selectedCriterion?.criterion
+  const recentHistoryLabel = recentSessions.length ? 'Historique des séances récentes pris en compte : ' + recentSessions.slice(0,2).map(row => row.title || row.theme || ('semaine ' + (row.source_week || '?'))).join(' · ') + '. Varier la situation proposée pour éviter une répétition immédiate.' : 'Aucun historique récent transmis : la séance est construite sans hypothèse de répétition.';
+  const adaptationLabel = Number(age) > 0 && Number(age) <= 12 && /débutant|initiation/i.test(level) ? 'Progression accessible' : 'Progression adaptée au niveau déclaré';
+  const evidenceLabel = selectedCriterion?.criterion
     ? 'Critère choisi par le coach : ' + selectedCriterion.main_theme + ' · ' + selectedCriterion.subtheme + ' · ' + selectedCriterion.criterion + '. Les trois situations sont construites autour de ce critère.'
     : priority?.criterion
       ? 'Critère récurrent observé : ' + priority.criterion + ' (' + (priority.occurrences ?? 2) + ' des 3 derniers bilans).'
