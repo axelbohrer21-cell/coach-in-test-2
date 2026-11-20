@@ -260,6 +260,7 @@ $('#page-content').addEventListener('change',async event=>{
     if(objective){
       const theme=event.target.value;
       const goals=coachObjectives().filter(goal=>goal.theme===theme);
+      objective.disabled=!theme;
       objective.innerHTML='<option value="">Analyse générale du thème</option>'+goals.map(goal=>'<option value="'+escapeHtml(goal.label)+'">'+escapeHtml(goal.label)+'</option>').join('');
       const hint=form.querySelector('[data-video-objective-hint]');
       if(hint)hint.textContent=goals.length+' objectif(s) pédagogique(s) disponible(s) pour cette thématique.';
