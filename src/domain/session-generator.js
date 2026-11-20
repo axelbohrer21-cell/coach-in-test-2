@@ -358,6 +358,9 @@ export function generateOriginalSession({
     evidenceLabel,
     'Objectif : ' + plan.objective,
     sourceLabel,
+    recentHistoryLabel,
+    challenge?.objective ? 'Défi actif à réinvestir : ' + challenge.objective : '',
+    Number(age) > 0 && Number(age) <= 12 && /débutant|initiation/i.test(level) ? 'Séries de 4 à 6 balles, cible large, pauses fréquentes et consigne unique.' : '',
     'Les situations sont des propositions originales ; le coach ajuste distance, vitesse et difficulté au niveau réel du joueur.'
   ].join('\n');
   return {
