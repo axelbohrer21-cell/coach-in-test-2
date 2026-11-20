@@ -422,7 +422,7 @@ function stopVideoCamera(){
   const preview=$('#video-camera-preview');if(preview){preview.srcObject=null;preview.classList.remove('is-active');}
 }
 function initializeCourtCalibrationCanvases(){
-  $('[data-court-calibration]').forEach(canvas=>{
+  $$('[data-court-calibration]').forEach(canvas=>{
     const image=canvas.previousElementSibling;
     if(!image)return;
     const draw=()=>{
