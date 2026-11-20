@@ -145,14 +145,25 @@ export function generateOriginalSession({
   const plan = DRILLS[focus] || DRILLS.construction;
   const sourceWeek = sourceWeekFor(focus, recentSessions);
   const allocations = distributeMinutes(minutes);
-  const phases = plan.drills.map((drill,index) => ({
-    name: ['Situation de contrôle','Situation avec déplacement ou lecture','Transfert en points'][index],
-    minutes: allocations[index],
-    objective: plan.objective,
-    content: drill[0] + '\n' + drill[1] + '\nCritère de réussite : ' + drill[2],
-    success_criteria: drill[2],
-    origin: 'Situation créée par Coach In à partir du référentiel de critères et des objectifs pédagogiques.'
-  }));
+  const difficultySettings = {
+    very_easy: { label: 'Très facile', target: 4, instruction: 'Grande zone de sécurité, rythme lent et consigne simple.' },
+    easy: { label: 'Facile', target: 5, instruction: 'Contrainte modérée, rythme confortable et cible large.' },
+    medium: { label: 'Moyen', target: 6, instruction: 'Rythme normal et précision régulière.' },
+    hard: { label: 'Difficile', target: 8, instruction: 'Cible réduite, déplacement ou prise de décision plus exigeante.' },
+    very_hard: { label: 'Très difficile', target: 9, instruction: 'Forte exigence de précision, vitesse et décision sous pression.' }
+  };
+  const selectedDifficulty = difficultySettings[difficulty] || difficultySettings.medium;
+  const phases = plan.drills.map((drill,index) => {
+    const successCriteria = 'Réussir le comportement attendu sur au moins ' + selectedDifficulty.target + tentatives sur 10.';
+    return {
+      name: ['Situation de contrôle','Situation avec déplacement ou lecture','Transfert en points'][index],
+      minutes: allocations[index],
+      objective: plan.objective,
+      content: drill[0] + '\n' + drill[1] + '\nCritère de réussite : ' + successCriteria,
+      success_criteria: successCriteria,
+      origin: 'Situation créée par Coach In à partir du référentiel de critères et des objectifs pédagogiques.'
+    };
+  });
   const sourceLabel = sourceWeek
     ? 'Inspiration complémentaire : Cours de l’année.xlsx · Semaine ' + sourceWeek.week + ' · ' + String(sourceWeek.theme).replace(/^SEMAINE\s+\d+\s*:\s*/i,'')
     : 'Aucune semaine source directement comparable ; situations construites à partir du critère et du référentiel pédagogique.';
@@ -175,8 +186,8 @@ export function generateOriginalSession({
     player_visible_summary:plan.objective+' Les situations évoluent du contrôle vers le jeu à thème.',
     success_criteria:phases.map(phase=>phase.success_criteria).join(' '),
     adaptation:'Situations originales reliées au critère de progression et aux thèmes du programme collectif.',
-    difficulty:difficulty==='hard'?'Exigeant':difficulty==='easy'?'Accessible':'Progressif',
-    difficulty_rule:'Faire varier une seule difficulté à la fois : distance, vitesse, zone ou pression du score.',
+    difficulty:selectedDifficulty.label,
+    difficulty_rule:selectedDifficulty.instruction+' Le critère de réussite est réglé à '+selectedDifficulty.target+'/10.',
     progression:priorAdjustment || null, phases, exercise_count:phases.length,
     coach_feed_count:0, source_week:sourceWeek ? Number(sourceWeek.week) : null,
     source_file:sourceWeek ? 'Cours de l’année.xlsx' : null,
