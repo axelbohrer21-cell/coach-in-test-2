@@ -18,6 +18,8 @@ const coachObjectives=()=>state.sessionObjectives?.length?state.sessionObjective
 import { buildSessionProgression } from './domain/session-progression.js';
 import { buildAdaptiveTrainingProgram } from './domain/intelligence.js';
 import { analyzeVideoPose } from './domain/video-pose.js';
+import { solveCourtHomography, calibratedFootDistances } from './domain/court-calibration.js';
+const courtCalibrationSelections=new Map();
 
 let signupMode = false;
 let weatherRequest = 0;
@@ -77,6 +79,7 @@ function render(page) {
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
   $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
   $('#page-content').innerHTML=renderPage(page);
+  if(page==='videos') initializeCourtCalibrationCanvases();
   if(page==='planning') loadWeatherForecast();
   if(page==='messages'){subscribeToMessages();markVisibleConversationRead();}
   else if(messageChannel){supabase.removeChannel(messageChannel);messageChannel=null;}
@@ -122,6 +125,10 @@ $('#page-content').addEventListener('keydown', event=>{
 });
 
 $('#page-content').addEventListener('click', async event=>{
+  const calibrationCanvas=event.target.closest('[data-court-calibration]');
+  if(calibrationCanvas){addCourtCalibrationPoint(calibrationCanvas,event);return;}
+  const calibrateButton=event.target.closest('[data-court-calibrate]');
+  if(calibrateButton){await saveCourtCalibration(calibrateButton.dataset.analysisId);return;}
   if(event.target.closest('[data-camera-start]')){await startVideoCamera();return;}
   if(event.target.closest('[data-camera-record]')){startVideoRecording();return;}
   if(event.target.closest('[data-camera-stop]')){stopVideoRecording();return;}
@@ -413,6 +420,55 @@ function stopVideoCamera(){
   if(videoCameraRecorder?.state==='recording')videoCameraRecorder.stop();
   if(videoCameraStream){videoCameraStream.getTracks().forEach(track=>track.stop());videoCameraStream=null;}
   const preview=$('#video-camera-preview');if(preview){preview.srcObject=null;preview.classList.remove('is-active');}
+}
+function initializeCourtCalibrationCanvases(){
+  $('[data-court-calibration]').forEach(canvas=>{
+    const image=canvas.previousElementSibling;
+    if(!image)return;
+    const draw=()=>{
+      if(!image.naturalWidth||!image.naturalHeight)return;
+      canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+      const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+      let points=courtCalibrationSelections.get(canvas.dataset.analysisId);
+      if(!points){try{points=JSON.parse(canvas.dataset.initialPoints||'[]');}catch{points=[];}courtCalibrationSelections.set(canvas.dataset.analysisId,points);}
+      points.forEach((point,index)=>{
+        const x=point.x*canvas.width,y=point.y*canvas.height;
+        ctx.beginPath();ctx.arc(x,y,Math.max(12,canvas.width/65),0,Math.PI*2);ctx.fillStyle='#ffcf58';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#06121d';ctx.stroke();
+        ctx.fillStyle='#06121d';ctx.font='bold '+Math.max(15,canvas.width/45)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(index+1),x,y);
+        if(index){const previous=points[index-1];ctx.beginPath();ctx.moveTo(previous.x*canvas.width,previous.y*canvas.height);ctx.lineTo(x,y);ctx.lineWidth=Math.max(3,canvas.width/220);ctx.strokeStyle='#ffcf58';ctx.stroke();}
+      });
+    };
+    if(image.complete)draw();else image.addEventListener('load',draw,{once:true});
+    canvas._redrawCalibration=draw;
+  });
+}
+function addCourtCalibrationPoint(canvas,event){
+  const id=canvas.dataset.analysisId,rect=canvas.getBoundingClientRect();
+  const points=courtCalibrationSelections.get(id)||[];
+  if(points.length>=4){courtCalibrationSelections.set(id,[]);canvas._redrawCalibration?.();toast('Les quatre points ont été réinitialisés. Recommence dans l’ordre indiqué.');return;}
+  points.push({x:Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width)),y:Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height))});
+  courtCalibrationSelections.set(id,points);canvas._redrawCalibration?.();
+  const status=$('[data-court-calibration-status="'+id+'"]');if(status)status.textContent=points.length+'/4 points sélectionnés';
+}
+async function saveCourtCalibration(analysisId){
+  const row=(state.videoAnalyses||[]).find(item=>item.id===analysisId);
+  const points=courtCalibrationSelections.get(analysisId)||[];
+  if(!row||points.length!==4){toast('Sélectionne les quatre coins du court dans l’ordre indiqué.','error');return;}
+  const pose=row.analysis_result?.pose_analysis;
+  if(!pose?.available||!Array.isArray(pose.frames)||!pose.frames.length){toast('Les repères de pose sont indisponibles pour cette vidéo.','error');return;}
+  try{
+    const matrix=solveCourtHomography(points,10.97,23.77);
+    const footDistances=calibratedFootDistances(pose.frames,matrix);
+    const valid=footDistances.map(item=>item.distance_m).filter(value=>Number.isFinite(value));
+    if(!valid.length)throw new Error('Les pieds ne sont pas assez visibles sur les images analysées pour estimer leur écart.');
+    const mean=Number((valid.reduce((sum,value)=>sum+value,0)/valid.length).toFixed(2));
+    const calibration={court_width_m:10.97,court_length_m:23.77,points,matrix,foot_distances:footDistances,mean_foot_spacing_m:mean,calibrated_at:new Date().toISOString(),method:'Homographie manuelle à partir des quatre intersections fond / couloir de double',caveat:'Estimation au sol à partir des repères de pieds 2D ; dépend de la caméra fixe, du bon placement des points et de la visibilité des chaussures.'};
+    const updated={...row.analysis_result,pose_analysis:{...pose,calibration}};
+    const {error}=await supabase.from('coach_video_analyses').update({analysis_result:updated,updated_at:new Date().toISOString()}).eq('id',analysisId).eq('coach_id',state.user.id);
+    if(error)throw error;
+    await dataService.loadCoachWorkspace(state.user.id);render('videos');
+    toast('Court calibré. Écart moyen estimé entre les pieds : '+mean+' m.');
+  }catch(error){toast(error.message||'Impossible de calibrer le court.','error');}
 }
 async function extractVideoFrames(file){
   const objectUrl=URL.createObjectURL(file),video=document.createElement('video');
