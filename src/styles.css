@@ -1539,3 +1539,20 @@ body.camera-fullscreen-open{overflow:hidden}
 .video-annotation-legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
 .legend-joint{background:#ffcf58}.legend-foot{background:#39c9ff}.legend-push{background:#ff9b42}
 @media(max-width:600px){.video-segment-grid{grid-template-columns:1fr}.video-segment-image img{max-height:360px}}
+
+
+/* Palette des 50 couleurs uniques des joueurs */
+.player-color-picker{display:grid;gap:11px;padding:14px;border:1px solid rgba(113,223,208,.22);border-radius:14px;background:rgba(8,26,45,.58)}
+.player-color-picker-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.player-color-picker-head>div{display:grid;gap:4px}.player-color-picker-head b{font-size:13px;color:var(--text,#eaf2ff)}.player-color-picker-head small,.player-color-help{font-size:10px;color:var(--muted)}
+.player-color-picker-head>strong{font-size:11px;color:#9cebdd;white-space:nowrap}
+.player-color-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px}
+.player-color-option{position:relative;display:grid;justify-items:center;gap:4px;min-width:0;padding:5px 2px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .15s,border-color .15s}
+.player-color-option input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.player-color-option>span{display:block;width:24px;height:24px;border-radius:50%;background:var(--swatch);border:2px solid rgba(255,255,255,.5);box-shadow:0 2px 7px rgba(0,0,0,.22)}
+.player-color-option small{font-size:8px;color:var(--muted);font-variant-numeric:tabular-nums}
+.player-color-option:hover:not(.is-used),.player-color-option.is-selected{border-color:rgba(113,223,208,.65);background:rgba(113,223,208,.10)}
+.player-color-option.is-selected>span{outline:2px solid #eafaff;outline-offset:2px}
+.player-color-option.is-used{opacity:.2;cursor:not-allowed;filter:grayscale(1)}
+.player-color-option input:focus-visible+span{outline:2px solid #fff;outline-offset:3px}
+@media(max-width:520px){.player-color-grid{grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}.player-color-option>span{width:25px;height:25px}}
