@@ -72,3 +72,13 @@ test('les critères de volée distinguent les volées de coup droit et de revers
   assert.match(session.phases[0].content,/volée revers/i);
   assert.match(session.phases[2].content,/volée de finition/i);
 });
+
+
+test('le retour de première balle est distingué du service et du retour de deuxième balle', () => {
+  const session=generateOriginalSession({theme:'Retour de service',selectedCriterion:{id:'retour1',main_theme:'Retour de service',subtheme:'Retour sur première balle',criterion:'Prise de balle tardive'},duration:90});
+  assert.equal(session.focus,'Retour');
+  assert.match(session.phases[0].content,/première balle/i);
+  assert.match(session.phases[1].content,/retour orienté/i);
+  assert.match(session.phases[2].content,/premier échange/i);
+  assert.match(session.coaching_notes,/Prise de balle tardive/);
+});
