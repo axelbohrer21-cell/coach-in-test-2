@@ -25,24 +25,26 @@ function requestedTerms(value) {
 }
 
 function chooseSourceWeek({ theme, selectedObjective, customObjective, priority, recentSessions }) {
-  const request = [customObjective, selectedObjective?.label, selectedObjective?.theme, theme, priority?.main_theme, priority?.criterion]
-    .filter(Boolean).join(' ');
-  const text = normalize(request);
-  const groups = THEME_TERMS.filter(group => group.terms.some(term => text.includes(normalize(term))));
-  const terms = [...new Set(groups.flatMap(group => group.terms))];
-  if (!terms.length) return null;
-
+  const candidates = [customObjective, selectedObjective?.label, selectedObjective?.theme, theme, priority?.main_theme, priority?.criterion]
+    .map(value => String(value || '').trim()).filter(Boolean);
   const recentWeeks = new Set((recentSessions || []).slice(0, 3).map(session => Number(session.source_week)).filter(Boolean));
-  const ranked = (groupProgram.weeks || [])
-    .filter(week => (week.courts || []).some(content => String(content || '').trim()))
-    .map(week => {
+  const sourceWeeks = (groupProgram.weeks || []).filter(week => (week.courts || []).some(content => String(content || '').trim()));
+
+  for (const request of candidates) {
+    const text = normalize(request);
+    const groups = THEME_TERMS.filter(group => group.terms.some(term => text.includes(normalize(term))));
+    const terms = [...new Set(groups.flatMap(group => group.terms))];
+    if (!terms.length) continue;
+    const ranked = sourceWeeks.map(week => {
       const label = normalize(String(week.theme || '').replace(/^semaine\\s+\\d+\\s*:?\\s*/, ''));
       const score = terms.reduce((total, term) => total + (label.includes(normalize(term)) ? (normalize(term).length > 4 ? 3 : 1) : 0), 0);
       return { week, score, recentlyUsed: recentWeeks.has(Number(week.week)) };
     })
-    .filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score || Number(a.recentlyUsed) - Number(b.recentlyUsed) || Number(a.week.week) - Number(b.week.week));
-  return ranked[0]?.week || null;
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score || Number(a.recentlyUsed) - Number(b.recentlyUsed) || Number(a.week.week) - Number(b.week.week));
+    if (ranked[0]) return ranked[0].week;
+  }
+  return null;
 }
 
 function distributeMinutes(total, count) {
