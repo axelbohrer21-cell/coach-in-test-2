@@ -367,7 +367,7 @@ async function startVideoCamera(){
   try{
     stopVideoCamera();
     videoCameraStream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:60}}});
-    preview.srcObject=videoCameraStream;await preview.play();
+    preview.srcObject=videoCameraStream;preview.classList.add('is-active');await preview.play();
     const track=videoCameraStream.getVideoTracks()[0],settings=track.getSettings();
     if(status)status.textContent=(settings.width||'—')+' × '+(settings.height||'—')+' · caméra active';
     if(record)record.disabled=false;
@@ -406,7 +406,7 @@ function stopVideoRecording(){
 function stopVideoCamera(){
   if(videoCameraRecorder?.state==='recording')videoCameraRecorder.stop();
   if(videoCameraStream){videoCameraStream.getTracks().forEach(track=>track.stop());videoCameraStream=null;}
-  const preview=$('#video-camera-preview');if(preview)preview.srcObject=null;
+  const preview=$('#video-camera-preview');if(preview){preview.srcObject=null;preview.classList.remove('is-active');}
 }
 async function extractVideoFrames(file){
   const objectUrl=URL.createObjectURL(file),video=document.createElement('video');
