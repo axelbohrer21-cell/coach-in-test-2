@@ -1841,3 +1841,52 @@ body.camera-fullscreen-open{overflow:hidden}
   .calendar-event{gap:7px}
   .calendar-event-actions{flex-direction:row}
 }
+
+ 
+/* Planning : échelle visuelle 1 h par tranche de 30 min et événements à durée réelle */
+.calendar-hours{display:grid;gap:0}
+.calendar-hour-row{
+  height:60px;
+  min-height:60px;
+  grid-template-columns:48px minmax(0,1fr);
+  gap:7px;
+  align-items:stretch;
+}
+.calendar-hour-label{padding-top:8px;font-size:11px;line-height:1.35}
+.calendar-hour-content{
+  position:relative;
+  height:60px;
+  min-height:60px;
+  overflow:visible;
+  border-bottom:1px solid rgba(126,157,184,.16);
+}
+.calendar-hour-slot{
+  height:54px;
+  min-height:54px;
+}
+.calendar-hour-content>.calendar-event{
+  position:absolute;
+  z-index:5;
+  top:3px;
+  left:0;
+  right:0;
+  width:auto;
+  height:calc(var(--event-slots,1)*60px - 6px);
+  min-height:54px;
+  margin:0!important;
+  box-sizing:border-box;
+  overflow:visible;
+  align-items:flex-start;
+  box-shadow:0 5px 16px rgba(0,0,0,.2);
+}
+.calendar-hour-content>.calendar-event .calendar-event-main{min-width:0}
+.calendar-hour-content>.calendar-event .calendar-event-actions{position:relative;z-index:1}
+.calendar-hour-row-group-occupied{height:60px;min-height:60px}
+.calendar-hour-row-group-occupied .calendar-hour-content{height:60px;min-height:60px}
+.calendar-group-frame{height:100%;min-height:60px}
+.calendar-group-frame-label{min-height:48px}
+@media(max-width:600px){
+  .calendar-hour-row{height:60px;min-height:60px;grid-template-columns:48px minmax(0,1fr)}
+  .calendar-hour-content{height:60px;min-height:60px}
+  .calendar-hour-content>.calendar-event{height:calc(var(--event-slots,1)*60px - 6px)}
+}
