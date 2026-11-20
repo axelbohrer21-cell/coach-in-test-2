@@ -396,7 +396,7 @@ export function generateOriginalSession({
     generated:true, generation_mode:'original', theme:plan.label, focus:plan.label,
     objective_criteria:selectedCriterion?.criterion ? [selectedCriterion.criterion] : (priority?.criterion ? [priority.criterion] : (selectedObjective?.criteria || [])),
     duration_minutes:minutes, objective:plan.objective, coaching_notes:coachingNotes,
-    exercise_1:phases.slice(0,2).map((phase,index)=>formatPhase(phase,index)).join('\\n\\n'),
+    exercise_1:phases.slice(0,2).map((phase,index)=>formatPhase(phase,index)).join('\n\n'),
     exercise_2:formatPhase(phases[2],2,'TRANSFERT EN POINTS'),
     player_visible_summary:plan.objective+' Les situations évoluent du contrôle vers le jeu à thème.',
     success_criteria:phases.map(phase=>phase.success_criteria).join(' '),
