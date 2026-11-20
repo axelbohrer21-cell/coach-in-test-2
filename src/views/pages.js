@@ -376,12 +376,26 @@ function sessionsPage(isCoach) {
 
 function radarChart(report){
   if(!report)return '<p class="tiny muted">Le radar apparaîtra après le premier bilan.</p>';
-  const {axes,polygon,center,radius}=radarPoints(report);
-  const rings=[.25,.5,.75,1].map(f=>{const pts=Array.from({length:4},(_,i)=>{const a=-Math.PI/2+i*Math.PI/2;return `${center+Math.cos(a)*radius*f},${center+Math.sin(a)*radius*f}`}).join(' ');return `<polygon class="radar-grid" points="${pts}"/>`}).join('');
-  const labels=axes.map(([label],i)=>{const a=-Math.PI/2+i*Math.PI/2;return `<text class="radar-label" x="${center+Math.cos(a)*(radius+22)}" y="${center+Math.sin(a)*(radius+22)+3}">${label}</text>`}).join('');
-  const val=axes.map(([label,value])=>`<span><b>${label}</b> ${value===null||value===undefined?'—':`${value}/20`}</span>`).join('');
+  const {axes,polygon,center,radius}=radarPoints(report,240);
+  const angle=i=>-Math.PI/2+i*Math.PI/2;
+  const pointFor=(value,i)=>{
+    const r=value===null||value===undefined||value===''?0:Math.max(0,Math.min(20,Number(value)))/20*radius;
+    return {x:center+Math.cos(angle(i))*r,y:center+Math.sin(angle(i))*r};
+  };
+  const rings=[.2,.4,.6,.8,1].map(f=>{
+    const pts=Array.from({length:4},(_,i)=>`${center+Math.cos(angle(i))*radius*f},${center+Math.sin(angle(i))*radius*f}`).join(' ');
+    return `<polygon class="radar-grid" points="${pts}"/>`;
+  }).join('');
+  const spokes=axes.map((_,i)=>`<line class="radar-spoke" x1="${center}" y1="${center}" x2="${center+Math.cos(angle(i))*radius}" y2="${center+Math.sin(angle(i))*radius}"/>`).join('');
+  const labels=axes.map(([label],i)=>{
+    const p={x:center+Math.cos(angle(i))*(radius+22),y:center+Math.sin(angle(i))*(radius+22)};
+    const anchor=i===1?'start':i===3?'end':'middle';
+    return `<text class="radar-label" text-anchor="${anchor}" x="${p.x}" y="${p.y+4}">${label}</text>`;
+  }).join('');
   const complete=axes.every(([,value])=>value!==null&&value!==undefined&&value!=='');
-  return `<div class="radar-wrap"><svg viewBox="0 0 220 220" role="img" aria-label="Radar des quatre secteurs">${rings}${complete?`<polygon class="radar-area" points="${polygon}"/>`:''}${labels}</svg><div class="radar-values">${val}</div></div>${complete?'':'<p class="tiny muted radar-note">Radar complet disponible lorsque les quatre secteurs sont notés.</p>'}`;
+  const points=axes.map(([,value],i)=>{const p=pointFor(value,i);return `<circle class="radar-point" cx="${p.x}" cy="${p.y}" r="4.5"/>`;}).join('');
+  const val=axes.map(([label,value],i)=>`<span class="radar-value-card radar-value-${i}"><i></i><b>${label}</b><strong>${value===null||value===undefined||value===''?'—':`${value}<small>/20</small>`}</strong></span>`).join('');
+  return `<div class="radar-wrap radar-premium"><svg viewBox="0 0 240 240" role="img" aria-label="Radar des quatre compétences">${rings}${spokes}${complete?`<polygon class="radar-area" points="${polygon}"/>`:''}${points}${labels}</svg><div class="radar-values">${val}</div></div>${complete?'':'<p class="tiny muted radar-note">Les axes déjà notés sont visibles. Le profil se complète avec les quatre secteurs.</p>'}`;
 }
 
 function reportsPage(isCoach) {
