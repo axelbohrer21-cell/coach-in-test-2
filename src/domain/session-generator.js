@@ -154,7 +154,7 @@ export function generateOriginalSession({
   };
   const selectedDifficulty = difficultySettings[difficulty] || difficultySettings.medium;
   const phases = plan.drills.map((drill,index) => {
-    const successCriteria = 'Réussir le comportement attendu sur au moins ' + selectedDifficulty.target + tentatives sur 10.';
+    const successCriteria = 'Réussir le comportement attendu sur au moins ' + selectedDifficulty.target + ' tentatives sur 10.';
     return {
       name: ['Situation de contrôle','Situation avec déplacement ou lecture','Transfert en points'][index],
       minutes: allocations[index],
