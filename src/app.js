@@ -887,12 +887,11 @@ function playerSheetDialog(playerId){
     const xy=(value,index)=>{const d=Math.max(0,Math.min(20,value))/20*radius;return {x:center+Math.cos(angle(index))*d,y:center+Math.sin(angle(index))*d};};
     const rings=[.2,.4,.6,.8,1].map((f,level)=>{const pts=Array.from({length:4},(_,i)=>{const d=radius*f;return (center+Math.cos(angle(i))*d)+','+(center+Math.sin(angle(i))*d);}).join(' ');return '<polygon class="radar-grid radar-grid-'+(level+1)+'" points="'+pts+'"/>';}).join('');
     const spokes=scoreAxes.map((axis,i)=>'<line class="radar-spoke" x1="'+center+'" y1="'+center+'" x2="'+(center+Math.cos(angle(i))*radius)+'" y2="'+(center+Math.sin(angle(i))*radius)+'"/>').join('');
-    const scale=[5,10,15,20].map((value,i)=>'<text class="radar-scale" x="'+(center+7)+'" y="'+(center-radius*(value/20)+3)+'">'+value+'</text>').join('');
     const labels=scoreAxes.map((axis,i)=>{const p={x:center+Math.cos(angle(i))*115,y:center+Math.sin(angle(i))*115};const anchor=i===1?'start':i===3?'end':'middle';return '<text class="radar-label" text-anchor="'+anchor+'" x="'+p.x+'" y="'+(p.y+4)+'">'+axis[0]+'</text>';}).join('');
     const complete=validValues.length===4;
     const polygon=complete?latestValues.map((x,i)=>{const p=xy(x[1],i);return p.x+','+p.y;}).join(' '):'';
     const points=latestValues.map((x,i)=>{if(!Number.isFinite(x[1])||x[1]<0||x[1]>20)return '';const p=xy(x[1],i);return '<circle class="radar-point" cx="'+p.x+'" cy="'+p.y+'" r="5"/>';}).join('');
-    radar='<div class="radar-wrap player-sheet-radar radar-premium"><svg viewBox="0 0 280 280" role="img" aria-label="Toile de compétences sur 20"><defs><linearGradient id="playerRadarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#51e0f2" stop-opacity=".7"/><stop offset="100%" stop-color="#9b82ff" stop-opacity=".26"/></linearGradient></defs>'+rings+spokes+scale+(complete?'<polygon class="radar-area" fill="url(#playerRadarFill)" points="'+polygon+'"/>':'')+points+labels+'<circle class="radar-center" cx="'+center+'" cy="'+center+'" r="3.5"/></svg></div>';
+    radar='<div class="radar-wrap player-sheet-radar radar-premium"><svg viewBox="0 0 280 280" role="img" aria-label="Toile de compétences sur 20"><defs><linearGradient id="playerRadarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#51e0f2" stop-opacity=".7"/><stop offset="100%" stop-color="#9b82ff" stop-opacity=".26"/></linearGradient></defs>'+rings+spokes+(complete?'<polygon class="radar-area" fill="url(#playerRadarFill)" points="'+polygon+'"/>':'')+points+labels+'<circle class="radar-center" cx="'+center+'" cy="'+center+'" r="3.5"/></svg></div>';
   }
   const averageLatest=validValues.length?validValues.reduce((sum,x)=>sum+x[1],0)/validValues.length:null;
   const criterionFrequency=type=>{
