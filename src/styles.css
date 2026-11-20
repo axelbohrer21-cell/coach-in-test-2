@@ -1695,3 +1695,32 @@ body.camera-fullscreen-open{overflow:hidden}
 .player-sheet-radar svg{width:min(100%,370px)}
 .report-radar-item .radar-colorful svg{width:min(100%,340px)}
 @media(max-width:600px){.radar-colorful .radar-values{grid-template-columns:1fr 1fr}.radar-domain-label{font-size:12px}}
+
+
+/* Lisibilité et respiration des capacités par jour de cours */
+.group-series-grid{gap:18px}
+.group-series-card{padding:22px;border-radius:19px;background:linear-gradient(145deg,rgba(16,39,64,.98),rgba(8,24,43,.98));box-shadow:0 10px 28px rgba(0,0,0,.12)}
+.group-series-head{gap:16px;align-items:center;padding-bottom:15px;border-bottom:1px solid rgba(139,174,207,.14)}
+.group-series-head>div{display:grid;gap:7px;min-width:0}
+.group-series-head .eyebrow{margin:0;line-height:1.5;letter-spacing:.8px}
+.group-series-head h3{font-size:19px;line-height:1.3}
+.group-series-head .muted{display:block;margin-top:2px;line-height:1.5}
+.group-series-count{gap:9px;margin:17px 0 13px;padding:11px 13px;border-radius:13px;background:rgba(3,14,27,.42)}
+.group-series-count strong{font-size:29px;line-height:1.1}
+.group-series-count span{font-size:11px;line-height:1.4}
+.group-series-progress{height:10px;margin:0 2px}
+.group-series-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:15px}
+.group-series-meta span{min-width:0;padding:9px 10px;border:1px solid rgba(133,169,202,.13);border-radius:10px;background:rgba(17,42,67,.7);font-size:11px;line-height:1.4}
+.group-series-card>.btn{margin-top:13px;margin-right:7px}
+.group-series-card>p.tiny{margin:13px 2px 0;line-height:1.55}
+.radar-sector{opacity:.23}
+.radar-grid{stroke:rgba(205,229,250,.42);stroke-width:1.35}
+.radar-grid-5{stroke:rgba(240,249,255,.88);stroke-width:2.2}
+.radar-spoke-domain{stroke-width:2.8;opacity:1}
+.radar-domain-label{font-size:14px;stroke-width:3.5px}
+.radar-color-segment{stroke-width:6.5;filter:drop-shadow(0 0 7px currentColor)}
+.radar-domain-point{stroke:#fff;stroke-width:3;filter:drop-shadow(0 0 9px currentColor)}
+.radar-colorful svg,.player-sheet-radar svg{width:min(100%,400px);filter:drop-shadow(0 13px 26px rgba(0,0,0,.28))}
+.radar-colorful .radar-value-card{border-color:color-mix(in srgb,var(--radar-domain-color) 62%,transparent);background:color-mix(in srgb,var(--radar-domain-color) 17%,rgba(8,24,42,.94))}
+.radar-colorful .radar-value-card strong{ text-shadow:0 0 12px color-mix(in srgb,var(--radar-domain-color) 48%,transparent)}
+@media(max-width:760px){.group-series-grid{gap:14px}.group-series-card{padding:17px}.group-series-meta{gap:6px}.group-series-meta span{padding:8px;font-size:10px}}
