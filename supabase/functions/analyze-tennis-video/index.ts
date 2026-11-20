@@ -22,7 +22,7 @@ function normalizePoseAnalysis(value: any) {
   const frames = value.frames.slice(0, 8).map((frame: any) => {
     const landmarks = Array.isArray(frame?.landmarks) ? frame.landmarks.slice(0, 33).map((p: any) => ({ x: Math.max(0, Math.min(1, Number(p?.x) || 0)), y: Math.max(0, Math.min(1, Number(p?.y) || 0)), z: Math.max(-2, Math.min(2, Number(p?.z) || 0)), visibility: Math.max(0, Math.min(1, Number(p?.visibility) || 0)) })) : [];
     const angles = frame?.joint_angles || {};
-    const safeAngle = (v: unknown) => Number.isFinite(Number(v)) ? Math.max(0, Math.min(180, Number(v))) : null;
+    const safeAngle = (v: unknown) => v === null || v === undefined || v === "" ? null : Number.isFinite(Number(v)) ? Math.max(0, Math.min(180, Number(v))) : null;
     return { timestamp: Math.max(0, Math.min(600, Number(frame?.timestamp) || 0)), visibility: Math.max(0, Math.min(1, Number(frame?.visibility) || 0)), landmarks, joint_angles: { left_knee: safeAngle(angles.left_knee), right_knee: safeAngle(angles.right_knee), left_elbow: safeAngle(angles.left_elbow), right_elbow: safeAngle(angles.right_elbow), left_hip: safeAngle(angles.left_hip), right_hip: safeAngle(angles.right_hip) }, foot_spacing_image_ratio: Math.max(0, Math.min(1, Number(frame?.foot_spacing_image_ratio) || 0)) };
   }).filter((frame: any) => frame.landmarks.length === 33);
   const overlay = typeof value.overlay_data_url === "string" && value.overlay_data_url.startsWith("data:image/jpeg;base64,") && value.overlay_data_url.length <= 500_000 ? value.overlay_data_url : null;
