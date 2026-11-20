@@ -130,9 +130,8 @@ $('#page-content').addEventListener('click', async event=>{
   const calibrateButton=event.target.closest('[data-court-calibrate]');
   if(calibrateButton){await saveCourtCalibration(calibrateButton.dataset.analysisId);return;}
   if(event.target.closest('[data-camera-start]')){await startVideoCamera();return;}
-  if(event.target.closest('[data-camera-record]')){startVideoRecording();return;}
-  if(event.target.closest('[data-camera-stop]')){stopVideoRecording();return;}
-  if(event.target.closest('[data-camera-close]')){stopVideoCamera();const status=$('#camera-status');if(status)status.textContent='Caméra inactive';const record=$('[data-camera-record]');if(record)record.disabled=true;const start=$('[data-camera-start]');if(start)start.textContent='Ouvrir la caméra';return;}
+  if(event.target.closest('[data-camera-record]')){if(videoCameraRecorder?.state==='recording')stopVideoRecording();else startVideoRecording();return;}
+  if(event.target.closest('[data-camera-close]')){if(videoCameraRecorder?.state==='recording'){stopVideoRecording();return;}stopVideoCamera();const status=$('#camera-status');if(status)status.textContent='Caméra inactive';const start=$('[data-camera-start]');if(start)start.textContent='Ouvrir la caméra';return;}
   const deleteMatch=event.target.closest('[data-delete-match]');
   if(deleteMatch){
     if(!confirm('Supprimer ce match de ton journal personnel ?'))return;
@@ -325,6 +324,8 @@ $('#page-content').addEventListener('submit',async event=>{
   if(videoForm){event.preventDefault();await submitVideoAnalysis(videoForm);return;}
   const reviewForm=event.target.closest('#video-review-form');
   if(reviewForm){event.preventDefault();await saveVideoReview(reviewForm);return;}
+  const videoValidationForm=event.target.closest('#video-validation-form');
+  if(videoValidationForm){event.preventDefault();await validateVideoAnalysis(videoValidationForm);return;}
   const followupForm=event.target.closest('.video-followup-form');
   if(followupForm){event.preventDefault();await saveVideoCorrectionFollowup(followupForm);return;}
   const coachObjectiveForm=event.target.closest('#coach-objective-form');
@@ -399,15 +400,19 @@ function filterPlayerCards(){
 }
 
 async function startVideoCamera(){
-  const preview=$('#video-camera-preview'),status=$('#camera-status'),record=$('[data-camera-record]');
-  if(!preview||!navigator.mediaDevices?.getUserMedia){toast('La caméra intégrée n’est pas disponible dans ce navigateur. Utilise l’import vidéo.','error');return;}
+  const form=$('#video-analysis-form'),panel=$('.camera-capture-panel'),preview=$('#video-camera-preview'),status=$('#camera-status'),record=$('[data-camera-record]');
+  if(!form||!preview||!navigator.mediaDevices?.getUserMedia){toast('La caméra intégrée n’est pas disponible dans ce navigateur. Utilise l’import vidéo.','error');return;}
+  if(!form.elements.player_id.value||!String(form.elements.title.value||'').trim()||!form.elements.video_theme.value){toast('Choisis le joueur, le titre et la thématique avant d’ouvrir la caméra.','error');return;}
+  if(!form.elements.consent.checked){toast('Confirme l’autorisation du joueur avant de filmer.','error');return;}
+  if(!window.MediaRecorder){toast('Enregistrement direct non pris en charge. Utilise l’import vidéo.','error');return;}
   try{
     stopVideoCamera();
     videoCameraStream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:60}}});
     preview.srcObject=videoCameraStream;preview.classList.add('is-active');await preview.play();
+    panel?.classList.add('is-fullscreen');document.body.classList.add('camera-fullscreen-open');
     const track=videoCameraStream.getVideoTracks()[0],settings=track.getSettings();
     if(status)status.textContent=(settings.width||'—')+' × '+(settings.height||'—')+' · caméra active';
-    if(record)record.disabled=false;
+    if(record){record.disabled=false;record.textContent='● Enregistrer';record.classList.remove('danger');record.classList.add('primary');}
     const start=$('[data-camera-start]');if(start)start.textContent='Caméra ouverte';
   }catch(error){stopVideoCamera();toast(error.message||'Accès caméra refusé ou indisponible.','error');}
 }
@@ -421,29 +426,34 @@ function startVideoRecording(){
     videoCameraRecorder=new MediaRecorder(videoCameraStream,{...(mimeType?{mimeType}:{}),videoBitsPerSecond:8000000});
     videoCameraRecorder.ondataavailable=event=>{if(event.data?.size)videoCameraChunks.push(event.data);};
     videoCameraRecorder.onstop=()=>{
-      const type=videoCameraRecorder.mimeType||mimeType||'video/webm';
+      const recorder=videoCameraRecorder,type=recorder?.mimeType||mimeType||'video/webm';
       const ext=type.includes('mp4')?'mp4':'webm';
       const file=new File(videoCameraChunks,'coach-in-capture.'+ext,{type});
       const input=$('#video-analysis-form input[name=video]');
-      if(input){const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));}
-      const status=$('#camera-status');if(status)status.textContent='Vidéo prête · '+(file.size/1048576).toFixed(1)+' Mo';
-      const hint=$('#camera-hint');if(hint)hint.textContent='Ta vidéo est prête. Vérifie le joueur et le consentement, puis lance l’analyse.';
-      const record=$('[data-camera-record]');if(record)record.disabled=false;
-      const stop=$('[data-camera-stop]');if(stop)stop.disabled=true;
+      if(input&&file.size){const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));}
       videoCameraChunks=[];
+      if(videoCameraStream){videoCameraStream.getTracks().forEach(track=>track.stop());videoCameraStream=null;}
+      const preview=$('#video-camera-preview');if(preview){preview.srcObject=null;preview.classList.remove('is-active');}
+      $('.camera-capture-panel')?.classList.remove('is-fullscreen');document.body.classList.remove('camera-fullscreen-open');
+      const status=$('#camera-status');if(status)status.textContent=file.size?'Vidéo prête · '+(file.size/1048576).toFixed(1)+' Mo · analyse automatique':'Aucun contenu vidéo enregistré';
+      const hint=$('#camera-hint');if(hint)hint.textContent=file.size?'La vidéo est envoyée automatiquement à l’analyse IA.':'La capture est vide. Recommence l’enregistrement.';
+      const record=$('[data-camera-record]');if(record){record.disabled=true;record.textContent='● Enregistrer';record.classList.remove('danger');record.classList.add('primary');}
+      if(!file.size){toast('La vidéo enregistrée est vide. Recommence.','error');return;}
+      const form=$('#video-analysis-form');if(form)void submitVideoAnalysis(form,{fromCamera:true});
     };
     videoCameraRecorder.start(1000);
-    $('[data-camera-record]').disabled=true;$('[data-camera-stop]').disabled=false;
+    const record=$('[data-camera-record]');if(record){record.disabled=false;record.textContent='■ Stop';record.classList.remove('primary');record.classList.add('danger');}
     const status=$('#camera-status');if(status)status.textContent='Enregistrement en cours…';
+    const hint=$('#camera-hint');if(hint)hint.textContent='Appuie sur Stop avec le même bouton pour terminer et lancer automatiquement l’analyse IA.';
   }catch(error){toast(error.message||'Impossible de démarrer l’enregistrement.','error');}
 }
-function stopVideoRecording(){
-  if(videoCameraRecorder?.state==='recording')videoCameraRecorder.stop();
-}
+function stopVideoRecording(){if(videoCameraRecorder?.state==='recording')videoCameraRecorder.stop();}
 function stopVideoCamera(){
-  if(videoCameraRecorder?.state==='recording')videoCameraRecorder.stop();
+  if(videoCameraRecorder?.state==='recording'){stopVideoRecording();return;}
   if(videoCameraStream){videoCameraStream.getTracks().forEach(track=>track.stop());videoCameraStream=null;}
   const preview=$('#video-camera-preview');if(preview){preview.srcObject=null;preview.classList.remove('is-active');}
+  $('.camera-capture-panel')?.classList.remove('is-fullscreen');document.body.classList.remove('camera-fullscreen-open');
+  const record=$('[data-camera-record]');if(record){record.disabled=true;record.textContent='● Enregistrer';record.classList.remove('danger');record.classList.add('primary');}
 }
 function initializeCourtCalibrationCanvases(){
   $$('[data-court-calibration]').forEach(canvas=>{
@@ -526,7 +536,7 @@ async function extractVideoFrames(file){
     return {duration,frames};
   }finally{URL.revokeObjectURL(objectUrl);video.removeAttribute('src');video.load();}
 }
-async function submitVideoAnalysis(form){
+async function submitVideoAnalysis(form,{fromCamera=false}={}){
   const button=form.querySelector('button[type=submit]'),file=form.elements.video.files?.[0];
   const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value,theme=String(form.elements.video_theme?.value||'').trim(),objectiveLabel=String(form.elements.video_objective?.value||'').trim(),selectedObjective=objectiveLabel?coachObjectives().find(goal=>goal.theme===theme&&goal.label===objectiveLabel):null,objective=selectedObjective?[selectedObjective.label+'. Intention pédagogique : '+selectedObjective.intent+'. Critères à observer : '+(selectedObjective.criteria||[]).join('; ')+'. Indicateur de réussite : '+selectedObjective.success]:'';
   if(!file||!title||!playerId){toast('Renseigne le joueur, le titre et la vidéo.','error');return;}
@@ -586,6 +596,37 @@ async function saveVideoReview(form){
   const id=form.elements.analysis_id.value,review=String(form.elements.coach_review.value||'').trim();
   try{const {error}=await supabase.from('coach_video_analyses').update({coach_review:review,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id);if(error)throw error;await dataService.loadCoachWorkspace(state.user.id);render('videos');toast('Commentaire coach enregistré.');}
   catch(error){toast(error.message||'Impossible d’enregistrer le commentaire.','error');}
+}
+
+async function validateVideoAnalysis(form){
+  const analysisId=form.elements.analysis_id.value;
+  const analysis=(state.videoAnalyses||[]).find(row=>row.id===analysisId);
+  if(!analysis||analysis.status!=='completed'){toast('Cette analyse n’est pas disponible pour validation.','error');return;}
+  if(analysis.analysis_result?.coach_validation?.evaluation_id){toast('Ce bilan a déjà été envoyé au joueur.','error');return;}
+  const button=form.querySelector('button[type="submit"]');
+  const scores={technical_score:null,tactical_score:null,physical_score:null,mental_score:null};
+  for(const key of Object.keys(scores)){
+    const raw=String(form.elements[key]?.value??'').trim();
+    if(raw!==''){const value=Number(raw);if(!Number.isFinite(value)||value<0||value>20){toast('Les notes doivent être comprises entre 0 et 20.','error');return;}scores[key]=value;}
+  }
+  if(Object.values(scores).every(value=>value===null)){toast('Renseigne au moins une note sur 20 avant de valider le bilan.','error');return;}
+  const comment=String(form.elements.player_visible_comment.value||'').trim();
+  if(!comment){toast('Ajoute une synthèse pour la fiche joueur.','error');return;}
+  if(button){button.disabled=true;button.textContent='Enregistrement du bilan…';}
+  try{
+    const evaluation=await progressionService.saveEvaluation({playerId:analysis.player_id,coachId:state.user.id,scores,selectedCriteria:[],playerVisibleComment:comment,notifyPlayer:false});
+    const result={...(analysis.analysis_result||{}),coach_validation:{evaluation_id:evaluation.id,validated_at:new Date().toISOString(),scores,player_visible_comment:comment}};
+    const {error:updateError}=await supabase.from('coach_video_analyses').update({coach_review:comment,shared_with_player:true,analysis_result:result,updated_at:new Date().toISOString()}).eq('id',analysisId).eq('coach_id',state.user.id);
+    if(updateError)throw updateError;
+    const {error:notificationError}=await supabase.rpc('notify_player_existing_evaluation',{p_evaluation_id:evaluation.id});
+    await dataService.loadCoachWorkspace(state.user.id);
+    render('videos');
+    if(notificationError)toast('Bilan enregistré et vidéo ajoutée à la fiche joueur, mais la notification n’a pas pu être envoyée.','error');
+    else toast('Bilan validé : évaluation enregistrée et vidéo ajoutée à la fiche joueur.');
+  }catch(error){
+    if(button){button.disabled=false;button.textContent='Valider et envoyer à la fiche joueur';}
+    toast(error.message||'Impossible de valider ce bilan.','error');
+  }
 }
 
 async function saveVideoCorrectionFollowup(form){
