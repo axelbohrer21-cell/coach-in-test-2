@@ -158,3 +158,16 @@ test('une génération sans critère reste valide et ne fabrique pas de priorit�
   assert.equal(session.phases.length,3);
   assert.match(session.evidence_label,/Aucune priorité fiable/i);
 });
+
+
+test('les 19 sous-thèmes du catalogue Coach In génèrent une séance complète', () => {
+  const taxonomy=[["Coup droit","Coup droit"],["Jeu de jambes/déplacements","Jeu de jambes et déplacements"],["Mental","Attitude en match"],["Mental","Combativité et engagement"],["Mental","Concentration"],["Mental","Confiance en soi"],["Mental","Gestion de la pression"],["Mental","Gestion des émotions"],["Physique","Physique"],["Retour de service","Retour sur deuxième balle"],["Retour de service","Retour sur première balle"],["Revers","Critères communs"],["Revers","Revers à deux mains"],["Revers","Revers à une main"],["Revers","Variations lift / balle à plat / slice"],["Service","Service"],["Tactique","Tactique"],["Volée","Volée de coup droit"],["Volée","Volée de revers"]];
+  for (const [main_theme,subtheme] of taxonomy) {
+    const criterion='Critère de contrôle spécifique';
+    const session=generateOriginalSession({theme:main_theme,selectedCriterion:{id:main_theme+'-'+subtheme,main_theme,subtheme,criterion},duration:90});
+    assert.equal(session.phases.length,3,main_theme+' / '+subtheme);
+    assert.equal(session.selected_criterion.subtheme,subtheme);
+    assert.ok(session.phases.every(phase=>phase.content&&phase.success_criteria));
+    assert.match(session.evidence_label,new RegExp(subtheme.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+  }
+});
