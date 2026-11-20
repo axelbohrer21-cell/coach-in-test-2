@@ -158,8 +158,8 @@ function criterionSpecificPlan(selectedCriterion, fallbackPlan, focus) {
   const first=sub.includes('premiere'),serve=first?'première balle':'deuxième balle';
   if(has('prise de balle','tardive','anticipation','réactivité'))drills=[
    ['Lecture et déclenchement sur '+serve,'Le serveur varie direction et longueur. Le relanceur réalise une reprise d’appuis au lancer puis déclenche la préparation dès la lecture de trajectoire.'],
-   ['Retour orienté compact sous vitesse','Recevoir 10 services de '+serve+' dans deux zones. Raccourcir la préparation et prendre la balle devant soi, sans chercher la vitesse.'],
-   ['Retour anticipé en point','Jouer des points sur '+serve+'. Le relanceur doit lire tôt la trajectoire et prendre une décision avant le rebond.']
+   ['Retour compact orienté sous vitesse','Recevoir 10 services de '+serve+' dans deux zones. Raccourcir la préparation et prendre la balle devant soi, sans chercher la vitesse.'],
+   ['Retour anticipé et premier échange','Jouer des points sur '+serve+'. Le relanceur doit lire tôt la trajectoire, orienter le retour puis préparer le premier échange.']
   ];
   else if(has('profondeur','court','centré','zone','direction','variation'))drills=[
    ['Retour sur cible profonde','Servir 10 '+serve+' ; viser une zone longue croisée puis une zone longue au centre, avec une trajectoire de sécurité.'],
