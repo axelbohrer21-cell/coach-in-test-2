@@ -324,7 +324,7 @@ $('#page-content').addEventListener('submit',async event=>{
   if(videoForm){event.preventDefault();await submitVideoAnalysis(videoForm);return;}
   const reviewForm=event.target.closest('#video-review-form');
   if(reviewForm){event.preventDefault();await saveVideoReview(reviewForm);return;}
-  const videoValidationForm=event.target.closest('#video-validation-form');
+  const videoValidationForm=event.target.closest('.video-validation-form');
   if(videoValidationForm){event.preventDefault();await validateVideoAnalysis(videoValidationForm);return;}
   const followupForm=event.target.closest('.video-followup-form');
   if(followupForm){event.preventDefault();await saveVideoCorrectionFollowup(followupForm);return;}
