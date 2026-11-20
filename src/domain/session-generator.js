@@ -1,131 +1,185 @@
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
 
 const normalize = value => String(value || '')
-  .toLocaleLowerCase('fr')
-  .normalize('NFD')
-  .replace(/[\\u0300-\\u036f]/g, '')
-  .replace(/[^a-z0-9 ]/g, ' ')
-  .replace(/\\s+/g, ' ')
-  .trim();
+  .toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 
-const THEME_TERMS = [
-  { key: 'service', terms: ['service', 'mise en jeu', 'premiere balle', 'deuxieme balle', 'slice'] },
-  { key: 'retour', terms: ['retour', 'return', 'relance', 'retourne'] },
-  { key: 'volley', terms: ['volee', 'volley', 'filet', 'montee'] },
-  { key: 'attaque', terms: ['attaque', 'agressivite', 'decalage', 'balle favorable'] },
-  { key: 'defense', terms: ['defense', 'defensif', 'couverture', 'lateral', 'lateraux'] },
-  { key: 'construction', terms: ['construction', 'regularite', 'longueur', 'faire bouger', 'fond de court', 'cd', 'revers', 'avant arriere'] },
-  { key: 'double', terms: ['double', 'jeu en double'] },
-];
-
-function requestedTerms(value) {
+function classifyFocus(value) {
   const text = normalize(value);
-  const matched = THEME_TERMS.filter(group => group.terms.some(term => text.includes(normalize(term))));
-  return [...new Set(matched.flatMap(group => group.terms.filter(term => text.includes(normalize(term)) || group.terms.length === 1)))];
+  const has = (...terms) => terms.some(term => text.includes(normalize(term)));
+  if (has('service','mise en jeu','lancer','premiere balle','deuxieme balle','slice au service')) return 'service';
+  if (has('retour','relance')) return 'retour';
+  if (has('volee','volley','filet','smash','smatch')) return 'volley';
+  if (has('revers','backhand')) return 'revers';
+  if (has('coup droit','cd','forehand')) return 'coup-droit';
+  if (has('defense','defensif','couverture')) return 'defense';
+  if (has('attaque','agressivite','balle favorable','decalage')) return 'attaque';
+  if (has('rapidite','coordination','endurance','deplacement','appuis','physique')) return 'physique';
+  if (has('mental','attitude','concentration','engagement','confiance')) return 'mental';
+  if (has('tactique','construction','longueur','variation','adversaire','point')) return 'construction';
+  return 'construction';
 }
 
-function chooseSourceWeek({ theme, selectedObjective, customObjective, priority, recentSessions }) {
-  const candidates = [customObjective, selectedObjective?.label, selectedObjective?.theme, theme, priority?.main_theme, priority?.criterion]
-    .map(value => String(value || '').trim()).filter(Boolean);
-  const recentWeeks = new Set((recentSessions || []).slice(0, 3).map(session => Number(session.source_week)).filter(Boolean));
-  const sourceWeeks = (groupProgram.weeks || []).filter(week => (week.courts || []).some(content => String(content || '').trim()));
-
-  for (const request of candidates) {
-    const text = normalize(request);
-    const groups = THEME_TERMS.filter(group => group.terms.some(term => text.includes(normalize(term))));
-    const terms = [...new Set(groups.flatMap(group => group.terms))];
-    if (!terms.length) continue;
-    const ranked = sourceWeeks.map(week => {
-      const label = normalize(String(week.theme || '').replace(/^semaine\\s+\\d+\\s*:?\\s*/, ''));
-      const score = terms.reduce((total, term) => total + (label.includes(normalize(term)) ? (normalize(term).length > 4 ? 3 : 1) : 0), 0);
-      return { week, score, recentlyUsed: recentWeeks.has(Number(week.week)) };
-    })
-      .filter(item => item.score > 0)
-      .sort((a, b) => b.score - a.score || Number(a.recentlyUsed) - Number(b.recentlyUsed) || Number(a.week.week) - Number(b.week.week));
-    if (ranked[0]) return ranked[0].week;
+const DRILLS = {
+  'coup-droit': {
+    label:'Coup droit', objective:'Stabiliser le coup droit puis choisir la bonne zone selon la profondeur de balle.',
+    drills:[
+      ['Cible alternée et replacement','Deux zones sont matérialisées dans la diagonale et dans le long de ligne. Le coach distribue 10 balles alternant balle neutre et balle plus courte. Le joueur annonce sa cible, frappe, puis revient derrière un repère central avant la balle suivante.','Réussir 6 cibles sur 10 sans perdre le replacement.'],
+      ['Balle courte : avancer ou temporiser','Le coach alterne une balle longue et une balle courte sans annoncer laquelle. Sur la balle longue, le joueur construit haut et profond ; sur la courte, il avance et joue dans une zone offensive. Après chaque frappe, il doit se replacer pour jouer la balle suivante.','Faire le bon choix sur 7 balles sur 10.'],
+      ['Construire puis ouvrir le court','Échange croisé coup droit. Après deux frappes profondes dans une zone cible, le joueur peut ouvrir le court en long de ligne ou court croisé. Le point continue librement après l’ouverture.','Créer une ouverture cohérente dans 5 points sur 8.']
+    ]
+  },
+  revers: {
+    label:'Revers', objective:'Améliorer la qualité du revers selon le timing de prise de balle et la zone visée.',
+    drills:[
+      ['Prise de balle tôt sur repère','Placer un repère de rebond dans la diagonale revers. Le coach envoie des balles régulières ; le joueur doit prendre la balle devant lui, avant qu’elle ne redescende, puis retrouver sa position de replacement.','Prendre la balle tôt et viser la zone longue sur 6 balles sur 10.'],
+      ['Revers en déplacement et retour au centre','Départ sur une pastille centrale. Le coach distribue alternativement revers proche du corps et revers écarté. Après chaque frappe, le joueur contourne un plot de replacement avant la suivante.','Garder une préparation équilibrée et atteindre la cible sur 6 balles sur 10.'],
+      ['Diagonale revers avec décision','Les deux joueurs échangent en diagonale revers. Une balle courte autorise l’attaque long de ligne ; une balle profonde impose de poursuivre la construction croisée. Le point se joue jusqu’au bout.','Choisir la bonne réponse sur 7 situations sur 10.']
+    ]
+  },
+  service: {
+    label:'Service', objective:'Fiabiliser la mise en jeu et construire la première frappe après le service.',
+    drills:[
+      ['Lancer et zone annoncée','Délimiter trois cibles dans le carré. Le serveur annonce sa cible avant le lancer, réalise sa routine complète et sert. Recommencer en alternant côté égalité et avantage.','Atteindre la zone annoncée sur 6 services sur 10, sans précipiter le lancer.'],
+      ['Service + première frappe','Le serveur annonce une zone. Le relanceur retourne dans une zone connue ; le serveur doit jouer la première frappe dans l’espace libéré, puis le point devient libre.','Construire une première frappe cohérente sur 6 points sur 10.'],
+      ['Jeu sous pression au service','Chaque joueur dispose de deux premières balles et d’une seconde balle par point. Une cible touchée donne un bonus uniquement si le joueur gagne ensuite l’échange.','Garder une intention claire et limiter les doubles fautes sur 8 points.']
+    ]
+  },
+  retour: {
+    label:'Retour', objective:'Lire la mise en jeu et orienter le retour avec une intention adaptée à la première ou à la seconde balle.',
+    drills:[
+      ['Lecture de la mise en jeu','Le serveur alterne première balle appuyée et seconde balle plus lente. Le relanceur annonce « première » ou « seconde » avant le rebond, puis joue vers une cible longue croisée ou au centre.','Identifier correctement 8 services sur 10 et viser 6 retours sur 10.'],
+      ['Retour et replacement','Le relanceur démarre derrière sa ligne. Après le retour, il doit retrouver une position de jeu avant la frappe suivante du serveur. Le serveur joue ensuite librement.','Remettre le retour en jeu et se replacer sur 7 points sur 10.'],
+      ['Point avec intention de retour','Le serveur choisit librement sa zone. Le relanceur marque un bonus si son retour neutralise la première attaque ou met le serveur en déplacement.','Obtenir une réponse tactique utile sur 5 points sur 8.']
+    ]
+  },
+  volley: {
+    label:'Jeu au filet', objective:'Rendre la volée plus stable et mieux choisir la zone de finition.',
+    drills:[
+      ['Volée de bloc dans les pieds','Le joueur part à la ligne de service. Le coach envoie une balle basse dans les pieds ; le joueur avance, bloque la volée devant lui et vise une zone profonde au centre.','Contrôler 6 volées sur 10 sans grand geste arrière.'],
+      ['Approche puis volée de finition','Le coach envoie une balle d’approche. Le joueur choisit une direction sûre, avance vers le filet et joue une volée de finition dans la zone opposée à l’adversaire.','Enchaîner approche et finition dans 5 séquences sur 8.'],
+      ['Volée avec lecture du passing','Un adversaire en fond de court choisit passing croisé ou long de ligne. Le volleyeur part d’une position centrale et doit lire l’orientation de la frappe pour fermer le bon angle.','Faire le bon premier déplacement sur 6 points sur 10.']
+    ]
+  },
+  defense: {
+    label:'Défense', objective:'Se réorganiser après le déplacement et remettre une balle qui permet de reprendre le point.',
+    drills:[
+      ['Défendre puis retrouver le centre','Le coach alterne balle large à droite et à gauche. Après chaque défense, le joueur repasse par une pastille centrale avant la distribution suivante.','Remettre 7 balles sur 10 dans une zone haute et profonde.'],
+      ['Défense vers neutralisation','Le coach attaque une balle sur le côté. Le joueur doit défendre haut et croisé dans une grande zone de sécurité, puis reprendre progressivement sa position.','Neutraliser 6 attaques sur 10 sans chercher le gagnant.'],
+      ['Point avec départ déséquilibré','Le défenseur commence décalé dans un couloir. Le partenaire engage dans l’espace opposé ; le point se joue librement et le défenseur cherche d’abord à se rééquilibrer.','Prolonger l’échange ou reprendre l’initiative sur 5 points sur 8.']
+    ]
+  },
+  attaque: {
+    label:'Attaque', objective:'Reconnaître la balle favorable et choisir une attaque qui ouvre le terrain.',
+    drills:[
+      ['Repérage de balle favorable','Le coach alterne balles longues et balles courtes. Une balle qui rebondit dans la zone courte déclenche l’attaque ; une balle profonde impose de construire.','Déclencher l’attaque uniquement sur 7 bonnes lectures sur 10.'],
+      ['Décalage et choix de direction','Le coach joue sur le revers. Le joueur se décale autour d’un plot et choisit long de ligne ou court croisé selon la hauteur et la profondeur de la balle.','Choisir la direction adaptée sur 6 balles sur 10.'],
+      ['Attaque et transition vers l’avant','Sur balle favorable, le joueur attaque dans une zone puis monte. Le point continue avec deux volées maximum pour finir ; si la balle n’est pas favorable, il doit reconstruire.','Prendre la bonne décision attaque/attente sur 6 points sur 10.']
+    ]
+  },
+  physique: {
+    label:'Déplacements et coordination', objective:'Améliorer la qualité des appuis et la capacité à se replacer entre deux frappes.',
+    drills:[
+      ['Appuis déclenchés par la trajectoire','Le joueur démarre sur une pastille. Le coach annonce ou montre une direction au départ de la frappe ; le joueur réalise le premier pas, ajuste ses appuis et frappe une balle contrôlée.','Déclencher le premier pas sans retard sur 8 départs sur 10.'],
+      ['Frappe et replacement avec atelier court','Après chaque frappe, le joueur contourne un plot puis revient sur sa pastille. Alterner séries de 4 balles côté coup droit et revers, avec récupération courte entre les séries.','Garder un replacement équilibré sur 3 séries consécutives.'],
+      ['Déplacement en situation de point','Le point commence par une distribution aléatoire droite/gauche. Le joueur doit se replacer après chaque frappe ; le point reste libre et le coach observe la qualité des appuis sous fatigue.','Conserver la qualité des appuis sur 6 échanges sur 8.']
+    ]
+  },
+  mental: {
+    label:'Engagement et routines', objective:'Installer une routine simple pour rester engagé et retrouver une intention après une erreur.',
+    drills:[
+      ['Routine entre deux points','Jouer des séquences courtes. Après chaque point, le joueur s’éloigne, respire, annonce une intention simple et revient prêt pour le point suivant.','Appliquer la routine sur 8 points sur 10.'],
+      ['Rebond après erreur','Le joueur démarre chaque série à 0. Après une faute directe, il doit appliquer sa routine et jouer le point suivant avec une intention tactique annoncée.','Garder une intention claire après une erreur sur 6 situations sur 8.'],
+      ['Score sous pression','Jouer des points en commençant à 30-30. Le joueur doit annoncer son intention avant le point et évaluer ensuite s’il l’a respectée, quel que soit le résultat.','Respecter son intention sur 6 points sur 10.']
+    ]
+  },
+  construction: {
+    label:'Construction du point', objective:'Construire l’échange avec de la longueur, de la variation et une lecture de la position adverse.',
+    drills:[
+      ['Profondeur avant variation','Délimiter une zone longue à droite et à gauche. Le joueur doit atteindre deux fois la zone profonde avant de pouvoir varier la direction.','Atteindre la zone profonde deux fois avant la variation sur 6 séquences sur 10.'],
+      ['Faire bouger puis jouer dans l’espace libre','Échange coopératif : alterner droite et gauche pour déplacer le partenaire. Dès qu’il est en retard ou qu’une balle courte apparaît, le joueur choisit la zone libre.','Créer une ouverture sans précipiter la frappe sur 5 échanges sur 8.'],
+      ['Point à contrat de construction','Le point commence en diagonale. Un bonus est accordé si le joueur construit avec deux balles profondes avant de changer de direction ou d’avancer sur une balle courte.','Respecter le contrat dans 6 points sur 10.']
+    ]
   }
-  return null;
+};
+
+function sourceWeekFor(focus, recentSessions = []) {
+  const terms = {
+    'coup-droit':['attaque cd','construction cd','cd'],
+    revers:['construction revers','revers'],
+    service:['service'],
+    retour:['retour','service / retour'],
+    volley:['volee','jeu au filet','volley'],
+    defense:['defense'],
+    attaque:['attaque'],
+    physique:['defense couverture','deplacement'],
+    mental:['match'],
+    construction:['construction','faire bouger','longueur']
+  }[focus] || [];
+  const recent = new Set(recentSessions.slice(0,3).map(row => Number(row.source_week)).filter(Boolean));
+  const ranked = (groupProgram.weeks || []).filter(week => (week.courts || []).some(Boolean)).map(week => {
+    const label = normalize(week.theme);
+    const score = terms.reduce((sum, term) => sum + (label.includes(normalize(term)) ? (term.length > 5 ? 3 : 1) : 0), 0);
+    return { week, score, recent: recent.has(Number(week.week)) };
+  }).filter(row => row.score > 0).sort((a,b) => b.score-a.score || Number(a.recent)-Number(b.recent) || a.week.week-b.week.week);
+  return ranked[0]?.week || null;
 }
 
-function distributeMinutes(total, count) {
-  const base = Math.floor(total / count);
-  const remainder = total - base * count;
-  return Array.from({ length: count }, (_, index) => base + (index < remainder ? 1 : 0));
+function distributeMinutes(total) {
+  const ratios = [0.3,0.35,0.35];
+  const first = Math.round(total*ratios[0]);
+  const second = Math.round(total*ratios[1]);
+  return [first,second,total-first-second];
 }
 
-/**
- * The collective course workbook is the only exercise source for generated sessions.
- * Court instructions are kept verbatim; this function only structures and times them.
- */
 export function generateOriginalSession({
-  theme = 'construction',
-  selectedObjective = null,
-  customObjective = '',
-  playerName = 'le joueur',
-  level = 'Intermédiaire',
-  difficulty = 'progressive',
-  priorAdjustment = null,
-  age = null,
-  playerType = 'Loisir',
-  duration = 90,
-  priority = null,
-  challenge = null,
-  recentSessions = [],
-  customExercises = []
+  theme = 'construction', selectedObjective = null, customObjective = '',
+  playerName = 'le joueur', level = 'Intermédiaire', difficulty = 'progressive',
+  priorAdjustment = null, age = null, playerType = 'Loisir', duration = 90,
+  priority = null, challenge = null, recentSessions = [], customExercises = []
 } = {}) {
-  const minutes = [60, 90, 120].includes(Number(duration)) ? Number(duration) : 90;
-  const sourceWeek = chooseSourceWeek({ theme, selectedObjective, customObjective, priority, recentSessions });
-  const sourceTheme = sourceWeek
-    ? String(sourceWeek.theme || '').replace(/^SEMAINE\\s+\\d+\\s*:\\s*/i, '').trim()
-    : String(selectedObjective?.theme || theme || 'Programme collectif');
-
-  const courts = (sourceWeek?.courts || [])
-    .map((instruction, index) => ({ instruction: String(instruction || '').trim(), court: index + 1 }))
-    .filter(item => item.instruction);
-  const allocations = distributeMinutes(minutes, courts.length || 1);
-  const phases = courts.map((item, index) => ({
-    name: 'Terrain ' + item.court,
+  const minutes = [60,90,120].includes(Number(duration)) ? Number(duration) : 90;
+  const explicitFocus = [customObjective, selectedObjective?.label, selectedObjective?.theme, theme].filter(Boolean).join(' ');
+  const evidenceFocus = [priority?.criterion, priority?.subtheme, priority?.main_theme].filter(Boolean).join(' ');
+  const focus = classifyFocus(priority?.criterion ? evidenceFocus : explicitFocus || evidenceFocus);
+  const plan = DRILLS[focus] || DRILLS.construction;
+  const sourceWeek = sourceWeekFor(focus, recentSessions);
+  const allocations = distributeMinutes(minutes);
+  const phases = plan.drills.map((drill,index) => ({
+    name: ['Situation de contrôle','Situation avec déplacement ou lecture','Transfert en points'][index],
     minutes: allocations[index],
-    objective: sourceTheme,
-    content: item.instruction,
-    source_week: Number(sourceWeek.week)
+    objective: plan.objective,
+    content: drill[0] + '\n' + drill[1] + '\nCritère de réussite : ' + drill[2],
+    success_criteria: drill[2],
+    origin: 'Situation créée par Coach In à partir du référentiel de critères et des objectifs pédagogiques.'
   }));
-
   const sourceLabel = sourceWeek
-    ? 'Source : Cours de l’année.xlsx · Semaine ' + sourceWeek.week + ' · ' + sourceTheme
-    : 'Aucun atelier correspondant à ce thème dans le programme collectif fourni.';
-  const exerciseText = phases.map(phase =>
-    phase.name.toUpperCase() + ' · ' + phase.minutes + ' min\\n' + phase.content
-  );
+    ? 'Inspiration complémentaire : Cours de l’année.xlsx · Semaine ' + sourceWeek.week + ' · ' + String(sourceWeek.theme).replace(/^SEMAINE\s+\d+\s*:\s*/i,'')
+    : 'Aucune semaine source directement comparable ; situations construites à partir du critère et du référentiel pédagogique.';
+  const evidenceLabel = priority?.criterion
+    ? 'Critère récurrent observé : ' + priority.criterion + ' (' + priority.occurrences + ' des 3 derniers bilans).'
+    : 'Aucune priorité fiable confirmée : séance de diagnostic et d’observation, sans prétendre cibler une difficulté récurrente.';
   const coachingNotes = [
     'Joueur : ' + playerName + ' · Profil : ' + playerType + ' · Niveau : ' + level,
+    evidenceLabel,
+    'Objectif : ' + plan.objective,
     sourceLabel,
-    'Les consignes des terrains sont reprises du programme collectif sans ajout ni remplacement.'
-  ].join('\\n');
-
+    'Les situations sont des propositions originales ; le coach ajuste distance, vitesse et difficulté au niveau réel du joueur.'
+  ].join('\n');
   return {
-    generated: true,
-    generation_mode: 'original',
-    theme: sourceTheme,
-    focus: sourceTheme,
-    objective_criteria: [],
-    duration_minutes: minutes,
-    objective: sourceWeek ? 'Thème de la semaine : ' + sourceTheme : sourceLabel,
-    coaching_notes: coachingNotes,
-    exercise_1: exerciseText.slice(0, 2).join('\\n\\n'),
-    exercise_2: exerciseText.slice(2).join('\\n\\n'),
-    player_visible_summary: sourceWeek
-      ? 'Séance construite à partir de la semaine ' + sourceWeek.week + ' du programme collectif.'
-      : sourceLabel,
-    success_criteria: 'Respecter la consigne exacte de chaque atelier et observer son application dans le jeu.',
-    adaptation: 'Contenu issu du programme collectif',
-    difficulty: difficulty === 'hard' ? 'Exigeant' : difficulty === 'easy' ? 'Accessible' : 'Progressif',
-    difficulty_rule: 'Adapter uniquement le rythme et les distances au niveau du joueur, sans modifier la consigne pédagogique source.',
-    progression: priorAdjustment || null,
-    phases,
-    exercise_count: phases.length,
-    coach_feed_count: 0,
-    source_week: sourceWeek ? Number(sourceWeek.week) : null,
-    source_file: 'Cours de l’année.xlsx'
+    generated:true, generation_mode:'original', theme:plan.label, focus:plan.label,
+    objective_criteria:priority?.criterion ? [priority.criterion] : (selectedObjective?.criteria || []),
+    duration_minutes:minutes, objective:plan.objective, coaching_notes:coachingNotes,
+    exercise_1:phases.slice(0,2).map((phase,index)=>'SITUATION '+(index+1)+' · '+phase.minutes+' min\n'+phase.content).join('\n\n'),
+    exercise_2:'TRANSFERT EN POINTS · '+phases[2].minutes+' min\n'+phases[2].content,
+    player_visible_summary:plan.objective+' Les situations évoluent du contrôle vers le jeu à thème.',
+    success_criteria:phases.map(phase=>phase.success_criteria).join(' '),
+    adaptation:'Situations originales reliées au critère de progression et aux thèmes du programme collectif.',
+    difficulty:difficulty==='hard'?'Exigeant':difficulty==='easy'?'Accessible':'Progressif',
+    difficulty_rule:'Faire varier une seule difficulté à la fois : distance, vitesse, zone ou pression du score.',
+    progression:priorAdjustment || null, phases, exercise_count:phases.length,
+    coach_feed_count:0, source_week:sourceWeek ? Number(sourceWeek.week) : null,
+    source_file:sourceWeek ? 'Cours de l’année.xlsx' : null,
+    source_label:sourceLabel, evidence_label:evidenceLabel, generated_exercises:true
   };
 }
