@@ -10,12 +10,16 @@ const evaluations = [
   { id: 'e0', player_id: 'p1', evaluated_at: '2026-10-20', technical_score: 10, tactical_score: 10 }
 ];
 
-test('détecte un point à travailler répété sur plusieurs bilans récents', () => {
+test('confirme un point à travailler seulement après trois bilans distincts', () => {
   const criteria = ['e3', 'e2'].map(evaluation_id => ({ evaluation_id, player_id: 'p1', criterion_id: 'c1', criterion: 'Revers en défense', criterion_type: 'improvement' }));
   const result = analyzePlayerProgress({ player, evaluations, evaluationCriteria: criteria, now: Date.parse('2026-11-17T12:00:00') });
   assert.equal(result.priority.criterion, 'Revers en défense');
+  assert.equal(result.criteriaConfidence, 'recurrent');
   assert.equal(result.status, 'Axe de progression identifié');
   assert.equal(result.trends.find(row => row.label === 'Technique').delta, null);
+  const insufficient = analyzePlayerProgress({ player, evaluations: evaluations.slice(0,2), evaluationCriteria: criteria, now: Date.parse('2026-11-17T12:00:00') });
+  assert.equal(insufficient.priority, null);
+  assert.equal(insufficient.criteriaConfidence, 'insufficient');
 });
 
 test('ne compare pas les tendances sans historique précédent suffisant', () => {
