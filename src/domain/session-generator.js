@@ -214,6 +214,38 @@ function criterionSpecificPlan(selectedCriterion, fallbackPlan, focus) {
    ['Déplacement et frappe équilibrée','Alterner les directions et les distances. Ajuster les appuis avant de frapper dans une zone large.'],
    ['Déplacement en point','Démarrer avec une distribution aléatoire et appliquer le critère sur les trois premières frappes.']
   ];
+ }else if(theme.includes('smash')){
+ drills=has('placement','deplacement','appuis','trajectoire')?[
+  ['Lecture du lob et premier déplacement','Le coach envoie des lobs de hauteurs et profondeurs variées. Lire la trajectoire, pivoter et démarrer en pas croisés pour se placer derrière la balle.'],
+  ['Ajustement et smash sur cible','Après le déplacement, ajuster en petits pas, frapper le smash au-dessus et légèrement devant soi vers une cible profonde ou croisée.'],
+  ['Lob aléatoire puis point','Le coach choisit entre lob et balle courte. Le joueur doit identifier le lob, se placer et finir au smash ; le point continue après la frappe.']
+ ]:has('direction','zone','controle')?[
+  ['Smash dans une grande zone','Depuis une position stable, jouer 10 smashs vers une grande cible annoncée avant l’envoi du lob.'],
+  ['Smash avec choix de zone','Le coach varie les lobs. Le joueur annonce la zone libre après avoir lu la position adverse puis dirige son smash.'],
+  ['Smash en situation de point','Le point commence par un lob défensif. Le joueur se place et choisit une zone de finition adaptée, puis termine le point.']
+ ]:[
+  ['Coordination lancer-frappe du smash','Sans opposition, répéter le déplacement sous le lob et le geste de frappe avec une balle facile, en gardant le contact haut et devant.'],
+  ['Smash après déplacement','Alterner lobs courts et profonds. Se déplacer, ajuster les appuis puis frapper en équilibre.'],
+  ['Smash et replacement','Après chaque smash, retrouver une position de couverture et jouer la balle suivante si elle revient.']
+ ];
+ }else if(theme.includes('tactique')){
+  drills=has('espace','angle','adversaire','zone libre')?[
+   ['Fixer puis ouvrir','Jouer deux balles profondes dans une zone pour fixer l’adversaire, puis jouer dans l’espace opposé. Le coach observe le déplacement réellement créé.'],
+   ['Lecture de l’espace libéré','Le coach ou partenaire se déplace après chaque frappe. Le joueur doit lire sa position avant de choisir la zone suivante.'],
+   ['Points à contrat : déplacer','Jouer 8 points. Bonus si le joueur déplace l’adversaire avant d’exploiter l’espace libéré, sans tenter le gagnant trop tôt.']
+  ]:has('longueur','profondeur')?[
+   ['Construire par la profondeur','Échanger en diagonale avec une cible derrière la ligne de service. Chercher deux balles profondes avant toute variation.'],
+   ['Profondeur puis changement','Après deux balles profondes, le coach envoie une balle plus courte. Le joueur avance et change de direction avec marge.'],
+   ['Points à contrat : longueur','Bonus si le joueur repousse l’adversaire par la longueur avant de changer de zone au bon moment.']
+  ]:has('initiative','decision','choix','risque','adaptation')?[
+   ['Lecture de la qualité de balle','Le coach alterne balle profonde rapide, balle neutre et balle courte. Le joueur annonce défendre, construire ou attaquer avant de jouer.'],
+   ['Décision avec adversaire mobile','Le partenaire varie sa position. Le joueur choisit la zone selon la qualité de balle et l’espace réellement disponible.'],
+   ['Points scénarisés','Jouer des points avec score ou situation de départ imposés. Le joueur verbalise son intention puis applique le choix tactique adapté.']
+  ]:[
+   ['Construction à deux intentions','Construire un point avec une première frappe de préparation puis une seconde frappe destinée à déplacer ou prendre l’initiative.'],
+   ['Choix selon la position adverse','Le partenaire alterne position centrée et décalée. Le joueur choisit une zone cohérente et justifie son choix.'],
+   ['Points à thème tactique','Jouer 8 points avec bonus si le critère tactique sélectionné est respecté au bon moment.']
+  ];
  }else if(theme.includes('mental'))drills=[
   ['Routine entre les points','Jouer cinq points. Entre chaque point, appliquer une routine courte puis annoncer une intention simple.'],
   ['Réaction après erreur','Après une faute, se recentrer et jouer le point suivant avec un objectif annoncé.'],
