@@ -1475,3 +1475,13 @@ button,a,input,select,textarea{touch-action:manipulation}
 .camera-actions{display:flex;gap:8px;flex-wrap:wrap}
 .camera-actions .btn{flex:1;min-width:110px}
 @media(max-width:520px){.camera-actions .btn{font-size:11px;padding:10px 8px}.camera-preview{max-height:300px}}
+
+
+/* Analyse vidéo : repères de pose et annotations articulaires */
+.video-pose-panel{margin:16px 0;padding:14px;border:1px solid rgba(66,232,189,.35);border-radius:14px;background:rgba(10,38,49,.45)}
+.video-pose-overlay{display:block;width:100%;max-height:520px;object-fit:contain;margin:12px auto;border-radius:10px;background:#06121d}
+.video-pose-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.video-pose-metrics span{display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:9px;background:rgba(255,255,255,.045);text-align:center}
+.video-pose-metrics b{font-size:18px;color:#8cf1d5;font-variant-numeric:tabular-nums}
+.video-pose-metrics small{font-size:10px;color:var(--muted)}
+@media(max-width:520px){.video-pose-panel{padding:10px}.video-pose-metrics{gap:5px}.video-pose-metrics span{padding:8px 4px}.video-pose-metrics b{font-size:15px}}
