@@ -376,17 +376,21 @@ function sessionsPage(isCoach) {
 
 function radarChart(report){
   if(!report)return '<p class="tiny muted">Le radar apparaîtra après le premier bilan.</p>';
-  const {axes,center,radius}=radarPoints(report,260);
+  const {axes,center,radius}=radarPoints(report,360);
   const angle=i=>-Math.PI/2+i*Math.PI/2;
+  const colors=['#43d4f2','#a78bfa','#66e0ad','#ffb36e'];
   const pointFor=(value,i)=>{const d=value===null||value===undefined||value===''?0:Math.max(0,Math.min(20,Number(value)))/20*radius;return {x:center+Math.cos(angle(i))*d,y:center+Math.sin(angle(i))*d};};
+  const outer=axes.map((_,i)=>({x:center+Math.cos(angle(i))*radius,y:center+Math.sin(angle(i))*radius}));
+  const sectors=axes.map((_,i)=>`<polygon class="radar-sector" fill="${colors[i]}" points="${center},${center} ${outer[i].x},${outer[i].y} ${outer[(i+1)%4].x},${outer[(i+1)%4].y}"/>`).join('');
   const rings=[.2,.4,.6,.8,1].map((f,level)=>{const pts=Array.from({length:4},(_,i)=>`${center+Math.cos(angle(i))*radius*f},${center+Math.sin(angle(i))*radius*f}`).join(' ');return `<polygon class="radar-grid radar-grid-${level+1}" points="${pts}"/>`;}).join('');
-  const spokes=axes.map((_,i)=>`<line class="radar-spoke" x1="${center}" y1="${center}" x2="${center+Math.cos(angle(i))*radius}" y2="${center+Math.sin(angle(i))*radius}"/>`).join('');
+  const spokes=axes.map((_,i)=>`<line class="radar-spoke radar-spoke-domain" stroke="${colors[i]}" x1="${center}" y1="${center}" x2="${outer[i].x}" y2="${outer[i].y}"/>`).join('');
   const complete=axes.every(([,value])=>value!==null&&value!==undefined&&value!=='');
   const polygon=complete?axes.map(([,value],i)=>{const p=pointFor(value,i);return `${p.x},${p.y}`;}).join(' '):'';
-  const points=axes.map(([,value],i)=>{if(value===null||value===undefined||value==='')return '';const p=pointFor(value,i);return `<circle class="radar-point" cx="${p.x}" cy="${p.y}" r="4.5"/>`;}).join('');
-  const labels=axes.map(([label],i)=>{const p={x:center+Math.cos(angle(i))*(radius+25),y:center+Math.sin(angle(i))*(radius+25)};const anchor=i===1?'start':i===3?'end':'middle';return `<text class="radar-label" text-anchor="${anchor}" x="${p.x}" y="${p.y+4}">${label}</text>`;}).join('');
-  const val=axes.map(([label,value],i)=>`<span class="radar-value-card radar-value-${i}"><i></i><b>${label}</b><strong>${value===null||value===undefined||value===''?'—':`${value}<small>/20</small>`}</strong></span>`).join('');
-  return `<div class="radar-wrap radar-premium"><svg viewBox="0 0 260 260" role="img" aria-label="Toile d'araignée des quatre compétences"><defs><linearGradient id="reportRadarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#51e0f2" stop-opacity=".7"/><stop offset="100%" stop-color="#9b82ff" stop-opacity=".26"/></linearGradient></defs>${rings}${spokes}${complete?`<polygon class="radar-area" fill="url(#reportRadarFill)" points="${polygon}"/>`:''}${points}${labels}<circle class="radar-center" cx="${center}" cy="${center}" r="3.5"/></svg><div class="radar-values">${val}</div></div>${complete?'':'<p class="tiny muted radar-note">La toile se complète au fur et à mesure des secteurs évalués.</p>'}`;
+  const segments=complete?axes.map(([,value],i)=>{const p1=pointFor(value,i),p2=pointFor(axes[(i+1)%4][1],(i+1)%4);return `<line class="radar-color-segment" stroke="${colors[i]}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}"/>`;}).join(''):'';
+  const points=axes.map(([,value],i)=>{if(value===null||value===undefined||value==='')return '';const p=pointFor(value,i);return `<circle class="radar-point radar-domain-point" fill="${colors[i]}" cx="${p.x}" cy="${p.y}" r="7"/>`;}).join('');
+  const labels=axes.map(([label],i)=>{const p={x:center+Math.cos(angle(i))*(radius+27),y:center+Math.sin(angle(i))*(radius+27)};const anchor=i===1?'start':i===3?'end':'middle';return `<text class="radar-label radar-domain-label" fill="${colors[i]}" text-anchor="${anchor}" x="${p.x}" y="${p.y+5}">${label}</text>`;}).join('');
+  const val=axes.map(([label,value],i)=>`<span class="radar-value-card radar-value-${i}" style="--radar-domain-color:${colors[i]}"><i></i><b>${label}</b><strong>${value===null||value===undefined||value===''?'—':`${value}<small>/20</small>`}</strong></span>`).join('');
+  return `<div class="radar-wrap radar-premium radar-colorful"><svg viewBox="0 0 360 360" role="img" aria-label="Toile d'araignée colorée des quatre compétences"><defs><linearGradient id="reportRadarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#43d4f2" stop-opacity=".48"/><stop offset="35%" stop-color="#a78bfa" stop-opacity=".36"/><stop offset="70%" stop-color="#66e0ad" stop-opacity=".34"/><stop offset="100%" stop-color="#ffb36e" stop-opacity=".42"/></linearGradient></defs>${sectors}${rings}${spokes}${complete?`<polygon class="radar-area" fill="url(#reportRadarFill)" points="${polygon}"/>`:''}${segments}${points}${labels}<circle class="radar-center" cx="${center}" cy="${center}" r="5"/></svg><div class="radar-values">${val}</div></div>${complete?'':'<p class="tiny muted radar-note">La toile se complète au fur et à mesure des secteurs évalués.</p>'}`;
 }
 
 function reportsPage(isCoach) {
