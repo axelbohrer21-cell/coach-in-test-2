@@ -125,6 +125,105 @@ function sourceWeekFor(focus, recentSessions = []) {
   return ranked[0]?.week || null;
 }
 
+
+function criterionSpecificPlan(selectedCriterion, fallbackPlan, focus) {
+ if(!selectedCriterion?.criterion)return fallbackPlan;
+ const criterion=String(selectedCriterion.criterion),theme=normalize(selectedCriterion.main_theme||''),sub=normalize(selectedCriterion.subtheme||''),key=normalize(criterion);
+ const has=(...words)=>words.some(word=>key.includes(normalize(word)));
+ let drills,objective='Travailler précisément « '+criterion+' » dans des situations progressives et transférables au match.';
+ if(theme.includes('service')){
+  drills=has('lancer','latéral')?[
+   ['Lancer dans une fenêtre','Réaliser 10 lancers sans frapper vers une fenêtre matérialisée légèrement devant et sur le côté. Relever les lancers qui permettent un contact confortable.'],
+   ['Lancer puis frappe','Enchaîner lancer et service à intensité modérée. Le coach vérifie la zone de chute et l’équilibre du joueur.'],
+   ['Service avec cible','Alterner côtés égalité et avantage. Annoncer une zone avant le lancer puis servir en conservant le même repère.']
+  ]:has('coude','préparation','raquette','rythme','coordination')?[
+   ['Position de préparation','Répéter le geste sans balle puis avec lancer, en marquant une pause dans la position de préparation. Le coach observe le critère sélectionné.'],
+   ['Rythme lancer-frappe','Servir à intensité modérée en gardant un rythme continu entre préparation, lancer et frappe.'],
+   ['Service + première frappe','Servir vers une zone annoncée puis jouer la première frappe dans l’espace libéré. Le point continue ensuite.']
+  ]:[
+   ['Service technique ciblé','Réaliser 10 services vers une grande cible en appliquant le critère choisi.'],
+   ['Service et variation de zone','Alterner deux zones annoncées avant le lancer sans modifier la routine.'],
+   ['Service + point à thème','Jouer le point après le service. Bonus si le critère choisi est respecté sur la mise en jeu.']
+  ];
+ }else if(theme.includes('retour')){
+  const first=sub.includes('premiere');
+  drills=[
+   ['Lecture de '+(first?'première balle':'deuxième balle'),'Le serveur alterne les services correspondant au thème. Le relanceur lit la trajectoire et prépare une réponse compacte.'],
+   ['Retour orienté sur cible','Servir dans deux zones. Le relanceur ajuste sa position puis dirige le retour vers une cible profonde en appliquant le critère choisi.'],
+   ['Retour puis premier échange','Jouer des points avec le type de service ciblé. Bonus si le retour respecte le critère et permet de jouer la balle suivante en équilibre.']
+  ];
+ }else if(theme.includes('volee')){
+  const stroke=sub.includes('revers')?'revers':'coup droit';
+  drills=has('direction','tamis','profondeur','centr','zone')?[
+   ['Volée '+stroke+' sur cible','Depuis la ligne de service, jouer 10 volées '+stroke+' vers une cible croisée en orientant le tamis vers la zone.'],
+   ['Volée '+stroke+' après déplacement','Départ au centre du carré. Alterner balle au corps et balle écartée, ajuster les appuis puis viser une cible.'],
+   ['Volée de finition','Jouer une approche puis une volée '+stroke+' dans l’espace libre. Le point se termine librement.']
+  ]:[
+   ['Préparation courte en volée '+stroke,'Le coach distribue des balles à hauteur variable. Préparer tôt, garder un geste compact et contacter devant le corps.'],
+   ['Volée '+stroke+' en avançant','Avancer depuis une pastille, ajuster les appuis et jouer la volée sans reculer au contact.'],
+   ['Approche-volée en point','Sur balle courte, jouer une approche puis avancer pour jouer une volée '+stroke+'.']
+  ];
+ }else if(theme.includes('coup droit')||theme.includes('revers')){
+  const stroke=theme.includes('revers')?'revers':'coup droit';
+  if(has('prise de balle','tôt','montante','plan de frappe'))drills=[
+   ['Repère de prise de balle','Placer un repère de rebond dans la zone de frappe. Distribuer 10 balles régulières ; contacter devant soi en phase montante.'],
+   ['Prise de balle tôt en déplacement','Alterner balle au corps et balle écartée. Ajuster les appuis et contacter avant le sommet du rebond.'],
+   ['Prise de balle tôt en échange','Échanger en diagonale '+stroke+'. Prendre tôt une balle sur deux avant de jouer le point librement.']
+  ];
+  else if(has('préparation','orientation des épaules','raquette'))drills=[
+   ['Préparation avant le rebond','Le coach annonce la direction au départ de sa frappe. Tourner les épaules et préparer la raquette avant le rebond.'],
+   ['Préparation en déplacement','Alterner balles proches et écartées. Préparer dès la lecture de trajectoire puis ajuster les appuis.'],
+   ['Préparation sous incertitude','Varier longueur et direction. Préparer tôt sans anticiper la direction finale puis jouer le point.']
+  ];
+  else if(has('régularité','centrage','stabilité','équilibre'))drills=[
+   ['Régularité en diagonale','Réaliser 10 frappes '+stroke+' dans une zone profonde matérialisée, avec marge au-dessus du filet.'],
+   ['Régularité avec cible alternée','Alterner deux zones de profondeur en conservant un équilibre stable à l’impact.'],
+   ['Régularité transférée au point','Commencer en diagonale '+stroke+' ; construire avec deux frappes régulières avant de jouer librement.']
+  ];
+  else if(has('effet','trajectoire','hauteur','variation'))drills=[
+   ['Contraste de trajectoires','Depuis le panier, alterner une balle liftée haute et une balle plus tendue en gardant une zone de rebond identique.'],
+   ['Variation dans l’échange','Échanger en diagonale '+stroke+' et annoncer l’effet ou la trajectoire recherchée avant la frappe.'],
+   ['Variation avec intention','Construire deux frappes puis varier l’effet ou la hauteur pour déplacer l’adversaire.']
+  ];
+  else if(has('distance','placement','corps'))drills=[
+   ['Distance balle-corps avec repères','Placer deux repères au sol pour matérialiser la distance de frappe. Distribuer des balles variées et ajuster les appuis avant le contact.'],
+   ['Ajustement sur balle décalée','Alterner balle au corps, proche et écartée. Utiliser des petits pas pour retrouver la bonne distance.'],
+   ['Distance adaptée en point','Jouer des points avec distributions variées. Bonus si la distance de frappe est confortable et équilibrée.']
+  ];
+  else drills=[
+   ['Répétition technique ciblée','Distribuer 10 balles sur le '+stroke+'. Travailler le critère choisi avec une consigne unique et une cible large.'],
+   ['Critère ciblé avec déplacement','Varier profondeur et direction en conservant le repère technique choisi.'],
+   ['Transfert du critère au point','Démarrer en diagonale '+stroke+. ' puis jouer librement après deux frappes appliquant le critère.']
+  ];
+ }else if(theme.includes('jeu de jambes')||theme.includes('déplacement')){
+  drills=has('replacement','repositionnement','centre')?[
+   ['Frappe et retour au repère','Après chaque frappe, revenir toucher une pastille centrale avant la distribution suivante.'],
+   ['Replacement avec incertitude','Le coach choisit la direction suivante après la frappe. Retrouver la position d’attente puis déclencher le premier pas.'],
+   ['Points avec bonus replacement','Jouer des points libres ; bonus si une position équilibrée est retrouvée après chaque frappe.']
+  ]:[
+   ['Départ sur signal','Depuis la position d’attente, déclencher le premier pas à la frappe du coach puis rejoindre une balle distribuée.'],
+   ['Déplacement et frappe équilibrée','Alterner les directions et les distances. Ajuster les appuis avant de frapper dans une zone large.'],
+   ['Déplacement en point','Démarrer avec une distribution aléatoire et appliquer le critère sur les trois premières frappes.']
+  ];
+ }else if(theme.includes('mental'))drills=[
+  ['Routine entre les points','Jouer cinq points. Entre chaque point, appliquer une routine courte puis annoncer une intention simple.'],
+  ['Réaction après erreur','Après une faute, se recentrer et jouer le point suivant avec un objectif annoncé.'],
+  ['Score à enjeu','Jouer des points à 30-30 et évaluer après chaque point le respect du critère mental.']
+ ];
+ else if(theme.includes('physique'))drills=[
+  ['Atelier physique ciblé','Réaliser trois séries courtes de déplacements tennis avec une consigne liée au critère sélectionné.'],
+  ['Efforts répétés avec balle','Alterner déplacement, frappe contrôlée et retour au centre sur huit répétitions.'],
+  ['Transfert physique au point','Jouer des points avec départ imposé et observer la conservation du critère sous fatigue.']
+ ];
+ else if(theme.includes('tactique'))drills=[
+  ['Lecture de situation','Alterner balle profonde et balle courte. Annoncer construire, déplacer ou attaquer avant de jouer.'],
+  ['Schéma tactique à deux frappes','Construire deux frappes selon le critère puis jouer la troisième balle librement.'],
+  ['Points à contrat tactique','Jouer huit points avec bonus si le critère est appliqué au bon moment, sans forcer.']
+ ];
+ if(!drills)drills=fallbackPlan.drills.map(d=>[d[0]+' · critère ciblé',d[1]+' Le coach observe spécifiquement : '+criterion+'.']);
+ return {...fallbackPlan,objective,drills:drills.map(d=>[d[0],d[1],''])};
+}
+
 function distributeMinutes(total) {
   const ratios = [0.3,0.35,0.35];
   const first = Math.round(total*ratios[0]);
@@ -133,16 +232,17 @@ function distributeMinutes(total) {
 }
 
 export function generateOriginalSession({
-  theme = 'construction', selectedObjective = null, customObjective = '',
+  theme = 'construction', selectedObjective = null, selectedCriterion = null, customObjective = '',
   playerName = 'le joueur', level = 'Intermédiaire', difficulty = 'progressive',
   priorAdjustment = null, age = null, playerType = 'Loisir', duration = 90,
   priority = null, challenge = null, recentSessions = [], customExercises = []
 } = {}) {
   const minutes = [60,90,120].includes(Number(duration)) ? Number(duration) : 90;
-  const explicitFocus = [customObjective, selectedObjective?.label, selectedObjective?.theme, theme].filter(Boolean).join(' ');
+  const explicitFocus = [selectedCriterion?.main_theme, selectedCriterion?.subtheme, selectedCriterion?.criterion, selectedObjective?.label, selectedObjective?.theme, theme].filter(Boolean).join(' ');
   const evidenceFocus = [priority?.criterion, priority?.subtheme, priority?.main_theme].filter(Boolean).join(' ');
-  const focus = classifyFocus(priority?.criterion ? evidenceFocus : explicitFocus || evidenceFocus);
-  const plan = DRILLS[focus] || DRILLS.construction;
+  const focus = classifyFocus(selectedCriterion ? explicitFocus : (priority?.criterion ? evidenceFocus : explicitFocus || evidenceFocus));
+  const basePlan = DRILLS[focus] || DRILLS.construction;
+  const plan = criterionSpecificPlan(selectedCriterion, basePlan, focus);
   const sourceWeek = sourceWeekFor(focus, recentSessions);
   const allocations = distributeMinutes(minutes);
   const difficultySettings = {
@@ -167,9 +267,11 @@ export function generateOriginalSession({
   const sourceLabel = sourceWeek
     ? 'Inspiration complémentaire : Cours de l’année.xlsx · Semaine ' + sourceWeek.week + ' · ' + String(sourceWeek.theme).replace(/^SEMAINE\s+\d+\s*:\s*/i,'')
     : 'Aucune semaine source directement comparable ; situations construites à partir du critère et du référentiel pédagogique.';
-  const evidenceLabel = priority?.criterion
-    ? 'Critère récurrent observé : ' + priority.criterion + ' (' + priority.occurrences + ' des 3 derniers bilans).'
-    : 'Aucune priorité fiable confirmée : séance de diagnostic et d’observation, sans prétendre cibler une difficulté récurrente.';
+  const evidenceLabel = selectedCriterion?.criterion
+    ? 'Critère choisi par le coach : ' + selectedCriterion.main_theme + ' · ' + selectedCriterion.subtheme + ' · ' + selectedCriterion.criterion + '. Les trois situations sont construites autour de ce critère.'
+    : priority?.criterion
+      ? 'Critère récurrent observé : ' + priority.criterion + ' (' + priority.occurrences + ' des 3 derniers bilans).'
+      : 'Aucune priorité fiable confirmée : séance de diagnostic et d’observation, sans prétendre cibler une difficulté récurrente.';
   const coachingNotes = [
     'Joueur : ' + playerName + ' · Profil : ' + playerType + ' · Niveau : ' + level,
     evidenceLabel,
@@ -179,12 +281,13 @@ export function generateOriginalSession({
   ].join('\n');
   return {
     generated:true, generation_mode:'original', theme:plan.label, focus:plan.label,
-    objective_criteria:priority?.criterion ? [priority.criterion] : (selectedObjective?.criteria || []),
+    objective_criteria:selectedCriterion?.criterion ? [selectedCriterion.criterion] : (priority?.criterion ? [priority.criterion] : (selectedObjective?.criteria || [])),
     duration_minutes:minutes, objective:plan.objective, coaching_notes:coachingNotes,
     exercise_1:phases.slice(0,2).map((phase,index)=>'SITUATION '+(index+1)+' · '+phase.minutes+' min\n'+phase.content).join('\n\n'),
     exercise_2:'TRANSFERT EN POINTS · '+phases[2].minutes+' min\n'+phases[2].content,
     player_visible_summary:plan.objective+' Les situations évoluent du contrôle vers le jeu à thème.',
     success_criteria:phases.map(phase=>phase.success_criteria).join(' '),
+    selected_criterion:selectedCriterion ? {id:selectedCriterion.id,main_theme:selectedCriterion.main_theme,subtheme:selectedCriterion.subtheme,criterion:selectedCriterion.criterion} : null,
     adaptation:'Situations originales reliées au critère de progression et aux thèmes du programme collectif.',
     difficulty:selectedDifficulty.label,
     difficulty_rule:selectedDifficulty.instruction+' Le critère de réussite est réglé à '+selectedDifficulty.target+'/10.',
