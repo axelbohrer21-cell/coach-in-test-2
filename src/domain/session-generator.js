@@ -155,20 +155,43 @@ function criterionSpecificPlan(selectedCriterion, fallbackPlan, focus) {
    ['Service + point à thème','Jouer le point après le service. Bonus si le critère choisi est respecté sur la mise en jeu.']
   ];
  }else if(theme.includes('retour')){
-  const first=sub.includes('premiere');
-  drills=[
-   ['Lecture de '+(first?'première balle':'deuxième balle'),'Le serveur alterne les services correspondant au thème. Le relanceur lit la trajectoire et prépare une réponse compacte.'],
+  const first=sub.includes('premiere'),serve=first?'première balle':'deuxième balle';
+  if(has('prise de balle','tardive','anticipation','réactivité'))drills=[
+   ['Lecture et déclenchement sur '+serve,'Le serveur varie direction et longueur. Le relanceur réalise une reprise d’appuis au lancer puis déclenche la préparation dès la lecture de trajectoire.'],
+   ['Retour compact sous vitesse','Recevoir 10 services de '+serve+' dans deux zones. Raccourcir la préparation et prendre la balle devant soi, sans chercher la vitesse.'],
+   ['Retour anticipé en point','Jouer des points sur '+serve+'. Le relanceur doit lire tôt la trajectoire et prendre une décision avant le rebond.']
+  ];
+  else if(has('profondeur','court','centré','zone','direction','variation'))drills=[
+   ['Retour sur cible profonde','Servir 10 '+serve+' ; viser une zone longue croisée puis une zone longue au centre, avec une trajectoire de sécurité.'],
+   ['Retour avec deux intentions','Annoncer avant le service si le retour sera croisé ou au centre. Ajuster la direction selon la zone de service.'],
+   ['Retour tactique en point','Jouer des points sur '+serve+'. Bonus si le retour sort le serveur de sa zone de confort sans prendre un risque excessif.']
+  ];
+  else if(has('initiative','attaque','risque'))drills=[
+   ['Retour neutre puis retour agressif','Alterner des services faciles et plus appuyés. Sur balle favorable, avancer et prendre l’initiative ; sinon, remettre profond au centre.'],
+   ['Deuxième balle à attaquer','Pour la première balle : neutraliser. Pour la deuxième : avancer et viser une zone offensive.'],
+   ['Point avec choix de retour','Jouer des points en alternant première et deuxième balle. Le bonus récompense le bon choix entre neutraliser et attaquer.']
+  ];
+  else drills=[
+   ['Lecture de '+serve,'Le serveur alterne les services correspondant au thème. Le relanceur lit la trajectoire et prépare une réponse compacte.'],
    ['Retour orienté sur cible','Servir dans deux zones. Le relanceur ajuste sa position puis dirige le retour vers une cible profonde en appliquant le critère choisi.'],
    ['Retour puis premier échange','Jouer des points avec le type de service ciblé. Bonus si le retour respecte le critère et permet de jouer la balle suivante en équilibre.']
   ];
  }else if(theme.includes('volee')){
   const stroke=sub.includes('revers')?'revers':'coup droit';
-  drills=has('direction','tamis','profondeur','centr','zone')?[
-   ['Volée '+stroke+' sur cible','Depuis la ligne de service, jouer 10 volées '+stroke+' vers une cible croisée en orientant le tamis vers la zone.'],
-   ['Volée '+stroke+' après déplacement','Départ au centre du carré. Alterner balle au corps et balle écartée, ajuster les appuis puis viser une cible.'],
+  drills=has('direction','tamis','profondeur','centr','zone','courte','longue','haute')?[
+   ['Volée '+stroke+' sur cible','Depuis la ligne de service, jouer 10 volées '+stroke+' vers une cible croisée ou longue en contrôlant l’orientation du tamis.'],
+   ['Contrôle de longueur en volée '+stroke,'Alterner volée courte et volée longue selon la hauteur de balle. Le coach annonce la cible avant la distribution.'],
    ['Volée de finition','Jouer une approche puis une volée '+stroke+' dans l’espace libre. Le point se termine librement.']
+  ]:has('poignet','absorption','vitesse')?[
+   ['Volée bloc et absorption','Le coach envoie des balles rapides. Le joueur garde une prise ferme mais relâchée, amortit la vitesse et bloque devant lui.'],
+   ['Volée sur balle lourde','Recevoir des balles de vitesse variable et adapter l’angle du tamis sans grand geste arrière.'],
+   ['Absorption sous pression','Jouer des points où le partenaire accélère volontairement sur le volleyeur. Contrôler la réponse avant de chercher à finir.']
+  ]:has('réactivité','prise de balle','préparation')?[
+   ['Préparation et contact précoces','Le coach distribue des balles à hauteur variable. Préparer tôt et contacter devant le corps avec un geste compact.'],
+   ['Réaction au filet','Départ au centre du carré ; le coach choisit la direction au dernier moment. Déclencher le premier pas et bloquer la volée.'],
+   ['Approche-volée en point','Sur balle courte, jouer une approche puis avancer pour jouer une volée '+stroke+'.']
   ]:[
-   ['Préparation courte en volée '+stroke,'Le coach distribue des balles à hauteur variable. Préparer tôt, garder un geste compact et contacter devant le corps.'],
+   ['Équilibre en volée '+stroke,'Le coach distribue des balles proches et écartées. Ajuster les appuis avant le contact et finir en équilibre.'],
    ['Volée '+stroke+' en avançant','Avancer depuis une pastille, ajuster les appuis et jouer la volée sans reculer au contact.'],
    ['Approche-volée en point','Sur balle courte, jouer une approche puis avancer pour jouer une volée '+stroke+'.']
   ];
@@ -188,6 +211,21 @@ function criterionSpecificPlan(selectedCriterion, fallbackPlan, focus) {
    ['Régularité en diagonale','Réaliser 10 frappes '+stroke+' dans une zone profonde matérialisée, avec marge au-dessus du filet.'],
    ['Régularité avec cible alternée','Alterner deux zones de profondeur en conservant un équilibre stable à l’impact.'],
    ['Régularité transférée au point','Commencer en diagonale '+stroke+' ; construire avec deux frappes régulières avant de jouer librement.']
+  ];
+  else if(has('transfert','poids du corps','poussée des jambes'))drills=[
+   ['Transfert du poids sur frappe contrôlée','Depuis une position stable, réaliser 10 frappes en avançant légèrement le poids du corps vers l’avant au moment de l’impact, sans perdre l’équilibre.'],
+   ['Transfert après déplacement','Alterner balle courte et balle longue. Ajuster les appuis puis transférer le poids vers la cible au moment de la frappe.'],
+   ['Transfert en situation de point','Jouer des points avec bonus si le joueur s’engage vers la balle et transfère son poids sans se déséquilibrer.']
+  ];
+  else if(has('accélération','tête de raquette','amplitude'))drills=[
+   ['Accélération progressive de la raquette','Réaliser 10 frappes à intensité croissante en gardant une préparation relâchée et une accélération nette au moment de l’impact.'],
+   ['Accélérer sur balle favorable','Le coach alterne balle neutre et balle courte. Accélérer uniquement sur la balle favorable en gardant une zone cible.'],
+   ['Accélération dans le point','Construire deux frappes contrôlées puis accélérer sur une balle favorable avant de jouer le point librement.']
+  ];
+  else if(has('accompagnement','finition','relâchement','bras non directeur','extension du bras','poignet'))drills=[
+   ['Finition guidée','Réaliser 10 frappes en exagérant le trajet d’accompagnement demandé, puis réduire progressivement l’amplitude pour retrouver un geste naturel.'],
+   ['Finition après déplacement','Alterner les directions et conserver l’accompagnement du geste malgré le déplacement.'],
+   ['Finition en échange','Jouer une diagonale en observant la continuité du geste après l’impact, puis terminer le point librement.']
   ];
   else if(has('effet','trajectoire','hauteur','variation'))drills=[
    ['Contraste de trajectoires','Depuis le panier, alterner une balle liftée haute et une balle plus tendue en gardant une zone de rebond identique.'],
