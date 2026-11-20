@@ -183,8 +183,11 @@ $('#page-content').addEventListener('click', async event=>{
   const cancel=event.target.closest('[data-cancel-booking]'); if(cancel) return cancelBooking(cancel.dataset.cancelBooking);
   const completeGroup=event.target.closest('[data-complete-group]'); if(completeGroup) return completeGroupSession(completeGroup.dataset.completeGroup);
   const cancelGroup=event.target.closest('[data-cancel-group]'); if(cancelGroup) return cancelGroupSession(cancelGroup.dataset.cancelGroup);
+  const cancelSession=event.target.closest('[data-cancel-session]');
+  if(cancelSession)return cancelPrivateSession(cancelSession.dataset.cancelSession);
   const calendarEvent=event.target.closest('[data-calendar-event]');
   if(calendarEvent){
+    if(calendarEvent.dataset.eventKind==='session')return sessionDialog(undefined,undefined,null,calendarEvent.dataset.eventId);
     const wasSelected=calendarEvent.classList.contains('is-selected');
     $('#page-content').querySelectorAll('[data-calendar-event].is-selected').forEach(card=>{card.classList.remove('is-selected');card.setAttribute('aria-pressed','false');});
     if(!wasSelected){calendarEvent.classList.add('is-selected');calendarEvent.setAttribute('aria-pressed','true');}
@@ -796,9 +799,19 @@ function sessionReviewDialog(sessionId){
     '<label class="span-2">Ajustement à prévoir<textarea name="next_adjustment" rows="2" placeholder="Ex. réduire la vitesse et élargir la cible avant de remettre de la pression…">'+escapeHtml(review.next_adjustment||'')+'</textarea></label>'+
     '<div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer le bilan</button></div></form>');
 }
-function sessionDialog(date=toLocalISO(new Date()), time='17:00', libraryItem=null){
+async function cancelPrivateSession(sessionId){
+  if(!confirm('Annuler ce cours particulier ? Il restera visible dans le planning avec le statut ANNULÉ.'))return;
+  try{await dataService.updateSession(sessionId,{status:'Annulée'},state.user.id);closeDialog();await refreshAndRender();toast('Cours particulier annulé.');}
+  catch(error){toast(error.message||'Impossible d’annuler ce cours.','error');}
+}
+
+function sessionDialog(date=toLocalISO(new Date()), time='17:00', libraryItem=null, sessionId=''){
   if(!state.players.length){toast('Associe d’abord un compte joueur à ton effectif.','error');return;}
-  showDialog(`<div class="dialog-head"><div><p class="eyebrow">TERRAIN</p><h2>Planifier une séance</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="session-form" class="form-grid"><label class="span-2">Joueur<select name="player_id" required>${state.players.map(p=>`<option value="${p.id}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label><label>Date<input name="session_date" type="date" required value="${date}"></label><label>Heure<input name="session_time" type="time" required value="${time}"></label><fieldset class="duration-choice span-2"><legend>Durée du cours</legend><div class="duration-choice-options"><label><input type="radio" name="duration_minutes" value="60" checked><span>1 heure</span></label><label><input type="radio" name="duration_minutes" value="90"><span>1 h 30</span></label><label><input type="radio" name="duration_minutes" value="120"><span>2 heures</span></label></div></fieldset><label>Court<select name="court_number"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><label>Thème<input name="theme" required placeholder="Ex. Construction du point"></label><label class="span-2">Exercice 1<textarea name="exercise_1" rows="2"></textarea></label><label class="span-2">Exercice 2<textarea name="exercise_2" rows="2"></textarea></label><label class="span-2">Synthèse visible joueur<textarea name="player_visible_summary" rows="2"></textarea></label><label class="span-2">Notes privées coach<textarea name="coach_private_notes" rows="2"></textarea></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer la séance</button></div></form>`);
+  const existing=sessionId?state.sessions.find(row=>row.id===sessionId):null;
+  if(sessionId&&!existing){toast('Cette séance est introuvable.','error');return;}
+  const editing=Boolean(existing);
+  const duration=Number(existing?.duration_minutes||60);
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">TERRAIN</p><h2>${editing?'Modifier la séance':'Planifier une séance'}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="session-form" class="form-grid"><input type="hidden" name="id" value="${escapeHtml(existing?.id||'')}"><label class="span-2">Joueur<select name="player_id" required>${state.players.map(p=>`<option value="${p.id}" ${existing?.player_id===p.id?'selected':''}>${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label><label>Date<input name="session_date" type="date" required value="${existing?.session_date||date}"></label><label>Heure<input name="session_time" type="time" required value="${existing?.session_time||time}"></label><fieldset class="duration-choice span-2"><legend>Durée du cours</legend><div class="duration-choice-options"><label><input type="radio" name="duration_minutes" value="60" ${duration===60?'checked':''}><span>1 heure</span></label><label><input type="radio" name="duration_minutes" value="90" ${duration===90?'checked':''}><span>1 h 30</span></label><label><input type="radio" name="duration_minutes" value="120" ${duration===120?'checked':''}><span>2 heures</span></label></div></fieldset><label>Court<select name="court_number"><option value="1" ${Number(existing?.court_number||1)===1?'selected':''}>Court 1</option><option value="2" ${Number(existing?.court_number)===2?'selected':''}>Court 2</option><option value="3" ${Number(existing?.court_number)===3?'selected':''}>Court 3</option><option value="4" ${Number(existing?.court_number)===4?'selected':''}>Court 4</option></select></label><label>Thème<input name="theme" required value="${escapeHtml(existing?.theme||'')}" placeholder="Ex. Construction du point"></label><label class="span-2">Exercice 1<textarea name="exercise_1" rows="2">${escapeHtml(existing?.exercise_1||'')}</textarea></label><label class="span-2">Exercice 2<textarea name="exercise_2" rows="2">${escapeHtml(existing?.exercise_2||'')}</textarea></label><label class="span-2">Synthèse visible joueur<textarea name="player_visible_summary" rows="2">${escapeHtml(existing?.player_visible_summary||'')}</textarea></label><label class="span-2">Notes privées coach<textarea name="coach_private_notes" rows="2">${escapeHtml(existing?.coach_private_notes||'')}</textarea></label><div class="dialog-actions span-2">${editing?'<button type="button" class="btn danger" data-cancel-session="'+existing.id+'">Annuler ce cours</button>':''}<button type="button" class="btn subtle" data-close>Fermer</button><button class="btn primary">${editing?'Enregistrer les modifications':'Enregistrer la séance'}</button></div></form>`);
   if(libraryItem) applyLibraryItemToSessionForm(libraryItem);
 }
 function applyLibraryItemToSessionForm(item){
@@ -1097,10 +1110,11 @@ $('#dialog-content').addEventListener('submit',async event=>{
       else{await dataService.createGroupSession({coach_id:state.user.id,...groupPayload,status:'scheduled'});toast('Cours collectif ajouté au planning.');}
     } else if(form.id==='session-form'){
       if(!isPrivateLessonDateAllowed(values.session_date)) throw new Error('Les cours particuliers sont suspendus pendant les vacances scolaires et les jours fériés (sauf le 8 mai).');
-      const conflict=findScheduleConflict({session_date:values.session_date,session_time:values.session_time,duration_minutes:Number(values.duration_minutes)});
+      const conflict=findScheduleConflict({session_date:values.session_date,session_time:values.session_time,duration_minutes:Number(values.duration_minutes),excludeSessionId:values.id||null});
       if(conflict)throw new Error('Ce créneau chevauche déjà '+conflict+'. Choisis un autre horaire.');
       const payload={...values,player_id:values.player_id,created_by:state.user.id,duration_minutes:Number(values.duration_minutes),court_number:Number(values.court_number),status:'Prévue'};
-      await dataService.createSession(payload);toast('Séance enregistrée.');
+      if(values.id){await dataService.updateSession(values.id,payload,state.user.id);toast('Séance modifiée.');}
+      else{await dataService.createSession(payload);toast('Séance enregistrée.');}
     } else if(form.id==='evaluation-form'){
       const keys=['technical_score','tactical_score','physical_score','mental_score'];
       const scores=Object.fromEntries(keys.map(k=>[k,values[k]===''?null:Number(values[k])]));
@@ -1171,11 +1185,11 @@ function timeToMinutes(value){
   return (Number.isFinite(hours)?hours:0)*60+(Number.isFinite(minutes)?minutes:0);
 }
 
-function findScheduleConflict({session_date,session_time,duration_minutes,excludeGroupId=null}){
+function findScheduleConflict({session_date,session_time,duration_minutes,excludeGroupId=null,excludeSessionId=null}){
   const start=timeToMinutes(session_time),end=start+Number(duration_minutes||0);
   if(!session_date||end<=start)return null;
   const events=[
-    ...(state.sessions||[]).filter(row=>row.session_date===session_date&&!['cancelled','annulée','annulee'].includes(String(row.status||'').toLowerCase())).map(row=>({
+    ...(state.sessions||[]).filter(row=>row.session_date===session_date&&row.id!==excludeSessionId&&!['cancelled','annulée','annulee'].includes(String(row.status||'').toLowerCase())).map(row=>({
       start:timeToMinutes(row.session_time),end:timeToMinutes(row.session_time)+Number(row.duration_minutes||60),
       label:'un cours particulier ('+((state.players||[]).find(player=>player.id===row.player_id)?.first_name||'joueur')+')'
     })),
