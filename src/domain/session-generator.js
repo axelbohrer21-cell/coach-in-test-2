@@ -8,6 +8,7 @@ function classifyFocus(value) {
   const text = normalize(value);
   const has = (...terms) => terms.some(term => text.includes(normalize(term)));
   if (has('retour','relance')) return 'retour';
+  if (has('smash','smatch')) return 'smash';
   if (has('service','mise en jeu','lancer','premiere balle','deuxieme balle','slice au service')) return 'service';
   if (has('volee','volley','filet','smash','smatch')) return 'volley';
   if (has('revers','backhand')) return 'revers';
@@ -51,6 +52,14 @@ const DRILLS = {
       ['Lecture de la mise en jeu','Le serveur alterne première balle appuyée et seconde balle plus lente. Le relanceur annonce « première » ou « seconde » avant le rebond, puis joue vers une cible longue croisée ou au centre.','Identifier correctement 8 services sur 10 et viser 6 retours sur 10.'],
       ['Retour et replacement','Le relanceur démarre derrière sa ligne. Après le retour, il doit retrouver une position de jeu avant la frappe suivante du serveur. Le serveur joue ensuite librement.','Remettre le retour en jeu et se replacer sur 7 points sur 10.'],
       ['Point avec intention de retour','Le serveur choisit librement sa zone. Le relanceur marque un bonus si son retour neutralise la première attaque ou met le serveur en déplacement.','Obtenir une réponse tactique utile sur 5 points sur 8.']
+    ]
+  },
+  smash: {
+    label:'Smash', objective:'Se placer sous le lob, frapper haut devant soi et choisir une zone de finition.',
+    drills:[
+      ['Placement sous le lob','Le coach envoie des lobs réguliers au-dessus de l’épaule. Le joueur recule avec des pas croisés, se replace sous la balle puis frappe un smash contrôlé vers une grande cible.','Se placer correctement et atteindre la cible sur 6 lobs sur 10.'],
+      ['Smash après déplacement','Alterner lob court et lob profond. Le joueur annonce sa zone de déplacement, ajuste ses appuis et frappe haut devant lui sans se laisser enfermer sous la balle.','Réaliser 6 smashes équilibrés sur 10.'],
+      ['Lob, smash et finition en point','Démarrer par un échange où le partenaire cherche à lober. Le joueur doit identifier le lob, reculer, jouer le smash puis terminer le point.','Choisir la bonne trajectoire et finir 5 points sur 8.']
     ]
   },
   volley: {
