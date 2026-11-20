@@ -38,7 +38,7 @@ export function recommendSessionExercises({playerId,evaluations=[],evaluationCri
     const repeat=isRecentRepeat(item,sessions,playerId);
     return {item,score:score-(repeat?12:0),repeat};
   }).filter(row=>row.score>0).sort((a,b)=>b.score-a.score||String(a.item.title).localeCompare(String(b.item.title),'fr'));
-  const first=candidates[0]||null,second=candidates.find(row=>row.item.id!==first?.item.id&&row.score>=Math.max(3,first.score-3))||null;
+  const first=candidates[0]||null,second=candidates.find(row=>row.item.id!==first?.item.id&&row.score>=Math.max(3,first.score-6))||null;
   return {priority,activeChallenge,exerciseOne:first?.item||null,exerciseTwo:second?.item||null,reportCount:playerReports.length,observationDayCount:3,videoSignalUsed:Boolean(videoText&&candidates.some(row=>normalize([row.item.title,row.item.theme,row.item.subtheme,row.item.objective,row.item.instructions].join(' ')).split(/[^a-z0-9]+/).some(token=>token.length>3&&videoText.includes(token)))),reason:first?'Priorité observée sur au moins deux journées distinctes parmi les trois dernières. Les exercices correspondent aux mots-clés du critère, du sous-thème et du thème.':'Priorité confirmée, mais aucun exercice de la bibliothèque privée ne correspond assez précisément. La création originale peut construire des situations à partir du critère et du programme pédagogique.',varietyApplied:Boolean(first&&!first.repeat)};
 }
 export function buildSessionCoachingPlan(recommendation,duration=90){
