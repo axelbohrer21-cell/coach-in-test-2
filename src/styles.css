@@ -2317,3 +2317,264 @@ body.camera-fullscreen-open{overflow:hidden}
 .session-builder-phase-variants span{display:flex;flex-direction:column;gap:5px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.035);color:#c8d8e9;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
 @media(max-width:600px){.session-builder-phase-variants{grid-template-columns:1fr}}
 
+
+
+/* ===== Ajustement ciblé : fenêtre « Composer une séance » uniquement ===== */
+.dialog:has(#session-builder-form){
+  width:min(820px,calc(100% - 28px));
+  padding:clamp(18px,3vw,28px);
+}
+.dialog:has(#session-builder-form) .dialog-head{
+  position:static;
+  display:flex;
+  align-items:flex-start;
+  gap:16px;
+  margin-bottom:22px;
+  padding:0 0 16px;
+  border-bottom:1px solid rgba(113,160,201,.2);
+  background:none;
+}
+.dialog:has(#session-builder-form) .dialog-head h2{
+  margin:3px 0 7px;
+  font-size:clamp(23px,3vw,29px);
+  line-height:1.2;
+  letter-spacing:-.6px;
+}
+.dialog:has(#session-builder-form) .dialog-head .muted{
+  max-width:590px;
+  margin:0;
+  font-size:13px;
+  line-height:1.65;
+}
+#session-builder-form{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:17px 18px;
+  align-items:start;
+}
+#session-builder-form>label{
+  display:grid;
+  align-content:start;
+  gap:8px;
+  min-width:0;
+  color:#dce9f7;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.4;
+}
+#session-builder-form>label small{
+  color:#94a9c1;
+  font-size:11px;
+  font-weight:500;
+  line-height:1.55;
+}
+#session-builder-form input:not([type=radio]),
+#session-builder-form select{
+  min-height:44px;
+  padding:11px 13px;
+  border:1px solid #385574;
+  border-radius:11px;
+  background:#0a1a2e;
+  color:#f2f7ff;
+  font-size:13px;
+}
+#session-builder-form input:focus,
+#session-builder-form select:focus{
+  border-color:#43c8e9;
+  box-shadow:0 0 0 3px rgba(67,200,233,.12);
+}
+#session-builder-form .duration-choice{
+  padding:13px 14px 14px;
+  border:1px solid rgba(113,223,208,.2);
+  border-radius:13px;
+  background:rgba(113,223,208,.045);
+}
+#session-builder-form .duration-choice legend{
+  padding:0 6px;
+  color:#dce9f7;
+  font-size:12px;
+  font-weight:850;
+}
+#session-builder-form .duration-choice-options{gap:9px}
+#session-builder-form .duration-choice-options span{
+  min-height:48px;
+  border-color:rgba(113,223,208,.26);
+  background:rgba(113,223,208,.055);
+  color:#d6e8f2;
+  font-size:12px;
+}
+#session-builder-form .duration-choice-options input:checked+span{
+  background:rgba(67,200,233,.16);
+  border-color:#43c8e9;
+  color:#e8fbff;
+  box-shadow:inset 0 0 0 1px rgba(67,200,233,.2);
+}
+#session-builder-form .session-criterion-picker{
+  padding:16px;
+  border-color:rgba(122,155,205,.28);
+  background:rgba(10,27,47,.62);
+}
+#session-builder-form .session-criterion-picker>strong{
+  display:block;
+  margin-bottom:10px;
+  color:#e9f3ff;
+  font-size:13px;
+}
+#session-builder-form .session-criterion-picker .tiny{
+  margin:0 0 10px;
+  color:#9fb2c9;
+  font-size:11px;
+  line-height:1.55;
+}
+#session-builder-form .session-criterion-group{margin-top:14px}
+#session-builder-form .session-criterion-group>strong{
+  color:#8edfff;
+  font-size:11px;
+  letter-spacing:.35px;
+}
+#session-builder-form .session-criterion-list{gap:8px}
+#session-builder-form .session-criterion-option{
+  min-height:42px;
+  padding:10px 11px;
+  border-color:rgba(113,153,192,.2);
+  background:rgba(255,255,255,.035);
+  color:#dce8f6;
+  font-size:12px;
+  line-height:1.5;
+}
+#session-builder-form .session-criterion-option:has(input:checked){
+  border-color:rgba(67,200,233,.55);
+  background:rgba(67,200,233,.12);
+}
+#session-builder-form .session-criterion-option input{accent-color:#43c8e9}
+#session-builder-form .session-builder-tip{
+  padding:15px 17px;
+  border:1px solid rgba(156,140,255,.25);
+  border-left:4px solid #9c8cff;
+  border-radius:12px;
+  background:linear-gradient(110deg,rgba(92,75,154,.18),rgba(17,37,64,.55));
+}
+#session-builder-form .session-builder-tip strong{
+  color:#d5caff;
+  font-size:12px;
+  line-height:1.5;
+}
+#session-builder-form .session-builder-tip p{
+  margin:6px 0 0;
+  color:#b7c6da;
+  font-size:12px;
+  line-height:1.65;
+}
+#session-builder-preview{min-width:0}
+#session-builder-preview:empty{display:none}
+#session-builder-preview .session-builder-preview{
+  gap:13px;
+  padding:clamp(15px,2.5vw,22px);
+  border-color:rgba(67,200,233,.28);
+  border-radius:16px;
+  background:linear-gradient(145deg,rgba(16,43,70,.96),rgba(9,24,42,.98));
+}
+#session-builder-preview .session-builder-preview-head{
+  padding-bottom:13px;
+  border-bottom-color:rgba(127,164,201,.22);
+}
+#session-builder-preview .session-builder-preview-head h3{
+  font-size:clamp(19px,2.4vw,24px);
+  line-height:1.3;
+}
+#session-builder-preview .session-builder-focus{
+  padding:13px 15px;
+  border-color:rgba(102,224,173,.22);
+  border-left:4px solid #66e0ad;
+  background:rgba(26,92,75,.16);
+}
+#session-builder-preview .session-builder-focus strong{color:#83e8c0;font-size:10px}
+#session-builder-preview .session-builder-focus span{
+  color:#edf8f4;
+  font-size:13px;
+  line-height:1.6;
+}
+#session-builder-preview .session-builder-phase{
+  gap:9px;
+  padding:15px 17px;
+  border-color:rgba(126,160,197,.22);
+  border-radius:13px;
+  background:rgba(7,22,39,.68);
+}
+#session-builder-preview .session-builder-phase>strong{
+  color:#e8f3ff;
+  font-size:13px;
+  line-height:1.45;
+}
+#session-builder-preview .session-builder-phase>small{
+  background:rgba(67,200,233,.12);
+  color:#8edfff;
+}
+#session-builder-preview .session-builder-phase p,
+#session-builder-preview .session-builder-exercise-content p,
+#session-builder-preview .session-builder-exercise-details p{
+  color:#c8d7e8;
+  font-size:13px;
+  line-height:1.75;
+}
+#session-builder-preview .session-builder-phase-meta{gap:9px}
+#session-builder-preview .session-builder-phase-meta span{
+  flex:1 1 145px;
+  padding:11px 12px;
+  border-color:rgba(142,223,255,.16);
+  background:rgba(142,223,255,.055);
+  color:#d2e0ef;
+  font-size:12px;
+  line-height:1.6;
+}
+#session-builder-preview .session-builder-phase-meta b,
+#session-builder-preview .session-builder-phase-variants b{color:#8edfff}
+#session-builder-preview .session-builder-phase-variants{gap:9px}
+#session-builder-preview .session-builder-phase-variants span{
+  padding:12px 13px;
+  background:rgba(255,255,255,.045);
+  color:#d2e0ef;
+  font-size:12px;
+  line-height:1.65;
+}
+#session-builder-preview .session-builder-exercise-details,
+#session-builder-preview .session-builder-exercise-content{
+  border-color:rgba(126,160,197,.22);
+  background:rgba(5,17,31,.55);
+}
+#session-builder-preview .session-builder-exercise-details summary{
+  color:#8edfff;
+  font-size:12px;
+  line-height:1.5;
+}
+#session-builder-preview .session-builder-actions{
+  position:sticky;
+  bottom:0;
+  z-index:2;
+  padding:12px 0 2px;
+  background:linear-gradient(180deg,rgba(9,24,42,0),rgba(9,24,42,.98) 35%);
+}
+#session-builder-form>.dialog-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding-top:5px;
+  border-top:1px solid rgba(113,160,201,.16);
+}
+@media(max-width:620px){
+  .dialog:has(#session-builder-form){
+    width:calc(100% - 16px);
+    max-height:94vh;
+    padding:17px;
+  }
+  #session-builder-form{grid-template-columns:1fr;gap:14px}
+  #session-builder-form .span-2{grid-column:1}
+  #session-builder-form .duration-choice-options span{min-height:46px}
+  #session-builder-form .session-criterion-list{grid-template-columns:1fr}
+  #session-builder-form>.dialog-actions{flex-direction:column-reverse}
+  #session-builder-form>.dialog-actions .btn{width:100%}
+  #session-builder-preview .session-builder-preview-head{flex-direction:column;align-items:flex-start}
+  #session-builder-preview .session-builder-phase-variants{grid-template-columns:1fr}
+  #session-builder-preview .session-builder-actions,
+  #session-builder-preview .session-builder-actions .btn{width:100%}
+}
