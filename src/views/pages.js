@@ -199,7 +199,7 @@ function intelligencePage() {
   const report = buildCoachIntelligence({ players: state.players || [], evaluations: state.evaluations || [], evaluationCriteria: state.evaluationCriteria || [], sessions: state.sessions || [], videoAnalyses: state.videoAnalyses || [], challenges: state.challenges || [] });
   const cards = report.insights.map(item => {
     const strengths = item.strengths.map(row => '<span class="tag tag-green">' + escapeHtml(row.criterion) + ' · ' + row.occurrences + '/3 jours</span>').join('');
-    const difficulties = item.difficulties.map(row => '<span class="tag tag-orange">' + escapeHtml(row.criterion) + ' · ' + row.occurrences + '/3 bilans</span>').join('');
+    const difficulties = item.difficulties.map(row => '<span class="tag tag-orange">' + escapeHtml(row.criterion) + ' · ' + row.occurrences + '/3 jours</span>').join('');
     const confidence = item.criteriaConfidence === 'insufficient'
       ? '<div class="intelligence-block"><strong>Fiabilité des observations</strong><p class="tiny muted">Échantillon insuffisant : ' + item.reportCount + ' bilan(s) répartis sur ' + item.observationDayCount + ' journée(s). Trois journées distinctes sont nécessaires ; plusieurs bilans le même jour ne comptent qu’une fois.</p></div>'
       : '<div class="intelligence-block"><strong>Fiabilité des observations</strong><p class="tiny muted">Lecture sur les trois dernières journées d’observation distinctes. Une récurrence est affichée à partir de deux journées.</p></div>';
