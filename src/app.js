@@ -257,7 +257,7 @@ $('#dialog-content').addEventListener('change',event=>{
 $('#page-content').addEventListener('change',async event=>{
   if(event.target.matches('#video-analysis-form [name="video_theme"]')){
     const form=event.target.form, theme=event.target.value;
-    const normalize=value=>String(value||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim();
+    const normalize=value=>String(value||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
     const key=normalize(theme);
     const criterionSelect=form?.elements.video_criterion;
     const objective=form?.elements.video_objective;
