@@ -1460,3 +1460,99 @@ button,a,input,select,textarea{touch-action:manipulation}
 }
 .calendar-group-frame-label>span:nth-child(2){flex:none;width:100%;text-align:center;letter-spacing:.55px}
 .calendar-group-frame-label small{margin:0;color:#e0d6ff;font-size:10px;white-space:nowrap}
+
+
+/* Analyse vidéo : capture caméra intégrée, cadrage libre */
+.camera-capture-panel{display:grid;gap:12px;padding:15px;border:1px solid #31516f;border-radius:15px;background:#081a2d}
+.camera-capture-panel.is-fullscreen{position:fixed;inset:0;z-index:10050;width:100vw;height:100vh;height:100dvh;max-height:100dvh;overflow:hidden;grid-template-rows:auto minmax(0,1fr) auto auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 14px);border:0;border-radius:0;background:#020914}
+.camera-capture-panel.is-fullscreen .camera-capture-head{z-index:2}
+.camera-capture-panel.is-fullscreen .camera-preview{display:block;width:100%;height:100%;max-height:none;min-height:0;aspect-ratio:auto;object-fit:contain;border-radius:0;background:#000}
+.camera-capture-panel.is-fullscreen .camera-actions{z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.camera-capture-panel.is-fullscreen .camera-actions .btn{min-height:52px;font-size:15px}
+.camera-capture-panel.is-fullscreen #camera-hint{z-index:2;margin:0;text-align:center}
+body.camera-fullscreen-open{overflow:hidden}
+.video-validation-form{display:grid;gap:12px;margin:16px 0;padding:15px;border:1px solid rgba(66,199,245,.38);border-radius:14px;background:rgba(12,37,58,.62)}
+.video-validation-heading{display:grid;gap:4px}
+.video-validation-heading b{font-size:14px}
+.video-validation-heading small,.video-validation-done small{color:var(--muted);font-size:11px}
+.video-score-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.video-score-grid label{display:grid;gap:5px;font-size:11px;color:var(--muted)}
+.video-score-grid input{width:100%;min-width:0;padding:10px;border:1px solid var(--line);border-radius:9px;background:#081a2d;color:var(--text)}
+.video-validation-form textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#081a2d;color:var(--text);resize:vertical}
+.video-validation-done{display:grid;gap:5px;margin:16px 0;padding:13px;border:1px solid rgba(84,214,160,.38);border-radius:12px;background:rgba(84,214,160,.08);color:#8ce7bc}
+@media(max-width:520px){.video-score-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.camera-capture-panel.is-fullscreen .camera-capture-head{align-items:flex-start}.camera-capture-panel.is-fullscreen .camera-status{max-width:45%;text-align:center}}
+.camera-capture-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.camera-capture-head b,.camera-capture-head small{display:block}
+.camera-capture-head b{font-size:13px;color:#eaf4ff}
+.camera-capture-head small{margin-top:4px;color:var(--muted);font-size:11px}
+.camera-status{padding:6px 9px;border-radius:20px;background:#18354b;color:#9edfff;font-size:10px;font-weight:800}
+.camera-preview{display:none;width:100%;max-height:440px;aspect-ratio:16/9;object-fit:contain;background:#020914;border-radius:11px}
+.camera-preview[src],.camera-preview:not([src]){ }
+.camera-preview.is-active{display:block}
+.camera-actions{display:flex;gap:8px;flex-wrap:wrap}
+.camera-actions .btn{flex:1;min-width:110px}
+@media(max-width:520px){.camera-actions .btn{font-size:11px;padding:10px 8px}.camera-preview{max-height:300px}}
+
+
+/* Analyse vidéo : repères de pose et annotations articulaires */
+.video-pose-panel{margin:16px 0;padding:14px;border:1px solid rgba(66,232,189,.35);border-radius:14px;background:rgba(10,38,49,.45)}
+.video-pose-overlay{display:block;width:100%;max-height:520px;object-fit:contain;margin:12px auto;border-radius:10px;background:#06121d}
+.video-pose-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.video-pose-metrics span{display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:9px;background:rgba(255,255,255,.045);text-align:center}
+.video-pose-metrics b{font-size:18px;color:#8cf1d5;font-variant-numeric:tabular-nums}
+.video-pose-metrics small{font-size:10px;color:var(--muted)}
+@media(max-width:520px){.video-pose-panel{padding:10px}.video-pose-metrics{gap:5px}.video-pose-metrics span{padding:8px 4px}.video-pose-metrics b{font-size:15px}}
+
+
+.court-calibration-wrap{position:relative;width:100%;margin:12px auto;overflow:hidden;border-radius:10px;background:#06121d}
+.court-calibration-wrap .video-pose-overlay{margin:0;max-height:520px}
+.court-calibration-canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:manipulation}
+.court-calibration-tools{display:grid;gap:8px;padding:12px;border-radius:10px;background:rgba(255,255,255,.04)}
+.court-calibration-tools>b{font-size:13px;color:#8cf1d5}
+.court-calibration-tools small{color:var(--muted);font-size:11px}
+.court-calibration-tools .btn{justify-self:start}
+
+
+.camera-framing-visual{display:flex;align-items:center;gap:14px;padding:10px;border-radius:12px;background:rgba(255,255,255,.035)}
+.camera-framing-visual svg{width:116px;min-width:116px;height:82px;overflow:visible}
+.camera-framing-visual>div{display:grid;gap:5px}
+.camera-framing-visual b{font-size:12px;color:#8cf1d5}
+.camera-framing-visual small{font-size:11px;color:var(--muted);line-height:1.45}
+@media(max-width:520px){.camera-framing-visual svg{width:92px;min-width:92px;height:72px}.camera-framing-visual{gap:10px;padding:8px}}
+
+
+/* Analyse vidéo segmentée : articulation, appuis, propulsion et angles */
+.video-segment-gallery{display:grid;gap:12px;margin:14px 0}
+.video-segment-gallery-head{display:grid;gap:4px}
+.video-segment-gallery-head>b{color:#9de6ff;font-size:13px}
+.video-segment-gallery-head>small{color:var(--muted);font-size:11px}
+.video-segment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.video-segment-card{min-width:0;overflow:hidden;border:1px solid rgba(100,150,190,.22);border-radius:12px;background:rgba(5,19,35,.7)}
+.video-segment-image{background:#020914}
+.video-segment-image img{display:block;width:100%;height:auto;max-height:300px;object-fit:contain}
+.video-segment-no-image{display:grid;place-items:center;min-height:130px;color:var(--muted);font-size:11px}
+.video-segment-details{display:grid;gap:5px;padding:10px}
+.video-segment-details>b{color:#e6f4ff;font-size:11px}
+.video-segment-details>span{color:#b9cde3;font-size:10px;line-height:1.4}
+.video-annotation-legend{display:flex;gap:12px;flex-wrap:wrap;color:#c5d5e7;font-size:10px}
+.video-annotation-legend span{display:flex;align-items:center;gap:6px}
+.video-annotation-legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
+.legend-joint{background:#ffcf58}.legend-foot{background:#39c9ff}.legend-push{background:#ff9b42}
+@media(max-width:600px){.video-segment-grid{grid-template-columns:1fr}.video-segment-image img{max-height:360px}}
+
+
+/* Palette des 50 couleurs uniques des joueurs */
+.player-color-picker{display:grid;gap:11px;padding:14px;border:1px solid rgba(113,223,208,.22);border-radius:14px;background:rgba(8,26,45,.58)}
+.player-color-picker-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.player-color-picker-head>div{display:grid;gap:4px}.player-color-picker-head b{font-size:13px;color:var(--text,#eaf2ff)}.player-color-picker-head small,.player-color-help{font-size:10px;color:var(--muted)}
+.player-color-picker-head>strong{font-size:11px;color:#9cebdd;white-space:nowrap}
+.player-color-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px}
+.player-color-option{position:relative;display:grid;justify-items:center;gap:4px;min-width:0;padding:5px 2px;border:1px solid transparent;border-radius:9px;cursor:pointer;transition:background .15s,border-color .15s}
+.player-color-option input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.player-color-option>span{display:block;width:24px;height:24px;border-radius:50%;background:var(--swatch);border:2px solid rgba(255,255,255,.5);box-shadow:0 2px 7px rgba(0,0,0,.22)}
+.player-color-option small{font-size:8px;color:var(--muted);font-variant-numeric:tabular-nums}
+.player-color-option:hover:not(.is-used),.player-color-option.is-selected{border-color:rgba(113,223,208,.65);background:rgba(113,223,208,.10)}
+.player-color-option.is-selected>span{outline:2px solid #eafaff;outline-offset:2px}
+.player-color-option.is-used{opacity:.2;cursor:not-allowed;filter:grayscale(1)}
+.player-color-option input:focus-visible+span{outline:2px solid #fff;outline-offset:3px}
+@media(max-width:520px){.player-color-grid{grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}.player-color-option>span{width:25px;height:25px}}

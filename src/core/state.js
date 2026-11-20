@@ -9,6 +9,8 @@ export const state = {
   groupCourseCancellations: [],
   bookingRequests: [],
   library: [],
+  customSessionExercises: [],
+  sessionObjectives: [],
   notifications: [],
   notificationPreferences: null,
   criteria: [],
@@ -38,7 +40,7 @@ export const state = {
 export function resetState() {
   Object.assign(state, {
     user: null, profile: null, players: [], sessions: [], evaluations: [], groupSessions: [], groupSeries: [], groupCourseCancellations: [],
-    bookingRequests: [], library: [], notifications: [], notificationPreferences: null, criteria: [], evaluationCriteria: [],
+    bookingRequests: [], library: [], customSessionExercises: [], sessionObjectives: [], notifications: [], notificationPreferences: null, criteria: [], evaluationCriteria: [],
     challenges: [], achievements: [], playerCoaches: [], playerCoachHistory: [], coachInvitations: [], coachPlayerShares: [], adminCoaches: [], weeklyAvailability: [], weather: null, messages: [], videoAnalyses: [], videoCorrectionFollowups: [], playerProfileDetails: null, playerProfileDetailsById: {}, matchJournal: [], clubEvents: [], messagePartnerId: '', currentPage: 'dashboard', planningWeekOffset: 0,
     filters: { playerType: 'all', search: '', libraryCategory: 'all', librarySearch: '' }
   });

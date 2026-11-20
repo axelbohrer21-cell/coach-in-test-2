@@ -1,9 +1,11 @@
+import { buildCurriculumActivities } from './session-curriculum.js';
 const norm=v=>String(v||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const has=(v,words)=>words.some(w=>norm(v).includes(norm(w)));
 const themes=[
  {key:'service',label:'Service',words:['service','mise en jeu'],objective:'Construire un service fiable et intentionnel',cue:'Lancer régulier, relâchement du bras et équilibre à la frappe.',setup:'Un panier de balles et des cibles dans les zones de service.'},
  {key:'return',label:'Retour',words:['retour','relance'],objective:'Améliorer la lecture et la qualité du retour',cue:'Position dynamique, lecture précoce et préparation compacte.',setup:'Un serveur, un relanceur et deux zones cibles profondes.'},
  {key:'volley',label:'Volée',words:['volée','volley','filet'],objective:'Gagner en contrôle et en décision vers l’avant',cue:'Raquette devant, prise de balle tôt et accompagnement court.',setup:'Un joueur au filet face à un passeur du fond.'},
+ {key:'smash',label:'Smash',words:['smash','overhead','lob'],objective:'Lire le lob, se placer et finir avec contrôle',cue:'Tourner les épaules, reculer en pas croisés puis ajuster en petits pas pour frapper au-dessus et légèrement devant soi.',setup:'Un joueur au filet face à un coach qui varie les lobs et les zones de finition.'},
  {key:'defense',label:'Défense',words:['défense','defendre','défensif'],objective:'Sortir de la défense et retrouver une position neutre',cue:'Donner de la hauteur et de la longueur, puis se replacer.',setup:'Départ décalé et couloirs profonds matérialisés.'},
  {key:'construction',label:'Construction du point',words:['construction','régularité','fond de court','échange'],objective:'Construire le point avec une intention tactique claire',cue:'Identifier la balle neutre, la balle favorable et l’espace libre.',setup:'Deux joueurs du fond et des cibles profondes.'},
  {key:'attaque',label:'Attaque',words:['attaque','agressivité','accélération'],objective:'Reconnaître et exploiter les balles d’attaque',cue:'Avancer dans le terrain et choisir une cible avec marge.',setup:'Le coach distribue des balles neutres puis courtes.'},
@@ -33,7 +35,8 @@ function focusForRequest(value){
 function activity(name,minutes,objective,setup,procedure,scoring,coachCue){
  return {name,minutes,objective,setup,procedure,scoring,coachCue};
 }
-function buildActivities(t,focus,mins){
+function buildActivities(t,focus,mins,selectedObjective=null){
+ if(selectedObjective){return buildCurriculumActivities(selectedObjective,mins);}
  const secondServe=focus?.kind==='second-serve';
  if(t.key==='service'&&secondServe){
   const feed=activity('Envoi du coach · fenêtre de frappe et rotation',mins===60?12:mins===90?12:12,
@@ -135,23 +138,23 @@ function buildActivities(t,focus,mins){
 function formatActivity(item,index){
  return 'EXERCICE '+(index+1)+' · '+item.name.toUpperCase()+' · '+item.minutes+' min\nOBJECTIF : '+item.objective+'\nMISE EN PLACE : '+item.setup+'\nDÉROULEMENT : '+item.procedure+'\nBARÈME / RÉUSSITE : '+item.scoring+'\nREPÈRE COACH : '+item.coachCue;
 }
-export function generateOriginalSession({theme='construction',customObjective='',playerName='le joueur',level='Intermédiaire',difficulty='progressive',priorAdjustment=null,age=null,playerType='Loisir',duration=90,priority=null,challenge=null,recentSessions=[]}={}){
+export function generateOriginalSession({theme='construction',selectedObjective=null,customObjective='',playerName='le joueur',level='Intermédiaire',difficulty='progressive',priorAdjustment=null,age=null,playerType='Loisir',duration=90,priority=null,challenge=null,recentSessions=[],customExercises=[]}={}){
  const request=String(customObjective||'').trim(),combined=request||String(theme||'');
  const t=themes.find(x=>norm(x.key)===norm(theme)||norm(x.label)===norm(theme))||themes.find(x=>has(combined,x.words))||themes.find(x=>has(priority?.main_theme||priority?.criterion,x.words))||themes[4];
- const focus=focusForRequest(request),a=adaptation(level,age),mins=[60,90,120].includes(Number(duration))?Number(duration):90;
- const activities=buildActivities(t,focus,mins);
+ const focus=selectedObjective?{label:selectedObjective.label,cue:selectedObjective.intent,success:selectedObjective.success}:focusForRequest(request),a=adaptation(level,age),mins=[60,90,120].includes(Number(duration))?Number(duration):90;
+ const activities=selectedObjective?buildCurriculumActivities(selectedObjective,mins,customExercises):buildActivities(t,focus,mins,selectedObjective);
  const selectedDifficulty=difficulty==='auto'&&priorAdjustment?.hasHistory?priorAdjustment.difficulty:difficulty;
  const progression=selectedDifficulty==='easy'?{label:'Accessible',rule:'Rapprocher le joueur, ralentir le rythme et élargir les cibles.'}:selectedDifficulty==='hard'?{label:'Exigeant',rule:'Réduire les cibles, augmenter l’incertitude et ajouter un score sous pression.'}:{label:'Progressif',rule:'Commencer avec une cible large, puis ajouter une variable après plusieurs réussites.'};
- const objective=request?'Objectif personnalisé : '+request+'.':priority?.criterion?'Priorité individualisée : '+priority.criterion+'. '+t.objective+'.':t.objective+'.';
+ const objective=selectedObjective?selectedObjective.label+' : '+selectedObjective.intent:request?'Objectif personnalisé : '+request+'.':priority?.criterion?'Priorité individualisée : '+priority.criterion+'. '+t.objective+'.':t.objective+'.';
  const challengeText=challenge?.objective||challenge?.criterion||'';
  const progressionNote=priorAdjustment?.hasHistory?'Adaptation depuis la séance précédente : '+priorAdjustment.label+'. '+priorAdjustment.guidance:'';
- const notes=['Joueur : '+playerName+' · Profil : '+playerType+' · Niveau : '+level,'Objectif : '+objective,'Consigne technique : '+(focus?.cue||t.cue),'Adaptation : '+a.change,'Difficulté : '+progression.label+' — '+progression.rule,progressionNote,priorAdjustment?.successCriterion?'Critère précédent : '+priorAdjustment.successCriterion:'',priorAdjustment?.observed?'Observation précédente : '+priorAdjustment.observed:'',priorAdjustment?.nextAdjustment?'Ajustement demandé : '+priorAdjustment.nextAdjustment:'','Charge : '+a.load,'Réussite globale : '+(focus?.success||activities.at(-1).scoring),challengeText?'Défi actif : '+challengeText:'',recentSessions.slice(0,3).some(x=>has(x.theme,t.words))?'Le thème apparaît dans les séances récentes : varier la cible ou la contrainte.':''].filter(Boolean).join('\n');
+ const notes=['Joueur : '+playerName+' · Profil : '+playerType+' · Niveau : '+level,'Objectif : '+objective,selectedObjective?.criteria?.length?'Critères reliés au bilan : '+selectedObjective.criteria.join(' · '):'','Consigne technique : '+(focus?.cue||t.cue),'Adaptation : '+a.change,'Difficulté : '+progression.label+' — '+progression.rule,progressionNote,priorAdjustment?.successCriterion?'Critère précédent : '+priorAdjustment.successCriterion:'',priorAdjustment?.observed?'Observation précédente : '+priorAdjustment.observed:'',priorAdjustment?.nextAdjustment?'Ajustement demandé : '+priorAdjustment.nextAdjustment:'','Charge : '+a.load,'Réussite globale : '+(focus?.success||activities.at(-1).scoring),challengeText?'Défi actif : '+challengeText:'',recentSessions.slice(0,3).some(x=>has(x.theme,t.words))?'Le thème apparaît dans les séances récentes : varier la cible ou la contrainte.':''].filter(Boolean).join('\n');
  const formatted=activities.map(formatActivity);
  const firstGroup=mins===60?formatted.slice(0,2):mins===90?formatted.slice(0,2):formatted.slice(0,3);
  const secondGroup=mins===60?formatted.slice(2):mins===90?formatted.slice(2):formatted.slice(3);
  const phases=activities.map(item=>({name:item.name,minutes:item.minutes,objective:item.objective,content:formatActivity(item)}));
  const feedCount=activities.filter(x=>x.name.toLocaleLowerCase('fr').includes('envoi du coach')).length;
- return {generated:true,generation_mode:'original',theme:focus?.label||t.label,focus:focus?.label||null,duration_minutes:mins,objective,coaching_notes:notes,
+ return {generated:true,generation_mode:'original',theme:selectedObjective?.theme||focus?.label||t.label,focus:selectedObjective?.label||focus?.label||null,objective_criteria:selectedObjective?.criteria||[],duration_minutes:mins,objective,coaching_notes:notes,
  exercise_1:firstGroup.join('\n\n'),exercise_2:secondGroup.join('\n\n'),
  player_visible_summary:objective+' La séance est organisée en '+activities.length+' exercices progressifs : alimentation du coach, gammes techniques distinctes et transfert en points.',
  success_criteria:focus?.success||activities.at(-1).scoring,adaptation:a.label,difficulty:progression.label,difficulty_rule:progression.rule,progression:priorAdjustment||null,

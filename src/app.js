@@ -7,14 +7,20 @@ import { pageMeta, renderPage, libraryItemsForCoach, libraryCard } from './views
 import { bookingService } from './services/booking.js';
 import { notificationService } from './services/notifications.js';
 import { calculateAgeCategory, toLocalISO } from './domain/tennis.js';
+import { PLAYER_COLORS } from './domain/player-colors.js';
 import { isTeachingDate, isWithinTeachingWindow, isPrivateLessonDateAllowed, GROUP_SEASON } from './domain/group-calendar.js';
 import { groupCriteria, recommendChallenge, hasEvaluationContent } from './domain/progression.js';
 import { buildSeriesOccurrences } from './domain/group-series.js';
 import { progressionService } from './services/progression.js';
 import { recommendSessionExercises, buildMatchTransfer, buildSessionCoachingPlan } from './domain/session-recommendations.js';
 import { generateOriginalSession } from './domain/session-generator.js';
+import { OBJECTIVES, objectivesForTheme, findObjective } from './domain/session-curriculum.js';
+const coachObjectives=()=>state.sessionObjectives?.length?state.sessionObjectives:OBJECTIVES;
 import { buildSessionProgression } from './domain/session-progression.js';
 import { buildAdaptiveTrainingProgram } from './domain/intelligence.js';
+import { analyzeVideoPose } from './domain/video-pose.js';
+import { solveCourtHomography, calibratedFootDistances } from './domain/court-calibration.js';
+const courtCalibrationSelections=new Map();
 
 let signupMode = false;
 let weatherRequest = 0;
@@ -24,6 +30,9 @@ let notificationRefreshPromise = null;
 let messageRefreshPromise = null;
 let notificationRetryCount = 0;
 let messageRetryCount = 0;
+let videoCameraStream = null;
+let videoCameraRecorder = null;
+let videoCameraChunks = [];
 const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Accueil','⌂'], ['passport','Passeport','✦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
@@ -59,6 +68,7 @@ async function loadWorkspace() {
 }
 
 function render(page) {
+  if(page!=='videos') stopVideoCamera();
   const isCoach = state.profile?.role === 'coach';
   const isAdmin = state.profile?.is_admin === true || state.profile?.role === 'admin';
   const navItems = isCoach ? [...coachNav, ...(isAdmin ? adminNav : [])] : isAdmin ? [['coaches','Gestion des coachs','♙']] : playerNav;
@@ -70,6 +80,7 @@ function render(page) {
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
   $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
   $('#page-content').innerHTML=renderPage(page);
+  if(page==='videos') initializeCourtCalibrationCanvases();
   if(page==='planning') loadWeatherForecast();
   if(page==='messages'){subscribeToMessages();markVisibleConversationRead();}
   else if(messageChannel){supabase.removeChannel(messageChannel);messageChannel=null;}
@@ -115,6 +126,13 @@ $('#page-content').addEventListener('keydown', event=>{
 });
 
 $('#page-content').addEventListener('click', async event=>{
+  const calibrationCanvas=event.target.closest('[data-court-calibration]');
+  if(calibrationCanvas){addCourtCalibrationPoint(calibrationCanvas,event);return;}
+  const calibrateButton=event.target.closest('[data-court-calibrate]');
+  if(calibrateButton){await saveCourtCalibration(calibrateButton.dataset.analysisId);return;}
+  if(event.target.closest('[data-camera-start]')){await startVideoCamera();return;}
+  if(event.target.closest('[data-camera-record]')){if(videoCameraRecorder?.state==='recording')stopVideoRecording();else startVideoRecording();return;}
+  if(event.target.closest('[data-camera-close]')){if(videoCameraRecorder?.state==='recording'){stopVideoRecording();return;}stopVideoCamera();const status=$('#camera-status');if(status)status.textContent='Caméra inactive';const start=$('[data-camera-start]');if(start)start.textContent='Ouvrir la caméra';return;}
   const deleteMatch=event.target.closest('[data-delete-match]');
   if(deleteMatch){
     if(!confirm('Supprimer ce match de ton journal personnel ?'))return;
@@ -150,6 +168,10 @@ $('#page-content').addEventListener('click', async event=>{
   if(action==='request-booking') return bookingDialog();
   if(action==='new-evaluation') return evaluationDialog();
   if(action==='new-library-item') return libraryDialog();
+  if(action==='new-coach-exercise') return coachExerciseDialog();
+  const editCoachObjective=event.target.closest('[data-edit-coach-objective]'); if(editCoachObjective)return coachObjectiveDialog(editCoachObjective.dataset.editCoachObjective);
+  const editCoachExercise=event.target.closest('[data-edit-coach-exercise]'); if(editCoachExercise)return coachExerciseDialog(editCoachExercise.dataset.editCoachExercise);
+  const deleteCoachExercise=event.target.closest('[data-delete-coach-exercise]'); if(deleteCoachExercise){if(!confirm('Supprimer cet exercice de ta banque personnelle ?'))return;try{await dataService.deleteCoachSessionExercise(deleteCoachExercise.dataset.deleteCoachExercise);state.customSessionExercises=(state.customSessionExercises||[]).filter(row=>row.id!==deleteCoachExercise.dataset.deleteCoachExercise);render('library');toast('Exercice supprimé de ta banque.');}catch(error){toast(error.message||'Suppression impossible.','error');}return;}
   const editLibrary=event.target.closest('[data-edit-library]'); if(editLibrary) return libraryDialog(editLibrary.dataset.editLibrary);
   const addProgramItem=event.target.closest('[data-add-program-item]'); if(addProgramItem){const template=libraryItemsForCoach().find(item=>item.id===addProgramItem.dataset.addProgramItem);if(template)return libraryDialog('',template);}
   const useLibrary=event.target.closest('[data-use-library]'); if(useLibrary){const item=state.library.find(row=>row.id===useLibrary.dataset.useLibrary);if(item)return sessionDialog(undefined,undefined,item);}
@@ -227,10 +249,24 @@ $('#dialog-content').addEventListener('change',event=>{
     const form=event.target.closest('#evaluation-form');
     if(form){form.dataset.criteriaConfirmed='false';const confirm=form.querySelector('[data-confirm-criteria]');if(confirm){confirm.textContent='Valider les critères ✓';confirm.classList.remove('criteria-confirmed');}const title=form.querySelector('[data-validation-title]');if(title)title.textContent='Sélection à confirmer';const hint=form.querySelector('[data-validation-hint]');if(hint)hint.textContent='Ta sélection a changé : valide-la à nouveau.';updateEvaluationSelectionUI();}
   }
-  if(event.target.name==='player_id'&&event.target.form?.id==='session-builder-form')applySessionRecommendationToBuilder(event.target.value);
+  if(event.target.name==='player_id'&&event.target.form?.id==='session-builder-form'){applySessionRecommendationToBuilder(event.target.value);const form=event.target.form;const rec=state.players.find(p=>p.id===event.target.value);const recommendation=rec?recommendSessionExercises({playerId:rec.id,evaluations:state.evaluations,evaluationCriteria:state.evaluationCriteria,library:state.library,sessions:state.sessions,challenges:state.challenges,videoAnalyses:state.videoAnalyses}):null;const goal=coachObjectives().find(item=>item.criteria.some(c=>normTheme(c)===normTheme(recommendation?.priority?.criterion)))||coachObjectives().find(item=>normTheme(item.theme)===normTheme(recommendation?.priority?.main_theme));if(goal){form.elements.theme.value=goal.theme;updateSessionObjectiveOptions();form.elements.objective_id.value=goal.id;}}
   if(event.target.name==='creation_mode'&&event.target.form?.id==='session-builder-form')updateSessionBuilderMode();
+  if(event.target.name==='theme'&&event.target.form?.id==='session-builder-form'){updateSessionObjectiveOptions();updateSessionBuilderExerciseOptions();}
+  if(event.target.name==='objective_id'&&event.target.form?.id==='session-builder-form'){const goal=findObjective(event.target.value);const custom=event.target.form.elements.custom_objective;if(goal&&custom)custom.value='';}
 });
 $('#page-content').addEventListener('change',async event=>{
+  if(event.target.matches('#video-analysis-form [name="video_theme"]')){
+    const form=event.target.form, objective=form?.elements.video_objective;
+    if(objective){
+      const theme=event.target.value;
+      const goals=coachObjectives().filter(goal=>goal.theme===theme);
+      objective.disabled=!theme;
+      objective.innerHTML='<option value="">Analyse générale du thème</option>'+goals.map(goal=>'<option value="'+escapeHtml(goal.label)+'">'+escapeHtml(goal.label)+'</option>').join('');
+      const hint=form.querySelector('[data-video-objective-hint]');
+      if(hint)hint.textContent=goals.length+' objectif(s) pédagogique(s) disponible(s) pour cette thématique.';
+    }
+    return;
+  }
   const input=event.target.closest('[data-group-rain-day]');
   if(!input)return;
   const rainy=input.checked;
@@ -289,8 +325,38 @@ $('#page-content').addEventListener('submit',async event=>{
   if(videoForm){event.preventDefault();await submitVideoAnalysis(videoForm);return;}
   const reviewForm=event.target.closest('#video-review-form');
   if(reviewForm){event.preventDefault();await saveVideoReview(reviewForm);return;}
+  const videoValidationForm=event.target.closest('.video-validation-form');
+  if(videoValidationForm){event.preventDefault();await validateVideoAnalysis(videoValidationForm);return;}
   const followupForm=event.target.closest('.video-followup-form');
   if(followupForm){event.preventDefault();await saveVideoCorrectionFollowup(followupForm);return;}
+  const coachObjectiveForm=event.target.closest('#coach-objective-form');
+  if(coachObjectiveForm){
+    event.preventDefault();
+    const values=Object.fromEntries(new FormData(coachObjectiveForm).entries());
+    const criteria=String(values.criteria||'').split(/\n|;/).map(x=>x.trim()).filter(Boolean);
+    const validCriteria=new Set((state.criteria||[]).map(row=>row.criterion).filter(Boolean));
+    const unknown=criteria.filter(value=>validCriteria.size&&!validCriteria.has(value));
+    if(unknown.length){toast('Critères absents de ta banque d’évaluation : '+unknown.join(', '),'error');return;}
+    try{
+      const saved=await dataService.updateCoachSessionObjective(values.id,{label:String(values.label||'').trim(),intent:String(values.intent||'').trim(),success:String(values.success||'').trim(),criteria});
+      state.sessionObjectives=(state.sessionObjectives||[]).map(row=>row.id===values.id?{...saved,id:saved.objective_id,db_id:saved.id}:row);
+      closeDialog();render('library');toast('Objectif pédagogique mis à jour.');
+    }catch(error){toast(error.message||'Impossible de modifier cet objectif.','error');}
+    return;
+  }
+  const coachExerciseForm=event.target.closest('#coach-exercise-form');
+  if(coachExerciseForm){
+    event.preventDefault();
+    const values=Object.fromEntries(new FormData(coachExerciseForm).entries());
+    const objective=coachObjectives().find(goal=>goal.id===values.objective_id);
+    const payload={objective_id:values.objective_id||null,theme:objective?.theme||values.theme,title:String(values.title||'').trim(),setup:String(values.setup||'').trim(),instructions:String(values.instructions||'').trim(),success_criteria:String(values.success_criteria||'').trim(),coaching_cue:String(values.coaching_cue||'').trim(),level:values.level||'Tous niveaux',active:true};
+    try{
+      const saved=values.id?await dataService.updateCoachSessionExercise(values.id,payload):await dataService.createCoachSessionExercise(payload);
+      state.customSessionExercises=values.id?(state.customSessionExercises||[]).map(row=>row.id===values.id?saved:row):[...(state.customSessionExercises||[]),saved];
+      closeDialog();render('library');toast(values.id?'Exercice mis à jour.':'Exercice ajouté à ta banque.');
+    }catch(error){toast(error.message||'Impossible d’enregistrer cet exercice.','error');}
+    return;
+  }
   const form=event.target.closest('#notification-preferences-form'); if(!form)return;
   event.preventDefault();
   const preferences=Object.fromEntries(['booking_requests','booking_decisions','booking_changes','reminders_24h','messages','progress','session_changes'].map(key=>[key,form.elements[key].checked]));
@@ -302,6 +368,22 @@ $('#page-content').addEventListener('input',event=>{
   if(['library-search','library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
 $('#page-content').addEventListener('change',event=>{
+  if(event.target.name==='camera_framing'){
+    const presets={
+      side:{hint:'Place le téléphone de côté, à distance suffisante pour garder le joueur entier dans l’image.',title:'Profil latéral',meta:'5–7 m · hauteur 1,2–1,5 m · téléphone horizontal',x:24,y:100,tx:105,ty:100},
+      front:{hint:'Place le téléphone derrière le fond opposé pour voir le joueur de face. Garde les deux pieds visibles.',title:'Face au joueur',meta:'6–8 m · hauteur 1,2–1,5 m · axe du court',x:160,y:3,tx:160,ty:16},
+      rear:{hint:'Place le téléphone derrière la ligne de fond du joueur, sans gêner le jeu.',title:'Vue arrière',meta:'4–6 m derrière le fond · hauteur 1,2–1,5 m',x:160,y:197,tx:160,ty:184},
+      serve:{hint:'Place le téléphone sur le côté du serveur pour voir le lancer, la flexion et l’extension.',title:'Profil service',meta:'4–6 m sur le côté · hauteur 1,2–1,5 m',x:24,y:62,tx:105,ty:72},
+      wide:{hint:'Recule suffisamment pour conserver le joueur et toute sa zone de déplacement dans l’image.',title:'Vue large',meta:'8–12 m · hauteur 1,5–2 m · cadre large',x:160,y:197,tx:160,ty:178},
+      threequarter:{hint:'Place le téléphone en diagonale pour voir l’orientation du corps et les transitions.',title:'Trois-quarts',meta:'5–7 m en diagonale · hauteur 1,2–1,5 m',x:35,y:180,tx:108,ty:150}
+    };
+    const preset=presets[event.target.value],hint=$('#camera-framing-hint'),title=$('#camera-guide-title'),meta=$('#camera-guide-meta'),marker=$('#camera-marker'),direction=$('#camera-direction');
+    if(hint)hint.textContent=preset?.hint||'Ce conseil n’est jamais obligatoire et ne bloque pas l’analyse.';
+    if(title)title.textContent=preset?.title||'Position indicative';
+    if(meta)meta.textContent=preset?.meta||'Choisis un cadrage pour afficher une suggestion de placement.';
+    if(marker){marker.setAttribute('cx',preset?.x??24);marker.setAttribute('cy',preset?.y??100);}
+    if(direction){direction.setAttribute('x1',preset?.x??24);direction.setAttribute('y1',preset?.y??100);direction.setAttribute('x2',preset?.tx??105);direction.setAttribute('y2',preset?.ty??100);}
+  }
   if(event.target.id==='message-partner'){state.messagePartnerId=event.target.value;render('messages');}
   if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;filterPlayerCards();}
   if(['library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
@@ -318,6 +400,111 @@ function filterPlayerCards(){
   });
 }
 
+async function startVideoCamera(){
+  const form=$('#video-analysis-form'),panel=$('.camera-capture-panel'),preview=$('#video-camera-preview'),status=$('#camera-status'),record=$('[data-camera-record]');
+  if(!form||!preview||!navigator.mediaDevices?.getUserMedia){toast('La caméra intégrée n’est pas disponible dans ce navigateur. Utilise l’import vidéo.','error');return;}
+  if(!form.elements.player_id.value||!String(form.elements.title.value||'').trim()||!form.elements.video_theme.value){toast('Choisis le joueur, le titre et la thématique avant d’ouvrir la caméra.','error');return;}
+  if(!form.elements.consent.checked){toast('Confirme l’autorisation du joueur avant de filmer.','error');return;}
+  if(!window.MediaRecorder){toast('Enregistrement direct non pris en charge. Utilise l’import vidéo.','error');return;}
+  try{
+    stopVideoCamera();
+    videoCameraStream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:60}}});
+    preview.srcObject=videoCameraStream;preview.classList.add('is-active');await preview.play();
+    panel?.classList.add('is-fullscreen');document.body.classList.add('camera-fullscreen-open');
+    const track=videoCameraStream.getVideoTracks()[0],settings=track.getSettings();
+    if(status)status.textContent=(settings.width||'—')+' × '+(settings.height||'—')+' · caméra active';
+    if(record){record.disabled=false;record.textContent='● Enregistrer';record.classList.remove('danger');record.classList.add('primary');}
+    const start=$('[data-camera-start]');if(start)start.textContent='Caméra ouverte';
+  }catch(error){stopVideoCamera();toast(error.message||'Accès caméra refusé ou indisponible.','error');}
+}
+function startVideoRecording(){
+  if(!videoCameraStream||videoCameraRecorder?.state==='recording')return;
+  if(!window.MediaRecorder){toast('Enregistrement direct non pris en charge. Utilise l’import vidéo.','error');return;}
+  const types=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  const mimeType=types.find(type=>MediaRecorder.isTypeSupported(type))||'';
+  try{
+    videoCameraChunks=[];
+    videoCameraRecorder=new MediaRecorder(videoCameraStream,{...(mimeType?{mimeType}:{}),videoBitsPerSecond:8000000});
+    videoCameraRecorder.ondataavailable=event=>{if(event.data?.size)videoCameraChunks.push(event.data);};
+    videoCameraRecorder.onstop=()=>{
+      const recorder=videoCameraRecorder,type=recorder?.mimeType||mimeType||'video/webm';
+      const ext=type.includes('mp4')?'mp4':'webm';
+      const file=new File(videoCameraChunks,'coach-in-capture.'+ext,{type});
+      const input=$('#video-analysis-form input[name=video]');
+      if(input&&file.size){const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));}
+      videoCameraChunks=[];
+      if(videoCameraStream){videoCameraStream.getTracks().forEach(track=>track.stop());videoCameraStream=null;}
+      const preview=$('#video-camera-preview');if(preview){preview.srcObject=null;preview.classList.remove('is-active');}
+      $('.camera-capture-panel')?.classList.remove('is-fullscreen');document.body.classList.remove('camera-fullscreen-open');
+      const status=$('#camera-status');if(status)status.textContent=file.size?'Vidéo prête · '+(file.size/1048576).toFixed(1)+' Mo · analyse automatique':'Aucun contenu vidéo enregistré';
+      const hint=$('#camera-hint');if(hint)hint.textContent=file.size?'La vidéo est envoyée automatiquement à l’analyse IA.':'La capture est vide. Recommence l’enregistrement.';
+      const record=$('[data-camera-record]');if(record){record.disabled=true;record.textContent='● Enregistrer';record.classList.remove('danger');record.classList.add('primary');}
+      if(!file.size){toast('La vidéo enregistrée est vide. Recommence.','error');return;}
+      const form=$('#video-analysis-form');if(form)void submitVideoAnalysis(form,{fromCamera:true});
+    };
+    videoCameraRecorder.start(1000);
+    const record=$('[data-camera-record]');if(record){record.disabled=false;record.textContent='■ Stop';record.classList.remove('primary');record.classList.add('danger');}
+    const status=$('#camera-status');if(status)status.textContent='Enregistrement en cours…';
+    const hint=$('#camera-hint');if(hint)hint.textContent='Appuie sur Stop avec le même bouton pour terminer et lancer automatiquement l’analyse IA.';
+  }catch(error){toast(error.message||'Impossible de démarrer l’enregistrement.','error');}
+}
+function stopVideoRecording(){if(videoCameraRecorder?.state==='recording')videoCameraRecorder.stop();}
+function stopVideoCamera(){
+  if(videoCameraRecorder?.state==='recording'){stopVideoRecording();return;}
+  if(videoCameraStream){videoCameraStream.getTracks().forEach(track=>track.stop());videoCameraStream=null;}
+  const preview=$('#video-camera-preview');if(preview){preview.srcObject=null;preview.classList.remove('is-active');}
+  $('.camera-capture-panel')?.classList.remove('is-fullscreen');document.body.classList.remove('camera-fullscreen-open');
+  const record=$('[data-camera-record]');if(record){record.disabled=true;record.textContent='● Enregistrer';record.classList.remove('danger');record.classList.add('primary');}
+}
+function initializeCourtCalibrationCanvases(){
+  $$('[data-court-calibration]').forEach(canvas=>{
+    const image=canvas.previousElementSibling;
+    if(!image)return;
+    const draw=()=>{
+      if(!image.naturalWidth||!image.naturalHeight)return;
+      canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+      const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+      let points=courtCalibrationSelections.get(canvas.dataset.analysisId);
+      if(!points){try{points=JSON.parse(canvas.dataset.initialPoints||'[]');}catch{points=[];}courtCalibrationSelections.set(canvas.dataset.analysisId,points);}
+      points.forEach((point,index)=>{
+        const x=point.x*canvas.width,y=point.y*canvas.height;
+        ctx.beginPath();ctx.arc(x,y,Math.max(12,canvas.width/65),0,Math.PI*2);ctx.fillStyle='#ffcf58';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#06121d';ctx.stroke();
+        ctx.fillStyle='#06121d';ctx.font='bold '+Math.max(15,canvas.width/45)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(index+1),x,y);
+        if(index){const previous=points[index-1];ctx.beginPath();ctx.moveTo(previous.x*canvas.width,previous.y*canvas.height);ctx.lineTo(x,y);ctx.lineWidth=Math.max(3,canvas.width/220);ctx.strokeStyle='#ffcf58';ctx.stroke();}
+      });
+    };
+    if(image.complete)draw();else image.addEventListener('load',draw,{once:true});
+    canvas._redrawCalibration=draw;
+  });
+}
+function addCourtCalibrationPoint(canvas,event){
+  const id=canvas.dataset.analysisId,rect=canvas.getBoundingClientRect();
+  const points=courtCalibrationSelections.get(id)||[];
+  if(points.length>=4){courtCalibrationSelections.set(id,[]);canvas._redrawCalibration?.();toast('Les quatre points ont été réinitialisés. Recommence dans l’ordre indiqué.');return;}
+  points.push({x:Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width)),y:Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height))});
+  courtCalibrationSelections.set(id,points);canvas._redrawCalibration?.();
+  const status=$('[data-court-calibration-status="'+id+'"]');if(status)status.textContent=points.length+'/4 points sélectionnés';
+}
+async function saveCourtCalibration(analysisId){
+  const row=(state.videoAnalyses||[]).find(item=>item.id===analysisId);
+  const points=courtCalibrationSelections.get(analysisId)||[];
+  if(!row||points.length!==4){toast('Sélectionne les quatre coins du court dans l’ordre indiqué.','error');return;}
+  const pose=row.analysis_result?.pose_analysis;
+  if(!pose?.available||!Array.isArray(pose.frames)||!pose.frames.length){toast('Les repères de pose sont indisponibles pour cette vidéo.','error');return;}
+  try{
+    const matrix=solveCourtHomography(points,10.97,23.77);
+    const footDistances=calibratedFootDistances(pose.frames,matrix);
+    const valid=footDistances.map(item=>item.distance_m).filter(value=>Number.isFinite(value));
+    if(!valid.length)throw new Error('Les pieds ne sont pas assez visibles sur les images analysées pour estimer leur écart.');
+    const mean=Number((valid.reduce((sum,value)=>sum+value,0)/valid.length).toFixed(2));
+    const calibration={court_width_m:10.97,court_length_m:23.77,points,matrix,foot_distances:footDistances,mean_foot_spacing_m:mean,calibrated_at:new Date().toISOString(),method:'Homographie manuelle à partir des quatre intersections fond / couloir de double',caveat:'Estimation au sol à partir des repères de pieds 2D ; dépend de la caméra fixe, du bon placement des points et de la visibilité des chaussures.'};
+    const updated={...row.analysis_result,pose_analysis:{...pose,calibration}};
+    const {error}=await supabase.from('coach_video_analyses').update({analysis_result:updated,updated_at:new Date().toISOString()}).eq('id',analysisId).eq('coach_id',state.user.id);
+    if(error)throw error;
+    await dataService.loadCoachWorkspace(state.user.id);render('videos');
+    toast('Court calibré. Écart moyen estimé entre les pieds : '+mean+' m.');
+  }catch(error){toast(error.message||'Impossible de calibrer le court.','error');}
+}
 async function extractVideoFrames(file){
   const objectUrl=URL.createObjectURL(file),video=document.createElement('video');
   video.muted=true;video.playsInline=true;video.preload='metadata';
@@ -350,17 +537,20 @@ async function extractVideoFrames(file){
     return {duration,frames};
   }finally{URL.revokeObjectURL(objectUrl);video.removeAttribute('src');video.load();}
 }
-async function submitVideoAnalysis(form){
+async function submitVideoAnalysis(form,{fromCamera=false}={}){
   const button=form.querySelector('button[type=submit]'),file=form.elements.video.files?.[0];
-  const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value;
+  const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value,theme=String(form.elements.video_theme?.value||'').trim(),objectiveLabel=String(form.elements.video_objective?.value||'').trim(),selectedObjective=objectiveLabel?coachObjectives().find(goal=>goal.theme===theme&&goal.label===objectiveLabel):null,objective=selectedObjective?[selectedObjective.label+'. Intention pédagogique : '+selectedObjective.intent+'. Critères à observer : '+(selectedObjective.criteria||[]).join('; ')+'. Indicateur de réussite : '+selectedObjective.success]:'';
   if(!file||!title||!playerId){toast('Renseigne le joueur, le titre et la vidéo.','error');return;}
-  if(!['video/mp4','video/quicktime','video/webm'].includes(file.type)){toast('Format accepté : MP4, MOV ou WEBM.','error');return;}
+  const videoMime=file.type.split(';')[0].trim();
+  if(!['video/mp4','video/quicktime','video/webm'].includes(videoMime)){toast('Format accepté : MP4, MOV ou WEBM.','error');return;}
   if(file.size>262144000){toast('La vidéo dépasse la limite de 250 Mo.','error');return;}
   if(!form.elements.consent.checked){toast('Confirme que tu disposes de l’autorisation du joueur avant l’analyse.','error');return;}
   button.disabled=true;button.textContent='Préparation de la vidéo…';
   let analysisId=null,videoPath=null;
   try{
     const {duration,frames}=await extractVideoFrames(file);
+    button.textContent='Détection des articulations sur le téléphone…';
+    const poseAnalysis=await analyzeVideoPose(file);
     const totalFrameBytes=frames.reduce((total,frame)=>total+frame.data_url.length,0);
     if(totalFrameBytes>6500000)throw new Error('Les images extraites sont trop volumineuses pour une analyse fiable. Essaie une vidéo plus courte.');
     analysisId=crypto.randomUUID();
@@ -371,7 +561,7 @@ async function submitVideoAnalysis(form){
     const {error:insertError}=await supabase.from('coach_video_analyses').insert({id:analysisId,coach_id:state.user.id,player_id:playerId,title,stroke_type:stroke,video_path:videoPath,video_mime:file.type,video_size_bytes:file.size,duration_seconds:Number(duration.toFixed(2)),status:'uploaded'});
     if(insertError){await supabase.storage.from('coach-in-videos').remove([videoPath]);throw insertError;}
     button.textContent='Analyse IA en cours…';
-    const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,frames}});
+    const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,frames,theme,objective,pose_analysis:poseAnalysis}});
     if(error||data?.error){
       const {data:latest}=await supabase.from('coach_video_analyses').select('status').eq('id',analysisId).maybeSingle();
       if(latest?.status!=='completed')throw new Error(data?.error||error?.message||'Le service IA n’a pas répondu. Vérifie le statut avant de relancer.');
@@ -407,6 +597,37 @@ async function saveVideoReview(form){
   const id=form.elements.analysis_id.value,review=String(form.elements.coach_review.value||'').trim();
   try{const {error}=await supabase.from('coach_video_analyses').update({coach_review:review,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id);if(error)throw error;await dataService.loadCoachWorkspace(state.user.id);render('videos');toast('Commentaire coach enregistré.');}
   catch(error){toast(error.message||'Impossible d’enregistrer le commentaire.','error');}
+}
+
+async function validateVideoAnalysis(form){
+  const analysisId=form.elements.analysis_id.value;
+  const analysis=(state.videoAnalyses||[]).find(row=>row.id===analysisId);
+  if(!analysis||analysis.status!=='completed'){toast('Cette analyse n’est pas disponible pour validation.','error');return;}
+  if(analysis.analysis_result?.coach_validation?.evaluation_id){toast('Ce bilan a déjà été envoyé au joueur.','error');return;}
+  const button=form.querySelector('button[type="submit"]');
+  const scores={technical_score:null,tactical_score:null,physical_score:null,mental_score:null};
+  for(const key of Object.keys(scores)){
+    const raw=String(form.elements[key]?.value??'').trim();
+    if(raw!==''){const value=Number(raw);if(!Number.isFinite(value)||value<0||value>20){toast('Les notes doivent être comprises entre 0 et 20.','error');return;}scores[key]=value;}
+  }
+  if(Object.values(scores).every(value=>value===null)){toast('Renseigne au moins une note sur 20 avant de valider le bilan.','error');return;}
+  const comment=String(form.elements.player_visible_comment.value||'').trim();
+  if(!comment){toast('Ajoute une synthèse pour la fiche joueur.','error');return;}
+  if(button){button.disabled=true;button.textContent='Enregistrement du bilan…';}
+  try{
+    const evaluation=await progressionService.saveEvaluation({playerId:analysis.player_id,coachId:state.user.id,scores,selectedCriteria:[],playerVisibleComment:comment,notifyPlayer:false});
+    const result={...(analysis.analysis_result||{}),coach_validation:{evaluation_id:evaluation.id,validated_at:new Date().toISOString(),scores,player_visible_comment:comment}};
+    const {error:updateError}=await supabase.from('coach_video_analyses').update({coach_review:comment,shared_with_player:true,analysis_result:result,updated_at:new Date().toISOString()}).eq('id',analysisId).eq('coach_id',state.user.id);
+    if(updateError)throw updateError;
+    const {error:notificationError}=await supabase.rpc('notify_player_existing_evaluation',{p_evaluation_id:evaluation.id});
+    await dataService.loadCoachWorkspace(state.user.id);
+    render('videos');
+    if(notificationError)toast('Bilan enregistré et vidéo ajoutée à la fiche joueur, mais la notification n’a pas pu être envoyée.','error');
+    else toast('Bilan validé : évaluation enregistrée et vidéo ajoutée à la fiche joueur.');
+  }catch(error){
+    if(button){button.disabled=false;button.textContent='Valider et envoyer à la fiche joueur';}
+    toast(error.message||'Impossible de valider ce bilan.','error');
+  }
 }
 
 async function saveVideoCorrectionFollowup(form){
@@ -460,6 +681,19 @@ function libraryDialog(itemId='', seedItem=null){
 }
 
 
+function coachObjectiveDialog(id=''){
+ const item=coachObjectives().find(row=>row.id===id);
+ if(!item){toast('Objectif introuvable.','error');return;}
+ showDialog('<div class="dialog-head"><div><p class="eyebrow">CATALOGUE PÉDAGOGIQUE · COURS PARTICULIERS</p><h2>Modifier l’objectif</h2><p class="tiny muted">'+escapeHtml(item.theme)+' · '+escapeHtml(item.objective_id)+'</p></div><button class="btn icon-btn" data-close>✕</button></div><form id="coach-objective-form" class="form-grid"><input type="hidden" name="id" value="'+escapeHtml(item.id)+'"><label class="span-2">Intitulé<input name="label" required maxlength="180" value="'+escapeHtml(item.label)+'"></label><label class="span-2">Intention pédagogique<textarea name="intent" rows="3" required>'+escapeHtml(item.intent)+'</textarea></label><label class="span-2">Critère de réussite mesurable<textarea name="success" rows="2" required>'+escapeHtml(item.success)+'</textarea></label><label class="span-2">Critères d’évaluation associés (un par ligne)<textarea name="criteria" rows="5" required>'+escapeHtml((item.criteria||[]).join('\n'))+'</textarea><small>Conserve les intitulés exacts de ta banque d’évaluation pour garder le lien avec les bilans.</small></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer l’objectif</button></div></form>');
+}
+
+function coachExerciseDialog(id=''){
+ const item=(state.customSessionExercises||[]).find(row=>row.id===id)||{};
+ const editing=Boolean(id);
+ const themes=[...new Set(coachObjectives().map(goal=>goal.theme))];
+ showDialog('<div class="dialog-head"><div><p class="eyebrow">BANQUE TACTIQUE PERSONNELLE</p><h2>'+(editing?'Modifier un exercice':'Ajouter un exercice')+'</h2><p class="tiny muted">Cet exercice sera privé à ton compte coach et proposé pour les cours particuliers.</p></div><button class="btn icon-btn" data-close>✕</button></div><form id="coach-exercise-form" class="form-grid"><input type="hidden" name="id" value="'+escapeHtml(item.id||'')+'"><label>Thème<select name="theme" required>'+themes.map(theme=>'<option value="'+escapeHtml(theme)+'" '+(item.theme===theme?'selected':'')+'>'+escapeHtml(theme)+'</option>').join('')+'</select></label><label>Niveau<select name="level">'+['Tous niveaux','Débutant','Intermédiaire','Confirmé','Compétition'].map(level=>'<option '+((item.level||'Tous niveaux')===level?'selected':'')+'>'+level+'</option>').join('')+'</select></label><label class="span-2">Objectif associé<select name="objective_id"><option value="">Tous les objectifs du thème</option>'+coachObjectives().map(goal=>'<option value="'+goal.id+'" '+(item.objective_id===goal.id?'selected':'')+'>'+escapeHtml(goal.theme+' · '+goal.label)+'</option>').join('')+'</select></label><label class="span-2">Nom de l’exercice<input name="title" required maxlength="140" value="'+escapeHtml(item.title||'')+'" placeholder="Ex. Défense haute puis reprise de terrain"></label><label class="span-2">Mise en place<textarea name="setup" rows="2" required>'+escapeHtml(item.setup||'')+'</textarea></label><label class="span-2">Déroulement et consignes tactiques<textarea name="instructions" rows="4" required>'+escapeHtml(item.instructions||'')+'</textarea></label><label class="span-2">Critère de réussite mesurable<textarea name="success_criteria" rows="2" required>'+escapeHtml(item.success_criteria||'')+'</textarea></label><label class="span-2">Point de vigilance coach<textarea name="coaching_cue" rows="2">'+escapeHtml(item.coaching_cue||'')+'</textarea></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">'+(editing?'Enregistrer les modifications':'Ajouter à ma banque')+'</button></div></form>');
+}
+
 let generatedSessionPlan = null;
 let generatedSessionRecommendation = null;
 
@@ -478,6 +712,15 @@ function updateSessionBuilderExerciseOptions(){
   else if(filtered.length>1)second.value=String(filtered.find(item=>String(item.id)!==first.value)?.id||'');
 }
 
+
+function updateSessionObjectiveOptions(){
+ const form=$('#session-builder-form');if(!form)return;
+ const select=form.elements.objective_id;if(!select)return;
+ const current=select.value,goals=coachObjectives().filter(item=>item.theme===form.elements.theme.value);
+ select.innerHTML='<option value="">Choisir un objectif…</option>'+goals.map(x=>'<option value="'+x.id+'">'+escapeHtml(x.label)+'</option>').join('');
+ if(goals.some(x=>x.id===current))select.value=current;
+}
+
 function sessionBuilderDialog(playerId=null, sessionDate=toLocalISO(new Date()), sessionTime='17:00', sessionDuration=90, programStep=null){
  if(!state.players.length){toast('Ajoute au moins un joueur à ton effectif avant de préparer une séance.','error');return;}
  const items=(state.library||[]).filter(x=>x.category==='particulier').sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'fr'));
@@ -491,13 +734,13 @@ function sessionBuilderDialog(playerId=null, sessionDate=toLocalISO(new Date()),
  '<fieldset class="duration-choice span-2"><legend>Durée du cours</legend><div class="duration-choice-options"><label><input type="radio" name="duration_minutes" value="60" '+(Number(sessionDuration||60)===60?'checked':'')+'><span>1 heure</span></label><label><input type="radio" name="duration_minutes" value="90" '+(Number(sessionDuration)===90?'checked':'')+'><span>1 h 30</span></label><label><input type="radio" name="duration_minutes" value="120" '+(Number(sessionDuration)===120?'checked':'')+'><span>2 heures</span></label></div></fieldset>'+
  '<label>Niveau<select name="level"><option>Débutant</option><option selected>Intermédiaire</option><option>Confirmé</option><option>Compétition</option></select></label>'+
  '<label class="span-2">Mode de création<select name="creation_mode"><option value="original" selected>Création originale · sans bibliothèque</option><option value="library">Utiliser ma bibliothèque</option></select></label>'+
- '<label class="span-2">Thématique de la séance<select name="theme" required>'+['Service','Retour','Volée','Défense','Construction du point','Attaque','Déplacements et appuis','Mental'].map(v=>'<option value="'+escapeHtml(v)+'" '+(priority&&normTheme(v)===normTheme(priority.main_theme)?'selected':'')+'>'+escapeHtml(v)+'</option>').join('')+'</select></label>'+
+ '<label class="span-2">Thématique de la séance<select name="theme" required>'+[...new Set(coachObjectives().map(item=>item.theme))].map(v=>'<option value="'+escapeHtml(v)+'" '+(priority&&normTheme(v)===normTheme(priority.main_theme)?'selected':'')+'>'+escapeHtml(v)+'</option>').join('')+'</select></label>'+ '<label class="span-2">Objectif pédagogique précis<select name="objective_id" id="session-objective-select"><option value="">Choisir un objectif…</option>'+coachObjectives().filter(x=>x.theme===(priority?.main_theme||'Coup droit')).map(x=>'<option value="'+x.id+'">'+escapeHtml(x.label)+'</option>').join('')+'</select><small>Les objectifs sont reliés aux critères de ta banque d’évaluation.</small></label>'+
  '<label class="span-2">Objectif personnalisé (facultatif)<input name="custom_objective" placeholder="Ex. prise de balle tôt en revers, varier les effets au service…"></label>'+
  '<label class="span-2">Niveau de difficulté<select name="difficulty"><option value="auto" selected>Automatique · selon le dernier bilan</option><option value="easy">Accessible · sécuriser le geste</option><option value="progressive">Progressif · faire évoluer la contrainte</option><option value="hard">Exigeant · pression et décision</option></select></label>'+
  '<div id="session-library-fields" class="span-2 hidden"><label>Exercice 1<select name="exercise_one">'+(options||'<option value="">Aucun exercice</option>')+'</select></label><label>Exercice 2<select name="exercise_two"><option value="">Aucun</option>'+options+'</select></label></div>'+
  '<div class="span-2 session-builder-tip"><strong>'+(priority?'Priorité du joueur : '+escapeHtml(priority.criterion):'Création pédagogique autonome')+'</strong><p>Coach In crée ateliers, consignes, adaptations et situations de match sans utiliser ta bibliothèque.</p></div>'+
  '<div id="session-builder-preview" class="span-2"></div><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button type="button" class="btn primary" data-generate-session>Générer la séance</button></div></form>');
- updateSessionBuilderExerciseOptions();const form=$('#session-builder-form');if(form){form.elements.creation_mode.value='original';form.elements.level.value=player?.player_type==='Compétition'?'Compétition':'Intermédiaire';if(programStep?.objective)form.elements.custom_objective.value=programStep.objective;if(programStep?.exerciseId&&items.some(item=>String(item.id)===String(programStep.exerciseId))){form.elements.creation_mode.value='library';form.elements.exercise_one.value=String(programStep.exerciseId);const selectedExercise=items.find(item=>String(item.id)===String(programStep.exerciseId));if(selectedExercise?.theme&&[...form.elements.theme.options].some(option=>option.value===selectedExercise.theme))form.elements.theme.value=selectedExercise.theme;updateSessionBuilderMode();}const tip=form.querySelector('.session-builder-tip');if(tip&&programStep)tip.innerHTML='<strong>'+escapeHtml(programStep.title||'Séance du cycle')+' · '+escapeHtml(programStep.stage||'')+'</strong><p>Objectif du cycle préchargé : '+escapeHtml(programStep.objective||'')+'</p>';updateSessionBuilderMode();}
+ updateSessionBuilderExerciseOptions();const form=$('#session-builder-form');if(form){updateSessionObjectiveOptions();if(priority&&!programStep?.objective&&!programStep?.exerciseId){const recommended=coachObjectives().find(goal=>goal.criteria.some(item=>normTheme(item)===normTheme(priority.criterion)))||coachObjectives().find(goal=>normTheme(goal.theme)===normTheme(priority.main_theme));if(recommended){form.elements.theme.value=recommended.theme;updateSessionObjectiveOptions();form.elements.objective_id.value=recommended.id;}}form.elements.creation_mode.value='original';form.elements.level.value=player?.player_type==='Compétition'?'Compétition':'Intermédiaire';if(programStep?.objective)form.elements.custom_objective.value=programStep.objective;if(programStep?.exerciseId&&items.some(item=>String(item.id)===String(programStep.exerciseId))){form.elements.creation_mode.value='library';form.elements.exercise_one.value=String(programStep.exerciseId);const selectedExercise=items.find(item=>String(item.id)===String(programStep.exerciseId));if(selectedExercise?.theme&&[...form.elements.theme.options].some(option=>option.value===selectedExercise.theme))form.elements.theme.value=selectedExercise.theme;updateSessionBuilderMode();}const tip=form.querySelector('.session-builder-tip');if(tip&&programStep)tip.innerHTML='<strong>'+escapeHtml(programStep.title||'Séance du cycle')+' · '+escapeHtml(programStep.stage||'')+'</strong><p>Objectif du cycle préchargé : '+escapeHtml(programStep.objective||'')+'</p>';updateSessionBuilderMode();}
 }
 function normTheme(v){return String(v||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]/g,'');}
 function updateSessionBuilderMode(){const form=$('#session-builder-form');if(!form)return;const libraryMode=form.elements.creation_mode.value==='library',fields=$('#session-library-fields');if(fields)fields.classList.toggle('hidden',!libraryMode);const tip=form.querySelector('.session-builder-tip');if(tip)tip.innerHTML=libraryMode?'<strong>Bibliothèque du coach</strong><p>Les exercices enregistrés restent sélectionnables.</p>':'<strong>Création originale indépendante</strong><p>Ateliers, consignes, critères de réussite et transfert au match seront créés sans puiser dans ta bibliothèque.</p>';}
@@ -536,7 +779,7 @@ function sessionBuilderExerciseText(item){
 function generateSessionPlan(){
  const form=$('#session-builder-form');if(!form)return;const values=Object.fromEntries(new FormData(form));
  if(!isPrivateLessonDateAllowed(values.session_date)){toast('Cette date tombe pendant une période sans cours particuliers. Choisis une autre date.','error');return;}
- const duration=Number(values.duration_minutes),player=state.players.find(p=>p.id===values.player_id)||{},mode=values.creation_mode||'original';
+ const duration=Number(values.duration_minutes),player=state.players.find(p=>p.id===values.player_id)||{},mode=values.creation_mode||'original',selectedObjective=findObjective(values.objective_id);
  let exerciseOne='',exerciseTwo='',theme=values.theme||'Construction du point',visibleSummary='',coachingPlan=null,phases=[];
  if(mode==='library'){
   const one=state.library.find(x=>String(x.id)===String(values.exercise_one)),two=values.exercise_two?state.library.find(x=>String(x.id)===String(values.exercise_two)):null;
@@ -549,13 +792,13 @@ function generateSessionPlan(){
  }else{
   const recent=state.sessions.filter(x=>x.player_id===values.player_id).sort((a,b)=>String(b.session_date||'').localeCompare(String(a.session_date||'')));
   const custom=String(values.custom_objective||'').trim(),age=player.date_of_birth?Math.floor((Date.now()-new Date(player.date_of_birth).getTime())/31557600000):player.age||null;
-  const priorAdjustment=buildSessionProgression(recent,values.player_id,custom||values.theme,state.evaluations,state.evaluationCriteria);const generated=generateOriginalSession({theme:values.theme||generatedSessionRecommendation?.priority?.main_theme||'Construction du point',customObjective:custom,difficulty:values.difficulty||'auto',priorAdjustment,playerName:[player.first_name,player.last_name].filter(Boolean).join(' ')||'le joueur',level:values.level||'Intermédiaire',age,playerType:player.player_type||'Loisir',duration,priority:generatedSessionRecommendation?.priority||null,challenge:generatedSessionRecommendation?.activeChallenge||null,recentSessions:recent});
+  const priorAdjustment=buildSessionProgression(recent,values.player_id,custom||selectedObjective?.label||values.theme,state.evaluations,state.evaluationCriteria);const generated=generateOriginalSession({theme:selectedObjective?.theme||values.theme||generatedSessionRecommendation?.priority?.main_theme||'Construction du point',selectedObjective,customObjective:custom,difficulty:values.difficulty||'auto',priorAdjustment,playerName:[player.first_name,player.last_name].filter(Boolean).join(' ')||'le joueur',level:values.level||'Intermédiaire',age,playerType:player.player_type||'Loisir',duration,priority:generatedSessionRecommendation?.priority||null,challenge:generatedSessionRecommendation?.activeChallenge||null,recentSessions:recent,customExercises:state.customSessionExercises||[]});
   exerciseOne=generated.exercise_1+'\n\nNOTES COACH\n'+generated.coaching_notes+'\n\nNIVEAU DE DIFFICULTÉ · '+generated.difficulty+'\n'+generated.difficulty_rule;exerciseTwo=generated.exercise_2;theme=generated.theme;visibleSummary=generated.player_visible_summary;coachingPlan={objective:generated.objective,success:generated.success_criteria};phases=generated.phases;
  }
  generatedSessionPlan={generated:true,player_id:values.player_id,session_date:values.session_date,session_time:values.session_time,duration_minutes:duration,theme,exercise_1:exerciseOne,exercise_2:exerciseTwo,level:values.level,player_visible_summary:visibleSummary,generation_mode:mode,progression:mode==='original'?buildSessionProgression(state.sessions.filter(x=>x.player_id===values.player_id),values.player_id,values.custom_objective||values.theme,state.evaluations,state.evaluationCriteria):null};
  const preview=$('#session-builder-preview');if(preview)preview.innerHTML='<section class="session-builder-preview"><div class="session-builder-preview-head"><div><p class="eyebrow">SÉANCE GÉNÉRÉE · '+(mode==='original'?'CRÉATION ORIGINALE':'BIBLIOTHÈQUE')+'</p><h3>'+escapeHtml(theme)+' · '+duration+' min</h3></div><span class="tag">'+escapeHtml(values.level)+'</span></div>'+
  (generatedSessionRecommendation?.priority?'<div class="session-builder-focus"><strong>Priorité joueur</strong><span>'+escapeHtml(generatedSessionRecommendation.priority.criterion)+'</span></div>':'')+(generatedSessionPlan.progression?.hasHistory?'<div class="session-builder-focus"><strong>'+escapeHtml(generatedSessionPlan.progression.label)+'</strong><span>'+escapeHtml(generatedSessionPlan.progression.guidance)+'</span></div>':'<div class="session-builder-focus"><strong>Premier repère</strong><span>La première séance évaluée servira de référence pour ajuster la suivante.</span></div>')+'<div class="session-builder-phase"><strong>Objectif pédagogique</strong><p>'+escapeHtml(coachingPlan?.objective||visibleSummary)+'</p><small>'+escapeHtml(coachingPlan?.success||'Réussite à observer en jeu')+'</small></div>'+
- (phases.length?phases.map((p,i)=>'<div class="session-builder-phase"><strong>0'+(i+1)+' · '+escapeHtml(p.name)+'</strong><small>'+p.minutes+' min</small>'+(p.objective?'<p>'+escapeHtml(p.objective)+'</p>':'')+(p.content?'<details class="session-builder-exercise-details"><summary>Voir le déroulement et les consignes</summary><p>'+escapeHtml(p.content)+'</p></details>':'')+'</div>').join(''):'<div class="session-builder-phase"><strong>Exercices sélectionnés</strong><p>Contenus issus de ta bibliothèque.</p></div>')+'<div class="session-builder-actions"><button type="button" class="btn primary" data-use-generated-session>Utiliser cette séance →</button></div></section>';
+ (selectedObjective?.criteria?.length?'<div class="session-builder-phase"><strong>Critères reliés au bilan</strong><p>'+selectedObjective.criteria.map(escapeHtml).join(' · ')+'</p></div>':'')+(phases.length?phases.map((p,i)=>'<div class="session-builder-phase"><strong>0'+(i+1)+' · '+escapeHtml(p.name)+'</strong><small>'+p.minutes+' min</small>'+(p.objective?'<p>'+escapeHtml(p.objective)+'</p>':'')+(p.content?'<details class="session-builder-exercise-details"><summary>Voir le déroulement et les consignes</summary><p>'+escapeHtml(p.content)+'</p></details>':'')+'</div>').join(''):'<div class="session-builder-phase"><strong>Exercices sélectionnés</strong><p>Contenus issus de ta bibliothèque.</p></div>')+'<div class="session-builder-actions"><button type="button" class="btn primary" data-use-generated-session>Utiliser cette séance →</button></div></section>';
 }
 function sessionReviewDialog(sessionId){
   const session=state.sessions.find(row=>row.id===sessionId);
@@ -800,7 +1043,16 @@ function addPlayerDialog(){
 }
 function editPlayerDialog(id){
   const p=state.players.find(x=>x.id===id);if(!p)return;
-  showDialog(`<div class="dialog-head"><div><p class="eyebrow">FICHE JOUEUR</p><h2>${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="player-form" class="form-grid"><input type="hidden" name="id" value="${p.id}"><label>Prénom<input name="first_name" required value="${escapeHtml(p.first_name)}"></label><label>Nom<input name="last_name" required value="${escapeHtml(p.last_name)}"></label><label>Date de naissance<input type="date" name="birth_date" value="${p.birth_date||''}"></label><label>Classement FFT<input name="fft_ranking" value="${escapeHtml(p.fft_ranking||'')}"></label><label>Catégorie d’âge<input name="age_category" value="${escapeHtml(p.age_category||'')}" placeholder="À calculer selon la saison FFT"></label><label>Profil<select name="player_type"><option ${p.player_type==='Loisir'?'selected':''}>Loisir</option><option ${p.player_type==='Compétition'?'selected':''}>Compétition</option></select></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer la fiche</button></div></form>`);
+  const usedColors=new Set(state.players.filter(row=>row.id!==id&&row.player_color).map(row=>row.player_color));
+  const availableCount=PLAYER_COLORS.filter(color=>!usedColors.has(color)).length;
+  const colorOptions=PLAYER_COLORS.map((color,index)=>{
+    const used=usedColors.has(color),selected=p.player_color===color;
+    return `<label class="player-color-option ${used?'is-used':''} ${selected?'is-selected':''}" title="${used?'Déjà attribuée':'Couleur '+(index+1)}">
+      <input type="radio" name="player_color" value="${color}" ${selected?'checked':''} ${used?'disabled':''} required>
+      <span style="--swatch:${color}"></span><small>${String(index+1).padStart(2,'0')}</small>
+    </label>`;
+  }).join('');
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">FICHE JOUEUR</p><h2>${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="player-form" class="form-grid"><input type="hidden" name="id" value="${p.id}"><label>Prénom<input name="first_name" required value="${escapeHtml(p.first_name)}"></label><label>Nom<input name="last_name" required value="${escapeHtml(p.last_name)}"></label><label>Date de naissance<input type="date" name="birth_date" value="${p.birth_date||''}"></label><label>Classement FFT<input name="fft_ranking" value="${escapeHtml(p.fft_ranking||'')}"></label><label>Catégorie d’âge<input name="age_category" value="${escapeHtml(p.age_category||'')}" placeholder="À calculer selon la saison FFT"></label><label>Profil<select name="player_type"><option ${p.player_type==='Loisir'?'selected':''}>Loisir</option><option ${p.player_type==='Compétition'?'selected':''}>Compétition</option></select></label><section class="player-color-picker span-2"><div class="player-color-picker-head"><div><b>Couleur du joueur</b><small>Une couleur unique parmi les 50 disponibles.</small></div><strong>${availableCount}/50 libres</strong></div><div class="player-color-grid">${colorOptions}</div><small class="player-color-help">Les couleurs déjà utilisées par un autre joueur sont verrouillées.</small></section><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer la fiche</button></div></form>`);
 }
 
 $('#dialog-content').addEventListener('click',event=>{if(event.target.closest('[data-close]'))closeDialog();});
@@ -914,7 +1166,11 @@ if (error) throw error;
 toast('Joueur ajouté à ton effectif.');
 
     } else if(form.id==='player-form'){
-      const {id,...changes}=values;await dataService.updatePlayer(id,{...changes,first_name:changes.first_name.trim(),last_name:changes.last_name.trim()});toast('Fiche joueur mise à jour.');
+      const {id,...changes}=values;
+      if(!PLAYER_COLORS.includes(changes.player_color))throw new Error('Choisis une couleur parmi les 50 couleurs proposées.');
+      if(state.players.some(player=>player.id!==id&&player.player_color===changes.player_color))throw new Error('Cette couleur est déjà attribuée à un autre joueur.');
+      await dataService.updatePlayer(id,{...changes,first_name:changes.first_name.trim(),last_name:changes.last_name.trim()});
+      toast('Fiche joueur et couleur mises à jour.');
     }
     closeDialog();await refreshAndRender();
   }catch(error){
