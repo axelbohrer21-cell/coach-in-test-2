@@ -43,7 +43,7 @@ const DRILLS = {
     drills:[
       ['Lancer et zone annoncée','Délimiter trois cibles dans le carré. Le serveur annonce sa cible avant le lancer, réalise sa routine complète et sert. Recommencer en alternant côté égalité et avantage.','Atteindre la zone annoncée sur 6 services sur 10, sans précipiter le lancer.'],
       ['Service + première frappe','Le serveur annonce une zone. Le relanceur retourne dans une zone connue ; le serveur doit jouer la première frappe dans l’espace libéré, puis le point devient libre.','Construire une première frappe cohérente sur 6 points sur 10.'],
-      ['Jeu sous pression au service','Chaque joueur dispose de deux premières balles et d’une seconde balle par point. Une cible touchée donne un bonus uniquement si le joueur gagne ensuite l’échange.','Garder une intention claire et limiter les doubles fautes sur 8 points.']
+      ['Service sous pression et première frappe','Jouer des points à score annoncé. Après chaque mise en jeu, le serveur doit enchaîner une première frappe vers la zone libre ; une cible touchée donne un bonus uniquement si le joueur gagne ensuite l’échange.','Garder une intention claire au service et construire la première frappe sur 6 points sur 10.']
     ]
   },
   retour: {
@@ -346,7 +346,7 @@ export function generateOriginalSession({
   const sourceLabel = sourceWeek
     ? 'Inspiration complémentaire : Cours de l’année.xlsx · Semaine ' + sourceWeek.week + ' · ' + String(sourceWeek.theme).replace(/^SEMAINE\s+\d+\s*:\s*/i,'')
     : 'Aucune semaine source directement comparable ; situations construites à partir du critère et du référentiel pédagogique.';
-  const evidenceLabel = selectedCriterion?.criterion
+  const recentHistoryLabel = recentSessions.length ? 'Historique pris en compte : ' + recentSessions.slice(0,2).map(row => row.title || row.theme || ('semaine ' + (row.source_week || '?'))).join(' · ') + '. Varier la situation proposée pour éviter une répétition immédiate.' : 'Aucun historique récent transmis : la séance est construite sans hypothèse de répétition.';\n  const adaptationLabel = Number(age) > 0 && Number(age) <= 12 && /débutant|initiation/i.test(level) ? 'Progression accessible' : 'Progression adaptée au niveau déclaré';\n  const evidenceLabel = selectedCriterion?.criterion
     ? 'Critère choisi par le coach : ' + selectedCriterion.main_theme + ' · ' + selectedCriterion.subtheme + ' · ' + selectedCriterion.criterion + '. Les trois situations sont construites autour de ce critère.'
     : priority?.criterion
       ? 'Critère récurrent observé : ' + priority.criterion + ' (' + priority.occurrences + ' des 3 derniers bilans).'
@@ -367,7 +367,7 @@ export function generateOriginalSession({
     player_visible_summary:plan.objective+' Les situations évoluent du contrôle vers le jeu à thème.',
     success_criteria:phases.map(phase=>phase.success_criteria).join(' '),
     selected_criterion:selectedCriterion ? {id:selectedCriterion.id,main_theme:selectedCriterion.main_theme,subtheme:selectedCriterion.subtheme,criterion:selectedCriterion.criterion} : null,
-    adaptation:'Situations originales reliées au critère de progression et aux thèmes du programme collectif.',
+    adaptation:adaptationLabel,
     difficulty:selectedDifficulty.label,
     difficulty_rule:selectedDifficulty.instruction+' Le critère de réussite est réglé à '+selectedDifficulty.target+'/10.',
     progression:priorAdjustment || null, phases, exercise_count:phases.length,
