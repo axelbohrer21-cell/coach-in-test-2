@@ -29,7 +29,7 @@ function dailyScore(days,key) {
 function average(values) {
   return values.length?values.reduce((sum,value)=>sum+value,0)/values.length:null;
 }
-function analyzePlayerProgress({player,evaluations=[],evaluationCriteria=[],sessions=[],videoAnalyses=[],challenges=[],now=Date.now()}) {
+export function analyzePlayerProgress({player,evaluations=[],evaluationCriteria=[],sessions=[],videoAnalyses=[],challenges=[],now=Date.now()}) {
   const reports=[...evaluations].filter(row=>row.player_id===player.id).sort((a,b)=>dateValue(b)-dateValue(a));
   const days=groupByObservationDay(reports);
   const recentDays=days.slice(0,3),previousDays=days.slice(3,6);
