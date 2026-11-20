@@ -131,7 +131,7 @@ test('chaque durée produit exactement trois phases dont la somme est exacte', (
     const session=generateOriginalSession({theme:'Tactique',selectedCriterion:{id:'t',main_theme:'Tactique',subtheme:'Construction',criterion:'Variation des longueurs'},duration});
     assert.equal(session.phases.length,3);
     assert.equal(session.phases.reduce((sum,phase)=>sum+phase.minutes,0),duration);
-    assert.ok(session.phases.every(phase=>phase.content&&phase.success_criteria));
+    assert.ok(session.phases.every(phase=>phase.content&&phase.success_criteria));\n    assert.ok(session.phases.every(phase=>phase.equipment?.length>=2&&phase.coach_cue&&phase.easier_variant&&phase.harder_variant));
   }
 });
 
