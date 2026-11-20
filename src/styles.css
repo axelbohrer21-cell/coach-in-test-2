@@ -1485,3 +1485,12 @@ button,a,input,select,textarea{touch-action:manipulation}
 .video-pose-metrics b{font-size:18px;color:#8cf1d5;font-variant-numeric:tabular-nums}
 .video-pose-metrics small{font-size:10px;color:var(--muted)}
 @media(max-width:520px){.video-pose-panel{padding:10px}.video-pose-metrics{gap:5px}.video-pose-metrics span{padding:8px 4px}.video-pose-metrics b{font-size:15px}}
+
+
+.court-calibration-wrap{position:relative;width:100%;margin:12px auto;overflow:hidden;border-radius:10px;background:#06121d}
+.court-calibration-wrap .video-pose-overlay{margin:0;max-height:520px}
+.court-calibration-canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:manipulation}
+.court-calibration-tools{display:grid;gap:8px;padding:12px;border-radius:10px;background:rgba(255,255,255,.04)}
+.court-calibration-tools>b{font-size:13px;color:#8cf1d5}
+.court-calibration-tools small{color:var(--muted);font-size:11px}
+.court-calibration-tools .btn{justify-self:start}
