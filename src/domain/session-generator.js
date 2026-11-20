@@ -334,13 +334,41 @@ export function generateOriginalSession({
   const selectedDifficulty = difficultySettings[difficulty] || difficultySettings.medium;
   const phases = plan.drills.map((drill,index) => {
     const successCriteria = 'Réussir le comportement attendu sur au moins ' + selectedDifficulty.target + ' tentatives sur 10.';
+    const coachCue = selectedCriterion?.criterion || priority?.criterion || plan.objective;
+    const equipment = ['Raquettes','Balles'];
+    if (/repère|plot|pastille|cible|zone|délimité/i.test(drill[1])) equipment.push('Plots ou repères au sol','Cibles matérialisées');
+    if (/panier|distribu|coach envoie|coach alterne/i.test(drill[1])) equipment.push('Panier ou réserve de balles');
+    const setup = drill[1].split(/(?<=[.!?])\\s+/)[0] || drill[1];
+    const progression = [
+      'Contrôle : distribution régulière, une consigne technique et une cible large.',
+      'Variabilité : modifier la direction, la profondeur ou le déplacement sans changer le critère.',
+      'Transfert : jouer des points avec un contrat lié au critère, puis libérer le jeu.'
+    ][index];
+    const easierVariant = 'Ralentir l’envoi, agrandir la cible et réduire le déplacement tout en conservant le critère.';
+    const harderVariant = 'Réduire la cible, varier la trajectoire sans prévenir et ajouter une décision en situation de point.';
+    const content = [
+      drill[0],
+      'Organisation : ' + drill[1],
+      'Repère coach : ' + coachCue,
+      'Matériel : ' + equipment.join(', '),
+      'Progression : ' + progression,
+      'Variante facilitante : ' + easierVariant,
+      'Variante exigeante : ' + harderVariant,
+      'Critère de réussite : ' + successCriteria
+    ].join('\\n');
     return {
       name: ['Situation de contrôle','Situation avec déplacement ou lecture','Transfert en points'][index],
       minutes: allocations[index],
       objective: plan.objective,
-      content: drill[0] + '\n' + drill[1] + '\nCritère de réussite : ' + successCriteria,
+      setup,
+      equipment,
+      coach_cue: coachCue,
+      progression,
+      easier_variant: easierVariant,
+      harder_variant: harderVariant,
+      content,
       success_criteria: successCriteria,
-      origin: 'Situation créée par Coach In à partir du référentiel de critères et des objectifs pédagogiques.'
+      origin: 'Situation originale Coach In, conçue à partir du critère sélectionné, du programme du coach et des principes pédagogiques FFT/USTA.'
     };
   });
   const sourceLabel = sourceWeek
