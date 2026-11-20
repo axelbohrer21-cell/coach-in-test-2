@@ -1,59 +1,50 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateOriginalSession } from './session-generator.js';
+import groupProgram from '../data/group-course-program.json' with { type: 'json' };
 
-test('construit une séance deuxième balle de service avec des contenus spécifiques', () => {
+test('utilise uniquement les consignes présentes dans le programme collectif', () => {
   for (const duration of [60, 90, 120]) {
-    const session = generateOriginalSession({ theme: 'service', customObjective: '2eme balle de service', duration });
-    assert.equal(session.focus, 'Deuxième balle de service');
+    const session = generateOriginalSession({ theme: 'service', duration });
+    assert.ok(session.source_week);
+    assert.equal(session.phases.length, 3);
     assert.equal(session.phases.reduce((sum, phase) => sum + phase.minutes, 0), duration);
-    assert.match(session.exercise_1, /ENVOI DU COACH/i);
-    assert.match(session.exercise_1 + session.exercise_2, /rotation/i);
-    assert.match(session.exercise_1 + session.exercise_2, /deuxième balle/i);
-    assert.match(session.exercise_1 + session.exercise_2, /Points · commencer chaque échange sur une deuxième balle/i);
+    const sourceWeek = groupProgram.weeks.find(week => week.week === session.source_week);
+    assert.deepEqual(session.phases.map(phase => phase.content), sourceWeek.courts.filter(Boolean));
+    assert.equal(session.source_file, "Cours de l’année.xlsx");
   }
 });
 
-test('respecte exactement la structure demandée selon la durée', () => {
-  const oneHour = generateOriginalSession({ theme: 'service', customObjective: '2e balle', duration: 60 });
-  const ninety = generateOriginalSession({ theme: 'service', customObjective: '2e balle', duration: 90 });
-  const twoHours = generateOriginalSession({ theme: 'service', customObjective: '2e balle', duration: 120 });
-  assert.equal(oneHour.phases.length, 3);
-  assert.equal(ninety.phases.length, 4);
-  assert.equal(twoHours.phases.length, 5);
-  assert.equal(ninety.phases.filter(x => x.name.startsWith('Gamme')).length, 2);
-  assert.equal(twoHours.phases.filter(x => x.name.startsWith('Gamme')).length, 3);
-  assert.equal(twoHours.coach_feed_count, 1);
-});
-
-test('propose des jeux réellement utilisables pour les points', () => {
-  const session = generateOriginalSession({ theme: 'service', customObjective: '2eme balle de service', duration: 90 });
-  const points = session.phases.at(-1).content;
-  assert.match(points, /manches de 7 points/i);
-  assert.match(points, /30-30/i);
-  assert.match(points, /rotation des rôles/i);
-});
-
-test('adapte la difficulté et conserve les notes de progression', () => {
-  const easy = generateOriginalSession({ customObjective: 'Varier les effets au service', difficulty: 'easy' });
-  const hard = generateOriginalSession({ customObjective: 'Varier les effets au service', difficulty: 'hard' });
-  assert.equal(easy.difficulty, 'Accessible');
-  assert.equal(hard.difficulty, 'Exigeant');
-  assert.match(hard.coaching_notes, /pression/i);
-  const session = generateOriginalSession({ customObjective: 'Prise de balle tôt en revers', difficulty: 'auto', priorAdjustment: { hasHistory: true, difficulty: 'hard', label: 'Augmenter le défi', guidance: 'Réduire les zones et ajouter une décision.', successCriterion: 'Réussir 8 balles sur 10.' } });
-  assert.equal(session.difficulty, 'Exigeant');
-  assert.match(session.coaching_notes, /Augmenter le défi/);
-  assert.match(session.coaching_notes, /Réussir 8 balles sur 10/);
-});
-
-test('chaque grande thématique propose envoi coach, gammes et points pour chaque durée', () => {
-  for (const theme of ['service','return','volley','defense','construction','attaque','footwork','mental']) {
-    for (const duration of [60,90,120]) {
-      const session = generateOriginalSession({ theme, duration });
-      assert.equal(session.phases.reduce((sum, phase) => sum + phase.minutes, 0), duration);
-      assert.match(session.exercise_1 + session.exercise_2, /Envoi du coach/i);
-      assert.match(session.exercise_1 + session.exercise_2, /Gamme 1/i);
-      assert.match(session.exercise_1 + session.exercise_2, /Points ·/i);
-    }
+test('garde les trois ateliers distincts et leur texte source', () => {
+  const session = generateOriginalSession({ theme: 'volée', duration: 90 });
+  assert.equal(session.phases.length, 3);
+  assert.deepEqual(session.phases.map(phase => phase.name), ['Terrain 1', 'Terrain 2', 'Terrain 3']);
+  for (const phase of session.phases) {
+    assert.ok(phase.content.length > 0);
+    assert.match(phase.content, /./);
   }
+});
+
+test('ne fabrique pas de contenu lorsqu’aucun atelier ne correspond au thème', () => {
+  const session = generateOriginalSession({ theme: 'mental', duration: 60 });
+  assert.equal(session.phases.length, 0);
+  assert.equal(session.exercise_1, '');
+  assert.equal(session.exercise_2, '');
+  assert.match(session.player_visible_summary, /Aucun atelier correspondant/);
+});
+
+test('les semaines MATCH sans exercices ne sont jamais utilisées comme source', () => {
+  const matchWeeks = groupProgram.weeks.filter(week => /MATCH/i.test(week.theme));
+  assert.equal(matchWeeks.length, 6);
+  assert.ok(matchWeeks.every(week => week.courts.every(content => !String(content).trim())));
+  const session = generateOriginalSession({ theme: 'construction', duration: 90 });
+  assert.ok(!matchWeeks.some(week => week.week === session.source_week));
+});
+
+test('conserve la durée demandée sans modifier le contenu pédagogique', () => {
+  const short = generateOriginalSession({ theme: 'attaque', duration: 60 });
+  const long = generateOriginalSession({ theme: 'attaque', duration: 120 });
+  assert.equal(short.phases.reduce((sum, phase) => sum + phase.minutes, 0), 60);
+  assert.equal(long.phases.reduce((sum, phase) => sum + phase.minutes, 0), 120);
+  assert.deepEqual(short.phases.map(phase => phase.content), long.phases.map(phase => phase.content));
 });
