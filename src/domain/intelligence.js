@@ -47,12 +47,14 @@ export function analyzePlayerProgress({ player, evaluations = [], evaluationCrit
       .sort((a, b) => b.occurrences - a.occurrences || a.criterion.localeCompare(b.criterion, 'fr'));
   };
 
-  const strengths = countCriteria(recentCriteria, 'positive').filter(row => row.occurrences >= 2).slice(0, 3);
-  const difficulties = countCriteria(recentCriteria, 'improvement').filter(row => row.occurrences >= 2).slice(0, 3);
+  const enoughReportsForCriteria = recent.length >= 3;
+  const strengths = (enoughReportsForCriteria ? countCriteria(recentCriteria, 'positive').filter(row => row.occurrences >= 2) : []).slice(0, 3);
+  const difficulties = (enoughReportsForCriteria ? countCriteria(recentCriteria, 'improvement').filter(row => row.occurrences >= 2) : []).slice(0, 3);
+  const criteriaConfidence = !enoughReportsForCriteria ? 'insufficient' : (strengths.length || difficulties.length ? 'recurrent' : 'no-recurrence');
   const trends = SCORE_FIELDS.map(([label, key]) => {
     const current = average(recent, key);
     const prior = average(previous, key);
-    const enoughHistory = scoreValues(recent, key).length >= 2 && scoreValues(previous, key).length >= 2;
+    const enoughHistory = scoreValues(recent, key).length >= 3 && scoreValues(previous, key).length >= 3;
     return { label, current, previous: prior, delta: current === null || prior === null || !enoughHistory ? null : Number((current - prior).toFixed(1)) };
   });
   const priority = difficulties[0] || null;
@@ -72,6 +74,9 @@ export function analyzePlayerProgress({ player, evaluations = [], evaluationCrit
   } else if (reportAgeDays !== null && reportAgeDays > 30) {
     status = 'Bilan à actualiser';
     statusReason = 'Le dernier bilan remonte à plus de 30 jours.';
+  } else if (!enoughReportsForCriteria) {
+    status = 'Observations à consolider';
+    statusReason = 'Moins de trois bilans distincts : aucune priorité ni réussite récurrente n’est confirmée.';
   } else if (difficulties.length) {
     status = 'Axe de progression identifié';
     statusReason = 'Un même point à travailler revient dans plusieurs bilans récents.';
@@ -92,7 +97,7 @@ export function analyzePlayerProgress({ player, evaluations = [], evaluationCrit
   const decliningAreas = trends.filter(row => row.delta !== null && row.delta < -0.5)
     .sort((a,b)=>a.delta-b.delta);
   const planFocus = priority?.criterion || (decliningAreas[0] ? decliningAreas[0].label : suggestedFocus.replace('Travailler : ',''));
-  const fourWeekPlan = reports.length >= 2 ? [
+  const fourWeekPlan = reports.length >= 3 ? [
     { week: 1, title: 'Reconstruction des repères', objective: 'Stabiliser '+planFocus+' avec une situation fermée et une seule consigne observable.', success: 'Réussir au moins 6 répétitions sur 10 avec une qualité gestuelle stable.' },
     { week: 2, title: 'Variabilité contrôlée', objective: 'Faire évoluer une seule variable : direction, hauteur, rythme ou déplacement.', success: 'Conserver au moins 6 réussites sur 10 malgré la variation.' },
     { week: 3, title: 'Lecture et décision', objective: 'Introduire une information à lire et laisser le joueur choisir sa réponse.', success: 'Faire le bon choix sur au moins 6 situations sur 10.' },
@@ -103,6 +108,9 @@ export function analyzePlayerProgress({ player, evaluations = [], evaluationCrit
     playerId: player.id,
     playerName: [player.first_name, player.last_name].filter(Boolean).join(' ') || 'Joueur',
     reportCount: reports.length,
+    criteriaConfidence,
+    criteriaSampleSize: recent.length,
+    scoreSampleSizes: trends.map(row => ({ label: row.label, recent: scoreValues(recent, SCORE_FIELDS.find(([label]) => label === row.label)?.[1] || '').length, previous: scoreValues(previous, SCORE_FIELDS.find(([label]) => label === row.label)?.[1] || '').length })),
     sessionCount: playerSessions.length,
     videoCount: playerVideos.length,
     lastReportDate,
