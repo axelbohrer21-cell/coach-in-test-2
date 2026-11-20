@@ -2295,3 +2295,15 @@ body.camera-fullscreen-open{overflow:hidden}
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
+
+/* Sélection des critères techniques dans le générateur de séance */
+.session-criterion-picker{padding:14px;border:1px solid var(--border,rgba(120,130,150,.25));border-radius:14px;background:var(--surface-soft,rgba(120,130,150,.06))}
+.session-criterion-picker>strong{display:block;margin-bottom:8px}
+.session-criterion-group{margin-top:12px}
+.session-criterion-group>strong{display:block;margin-bottom:7px;font-size:.82rem;color:var(--muted,#778)}
+.session-criterion-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.session-criterion-option{display:flex!important;align-items:flex-start;gap:8px;padding:9px 10px;border:1px solid var(--border,rgba(120,130,150,.25));border-radius:10px;background:var(--surface,#fff);font-size:.84rem;line-height:1.35;cursor:pointer}
+.session-criterion-option:has(input:checked){border-color:var(--accent,#3978d4);background:color-mix(in srgb,var(--accent,#3978d4) 10%,transparent)}
+.session-criterion-option input{margin:2px 0 0;flex:0 0 auto}
+.session-criterion-option span{min-width:0}
+@media(max-width:600px){.session-criterion-list{grid-template-columns:1fr}}
