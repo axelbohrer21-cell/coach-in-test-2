@@ -193,7 +193,7 @@ function criterionSpecificPlan(selectedCriterion, fallbackPlan, focus) {
   else drills=[
    ['Répétition technique ciblée','Distribuer 10 balles sur le '+stroke+'. Travailler le critère choisi avec une consigne unique et une cible large.'],
    ['Critère ciblé avec déplacement','Varier profondeur et direction en conservant le repère technique choisi.'],
-   ['Transfert du critère au point','Démarrer en diagonale '+stroke+. ' puis jouer librement après deux frappes appliquant le critère.']
+   ['Transfert du critère au point','Démarrer en diagonale '+stroke+' puis jouer librement après deux frappes appliquant le critère.']
   ];
  }else if(theme.includes('jeu de jambes')||theme.includes('déplacement')){
   drills=has('replacement','repositionnement','centre')?[
