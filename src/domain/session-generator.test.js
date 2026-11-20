@@ -97,3 +97,64 @@ test('un critère tactique de construction par la longueur pilote les situations
   assert.match(session.phases[1].content,/profondeur puis changement/i);
   assert.match(session.phases[2].content,/points à contrat/i);
 });
+
+
+test('un sous-thème technique pilote le générateur même si le thème principal est Technique', () => {
+  const session=generateOriginalSession({theme:'Technique',selectedCriterion:{id:'cd',main_theme:'Technique',subtheme:'Coup droit',criterion:'Régularité du coup droit'},duration:60});
+  assert.match(session.phases[0].content,/régularité en diagonale/i);
+  assert.match(session.phases[1].content,/cible alternée/i);
+  assert.match(session.phases[2].content,/régularité transférée au point/i);
+  assert.equal(session.selected_criterion.criterion,'Régularité du coup droit');
+});
+
+test('un sous-thème service déclenche le plan service avec thème principal Technique', () => {
+  const session=generateOriginalSession({theme:'Technique',selectedCriterion:{id:'srv',main_theme:'Technique',subtheme:'Service',criterion:'Rythme de préparation et de frappe'},duration:90});
+  assert.match(session.phases[0].content,/position de préparation/i);
+  assert.match(session.phases[1].content,/rythme lancer-frappe/i);
+  assert.match(session.phases[2].content,/service/i);
+});
+
+test('un sous-thème volée distingue le revers du coup droit', () => {
+  const session=generateOriginalSession({theme:'Technique',selectedCriterion:{id:'vol',main_theme:'Technique',subtheme:'Volée de revers',criterion:'Contrôle de la profondeur'},duration:90});
+  assert.match(session.phases[0].content,/volée revers sur cible/i);
+  assert.match(session.phases[1].content,/volée revers/i);
+});
+
+test('un sous-thème retour conserve la distinction première et deuxième balle', () => {
+  const session=generateOriginalSession({theme:'Technique',selectedCriterion:{id:'ret',main_theme:'Technique',subtheme:'Retour sur deuxième balle',criterion:'Prise de balle précoce'},duration:60});
+  assert.match(session.phases[0].content,/deuxième balle/i);
+  assert.match(session.phases[1].content,/retour compact/i);
+});
+
+test('chaque durée produit exactement trois phases dont la somme est exacte', () => {
+  for (const duration of [60,90,120]) {
+    const session=generateOriginalSession({theme:'Tactique',selectedCriterion:{id:'t',main_theme:'Tactique',subtheme:'Construction',criterion:'Variation des longueurs'},duration});
+    assert.equal(session.phases.length,3);
+    assert.equal(session.phases.reduce((sum,phase)=>sum+phase.minutes,0),duration);
+    assert.ok(session.phases.every(phase=>phase.content&&phase.success_criteria));
+  }
+});
+
+test('tous les niveaux de difficulté modifient le seuil de réussite sans casser la séance', () => {
+  const expected={very_easy:4,easy:5,medium:6,hard:8,very_hard:9};
+  for (const [difficulty,target] of Object.entries(expected)) {
+    const session=generateOriginalSession({theme:'Coup droit',selectedCriterion:{id:'cd',main_theme:'Technique',subtheme:'Coup droit',criterion:'Régularité'},difficulty,duration:60});
+    assert.match(session.phases[0].success_criteria,new RegExp('au moins '+target+' tentatives'));
+    assert.equal(session.phases.length,3);
+  }
+});
+
+test('un critère inconnu reste visible dans les notes et génère trois situations', () => {
+  const session=generateOriginalSession({theme:'Technique',selectedCriterion:{id:'x',main_theme:'Technique',subtheme:'Critère spécialisé',criterion:'Synchronisation segmentaire spécifique'},duration:60});
+  assert.equal(session.selected_criterion.criterion,'Synchronisation segmentaire spécifique');
+  assert.match(session.coaching_notes,/Synchronisation segmentaire spécifique/);
+  assert.ok(session.phases.every(phase=>phase.content));
+});
+
+test('une génération sans critère reste valide et ne fabrique pas de priorité', () => {
+  const session=generateOriginalSession({theme:'Construction',duration:90});
+  assert.equal(session.generated,true);
+  assert.equal(session.selected_criterion,null);
+  assert.equal(session.phases.length,3);
+  assert.match(session.evidence_label,/Aucune priorité fiable/i);
+});
