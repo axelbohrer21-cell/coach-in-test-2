@@ -10,7 +10,7 @@ const normalize = value => String(value || '')
 
 const THEME_TERMS = [
   { key: 'service', terms: ['service', 'mise en jeu', 'premiere balle', 'deuxieme balle', 'slice'] },
-  { key: 'retour', terms: ['retour', 'relance', 'retourne'] },
+  { key: 'retour', terms: ['retour', 'return', 'relance', 'retourne'] },
   { key: 'volley', terms: ['volee', 'volley', 'filet', 'montee'] },
   { key: 'attaque', terms: ['attaque', 'agressivite', 'decalage', 'balle favorable'] },
   { key: 'defense', terms: ['defense', 'defensif', 'couverture', 'lateral', 'lateraux'] },
