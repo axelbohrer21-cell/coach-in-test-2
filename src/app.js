@@ -528,7 +528,7 @@ async function extractVideoFrames(file){
 }
 async function submitVideoAnalysis(form){
   const button=form.querySelector('button[type=submit]'),file=form.elements.video.files?.[0];
-  const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value,theme=String(form.elements.video_theme?.value||'').trim(),objective=String(form.elements.video_objective?.value||'').trim();
+  const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value,theme=String(form.elements.video_theme?.value||'').trim(),objectiveLabel=String(form.elements.video_objective?.value||'').trim(),selectedObjective=objectiveLabel?coachObjectives().find(goal=>goal.theme===theme&&goal.label===objectiveLabel):null,objective=selectedObjective?[selectedObjective.label+'. Intention pédagogique : '+selectedObjective.intent+'. Critères à observer : '+(selectedObjective.criteria||[]).join('; ')+'. Indicateur de réussite : '+selectedObjective.success]:'';
   if(!file||!title||!playerId){toast('Renseigne le joueur, le titre et la vidéo.','error');return;}
   const videoMime=file.type.split(';')[0].trim();
   if(!['video/mp4','video/quicktime','video/webm'].includes(videoMime)){toast('Format accepté : MP4, MOV ou WEBM.','error');return;}
