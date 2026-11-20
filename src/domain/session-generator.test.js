@@ -82,3 +82,18 @@ test('le retour de première balle est distingué du service et du retour de deu
   assert.match(session.phases[2].content,/premier échange/i);
   assert.match(session.coaching_notes,/Prise de balle tardive/);
 });
+
+
+test('le smash sélectionné déclenche des situations de placement sous le lob et de finition', () => {
+  const session=generateOriginalSession({theme:'Smash',selectedCriterion:{id:'smash',main_theme:'Smash',subtheme:'Smash',criterion:'Contrôle de la direction'},duration:60});
+  assert.match(session.phases[0].content,/smash dans une grande zone/i);
+  assert.match(session.phases[1].content,/choix de zone/i);
+  assert.match(session.phases[2].content,/situation de point/i);
+});
+
+test('un critère tactique de construction par la longueur pilote les situations', () => {
+  const session=generateOriginalSession({theme:'Tactique',selectedCriterion:{id:'tac',main_theme:'Tactique',subtheme:'Tactique',criterion:'Variation des longueurs'},duration:90});
+  assert.match(session.phases[0].content,/construire par la profondeur/i);
+  assert.match(session.phases[1].content,/profondeur puis changement/i);
+  assert.match(session.phases[2].content,/points à contrat/i);
+});
