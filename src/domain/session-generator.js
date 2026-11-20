@@ -346,16 +346,7 @@ export function generateOriginalSession({
     ][index];
     const easierVariant = 'Ralentir l’envoi, agrandir la cible et réduire le déplacement tout en conservant le critère.';
     const harderVariant = 'Réduire la cible, varier la trajectoire sans prévenir et ajouter une décision en situation de point.';
-    const content = [
-      drill[0],
-      'Organisation : ' + drill[1],
-      'Repère coach : ' + coachCue,
-      'Matériel : ' + equipment.join(', '),
-      'Progression : ' + progression,
-      'Variante facilitante : ' + easierVariant,
-      'Variante exigeante : ' + harderVariant,
-      'Critère de réussite : ' + successCriteria
-    ].join('\n');
+    const content = drill[0] + '\n' + drill[1] + '\nCritère de réussite : ' + successCriteria;
     return {
       name: ['Situation de contrôle','Situation avec déplacement ou lecture','Transfert en points'][index],
       minutes: allocations[index],
@@ -391,6 +382,15 @@ export function generateOriginalSession({
     challenge?.objective ? 'Défi actif à réinvestir : ' + challenge.objective : '',
     Number(age) > 0 && Number(age) <= 12 && /débutant|initiation/i.test(level) ? 'Séries de 4 à 6 balles, cible large, pauses fréquentes et consigne unique.' : '',
     'Les situations sont des propositions originales ; le coach ajuste distance, vitesse et difficulté au niveau réel du joueur.'
+  ].join('\n');
+  const formatPhase = (phase,index,label='SITUATION') => [
+    label + ' ' + String(index+1).padStart(2,'0') + ' · ' + phase.minutes + ' min',
+    phase.content,
+    'Matériel : ' + phase.equipment.join(', '),
+    'Repère coach : ' + phase.coach_cue,
+    'Progression : ' + phase.progression,
+    'Faciliter : ' + phase.easier_variant,
+    'Complexifier : ' + phase.harder_variant
   ].join('\n');
   return {
     generated:true, generation_mode:'original', theme:plan.label, focus:plan.label,
