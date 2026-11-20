@@ -255,6 +255,17 @@ $('#dialog-content').addEventListener('change',event=>{
   if(event.target.name==='objective_id'&&event.target.form?.id==='session-builder-form'){const goal=findObjective(event.target.value);const custom=event.target.form.elements.custom_objective;if(goal&&custom)custom.value='';}
 });
 $('#page-content').addEventListener('change',async event=>{
+  if(event.target.matches('#video-analysis-form [name="video_theme"]')){
+    const form=event.target.form, objective=form?.elements.video_objective;
+    if(objective){
+      const theme=event.target.value;
+      const goals=coachObjectives().filter(goal=>goal.theme===theme);
+      objective.innerHTML='<option value="">Analyse générale du thème</option>'+goals.map(goal=>'<option value="'+escapeHtml(goal.label)+'">'+escapeHtml(goal.label)+'</option>').join('');
+      const hint=form.querySelector('[data-video-objective-hint]');
+      if(hint)hint.textContent=goals.length+' objectif(s) pédagogique(s) disponible(s) pour cette thématique.';
+    }
+    return;
+  }
   const input=event.target.closest('[data-group-rain-day]');
   if(!input)return;
   const rainy=input.checked;
