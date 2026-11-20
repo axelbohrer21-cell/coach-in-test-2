@@ -20,7 +20,9 @@ export async function analyzeVideoPose(file){
   try{
     const mp=await import(TASKS_URL);
     const vision=await mp.FilesetResolver.forVisionTasks(WASM_URL);
-    landmarker=await mp.PoseLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:MODEL_URL,delegate:'GPU'},runningMode:'VIDEO',numPoses:1,minPoseDetectionConfidence:.45,minPosePresenceConfidence:.45,minTrackingConfidence:.45});
+    const options={runningMode:'VIDEO',numPoses:1,minPoseDetectionConfidence:.45,minPosePresenceConfidence:.45,minTrackingConfidence:.45};
+    try{landmarker=await mp.PoseLandmarker.createFromOptions(vision,{...options,baseOptions:{modelAssetPath:MODEL_URL,delegate:'GPU'}});}
+    catch(_){landmarker=await mp.PoseLandmarker.createFromOptions(vision,{...options,baseOptions:{modelAssetPath:MODEL_URL,delegate:'CPU'}});}
     video=document.createElement('video');video.muted=true;video.playsInline=true;video.preload='auto';objectUrl=URL.createObjectURL(file);
     await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=()=>reject(new Error('Vidéo illisible pour la détection de pose.'));video.src=objectUrl;});
     const duration=Math.min(Number(video.duration)||0,600);if(!duration)throw new Error('Durée vidéo indisponible.');
