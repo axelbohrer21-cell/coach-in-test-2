@@ -345,6 +345,10 @@ $('#page-content').addEventListener('input',event=>{
   if(['library-search','library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
 $('#page-content').addEventListener('change',event=>{
+  if(event.target.name==='camera_framing'){
+    const hints={side:'Place le téléphone de côté, à distance suffisante pour garder le joueur entier dans l’image.',front:'Place le téléphone face au joueur pour observer l’équilibre et l’alignement des appuis.',rear:'Filme depuis l’arrière pour observer le placement, l’orientation et le replacement.',serve:'Une vue de profil peut aider à observer le lancer, la flexion et l’extension au service.',wide:'Éloigne le téléphone pour conserver le joueur et ses déplacements dans le cadre.',threequarter:'Une vue en diagonale peut aider à observer l’orientation du corps et les transitions.'};
+    const hint=$('#camera-framing-hint');if(hint)hint.textContent=hints[event.target.value]||'Ce conseil n’est jamais obligatoire et ne bloque pas l’analyse.';
+  }
   if(event.target.id==='message-partner'){state.messagePartnerId=event.target.value;render('messages');}
   if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;filterPlayerCards();}
   if(['library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
