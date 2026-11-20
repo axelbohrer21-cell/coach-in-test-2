@@ -2,7 +2,7 @@ const TASKS_URL='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vi
 const WASM_URL='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm';
 const MODEL_URL='https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
 const CONNECTIONS=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,29],[27,31],[28,30],[28,32],[15,17],[15,19],[16,18],[16,20]];
-const angle=(a,b,c)=>{if(!a||!b||!c)return null;const u=[a.x-b.x,a.y-b.y],v=[c.x-b.x,c.y-b.y],d=Math.hypot(...u)*Math.hypot(...v);if(!d)return null;return Math.round(Math.acos(Math.max(-1,Math.min(1,(u[0]*v[0]+u[1]*v[1])/d)))*180/Math.PI);};
+export const calculateAngle2D=(a,b,c)=>{if(!a||!b||!c||[a,b,c].some(p=>(p.visibility??1)<.35))return null;const u=[a.x-b.x,a.y-b.y],v=[c.x-b.x,c.y-b.y],d=Math.hypot(...u)*Math.hypot(...v);if(!d)return null;return Math.round(Math.acos(Math.max(-1,Math.min(1,(u[0]*v[0]+u[1]*v[1])/d)))*180/Math.PI);};
 const roundPoint=p=>({x:Number(p.x.toFixed(4)),y:Number(p.y.toFixed(4)),z:Number((p.z||0).toFixed(4)),visibility:Number((p.visibility??p.presence??0).toFixed(3))});
 function drawArrow(ctx,x1,y1,x2,y2,color,width=4){
   const dx=x2-x1,dy=y2-y1,length=Math.hypot(dx,dy);if(length<4)return;
@@ -12,7 +12,7 @@ function drawArrow(ctx,x1,y1,x2,y2,color,width=4){
   ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-head*Math.cos(angle-Math.PI/6),y2-head*Math.sin(angle-Math.PI/6));ctx.lineTo(x2-head*Math.cos(angle+Math.PI/6),y2-head*Math.sin(angle+Math.PI/6));ctx.closePath();ctx.fill();
 }
 function drawOverlay(canvas,video,landmarks,previous=null,timestamp=0,angles={}){
-  const max=640,scale=Math.min(1,max/Math.max(video.videoWidth,video.videoHeight));
+  const max=480,scale=Math.min(1,max/Math.max(video.videoWidth,video.videoHeight));
   canvas.width=Math.round(video.videoWidth*scale);canvas.height=Math.round(video.videoHeight*scale);
   const ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height);
   const px=p=>({x:p.x*canvas.width,y:p.y*canvas.height});
@@ -27,7 +27,7 @@ function drawOverlay(canvas,video,landmarks,previous=null,timestamp=0,angles={})
   ctx.fillStyle='rgba(4,15,28,.86)';ctx.fillRect(8,8,Math.min(canvas.width-16,Math.max(230,canvas.width*.43)),Math.min(canvas.height-16,26+labels.length*17));
   ctx.fillStyle='#fff';ctx.font='bold 12px system-ui';ctx.fillText('Coach In · '+timestamp.toFixed(2)+' s',16,25);
   ctx.font='11px system-ui';labels.forEach((item,index)=>{ctx.fillStyle=index<2?'#a9f1ff':'#fff';ctx.fillText(item[0]+ ' : '+(item[1]===null||item[1]===undefined?'—':item[1]+'°'),16,43+index*15);});
-  return canvas.toDataURL('image/jpeg',.52);
+  return canvas.toDataURL('image/jpeg',.42);
 }
 export async function analyzeVideoPose(file){
   let landmarker,video,objectUrl;
@@ -47,13 +47,13 @@ export async function analyzeVideoPose(file){
       const result=landmarker.detectForVideo(video,Math.max(lastTimestamp+1,Math.round(seconds*1000)));lastTimestamp=Math.max(lastTimestamp+1,Math.round(seconds*1000));
       const points=result.landmarks?.[0];if(!points)continue;
       const landmarks=points.map(roundPoint),visible=landmarks.filter(p=>p.visibility>.5).length/landmarks.length;
-      const leftKnee=angle(landmarks[23],landmarks[25],landmarks[27]),rightKnee=angle(landmarks[24],landmarks[26],landmarks[28]);
-      const leftElbow=angle(landmarks[11],landmarks[13],landmarks[15]),rightElbow=angle(landmarks[12],landmarks[14],landmarks[16]);
-      const leftHip=angle(landmarks[11],landmarks[23],landmarks[25]),rightHip=angle(landmarks[12],landmarks[24],landmarks[26]);
+      const leftKnee=calculateAngle2D(landmarks[23],landmarks[25],landmarks[27]),rightKnee=calculateAngle2D(landmarks[24],landmarks[26],landmarks[28]);
+      const leftElbow=calculateAngle2D(landmarks[11],landmarks[13],landmarks[15]),rightElbow=calculateAngle2D(landmarks[12],landmarks[14],landmarks[16]);
+      const leftHip=calculateAngle2D(landmarks[11],landmarks[23],landmarks[25]),rightHip=calculateAngle2D(landmarks[12],landmarks[24],landmarks[26]);
       // Angle bras-tronc au niveau de l'épaule et ouverture des jambes depuis le bassin.
-      const leftArmTorso=angle(landmarks[23],landmarks[11],landmarks[13]),rightArmTorso=angle(landmarks[24],landmarks[12],landmarks[14]);
+      const leftArmTorso=calculateAngle2D(landmarks[23],landmarks[11],landmarks[13]),rightArmTorso=calculateAngle2D(landmarks[24],landmarks[12],landmarks[14]);
       const hipCenter={x:(landmarks[23].x+landmarks[24].x)/2,y:(landmarks[23].y+landmarks[24].y)/2};
-      const legSpread=angle(landmarks[27],hipCenter,landmarks[28]);
+      const legSpread=calculateAngle2D(landmarks[27],{...hipCenter,visibility:Math.min(landmarks[23].visibility,landmarks[24].visibility)},landmarks[28]);
       const footSpacing=Number(Math.abs(landmarks[27].x-landmarks[28].x).toFixed(3));
       const jointAngles={left_knee:leftKnee,right_knee:rightKnee,left_elbow:leftElbow,right_elbow:rightElbow,left_hip:leftHip,right_hip:rightHip,left_arm_torso:leftArmTorso,right_arm_torso:rightArmTorso,leg_spread:legSpread};
       const previous=frames.length?frames[frames.length-1].landmarks:null;
