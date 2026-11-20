@@ -29,9 +29,11 @@ export const progressionService = {
     }
 
 
-await this.refreshAchievements(playerId, coachId);
-const hadActiveChallenge = await this.updateActiveChallenge(playerId, coachId, detailRows);
-if (!hadActiveChallenge) await this.createNextChallenge(playerId, coachId);
+if (detailRows.length) {
+  await this.refreshAchievements(playerId, coachId);
+  const hadActiveChallenge = await this.updateActiveChallenge(playerId, coachId, detailRows);
+  if (!hadActiveChallenge) await this.createNextChallenge(playerId, coachId);
+}
 
 if (notifyPlayer) {
   const { error: notificationError } = await supabase.rpc(
