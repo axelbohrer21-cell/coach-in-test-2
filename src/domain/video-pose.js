@@ -5,7 +5,7 @@ const CONNECTIONS=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,2
 const angle=(a,b,c)=>{if(!a||!b||!c)return null;const u=[a.x-b.x,a.y-b.y],v=[c.x-b.x,c.y-b.y],d=Math.hypot(...u)*Math.hypot(...v);if(!d)return null;return Math.round(Math.acos(Math.max(-1,Math.min(1,(u[0]*v[0]+u[1]*v[1])/d)))*180/Math.PI);};
 const roundPoint=p=>({x:Number(p.x.toFixed(4)),y:Number(p.y.toFixed(4)),z:Number((p.z||0).toFixed(4)),visibility:Number((p.visibility??p.presence??0).toFixed(3))});
 function drawOverlay(canvas,video,landmarks){
-  const max=720,scale=Math.min(1,max/Math.max(video.videoWidth,video.videoHeight));
+  const max=640,scale=Math.min(1,max/Math.max(video.videoWidth,video.videoHeight));
   canvas.width=Math.round(video.videoWidth*scale);canvas.height=Math.round(video.videoHeight*scale);
   const ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height);
   ctx.lineWidth=Math.max(2,canvas.width/260);ctx.strokeStyle='#42e8bd';ctx.fillStyle='#ffcf58';
@@ -13,7 +13,7 @@ function drawOverlay(canvas,video,landmarks){
   for(const p of landmarks){if(p.visibility>.35){ctx.beginPath();ctx.arc(p.x*canvas.width,p.y*canvas.height,Math.max(3,canvas.width/150),0,Math.PI*2);ctx.fill();}}
   ctx.fillStyle='rgba(4,15,28,.8)';ctx.fillRect(8,8,Math.min(canvas.width-16,250),28);
   ctx.fillStyle='#fff';ctx.font='bold 13px system-ui';ctx.fillText('Coach In · repères de pose',16,27);
-  return canvas.toDataURL('image/jpeg',.68);
+  return canvas.toDataURL('image/jpeg',.58);
 }
 export async function analyzeVideoPose(file){
   let landmarker,video,objectUrl;
