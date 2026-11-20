@@ -17,6 +17,17 @@ const cleanText = (value: unknown, max = 700): string =>
 const stringList = (value: unknown, maxItems = 8): string[] =>
   Array.isArray(value) ? value.slice(0, maxItems).map(item => cleanText(item, 500)).filter(Boolean) : [];
 
+function normalizePoseAnalysis(value: any) {
+  if (!value || value.available !== true || !Array.isArray(value.frames)) return { available: false, reason: cleanText(value?.reason, 300) || "Détection de pose non disponible." };
+  const frames = value.frames.slice(0, 8).map((frame: any) => {
+    const landmarks = Array.isArray(frame?.landmarks) ? frame.landmarks.slice(0, 33).map((p: any) => ({ x: Math.max(0, Math.min(1, Number(p?.x) || 0)), y: Math.max(0, Math.min(1, Number(p?.y) || 0)), z: Math.max(-2, Math.min(2, Number(p?.z) || 0)), visibility: Math.max(0, Math.min(1, Number(p?.visibility) || 0)) })) : [];
+    const angles = frame?.joint_angles || {};
+    const safeAngle = (v: unknown) => Number.isFinite(Number(v)) ? Math.max(0, Math.min(180, Number(v))) : null;
+    return { timestamp: Math.max(0, Math.min(600, Number(frame?.timestamp) || 0)), visibility: Math.max(0, Math.min(1, Number(frame?.visibility) || 0)), landmarks, joint_angles: { left_knee: safeAngle(angles.left_knee), right_knee: safeAngle(angles.right_knee), left_elbow: safeAngle(angles.left_elbow), right_elbow: safeAngle(angles.right_elbow), left_hip: safeAngle(angles.left_hip), right_hip: safeAngle(angles.right_hip) }, foot_spacing_image_ratio: Math.max(0, Math.min(1, Number(frame?.foot_spacing_image_ratio) || 0)) };
+  }).filter((frame: any) => frame.landmarks.length === 33);
+  const overlay = typeof value.overlay_data_url === "string" && value.overlay_data_url.startsWith("data:image/jpeg;base64,") && value.overlay_data_url.length <= 500_000 ? value.overlay_data_url : null;
+  return { available: frames.length > 0, model: "MediaPipe Pose Landmarker Lite", frames, overlay_data_url: overlay, summary: { frames_detected: frames.length, mean_visibility: Math.max(0, Math.min(1, Number(value?.summary?.mean_visibility) || 0)), best_frame_timestamp: Math.max(0, Math.min(600, Number(value?.summary?.best_frame_timestamp) || 0)), measurements_note: "Angles estimés en 2D image ; écart des pieds exprimé en proportion de largeur d’image. Aucune distance métrique au sol sans calibration du court." } };
+}
 function normalizeAnalysis(value: any) {
   const phases = Array.isArray(value?.phases) ? value.phases.slice(0, 8).map((item: any) => ({
     phase: cleanText(item?.phase, 100) || "Phase observée",
@@ -71,6 +82,7 @@ Deno.serve(async (req: Request) => {
   const analysisId = String(payload?.analysis_id || "");
   const theme = cleanText(payload?.theme, 80);
   const objective = cleanText(payload?.objective, 180);
+  const poseAnalysis = normalizePoseAnalysis(payload?.pose_analysis);
   const frames = Array.isArray(payload?.frames) ? payload.frames : [];
   if (!/^[0-9a-f-]{36}$/i.test(analysisId) || frames.length < 3 || frames.length > MAX_FRAMES) {
     return json({ error: "L’analyse nécessite entre 3 et 8 images extraites de la vidéo." }, 400);
@@ -122,10 +134,12 @@ MÉTHODE :
 5. Propose aussi des exercices progressifs complémentaires, réalisables avec du matériel courant, avec objectif et mise en place concrète.
 6. Termine par next_session_focus : une priorité unique à reprendre à la prochaine séance, formulée comme un objectif d'entraînement.
 7. Si l'angle de caméra, le cadrage, la fréquence d'images ou l'occlusion empêchent de conclure, signale-le et baisse le niveau de confiance.
+8. Des repères de pose calculés sur l’appareil peuvent être fournis ci-dessous. Utilise-les comme estimations d’angles 2D et de proportions d’image, jamais comme mesures biomécaniques certifiées. Ne convertis pas les proportions d’image en centimètres.
 LIMITES : ces images fixes ne permettent pas de mesurer précisément les angles articulaires, la vitesse de balle, les effets, la puissance ou le timing réel entre les images. N'affirme jamais ces mesures. Pas de diagnostic médical. Ne transforme pas une hypothèse en certitude.
 Réponds en français, de façon concise, professionnelle et utile au coach. Évite les conseils génériques.
 Retourne un JSON strict avec les clés : summary (string), next_session_focus (string), phases (array d'objets {phase,timestamp,observation}), strengths (array de strings), corrections (array d'objets {priority,observation,correction,exercise_name,exercise_setup,verification_goal,success_criteria}), drills (array d'objets {name,objective,setup}), limitations (array de strings), confidence ("faible"|"moyenne"|"bonne"). Si les images ne permettent pas une analyse fiable, dis-le explicitement dans summary et limitations.`;
-  const content: any[] = [{ type: "text", text: instructions }];
+  const poseContext = poseAnalysis.available ? "\nREPÈRES DE POSE (estimations locales) : " + JSON.stringify({ summary: poseAnalysis.summary, frames: poseAnalysis.frames.map((frame: any) => ({ timestamp: frame.timestamp, visibility: frame.visibility, joint_angles: frame.joint_angles, foot_spacing_image_ratio: frame.foot_spacing_image_ratio })) }) : "\nDÉTECTION DE POSE : " + poseAnalysis.reason;
+  const content: any[] = [{ type: "text", text: instructions + poseContext }];
   for (const frame of frames) {
     content.push({ type: "text", text: `Image à ${Number(frame.timestamp).toFixed(2)} seconde(s), dans l'ordre de la séquence.` });
     content.push({ type: "image_url", image_url: { url: frame.data_url, detail: "high" } });
@@ -154,6 +168,7 @@ Retourne un JSON strict avec les clés : summary (string), next_session_focus (s
     const raw = result?.choices?.[0]?.message?.content;
     if (typeof raw !== "string" || !raw.trim()) throw new Error("L’IA a renvoyé une réponse vide. Tu peux relancer l’analyse.");
     const parsed = normalizeAnalysis(JSON.parse(raw));
+    (parsed as any).pose_analysis = poseAnalysis;
     const { error: saveError } = await supabase.from("coach_video_analyses").update({
       status: "completed", analysis_result: parsed, analysis_error: null,
       model_name: "gpt-4.1-mini", confidence: parsed.confidence,
