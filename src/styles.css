@@ -2307,3 +2307,12 @@ body.camera-fullscreen-open{overflow:hidden}
 .session-criterion-option input{margin:2px 0 0;flex:0 0 auto}
 .session-criterion-option span{min-width:0}
 @media(max-width:600px){.session-criterion-list{grid-template-columns:1fr}}
+
+
+/* Fiche d'exercice détaillée du générateur Coach In */
+.session-builder-phase-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.session-builder-phase-meta span{display:flex;flex-direction:column;gap:4px;min-width:0;padding:9px 11px;border:1px solid rgba(142,223,255,.18);border-radius:10px;background:rgba(142,223,255,.045);color:#c8d8e9;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.session-builder-phase-meta b,.session-builder-phase-variants b{color:#8edfff;font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+.session-builder-phase-variants{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.session-builder-phase-variants span{display:flex;flex-direction:column;gap:5px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.035);color:#c8d8e9;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:600px){.session-builder-phase-variants{grid-template-columns:1fr}}
