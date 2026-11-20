@@ -45,3 +45,30 @@ test('garde les durées demandées et les trois étapes', () => {
     assert.equal(session.phases.reduce((sum,phase)=>sum+phase.minutes,0),duration);
   }
 });
+
+
+test('le critère technique sélectionné pilote les trois situations de coup droit', () => {
+  const criterion={id:'criterion-cd',main_theme:'Coup droit',subtheme:'Coup droit',criterion:'Prise de balle trop basse'};
+  const session=generateOriginalSession({theme:'Coup droit',selectedCriterion:criterion,difficulty:'easy',duration:90});
+  assert.equal(session.selected_criterion.criterion,criterion.criterion);
+  assert.match(session.objective,/Prise de balle trop basse/);
+  assert.match(session.phases[0].content,/repère de prise de balle/i);
+  assert.match(session.phases[1].content,/déplacement/i);
+  assert.match(session.phases[2].content,/échange/i);
+  assert.match(session.coaching_notes,/Critère choisi par le coach/);
+  assert.ok(session.phases.every(phase=>phase.success_criteria.includes('5 tentatives sur 10')));
+});
+
+test('un critère de service produit des ateliers centrés sur le lancer', () => {
+  const session=generateOriginalSession({theme:'Service',selectedCriterion:{id:'srv',main_theme:'Service',subtheme:'Service',criterion:'Lancer latéral prononcé'},duration:60});
+  assert.match(session.phases[0].content,/lancers sans frapper/i);
+  assert.match(session.phases[1].content,/lancer puis frappe/i);
+  assert.match(session.phases[2].content,/service avec cible/i);
+  assert.equal(session.focus,'Service');
+});
+
+test('les critères de volée distinguent les volées de coup droit et de revers', () => {
+  const session=generateOriginalSession({theme:'Volée',selectedCriterion:{id:'vol',main_theme:'Volée',subtheme:'Volée de revers',criterion:'Contrôle de la profondeur'},duration:60});
+  assert.match(session.phases[0].content,/volée revers/i);
+  assert.match(session.phases[2].content,/volée de finition/i);
+});
