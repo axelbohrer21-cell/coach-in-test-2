@@ -26,6 +26,9 @@ let notificationRefreshPromise = null;
 let messageRefreshPromise = null;
 let notificationRetryCount = 0;
 let messageRetryCount = 0;
+let videoCameraStream = null;
+let videoCameraRecorder = null;
+let videoCameraChunks = [];
 const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Accueil','⌂'], ['passport','Passeport','✦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
@@ -61,6 +64,7 @@ async function loadWorkspace() {
 }
 
 function render(page) {
+  if(page!=='videos') stopVideoCamera();
   const isCoach = state.profile?.role === 'coach';
   const isAdmin = state.profile?.is_admin === true || state.profile?.role === 'admin';
   const navItems = isCoach ? [...coachNav, ...(isAdmin ? adminNav : [])] : isAdmin ? [['coaches','Gestion des coachs','♙']] : playerNav;
@@ -117,6 +121,9 @@ $('#page-content').addEventListener('keydown', event=>{
 });
 
 $('#page-content').addEventListener('click', async event=>{
+  if(event.target.closest('[data-camera-start]')){await startVideoCamera();return;}
+  if(event.target.closest('[data-camera-record]')){startVideoRecording();return;}
+  if(event.target.closest('[data-camera-stop]')){stopVideoRecording();return;}
   const deleteMatch=event.target.closest('[data-delete-match]');
   if(deleteMatch){
     if(!confirm('Supprimer ce match de ton journal personnel ?'))return;
@@ -354,6 +361,53 @@ function filterPlayerCards(){
   });
 }
 
+async function startVideoCamera(){
+  const preview=$('#video-camera-preview'),status=$('#camera-status'),record=$('[data-camera-record]');
+  if(!preview||!navigator.mediaDevices?.getUserMedia){toast('La caméra intégrée n’est pas disponible dans ce navigateur. Utilise l’import vidéo.','error');return;}
+  try{
+    stopVideoCamera();
+    videoCameraStream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:60}}});
+    preview.srcObject=videoCameraStream;await preview.play();
+    const track=videoCameraStream.getVideoTracks()[0],settings=track.getSettings();
+    if(status)status.textContent=(settings.width||'—')+' × '+(settings.height||'—')+' · caméra active';
+    if(record)record.disabled=false;
+    const start=$('[data-camera-start]');if(start)start.textContent='Caméra ouverte';
+  }catch(error){stopVideoCamera();toast(error.message||'Accès caméra refusé ou indisponible.','error');}
+}
+function startVideoRecording(){
+  if(!videoCameraStream||videoCameraRecorder?.state==='recording')return;
+  if(!window.MediaRecorder){toast('Enregistrement direct non pris en charge. Utilise l’import vidéo.','error');return;}
+  const types=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  const mimeType=types.find(type=>MediaRecorder.isTypeSupported(type))||'';
+  try{
+    videoCameraChunks=[];
+    videoCameraRecorder=new MediaRecorder(videoCameraStream,{...(mimeType?{mimeType}:{}),videoBitsPerSecond:8000000});
+    videoCameraRecorder.ondataavailable=event=>{if(event.data?.size)videoCameraChunks.push(event.data);};
+    videoCameraRecorder.onstop=()=>{
+      const type=videoCameraRecorder.mimeType||mimeType||'video/webm';
+      const ext=type.includes('mp4')?'mp4':'webm';
+      const file=new File(videoCameraChunks,'coach-in-capture.'+ext,{type});
+      const input=$('#video-analysis-form input[name=video]');
+      if(input){const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));}
+      const status=$('#camera-status');if(status)status.textContent='Vidéo prête · '+(file.size/1048576).toFixed(1)+' Mo';
+      const hint=$('#camera-hint');if(hint)hint.textContent='Ta vidéo est prête. Vérifie le joueur et le consentement, puis lance l’analyse.';
+      const record=$('[data-camera-record]');if(record)record.disabled=false;
+      const stop=$('[data-camera-stop]');if(stop)stop.disabled=true;
+      videoCameraChunks=[];
+    };
+    videoCameraRecorder.start(1000);
+    $('[data-camera-record]').disabled=true;$('[data-camera-stop]').disabled=false;
+    const status=$('#camera-status');if(status)status.textContent='Enregistrement en cours…';
+  }catch(error){toast(error.message||'Impossible de démarrer l’enregistrement.','error');}
+}
+function stopVideoRecording(){
+  if(videoCameraRecorder?.state==='recording')videoCameraRecorder.stop();
+}
+function stopVideoCamera(){
+  if(videoCameraRecorder?.state==='recording')videoCameraRecorder.stop();
+  if(videoCameraStream){videoCameraStream.getTracks().forEach(track=>track.stop());videoCameraStream=null;}
+  const preview=$('#video-camera-preview');if(preview)preview.srcObject=null;
+}
 async function extractVideoFrames(file){
   const objectUrl=URL.createObjectURL(file),video=document.createElement('video');
   video.muted=true;video.playsInline=true;video.preload='metadata';
@@ -388,7 +442,7 @@ async function extractVideoFrames(file){
 }
 async function submitVideoAnalysis(form){
   const button=form.querySelector('button[type=submit]'),file=form.elements.video.files?.[0];
-  const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value;
+  const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value,theme=String(form.elements.video_theme?.value||'').trim(),objective=String(form.elements.video_objective?.value||'').trim();
   if(!file||!title||!playerId){toast('Renseigne le joueur, le titre et la vidéo.','error');return;}
   if(!['video/mp4','video/quicktime','video/webm'].includes(file.type)){toast('Format accepté : MP4, MOV ou WEBM.','error');return;}
   if(file.size>262144000){toast('La vidéo dépasse la limite de 250 Mo.','error');return;}
@@ -407,7 +461,7 @@ async function submitVideoAnalysis(form){
     const {error:insertError}=await supabase.from('coach_video_analyses').insert({id:analysisId,coach_id:state.user.id,player_id:playerId,title,stroke_type:stroke,video_path:videoPath,video_mime:file.type,video_size_bytes:file.size,duration_seconds:Number(duration.toFixed(2)),status:'uploaded'});
     if(insertError){await supabase.storage.from('coach-in-videos').remove([videoPath]);throw insertError;}
     button.textContent='Analyse IA en cours…';
-    const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,frames}});
+    const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,frames,theme,objective}});
     if(error||data?.error){
       const {data:latest}=await supabase.from('coach_video_analyses').select('status').eq('id',analysisId).maybeSingle();
       if(latest?.status!=='completed')throw new Error(data?.error||error?.message||'Le service IA n’a pas répondu. Vérifie le statut avant de relancer.');
