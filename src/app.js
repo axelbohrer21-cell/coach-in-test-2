@@ -7,6 +7,7 @@ import { pageMeta, renderPage, libraryItemsForCoach, libraryCard } from './views
 import { bookingService } from './services/booking.js';
 import { notificationService } from './services/notifications.js';
 import { calculateAgeCategory, toLocalISO } from './domain/tennis.js';
+import { PLAYER_COLORS } from './domain/player-colors.js';
 import { isTeachingDate, isWithinTeachingWindow, isPrivateLessonDateAllowed, GROUP_SEASON } from './domain/group-calendar.js';
 import { groupCriteria, recommendChallenge, hasEvaluationContent } from './domain/progression.js';
 import { buildSeriesOccurrences } from './domain/group-series.js';
@@ -1042,7 +1043,16 @@ function addPlayerDialog(){
 }
 function editPlayerDialog(id){
   const p=state.players.find(x=>x.id===id);if(!p)return;
-  showDialog(`<div class="dialog-head"><div><p class="eyebrow">FICHE JOUEUR</p><h2>${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="player-form" class="form-grid"><input type="hidden" name="id" value="${p.id}"><label>Prénom<input name="first_name" required value="${escapeHtml(p.first_name)}"></label><label>Nom<input name="last_name" required value="${escapeHtml(p.last_name)}"></label><label>Date de naissance<input type="date" name="birth_date" value="${p.birth_date||''}"></label><label>Classement FFT<input name="fft_ranking" value="${escapeHtml(p.fft_ranking||'')}"></label><label>Catégorie d’âge<input name="age_category" value="${escapeHtml(p.age_category||'')}" placeholder="À calculer selon la saison FFT"></label><label>Profil<select name="player_type"><option ${p.player_type==='Loisir'?'selected':''}>Loisir</option><option ${p.player_type==='Compétition'?'selected':''}>Compétition</option></select></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer la fiche</button></div></form>`);
+  const usedColors=new Set(state.players.filter(row=>row.id!==id&&row.player_color).map(row=>row.player_color));
+  const availableCount=PLAYER_COLORS.filter(color=>!usedColors.has(color)).length;
+  const colorOptions=PLAYER_COLORS.map((color,index)=>{
+    const used=usedColors.has(color),selected=p.player_color===color;
+    return `<label class="player-color-option ${used?'is-used':''} ${selected?'is-selected':''}" title="${used?'Déjà attribuée':'Couleur '+(index+1)}">
+      <input type="radio" name="player_color" value="${color}" ${selected?'checked':''} ${used?'disabled':''} required>
+      <span style="--swatch:${color}"></span><small>${String(index+1).padStart(2,'0')}</small>
+    </label>`;
+  }).join('');
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">FICHE JOUEUR</p><h2>${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="player-form" class="form-grid"><input type="hidden" name="id" value="${p.id}"><label>Prénom<input name="first_name" required value="${escapeHtml(p.first_name)}"></label><label>Nom<input name="last_name" required value="${escapeHtml(p.last_name)}"></label><label>Date de naissance<input type="date" name="birth_date" value="${p.birth_date||''}"></label><label>Classement FFT<input name="fft_ranking" value="${escapeHtml(p.fft_ranking||'')}"></label><label>Catégorie d’âge<input name="age_category" value="${escapeHtml(p.age_category||'')}" placeholder="À calculer selon la saison FFT"></label><label>Profil<select name="player_type"><option ${p.player_type==='Loisir'?'selected':''}>Loisir</option><option ${p.player_type==='Compétition'?'selected':''}>Compétition</option></select></label><section class="player-color-picker span-2"><div class="player-color-picker-head"><div><b>Couleur du joueur</b><small>Une couleur unique parmi les 50 disponibles.</small></div><strong>${availableCount}/50 libres</strong></div><div class="player-color-grid">${colorOptions}</div><small class="player-color-help">Les couleurs déjà utilisées par un autre joueur sont verrouillées.</small></section><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer la fiche</button></div></form>`);
 }
 
 $('#dialog-content').addEventListener('click',event=>{if(event.target.closest('[data-close]'))closeDialog();});
@@ -1156,7 +1166,11 @@ if (error) throw error;
 toast('Joueur ajouté à ton effectif.');
 
     } else if(form.id==='player-form'){
-      const {id,...changes}=values;await dataService.updatePlayer(id,{...changes,first_name:changes.first_name.trim(),last_name:changes.last_name.trim()});toast('Fiche joueur mise à jour.');
+      const {id,...changes}=values;
+      if(!PLAYER_COLORS.includes(changes.player_color))throw new Error('Choisis une couleur parmi les 50 couleurs proposées.');
+      if(state.players.some(player=>player.id!==id&&player.player_color===changes.player_color))throw new Error('Cette couleur est déjà attribuée à un autre joueur.');
+      await dataService.updatePlayer(id,{...changes,first_name:changes.first_name.trim(),last_name:changes.last_name.trim()});
+      toast('Fiche joueur et couleur mises à jour.');
     }
     closeDialog();await refreshAndRender();
   }catch(error){
