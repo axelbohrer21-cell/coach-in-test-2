@@ -504,19 +504,20 @@ export function libraryItemsForCoach() {
   ];
   const privateTemplates=privateThemes.map(([key,title])=>{
     const generated=generateOriginalSession({theme:key,level:'Intermédiaire',difficulty:'progressive',duration:90});
+    if(!generated.exercise_count)return null;
     return {
       id:'private-template-'+key,is_program_template:true,category:'particulier',title,
-      theme:generated.theme,subtheme:'Séance complète',level:'Tous niveaux',
+      theme:generated.theme,subtheme:'Programme collectif · semaine '+generated.source_week,level:'Tous niveaux',
       objective:generated.objective,
-      equipment:'Raquettes, balles et plots ou cibles selon les ateliers.',
-      setup:'Installer les zones et positions décrites dans les ateliers. Adapter l’alimentation au niveau du joueur.',
-      instructions:generated.exercise_1+'\n\n'+generated.exercise_2,
-      rotations:'Alterner les rôles de joueur et de partenaire après chaque série.',
-      variations:generated.difficulty_rule+'\n\nCritère de réussite : '+generated.success_criteria,
+      equipment:'',
+      setup:'',
+      instructions:generated.exercise_1+'\\n\\n'+generated.exercise_2,
+      rotations:'',
+      variations:'',
       keywords:[key,generated.theme,'cours particulier','séance type'],
-      source_week:null,duration_minutes:90
+      source_week:generated.source_week,duration_minutes:90
     };
-  });
+  }).filter(Boolean);
   const programItems=(groupProgram.weeks||[]).flatMap(week=>(week.courts||[]).map((instructions,index)=>{
     const text=String(instructions||'').trim(); if(!text)return null;
     const theme=String(week.theme||'').replace(/^SEMAINE\s+\d+\s*:\s*/i,'').trim();
