@@ -2022,3 +2022,106 @@ body.camera-fullscreen-open{overflow:hidden}
   .calendar-event-actions .btn{padding:6px 8px}
   .calendar-group-frame-label{gap:6px;padding:6px 7px;font-size:9px}
 }
+
+
+/* Alignement précis du planning : les horaires tombent sur les lignes de la grille */
+.calendar-hours{display:grid;grid-auto-rows:30px;gap:0}
+.calendar-hour-row{
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr);
+  height:30px;
+  min-height:30px;
+  box-sizing:border-box;
+  align-items:stretch;
+}
+.calendar-hour-content{
+  height:30px;
+  min-height:30px;
+  box-sizing:border-box;
+  border-bottom:1px solid rgba(151,180,207,.22);
+}
+.calendar-hour-label{
+  position:relative;
+  align-self:start;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  height:1px;
+  min-height:1px;
+  padding:0 3px 0 0;
+  margin:0;
+  top:0;
+  transform:translateY(-50%);
+  overflow:visible;
+  font-size:10px;
+  line-height:1;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  color:#b9cbe0;
+  z-index:2;
+}
+.calendar-hour-slot{
+  position:absolute;
+  top:3px;
+  right:4px;
+  display:grid;
+  place-items:center;
+  width:22px;
+  min-width:22px;
+  height:22px;
+  min-height:22px;
+  padding:0;
+  border:1px solid rgba(113,223,208,.28);
+  border-radius:7px;
+  background:rgba(113,223,208,.07);
+  color:#8fe7dc;
+  font-size:15px;
+  line-height:1;
+  opacity:.72;
+  box-shadow:none;
+}
+.calendar-hour-slot:hover{
+  opacity:1;
+  background:rgba(113,223,208,.18);
+  border-color:rgba(113,223,208,.62);
+  transform:none;
+}
+.calendar-group-frame{
+  position:relative;
+  height:30px;
+  min-height:30px;
+  margin:0;
+  padding:0 5px;
+  box-sizing:border-box;
+  overflow:visible;
+}
+.calendar-group-frame.is-group-start .calendar-group-frame-label{
+  position:absolute;
+  z-index:7;
+  top:0;
+  left:0;
+  right:0;
+  width:100%;
+  height:var(--group-frame-height,30px);
+  min-height:0;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px;
+  margin:0;
+  border:1px solid rgba(195,167,255,.28);
+  border-radius:10px;
+  background:rgba(124,91,190,.16);
+  text-align:center;
+}
+.calendar-group-frame-label>span:nth-child(2){width:100%;text-align:center}
+.calendar-group-frame-label small{margin:0;white-space:nowrap}
+.calendar-hour-row-group-occupied .calendar-hour-content{border-bottom-color:transparent}
+@media(max-width:600px){
+  .calendar-hour-row{grid-template-columns:48px minmax(0,1fr)}
+  .calendar-hour-label{font-size:9px}
+  .calendar-hour-slot{right:3px;width:20px;min-width:20px;height:20px;min-height:20px}
+}
