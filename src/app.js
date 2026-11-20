@@ -883,15 +883,18 @@ function playerSheetDialog(playerId){
   const validValues=latestValues.filter(x=>Number.isFinite(x[1])&&x[1]>=0&&x[1]<=20);
   let radar='<p class="chart-empty">Le radar se dessine au fil des bilans. Renseigne les secteurs pour voir ton profil se révéler.</p>';
   if(validValues.length){
-    const center=140,radius=88,angle=i=>-Math.PI/2+i*Math.PI/2;
+    const center=180,radius=118,angle=i=>-Math.PI/2+i*Math.PI/2;
     const xy=(value,index)=>{const d=Math.max(0,Math.min(20,value))/20*radius;return {x:center+Math.cos(angle(index))*d,y:center+Math.sin(angle(index))*d};};
+    const outer=scoreAxes.map((axis,i)=>({x:center+Math.cos(angle(i))*radius,y:center+Math.sin(angle(i))*radius}));
+    const sectors=scoreAxes.map((axis,i)=>'<polygon class="radar-sector" fill="'+axis[2]+'" points="'+center+','+center+' '+outer[i].x+','+outer[i].y+' '+outer[(i+1)%4].x+','+outer[(i+1)%4].y+'"/>').join('');
     const rings=[.2,.4,.6,.8,1].map((f,level)=>{const pts=Array.from({length:4},(_,i)=>{const d=radius*f;return (center+Math.cos(angle(i))*d)+','+(center+Math.sin(angle(i))*d);}).join(' ');return '<polygon class="radar-grid radar-grid-'+(level+1)+'" points="'+pts+'"/>';}).join('');
-    const spokes=scoreAxes.map((axis,i)=>'<line class="radar-spoke" x1="'+center+'" y1="'+center+'" x2="'+(center+Math.cos(angle(i))*radius)+'" y2="'+(center+Math.sin(angle(i))*radius)+'"/>').join('');
-    const labels=scoreAxes.map((axis,i)=>{const p={x:center+Math.cos(angle(i))*115,y:center+Math.sin(angle(i))*115};const anchor=i===1?'start':i===3?'end':'middle';return '<text class="radar-label" text-anchor="'+anchor+'" x="'+p.x+'" y="'+(p.y+4)+'">'+axis[0]+'</text>';}).join('');
+    const spokes=scoreAxes.map((axis,i)=>'<line class="radar-spoke radar-spoke-domain" stroke="'+axis[2]+'" x1="'+center+'" y1="'+center+'" x2="'+outer[i].x+'" y2="'+outer[i].y+'"/>').join('');
+    const labels=scoreAxes.map((axis,i)=>{const p={x:center+Math.cos(angle(i))*151,y:center+Math.sin(angle(i))*151};const anchor=i===1?'start':i===3?'end':'middle';return '<text class="radar-label radar-domain-label" fill="'+axis[2]+'" text-anchor="'+anchor+'" x="'+p.x+'" y="'+(p.y+5)+'">'+axis[0]+'</text>';}).join('');
     const complete=validValues.length===4;
     const polygon=complete?latestValues.map((x,i)=>{const p=xy(x[1],i);return p.x+','+p.y;}).join(' '):'';
-    const points=latestValues.map((x,i)=>{if(!Number.isFinite(x[1])||x[1]<0||x[1]>20)return '';const p=xy(x[1],i);return '<circle class="radar-point" cx="'+p.x+'" cy="'+p.y+'" r="5"/>';}).join('');
-    radar='<div class="radar-wrap player-sheet-radar radar-premium"><svg viewBox="0 0 280 280" role="img" aria-label="Toile de compétences sur 20"><defs><linearGradient id="playerRadarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#51e0f2" stop-opacity=".7"/><stop offset="100%" stop-color="#9b82ff" stop-opacity=".26"/></linearGradient></defs>'+rings+spokes+(complete?'<polygon class="radar-area" fill="url(#playerRadarFill)" points="'+polygon+'"/>':'')+points+labels+'<circle class="radar-center" cx="'+center+'" cy="'+center+'" r="3.5"/></svg></div>';
+    const segments=complete?latestValues.map((x,i)=>{const p1=xy(x[1],i),p2=xy(latestValues[(i+1)%4][1],(i+1)%4);return '<line class="radar-color-segment" stroke="'+scoreAxes[i][2]+'" x1="'+p1.x+'" y1="'+p1.y+'" x2="'+p2.x+'" y2="'+p2.y+'"/>';}).join(''):'';
+    const points=latestValues.map((x,i)=>{if(!Number.isFinite(x[1])||x[1]<0||x[1]>20)return '';const p=xy(x[1],i);return '<circle class="radar-point radar-domain-point" fill="'+scoreAxes[i][2]+'" cx="'+p.x+'" cy="'+p.y+'" r="7"/>';}).join('');
+    radar='<div class="radar-wrap player-sheet-radar radar-premium"><svg viewBox="0 0 360 360" role="img" aria-label="Toile de compétences colorée sur 20"><defs><linearGradient id="playerRadarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#43d4f2" stop-opacity=".48"/><stop offset="35%" stop-color="#a78bfa" stop-opacity=".36"/><stop offset="70%" stop-color="#66e0ad" stop-opacity=".34"/><stop offset="100%" stop-color="#ffb36e" stop-opacity=".42"/></linearGradient></defs>'+sectors+rings+spokes+(complete?'<polygon class="radar-area" fill="url(#playerRadarFill)" points="'+polygon+'"/>':'')+segments+points+labels+'<circle class="radar-center" cx="'+center+'" cy="'+center+'" r="5"/></svg></div>';
   }
   const averageLatest=validValues.length?validValues.reduce((sum,x)=>sum+x[1],0)/validValues.length:null;
   const criterionFrequency=type=>{
