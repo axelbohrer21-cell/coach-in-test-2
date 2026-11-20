@@ -395,7 +395,7 @@ function radarChart(report){
   const complete=axes.every(([,value])=>value!==null&&value!==undefined&&value!=='');
   const points=axes.map(([,value],i)=>{const p=pointFor(value,i);return `<circle class="radar-point" cx="${p.x}" cy="${p.y}" r="4.5"/>`;}).join('');
   const val=axes.map(([label,value],i)=>`<span class="radar-value-card radar-value-${i}"><i></i><b>${label}</b><strong>${value===null||value===undefined||value===''?'—':`${value}<small>/20</small>`}</strong></span>`).join('');
-  return `<div class="radar-wrap radar-premium"><svg viewBox="0 0 240 240" role="img" aria-label="Radar des quatre compétences">${rings}${spokes}${complete?`<polygon class="radar-area" points="${polygon}"/>`:''}${points}${labels}</svg><div class="radar-values">${val}</div></div>${complete?'':'<p class="tiny muted radar-note">Les axes déjà notés sont visibles. Le profil se complète avec les quatre secteurs.</p>'}`;
+  return `<div class="radar-wrap radar-premium"><svg viewBox="0 0 240 240" role="img" aria-label="Radar des quatre compétences"><defs><linearGradient id="radarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#57e2f4" stop-opacity=".72"/><stop offset="100%" stop-color="#8b78ff" stop-opacity=".22"/></linearGradient></defs>${rings}${spokes}${complete?`<polygon class="radar-area" points="${polygon}"/>`:''}${points}${labels}</svg><div class="radar-values">${val}</div></div>${complete?'':'<p class="tiny muted radar-note">Les axes déjà notés sont visibles. Le profil se complète avec les quatre secteurs.</p>'}`;
 }
 
 function reportsPage(isCoach) {
