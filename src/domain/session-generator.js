@@ -355,7 +355,7 @@ export function generateOriginalSession({
       'Variante facilitante : ' + easierVariant,
       'Variante exigeante : ' + harderVariant,
       'Critère de réussite : ' + successCriteria
-    ].join('\\n');
+    ].join('\n');
     return {
       name: ['Situation de contrôle','Situation avec déplacement ou lecture','Transfert en points'][index],
       minutes: allocations[index],
