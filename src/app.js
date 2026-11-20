@@ -448,7 +448,8 @@ async function submitVideoAnalysis(form){
   const button=form.querySelector('button[type=submit]'),file=form.elements.video.files?.[0];
   const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value,theme=String(form.elements.video_theme?.value||'').trim(),objective=String(form.elements.video_objective?.value||'').trim();
   if(!file||!title||!playerId){toast('Renseigne le joueur, le titre et la vidéo.','error');return;}
-  if(!['video/mp4','video/quicktime','video/webm'].includes(file.type)){toast('Format accepté : MP4, MOV ou WEBM.','error');return;}
+  const videoMime=file.type.split(';')[0].trim();
+  if(!['video/mp4','video/quicktime','video/webm'].includes(videoMime)){toast('Format accepté : MP4, MOV ou WEBM.','error');return;}
   if(file.size>262144000){toast('La vidéo dépasse la limite de 250 Mo.','error');return;}
   if(!form.elements.consent.checked){toast('Confirme que tu disposes de l’autorisation du joueur avant l’analyse.','error');return;}
   button.disabled=true;button.textContent='Préparation de la vidéo…';
