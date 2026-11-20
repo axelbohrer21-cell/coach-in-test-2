@@ -355,8 +355,20 @@ $('#page-content').addEventListener('input',event=>{
 });
 $('#page-content').addEventListener('change',event=>{
   if(event.target.name==='camera_framing'){
-    const hints={side:'Place le téléphone de côté, à distance suffisante pour garder le joueur entier dans l’image.',front:'Place le téléphone face au joueur pour observer l’équilibre et l’alignement des appuis.',rear:'Filme depuis l’arrière pour observer le placement, l’orientation et le replacement.',serve:'Une vue de profil peut aider à observer le lancer, la flexion et l’extension au service.',wide:'Éloigne le téléphone pour conserver le joueur et ses déplacements dans le cadre.',threequarter:'Une vue en diagonale peut aider à observer l’orientation du corps et les transitions.'};
-    const hint=$('#camera-framing-hint');if(hint)hint.textContent=hints[event.target.value]||'Ce conseil n’est jamais obligatoire et ne bloque pas l’analyse.';
+    const presets={
+      side:{hint:'Place le téléphone de côté, à distance suffisante pour garder le joueur entier dans l’image.',title:'Profil latéral',meta:'5–7 m · hauteur 1,2–1,5 m · téléphone horizontal',x:24,y:100,tx:105,ty:100},
+      front:{hint:'Place le téléphone derrière le fond opposé pour voir le joueur de face. Garde les deux pieds visibles.',title:'Face au joueur',meta:'6–8 m · hauteur 1,2–1,5 m · axe du court',x:160,y:3,tx:160,ty:16},
+      rear:{hint:'Place le téléphone derrière la ligne de fond du joueur, sans gêner le jeu.',title:'Vue arrière',meta:'4–6 m derrière le fond · hauteur 1,2–1,5 m',x:160,y:197,tx:160,ty:184},
+      serve:{hint:'Place le téléphone sur le côté du serveur pour voir le lancer, la flexion et l’extension.',title:'Profil service',meta:'4–6 m sur le côté · hauteur 1,2–1,5 m',x:24,y:62,tx:105,ty:72},
+      wide:{hint:'Recule suffisamment pour conserver le joueur et toute sa zone de déplacement dans l’image.',title:'Vue large',meta:'8–12 m · hauteur 1,5–2 m · cadre large',x:160,y:197,tx:160,ty:178},
+      threequarter:{hint:'Place le téléphone en diagonale pour voir l’orientation du corps et les transitions.',title:'Trois-quarts',meta:'5–7 m en diagonale · hauteur 1,2–1,5 m',x:35,y:180,tx:108,ty:150}
+    };
+    const preset=presets[event.target.value],hint=$('#camera-framing-hint'),title=$('#camera-guide-title'),meta=$('#camera-guide-meta'),marker=$('#camera-marker'),direction=$('#camera-direction');
+    if(hint)hint.textContent=preset?.hint||'Ce conseil n’est jamais obligatoire et ne bloque pas l’analyse.';
+    if(title)title.textContent=preset?.title||'Position indicative';
+    if(meta)meta.textContent=preset?.meta||'Choisis un cadrage pour afficher une suggestion de placement.';
+    if(marker){marker.setAttribute('cx',preset?.x??24);marker.setAttribute('cy',preset?.y??100);}
+    if(direction){direction.setAttribute('x1',preset?.x??24);direction.setAttribute('y1',preset?.y??100);direction.setAttribute('x2',preset?.tx??105);direction.setAttribute('y2',preset?.ty??100);}
   }
   if(event.target.id==='message-partner'){state.messagePartnerId=event.target.value;render('messages');}
   if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;filterPlayerCards();}
