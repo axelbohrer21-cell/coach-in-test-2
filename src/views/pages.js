@@ -11,17 +11,19 @@ import { buildDaySeriesOverview, buildHolidayStageOccurrences, getWeekProgram, G
 import { buildSeriesCounters } from '../domain/group-series.js';
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
 import { playerTennisPage, playerMatchesPage, clubLifePage } from './player-experience.js';
+import { PLAYER_COLORS } from '../domain/player-colors.js';
 
 function timeToMinutes(value) {
   const [hours, minutes] = String(value || '00:00').split(':').map(Number);
   return hours * 60 + (minutes || 0);
 }
 
-const PLAYER_ACCENTS = ['#42c7f5','#a78bfa','#54d6a0','#ffad66','#fb7185','#facc15','#2dd4bf','#c084fc'];
 function playerAccent(playerId) {
-  let hash = 0;
-  for (const char of String(playerId || '')) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return PLAYER_ACCENTS[hash % PLAYER_ACCENTS.length];
+  const player = (state.players || []).find(row => row.id === playerId);
+  if (player?.player_color) return player.player_color;
+  const ordered = [...(state.players || [])].sort((a,b) => String(a.id).localeCompare(String(b.id)));
+  const index = ordered.findIndex(row => row.id === playerId);
+  return PLAYER_COLORS[Math.max(0,index) % PLAYER_COLORS.length];
 }
 
 export const pageMeta = {
@@ -240,7 +242,7 @@ function playersPage() {
 
     <div class="player-grid">
       ${filtered.map(p => {
-        const color = playerAccent(p.id);
+        const color = p.player_color || playerAccent(p.id);
         const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
 
         return `<article class="player-card"
