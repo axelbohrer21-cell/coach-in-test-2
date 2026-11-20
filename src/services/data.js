@@ -174,6 +174,22 @@ export const dataService = {
     }
     return data;
   },
+  async updateSession(id, changes, coachId) {
+    const { coach_private_notes = '', ...sessionChanges } = changes;
+    const { data, error } = await supabase.from('training_sessions').update(sessionChanges).eq('id', id).eq('created_by', coachId).select().single();
+    if (error) throw error;
+    const { data: existing, error: readError } = await supabase.from('coach_session_notes').select('session_id,note').eq('session_id',id).eq('coach_id',coachId).maybeSingle();
+    if (readError) throw readError;
+    const note=String(coach_private_notes||'').trim();
+    if(existing){
+      const {error:noteError}=await supabase.from('coach_session_notes').update({note}).eq('session_id',id).eq('coach_id',coachId);
+      if(noteError)throw noteError;
+    }else if(note){
+      const {error:noteError}=await supabase.from('coach_session_notes').insert({session_id:id,coach_id:coachId,note});
+      if(noteError)throw noteError;
+    }
+    return data;
+  },
   async saveSessionReview(sessionId, coachId, review) {
     const marker = '<!--COACH_IN_PROGRESS:' + btoa(unescape(encodeURIComponent(JSON.stringify(review)))) + '-->';
     const { data: existing, error: readError } = await supabase.from('coach_session_notes')
