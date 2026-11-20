@@ -501,7 +501,7 @@ async function saveCourtCalibration(analysisId){
     toast('Court calibré. Écart moyen estimé entre les pieds : '+mean+' m.');
   }catch(error){toast(error.message||'Impossible de calibrer le court.','error');}
 }
-async function extractVideoFrames(file){
+async function getVideoDuration(file){
   const objectUrl=URL.createObjectURL(file),video=document.createElement('video');
   video.muted=true;video.playsInline=true;video.preload='metadata';
   const waitFor=(target,event)=>new Promise((resolve,reject)=>{
@@ -515,22 +515,7 @@ async function extractVideoFrames(file){
     const duration=Number(video.duration),sourceWidth=Number(video.videoWidth),sourceHeight=Number(video.videoHeight);
     if(!Number.isFinite(duration)||duration<=0||duration>600)throw new Error('La vidéo doit durer 10 minutes maximum.');
     if(!sourceWidth||!sourceHeight)throw new Error('Les dimensions de la vidéo sont illisibles.');
-    const maxDimension=768,scale=Math.min(1,maxDimension/Math.max(sourceWidth,sourceHeight));
-    const canvas=document.createElement('canvas');
-    canvas.width=Math.max(1,Math.round(sourceWidth*scale));
-    canvas.height=Math.max(1,Math.round(sourceHeight*scale));
-    const context=canvas.getContext('2d',{alpha:false});
-    if(!context)throw new Error('Impossible de préparer les images de cette vidéo.');
-    const frames=[],frameCount=8;
-    for(let i=0;i<frameCount;i++){
-      const timestamp=duration*(i+0.5)/frameCount;
-      const seekReady=waitFor(video,'seeked');video.currentTime=timestamp;await seekReady;
-      context.drawImage(video,0,0,canvas.width,canvas.height);
-      const dataUrl=canvas.toDataURL('image/jpeg',.62);
-      if(dataUrl.length>950000)throw new Error('Une image extraite est trop volumineuse. Essaie une vidéo plus courte ou une résolution inférieure.');
-      frames.push({timestamp:Number(timestamp.toFixed(2)),data_url:dataUrl});
-    }
-    return {duration,frames};
+    return duration;
   }finally{URL.revokeObjectURL(objectUrl);video.removeAttribute('src');video.load();}
 }
 async function submitVideoAnalysis(form,{fromCamera=false}={}){
@@ -544,11 +529,9 @@ async function submitVideoAnalysis(form,{fromCamera=false}={}){
   button.disabled=true;button.textContent='Préparation de la vidéo…';
   let analysisId=null,videoPath=null;
   try{
-    const {duration,frames}=await extractVideoFrames(file);
+    const duration=await getVideoDuration(file);
     button.textContent='Détection des articulations sur le téléphone…';
     const poseAnalysis=await analyzeVideoPose(file);
-    const totalFrameBytes=frames.reduce((total,frame)=>total+frame.data_url.length,0);
-    if(totalFrameBytes>6500000)throw new Error('Les images extraites sont trop volumineuses pour une analyse fiable. Essaie une vidéo plus courte.');
     analysisId=crypto.randomUUID();
     const extension=file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4';
     videoPath=state.user.id+'/'+playerId+'/'+analysisId+'/original.'+extension;
@@ -556,8 +539,8 @@ async function submitVideoAnalysis(form,{fromCamera=false}={}){
     if(uploadError)throw uploadError;
     const {error:insertError}=await supabase.from('coach_video_analyses').insert({id:analysisId,coach_id:state.user.id,player_id:playerId,title,stroke_type:stroke,video_path:videoPath,video_mime:file.type,video_size_bytes:file.size,duration_seconds:Number(duration.toFixed(2)),status:'uploaded'});
     if(insertError){await supabase.storage.from('coach-in-videos').remove([videoPath]);throw insertError;}
-    button.textContent='Analyse IA en cours…';
-    const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,frames,theme,objective,pose_analysis:poseAnalysis}});
+    button.textContent='Analyse locale en cours…';
+    const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,theme,objective,pose_analysis:poseAnalysis}});
     if(error||data?.error){
       const {data:latest}=await supabase.from('coach_video_analyses').select('status').eq('id',analysisId).maybeSingle();
       if(latest?.status!=='completed')throw new Error(data?.error||error?.message||'Le service IA n’a pas répondu. Vérifie le statut avant de relancer.');
@@ -567,7 +550,7 @@ async function submitVideoAnalysis(form,{fromCamera=false}={}){
   }catch(error){
     toast(error.message||'Impossible de traiter cette vidéo.','error');
     try{await dataService.loadCoachWorkspace(state.user.id);render('videos');}catch(_){}
-  }finally{if(button.isConnected){button.disabled=false;button.textContent='Lancer l’analyse IA';}}
+  }finally{if(button.isConnected){button.disabled=false;button.textContent='Lancer l’analyse locale';}}
 }
 async function toggleVideoShare(id,current){
   try{const {error}=await supabase.from('coach_video_analyses').update({shared_with_player:!current,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id);if(error)throw error;await dataService.loadCoachWorkspace(state.user.id);render('videos');toast(!current?'Analyse partagée avec le joueur.':'Partage retiré.');}
