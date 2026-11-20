@@ -1556,3 +1556,11 @@ body.camera-fullscreen-open{overflow:hidden}
 .player-color-option.is-used{opacity:.2;cursor:not-allowed;filter:grayscale(1)}
 .player-color-option input:focus-visible+span{outline:2px solid #fff;outline-offset:3px}
 @media(max-width:520px){.player-color-grid{grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}.player-color-option>span{width:25px;height:25px}}
+
+
+/* Analyse vidéo — liste unique des gestes observés */
+.video-criterion-field{display:grid;gap:10px;align-content:start;padding:18px 20px;border:1px solid rgba(92,139,180,.25);border-radius:16px;background:linear-gradient(145deg,rgba(18,43,68,.72),rgba(8,24,42,.82))}
+.video-criterion-field>select{width:100%;min-height:54px;padding:14px 16px;border:1px solid rgba(115,165,205,.35);border-radius:12px;background:#102b45;color:var(--text);font-size:14px;line-height:1.5}
+.video-criterion-field>select:focus{outline:2px solid rgba(67,212,242,.55);outline-offset:2px}
+.video-criterion-field>small{font-size:12px;line-height:1.55}
+@media(min-width:760px){.video-criterion-field{padding:22px 24px}.video-criterion-field>select{min-height:58px;font-size:15px}}
