@@ -881,14 +881,18 @@ function playerSheetDialog(playerId){
   const latest=reports[0];
   const latestValues=latest?scoreAxes.map(axis=>[axis[0],scoreValue(latest,axis[1])]):[];
   const validValues=latestValues.filter(x=>Number.isFinite(x[1])&&x[1]>=0&&x[1]<=20);
-  let radar='<p class="chart-empty">Le radar complet apparaîtra dès qu’un bilan aura les quatre secteurs notés.</p>';
-  if(validValues.length===4){
-    const center=110,radius=76;
-    const point=(value,index)=>{const angle=-Math.PI/2+index*Math.PI/2;const distance=value/20*radius;return (center+Math.cos(angle)*distance)+','+(center+Math.sin(angle)*distance);};
-    const rings=[.25,.5,.75,1].map(f=>{const pts=Array.from({length:4},(_,i)=>{const angle=-Math.PI/2+i*Math.PI/2;return (center+Math.cos(angle)*radius*f)+','+(center+Math.sin(angle)*radius*f);}).join(' ');return '<polygon class="radar-grid" points="'+pts+'"/>';}).join('');
-    const polygon=latestValues.map((x,i)=>point(x[1],i)).join(' ');
-    const labels=scoreAxes.map((axis,i)=>{const angle=-Math.PI/2+i*Math.PI/2;return '<text class="radar-label" x="'+(center+Math.cos(angle)*98)+'" y="'+(center+Math.sin(angle)*98+3)+'">'+axis[0]+'</text>';}).join('');
-    radar='<div class="radar-wrap player-sheet-radar"><svg viewBox="0 0 220 220" role="img" aria-label="Radar des quatre secteurs">'+rings+'<polygon class="radar-area" points="'+polygon+'"/>'+labels+'</svg></div>';
+  let radar='<p class="chart-empty">Le radar se dessine au fil des bilans. Renseigne les secteurs pour voir ton profil se révéler.</p>';
+  if(validValues.length){
+    const center=140,radius=88,angle=i=>-Math.PI/2+i*Math.PI/2;
+    const xy=(value,index)=>{const d=Math.max(0,Math.min(20,value))/20*radius;return {x:center+Math.cos(angle(index))*d,y:center+Math.sin(angle(index))*d};};
+    const rings=[.2,.4,.6,.8,1].map((f,level)=>{const pts=Array.from({length:4},(_,i)=>{const d=radius*f;return (center+Math.cos(angle(i))*d)+','+(center+Math.sin(angle(i))*d);}).join(' ');return '<polygon class="radar-grid radar-grid-'+(level+1)+'" points="'+pts+'"/>';}).join('');
+    const spokes=scoreAxes.map((axis,i)=>'<line class="radar-spoke" x1="'+center+'" y1="'+center+'" x2="'+(center+Math.cos(angle(i))*radius)+'" y2="'+(center+Math.sin(angle(i))*radius)+'"/>').join('');
+    const scale=[5,10,15,20].map((value,i)=>'<text class="radar-scale" x="'+(center+7)+'" y="'+(center-radius*(value/20)+3)+'">'+value+'</text>').join('');
+    const labels=scoreAxes.map((axis,i)=>{const p={x:center+Math.cos(angle(i))*115,y:center+Math.sin(angle(i))*115};const anchor=i===1?'start':i===3?'end':'middle';return '<text class="radar-label" text-anchor="'+anchor+'" x="'+p.x+'" y="'+(p.y+4)+'">'+axis[0]+'</text>';}).join('');
+    const complete=validValues.length===4;
+    const polygon=complete?latestValues.map((x,i)=>{const p=xy(x[1],i);return p.x+','+p.y;}).join(' '):'';
+    const points=latestValues.map((x,i)=>{if(!Number.isFinite(x[1])||x[1]<0||x[1]>20)return '';const p=xy(x[1],i);return '<circle class="radar-point" cx="'+p.x+'" cy="'+p.y+'" r="5"/>';}).join('');
+    radar='<div class="radar-wrap player-sheet-radar radar-premium"><svg viewBox="0 0 280 280" role="img" aria-label="Toile de compétences sur 20"><defs><linearGradient id="playerRadarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#51e0f2" stop-opacity=".7"/><stop offset="100%" stop-color="#9b82ff" stop-opacity=".26"/></linearGradient></defs>'+rings+spokes+scale+(complete?'<polygon class="radar-area" fill="url(#playerRadarFill)" points="'+polygon+'"/>':'')+points+labels+'<circle class="radar-center" cx="'+center+'" cy="'+center+'" r="3.5"/></svg></div>';
   }
   const averageLatest=validValues.length?validValues.reduce((sum,x)=>sum+x[1],0)/validValues.length:null;
   const criterionFrequency=type=>{
