@@ -137,7 +137,7 @@ function sourceWeekFor(focus, recentSessions = []) {
 
 function criterionSpecificPlan(selectedCriterion, fallbackPlan, focus) {
  if(!selectedCriterion?.criterion)return fallbackPlan;
- const criterion=String(selectedCriterion.criterion),theme=normalize(selectedCriterion.main_theme||''),sub=normalize(selectedCriterion.subtheme||''),key=normalize(criterion);
+ const criterion=String(selectedCriterion.criterion),sub=normalize(selectedCriterion.subtheme||''),theme=normalize([selectedCriterion.main_theme,selectedCriterion.subtheme].filter(Boolean).join(' ')),key=normalize(criterion);
  const has=(...words)=>words.some(word=>key.includes(normalize(word)));
  let drills,objective='Travailler précisément « '+criterion+' » dans des situations progressives et transférables au match.';
  if(theme.includes('service')&&!theme.includes('retour')){
@@ -176,7 +176,7 @@ function criterionSpecificPlan(selectedCriterion, fallbackPlan, focus) {
    ['Retour orienté sur cible','Servir dans deux zones. Le relanceur ajuste sa position puis dirige le retour vers une cible profonde en appliquant le critère choisi.'],
    ['Retour puis premier échange','Jouer des points avec le type de service ciblé. Bonus si le retour respecte le critère et permet de jouer la balle suivante en équilibre.']
   ];
- }else if(theme.includes('volee')){
+ }else if(theme.includes('volee')||theme.includes('filet')||theme.includes('volley')){
   const stroke=sub.includes('revers')?'revers':'coup droit';
   drills=has('direction','tamis','profondeur','centr','zone','courte','longue','haute')?[
    ['Volée '+stroke+' sur cible','Depuis la ligne de service, jouer 10 volées '+stroke+' vers une cible croisée ou longue en contrôlant l’orientation du tamis.'],
