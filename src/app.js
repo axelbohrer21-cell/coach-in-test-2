@@ -17,6 +17,7 @@ import { OBJECTIVES, objectivesForTheme, findObjective } from './domain/session-
 const coachObjectives=()=>state.sessionObjectives?.length?state.sessionObjectives:OBJECTIVES;
 import { buildSessionProgression } from './domain/session-progression.js';
 import { buildAdaptiveTrainingProgram } from './domain/intelligence.js';
+import { analyzeVideoPose } from './domain/video-pose.js';
 
 let signupMode = false;
 let weatherRequest = 0;
@@ -456,6 +457,8 @@ async function submitVideoAnalysis(form){
   let analysisId=null,videoPath=null;
   try{
     const {duration,frames}=await extractVideoFrames(file);
+    button.textContent='Détection des articulations sur le téléphone…';
+    const poseAnalysis=await analyzeVideoPose(file);
     const totalFrameBytes=frames.reduce((total,frame)=>total+frame.data_url.length,0);
     if(totalFrameBytes>6500000)throw new Error('Les images extraites sont trop volumineuses pour une analyse fiable. Essaie une vidéo plus courte.');
     analysisId=crypto.randomUUID();
@@ -466,7 +469,7 @@ async function submitVideoAnalysis(form){
     const {error:insertError}=await supabase.from('coach_video_analyses').insert({id:analysisId,coach_id:state.user.id,player_id:playerId,title,stroke_type:stroke,video_path:videoPath,video_mime:file.type,video_size_bytes:file.size,duration_seconds:Number(duration.toFixed(2)),status:'uploaded'});
     if(insertError){await supabase.storage.from('coach-in-videos').remove([videoPath]);throw insertError;}
     button.textContent='Analyse IA en cours…';
-    const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,frames,theme,objective}});
+    const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,frames,theme,objective,pose_analysis:poseAnalysis}});
     if(error||data?.error){
       const {data:latest}=await supabase.from('coach_video_analyses').select('status').eq('id',analysisId).maybeSingle();
       if(latest?.status!=='completed')throw new Error(data?.error||error?.message||'Le service IA n’a pas répondu. Vérifie le statut avant de relancer.');
