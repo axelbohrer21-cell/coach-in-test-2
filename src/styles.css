@@ -2316,3 +2316,285 @@ body.camera-fullscreen-open{overflow:hidden}
 .session-builder-phase-variants{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .session-builder-phase-variants span{display:flex;flex-direction:column;gap:5px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.035);color:#c8d8e9;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
 @media(max-width:600px){.session-builder-phase-variants{grid-template-columns:1fr}}
+
+
+/* ===== Coach In — interface claire, légère et colorée ===== */
+:root{
+  color-scheme:light;
+  --bg:#f4f7fb;
+  --surface:#ffffff;
+  --surface2:#f0f5ff;
+  --line:#e2e8f2;
+  --text:#19263b;
+  --muted:#68778d;
+  --cyan:#168fc2;
+  --violet:#8065d8;
+  --green:#159b72;
+  --orange:#e58a35;
+  --red:#d95e70;
+  --radius:16px;
+  --shadow-panel:0 5px 18px rgba(31,55,88,.055);
+}
+html{background:var(--bg)}
+body{
+  color:var(--text);
+  background:linear-gradient(180deg,#f8faff 0%,#f2f6fb 100%);
+  letter-spacing:0;
+}
+body:before{display:none}
+.muted,.tiny,.availability-note{color:var(--muted)}
+.eyebrow{color:#238bbd;letter-spacing:1.35px;font-size:10px}
+.brand{color:#1b2a42}
+.brand span{color:#218fc2;text-shadow:none}
+.sidebar{
+  background:#fff;
+  border-right:1px solid #e5ebf3;
+  box-shadow:4px 0 18px rgba(30,55,85,.035);
+}
+.side-caption{color:#94a1b3}
+.nav-item{color:#617087;border-color:transparent}
+.nav-item span{color:#8292a8}
+.nav-item:hover{background:#f2f7fc;color:#233650}
+.nav-item.active{
+  color:#176e9c;
+  background:linear-gradient(100deg,#e7f6ff,#edf0ff);
+  border-color:#d9eafa;
+  box-shadow:inset 3px 0 0 #249bd0;
+}
+.nav-item.active span{color:#168fc2}
+.account-label{color:#68778d}
+.main-area{padding-top:30px;padding-bottom:48px}
+.topbar{margin-bottom:24px}
+.topbar h1{color:#1b2a42;letter-spacing:-1.1px}
+.page-content{gap:16px}
+.panel,.stat-card,.group-series-card,.progress-player-card{
+  box-shadow:var(--shadow-panel);
+  backdrop-filter:none;
+}
+.panel{
+  border:1px solid #e6ebf3;
+  border-radius:17px;
+  background:#fff;
+  padding:20px;
+}
+.section-heading h2{color:#24344d}
+.welcome-panel{
+  min-height:170px;
+  padding:25px 28px;
+  border:0;
+  border-radius:20px;
+  background:linear-gradient(112deg,#dff4ff 0%,#e9edff 58%,#f7eaff 100%);
+  box-shadow:0 8px 24px rgba(72,112,170,.09);
+}
+.welcome-panel h2{color:#1e3657}
+.welcome-panel p:not(.eyebrow){color:#5c6f8a}
+.welcome-panel .eyebrow{color:#3979b5}
+.welcome-mark{color:#b4c8e5;text-shadow:none}
+.welcome-mark span{color:#2999c7}
+.stat-card{
+  border:1px solid #e6ebf3;
+  border-radius:16px;
+  background:#fff;
+  padding:17px;
+}
+.stat-card span{color:#75839a}
+.stat-card strong{color:#1e2e46}
+.stat-card small{color:#8290a4}
+.stat-card.blue{border-top:3px solid #36a9df}
+.stat-card.purple{border-top:3px solid #9278e8}
+.stat-card.green{border-top:3px solid #38b88e}
+.stat-card.orange{border-top:3px solid #f0a34e}
+.btn{border-radius:10px}
+.btn.primary{background:linear-gradient(115deg,#27a8d8,#5c8ff0);color:#fff;box-shadow:0 5px 13px rgba(48,139,205,.16)}
+.btn.subtle{background:#edf3fa;color:#40536e;border:1px solid #e1e9f3}
+.btn.ghost{background:#f1f5fa;color:#52647d;border:1px solid #e3eaf2}
+.btn.link{color:#168fc2}
+.btn.danger{background:#fff0f1;color:#b83d54}
+.feedback{background:#fff0f1;color:#a8374c}
+.toolbar{gap:9px}
+.search-input,.select-input,.stack input,.form-grid input,.form-grid select,.form-grid textarea,.message-compose textarea{
+  border:1px solid #dce5f0;
+  border-radius:10px;
+  background:#fbfdff;
+  color:#24344d;
+}
+.search-input::placeholder,.stack input::placeholder,.form-grid input::placeholder,.form-grid textarea::placeholder{color:#9aa7b8}
+.stack label,.form-grid label,.message-file-label,.message-partner-label{color:#52647d}
+.stack input:focus,.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus,.search-input:focus,.select-input:focus,.message-compose textarea:focus{
+  border-color:#48a8d5;
+  box-shadow:0 0 0 3px rgba(47,157,205,.12);
+}
+.tag{background:#e3f5fc;color:#167ba9}
+.tag-purple{background:#f0ebff;color:#7256c7}
+.tag-blue{background:#e6f1ff;color:#3978bd}
+.tag-orange{background:#fff1df;color:#a9651d}
+.tag-green{background:#e3f7ee;color:#16835f}
+.list-card{border-top-color:#edf1f6}
+.list-card:hover{background:#f8fbff}
+.list-date{color:#168fc2}
+.list-date small{color:#8a97a9}
+.list-main span,.list-main small{color:#738198}
+.empty-state{color:#75839a;border-color:#e2eaf3;background:#fbfdff}
+.empty-state h3{color:#31425b}
+.empty-icon{background:#e6f5fc;color:#168fc2}
+.player-card{
+  border-color:color-mix(in srgb,var(--player-accent) 30%,#e4eaf2);
+  background:linear-gradient(120deg,color-mix(in srgb,var(--player-accent) 9%,#fff),#fff 78%);
+  box-shadow:0 5px 16px rgba(31,55,88,.055);
+}
+.player-card-info h3{color:#263750}
+.player-card-info p{color:#65758c}
+.player-avatar{color:#fff}
+.player-card:hover{box-shadow:0 10px 24px rgba(31,55,88,.09)}
+.calendar-week{gap:9px}
+.calendar-day{
+  background:#fff;
+  border:1px solid #e3eaf3;
+  border-radius:12px;
+}
+.calendar-day-head{color:#53647b;border-bottom-color:#edf1f6}
+.calendar-day-head span{color:#168fc2}
+.calendar-day-disabled{background:#f1f3f6;opacity:.78}
+.calendar-day-reason{color:#b77834}
+.calendar-hour-label{color:#8492a6}
+.calendar-hour-content{border-bottom-color:#edf1f6}
+.calendar-hour-slot{border-color:#dce5ef;color:#8a98aa}
+.calendar-hour-slot:hover{border-color:#39a6d5;color:#168fc2;background:#f0faff}
+.calendar-event{background:#e5f5fc;color:#24516a;box-shadow:none}
+.calendar-event small{color:#5e7d91}
+.group-event{background:#f0eaff;color:#57458b;border-left-color:#9278e8}
+.dialog{
+  border:1px solid #e1e8f1;
+  border-radius:18px;
+  background:#fff;
+  color:#23344d;
+  box-shadow:0 22px 70px rgba(25,47,77,.2);
+}
+.dialog::backdrop{background:rgba(27,43,65,.38);backdrop-filter:blur(3px)}
+.dialog-head{background:linear-gradient(180deg,#fff 78%,rgba(255,255,255,0))}
+.dialog-head h2{color:#23344d}
+.form-grid label{color:#52647d}
+.icon-btn{background:#edf3fa;color:#52647d}
+.progress-player-card,.group-series-card{background:#fff;border-color:#e4eaf2}
+.challenge-strip{background:#fff4e8;border-left-color:#e99a46}
+.challenge-strip b{color:#b56b24}
+.challenge-strip small{color:#82694f}
+.challenge-strip.suggested{background:#eaf7fc;border-left-color:#38a6d4}
+.challenge-strip.suggested b{color:#1685b5}
+.progress-mini-stats{border-top-color:#edf1f6;color:#718098}
+.progress-mini-stats strong{color:#25364e}
+.achievement-card{
+  border-color:#ccebdc;
+  background:linear-gradient(145deg,#f0fbf5,#fff);
+}
+.achievement-card span,.achievement-card .achievement-symbol{color:#16835f}
+.achievement-card small{color:#6f857b}
+.theme-progress-row{border-bottom-color:#edf1f6}
+.theme-progress-track{background:#e9eef5}
+.theme-progress-track i{background:linear-gradient(90deg,#28a9d8,#8c78df)}
+.form-section-title{color:#334761}
+.score-grid label{border-color:#e0e8f2;background:#f8fbff;color:#53647b}
+.score-grid input{border-color:#dce5f0;background:#fff;color:#24344d}
+.criterion-theme{border-color:#e1e9f2;background:#f8fbff}
+.criterion-theme summary{color:#2d405a}
+.criterion-subtheme{border-top-color:#e8eef5}
+.criterion-subtheme h4{color:#62748d}
+.criterion-option{background:#fff;color:#465a73!important}
+.criterion-option:hover{background:#f1f8fc;border-color:#d8eaf3}
+.criterion-option:has(input:checked){border-color:#b9e8d2;background:#edfaf3}
+.criterion-option.improvement:has(input:checked){border-color:#f3d2ae;background:#fff6ec}
+.criterion-measure{border-color:#dce5f0;background:#fff;color:#24344d}
+.radar-grid{stroke:#cbd7e5;fill:rgba(68,130,180,.025)}
+.radar-spoke{stroke:#c4d1e0}
+.radar-scale{fill:#8293a9;stroke:#fff}
+.radar-label{fill:#4a5f79;stroke:#fff}
+.radar-values{color:#738198}
+.radar-values b{color:#344963}
+.radar-value-card{border-color:#e2eaf2;background:#fff}
+.radar-value-card>b{color:#566982}
+.radar-value-card>strong{color:#25364e}
+.radar-note{color:#77869a}
+.report-radar-item{border-color:#e2eaf2;background:#fbfdff}
+.journal-card{border-color:#e2eaf2;background:#fbfdff}
+.journal-date{color:#168fc2}
+.journal-card h3{color:#2d4058}
+.journal-card p{color:#718098}
+.journal-tag.positive{background:#e5f7ed;color:#16835f}
+.journal-tag.improvement{background:#fff1e2;color:#a76625}
+.sheet-section,.sheet-subtitle{border-top-color:#e7edf4}
+.sheet-section h3,.sheet-subtitle{color:#344761}
+.group-series-progress{background:#e8eef5}
+.group-series-meta{color:#697b92}
+.curriculum-week{border-color:#e2eaf2;background:#fff}
+.curriculum-week summary:hover{background:#f7faff}
+.curriculum-court{background:#f1f7fc;border-color:#e3ebf3}
+.curriculum-court b{color:#168fc2}
+.curriculum-court p{color:#596d86}
+.message-thread{background:#f6f9fd;border-color:#e2eaf2}
+.message-bubble{background:#e8eff8;color:#2c405a;box-shadow:none}
+.message-bubble small{color:#7c8ba0}
+.message-own{background:#e1f4fc;color:#24566f}
+.message-attachment{color:#168fc2}
+.message-compose textarea{background:#fbfdff;color:#24344d}
+.message-file-label input{color:#718098}
+.evaluation-stepper{background:#f6f9fd;border-color:#e2eaf2;color:#77869a}
+.evaluation-stepper .step-current{color:#16835f}
+.selection-total{background:#e5f5fc;color:#167ba9}
+.criterion-theme.coach-theme.has-selection{border-color:#b8e6d1;box-shadow:0 0 0 1px rgba(33,164,111,.06)}
+.theme-summary-main{color:#344761}
+.theme-summary-dot{color:#2999c7}
+.theme-chevron,.subtheme-summary-meta b{color:#8292a6}
+.criterion-subtheme-card{border-color:#e2eaf2;background:#fff}
+.criterion-subtheme-card>summary{color:#425671}
+.subtheme-summary-meta{color:#8290a3}
+.criteria-validation{border-color:#dfe8f2;background:linear-gradient(110deg,#eff8fc,#f3f1ff)}
+.criteria-validation strong{color:#334761}
+.criteria-validation .criteria-confirmed{background:linear-gradient(110deg,#16835f,#2cb783);color:#fff}
+.player-profile-head{border-bottom-color:#e5ebf3}
+.player-profile-avatar{border-color:#c7e6f3;background:linear-gradient(145deg,#dff5fc,#eee8ff);color:#28779c;box-shadow:none}
+.player-evolution-chart{border-color:#e2eaf2;background:#fbfdff}
+.evolution-chart-heading strong,.evolution-chart-foot strong{color:#344761}
+.evolution-chart-heading span,.evolution-chart-foot span{color:#8290a3}
+.evolution-gridline{stroke:#dce5ef}
+.journey-event:not(:last-child):before{background:#dce5ef}
+.journey-marker{border-color:#cce7f3;background:#edf8fc;color:#247fa6}
+.journey-achievement .journey-marker{border-color:#ccebdc;background:#edfaf3;color:#16835f}
+.journey-challenge .journey-marker{border-color:#f1d7bb;background:#fff6ec;color:#b77834}
+.journey-event-body{border-color:#e2eaf2;background:#fff}
+.journey-event-body h3{color:#344761}
+.coach-evolution-block{border-color:#e2eaf2;background:#fbfdff;box-shadow:none}
+.evolution-intro{color:#718098}
+.dashboard-chart-card{
+  border-color:#e2eaf2;
+  background:#fbfdff;
+}
+.dashboard-chart-card h3{color:#344761}
+.donut-chart:before{background:#fff;border-color:#e8edf4}
+.donut-chart{box-shadow:0 5px 16px rgba(31,55,88,.08)}
+.chart-legend{color:#718098}
+.chart-legend b{color:#344761}
+.sector-bar-row b{color:#344761}
+.sector-track{background:#e8eef5}
+.chart-empty{border-color:#e0e8f2;color:#77869a}
+.player-average-score strong{color:#168fc2}
+.criterion-donut-row{border-color:#e2eaf2;background:#fbfdff}
+.toast{background:#e8f8f0;border-color:#bde8d2;color:#176b4d;box-shadow:0 8px 24px rgba(31,55,88,.12)}
+.toast[data-type=error]{background:#fff0f1;border-color:#f0c8ce;color:#a8374c}
+.auth-card{border:1px solid #e3eaf3;background:#fff;box-shadow:0 18px 60px rgba(31,55,88,.12)}
+.auth-card h1{color:#1f3048}
+.auth-card .muted{color:#718098}
+.auth-card .stack label{color:#52647d}
+.auth-card .tiny{color:#8290a3}
+@media(max-width:760px){
+  .sidebar{background:rgba(255,255,255,.97);border-bottom-color:#e3eaf2;backdrop-filter:blur(14px)}
+  .nav-item.active{box-shadow:inset 0 -2px 0 #249bd0}
+  .main-area{padding-top:18px}
+  .panel{padding:16px}
+  .welcome-panel{min-height:150px}
+}
+@media(max-width:460px){
+  .topbar h1{font-size:27px}
+  .welcome-panel{padding:18px}
+  .panel{border-radius:15px}
+  .stat-card{border-radius:13px}
+}
