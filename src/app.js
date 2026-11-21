@@ -126,6 +126,8 @@ $('#page-content').addEventListener('keydown', event=>{
 });
 
 $('#page-content').addEventListener('click', async event=>{
+  const rosterCard=event.target.closest('[data-player-card-edit]');
+  if(rosterCard&&!event.target.closest('button,a,label,input,select,textarea,[data-player-sheet],[data-edit-player],[data-share-player]')){editPlayerDialog(rosterCard.dataset.playerCardEdit);return;}
   const calibrationCanvas=event.target.closest('[data-court-calibration]');
   if(calibrationCanvas){addCourtCalibrationPoint(calibrationCanvas,event);return;}
   const calibrateButton=event.target.closest('[data-court-calibrate]');
@@ -318,7 +320,7 @@ $('#dialog-content').addEventListener('click',async event=>{
     const canvas=document.createElement('canvas');canvas.width=960;canvas.height=1200;
     canvas.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
     const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('Export du portrait impossible.')),'image/png'));
-    URL.revokeObjectURL(url);pendingPlayerPortrait=null;await uploadPlayerPortrait(playerId,blob,uploadFromDialog);closeDialog();
+    URL.revokeObjectURL(url);pendingPlayerPortrait=null;closeDialog();await uploadPlayerPortrait(playerId,blob,uploadFromDialog);
   }catch(error){toast(error.message||'Impossible d’enregistrer le portrait.','error');save.disabled=false;}
 });
 
