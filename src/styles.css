@@ -4076,3 +4076,45 @@ body.camera-fullscreen-open{overflow:hidden}
 .message-compose-full textarea{width:100%;min-height:52px;max-height:120px;resize:vertical}
 .message-empty-thread{margin:auto;text-align:center}
 @media(max-width:600px){.message-full-page{height:calc(100dvh - 132px);min-height:calc(100dvh - 132px);padding:10px;gap:9px}.message-full-person h2{font-size:18px}.message-thread-full .message-bubble{max-width:90%}.message-compose-full textarea{min-height:48px}}
+
+
+/* Refonte du planning hebdomadaire Coach In */
+.planning-week-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;margin:14px 0;padding:12px;border:1px solid rgba(113,223,208,.16);border-radius:15px;background:linear-gradient(120deg,rgba(17,48,70,.82),rgba(10,26,45,.92))}
+.planning-week-summary article{display:grid;gap:3px;padding:4px 9px;border-right:1px solid rgba(135,166,190,.15)}
+.planning-week-summary article strong{font-size:22px;line-height:1.1;font-weight:900;color:#e8f4ff;font-variant-numeric:tabular-nums}
+.planning-week-summary article span{font-size:10px;color:#a9bdd0}
+.planning-add-button{align-self:center;white-space:nowrap}
+.planning-day-tabs{display:none}
+.planning-legend{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 12px;color:#aebfd2;font-size:10px}
+.planning-legend span{display:inline-flex;align-items:center;gap:6px}
+.planning-legend i{display:inline-block;width:9px;height:9px;border-radius:3px}
+.legend-private{background:#43c7f5}.legend-kids{background:#ffad66}.legend-adults{background:#a78bfa}.legend-cancelled{background:#64748b}.legend-completed{background:#54d6a0}
+.calendar-day-count{grid-column:1/-1;color:#829bb5;font-size:9px}
+.calendar-event[data-event-kind="session"]{border-left-color:var(--event-accent)!important;background:color-mix(in srgb,var(--event-accent) 16%,#0c2036)!important}
+.calendar-event.event-completed{border-left-color:#54d6a0!important;background:rgba(84,214,160,.12)!important}
+.calendar-event.event-cancelled{border-left-color:#64748b!important;background:rgba(100,116,139,.13)!important}
+.calendar-group-frame{border-right-color:rgba(167,139,250,.9);border-left-color:rgba(167,139,250,.9);background:rgba(167,139,250,.10)}
+.calendar-group-frame-label{color:#eee7ff}
+@media(max-width:760px){
+ .planning-week-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:10px}
+ .planning-week-summary article{padding:4px;text-align:center;border-right:0}
+ .planning-week-summary article strong{font-size:19px}
+ .planning-week-summary article span{font-size:9px;line-height:1.25}
+ .planning-add-button{grid-column:1/-1;width:100%;justify-content:center}
+ .planning-day-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0}
+ .planning-day-tab{padding:9px 5px;border:1px solid #29435f;border-radius:9px;background:#10243b;color:#aebfd2;font-size:11px;font-weight:800}
+ .planning-day-tab.active{border-color:#71dfd0;background:rgba(113,223,208,.16);color:#d8fff6}
+ .calendar-week{display:block;overflow:visible;padding:0}
+ .calendar-day{display:none;min-height:0;width:100%;padding:12px}
+ .calendar-day[data-calendar-day="0"],.calendar-day[data-calendar-day="1"],.calendar-day[data-calendar-day="2"],.calendar-day[data-calendar-day="3"],.calendar-day[data-calendar-day="4"],.calendar-day[data-calendar-day="5"],.calendar-day[data-calendar-day="6"]{display:none}
+ .calendar-week[data-selected-day="0"] .calendar-day[data-calendar-day="0"],.calendar-week[data-selected-day="1"] .calendar-day[data-calendar-day="1"],.calendar-week[data-selected-day="2"] .calendar-day[data-calendar-day="2"],.calendar-week[data-selected-day="3"] .calendar-day[data-calendar-day="3"],.calendar-week[data-selected-day="4"] .calendar-day[data-calendar-day="4"],.calendar-week[data-selected-day="5"] .calendar-day[data-calendar-day="5"],.calendar-week[data-selected-day="6"] .calendar-day[data-calendar-day="6"]{display:block}
+ .calendar-hour-row{grid-template-columns:48px minmax(0,1fr);min-height:42px;gap:7px}
+ .calendar-hour-label{padding-top:9px;font-size:11px}
+ .calendar-hour-content{min-height:38px}
+ .calendar-hour-content>.calendar-event{height:calc(var(--event-slots,2)*42px - 5px);min-height:38px;padding:8px 10px!important}
+ .calendar-event-main>strong{font-size:12px}
+ .calendar-event small{font-size:10px}
+ .calendar-group-frame{min-height:38px}
+ .calendar-group-frame-label{min-height:34px;font-size:10px}
+ .calendar-group-frame-label small{font-size:10px}
+}
