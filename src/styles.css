@@ -3948,3 +3948,8 @@ body.camera-fullscreen-open{overflow:hidden}
  #dialog-content:has(.player-game-card) .game-card-quick-facts b{font-size:9px}
  #dialog-content:has(.player-game-card) .game-card-top{font-size:8px;letter-spacing:.09em}
 }
+
+/* Roster action: keep the photo change on the portrait itself */
+.player-roster-actions{display:flex;align-items:center;gap:10px}
+.player-roster-actions [data-player-sheet]{margin-left:auto}
+.player-photo-quick-upload{display:none!important}
