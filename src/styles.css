@@ -4118,3 +4118,16 @@ body.camera-fullscreen-open{overflow:hidden}
  .calendar-group-frame-label{min-height:34px;font-size:10px}
  .calendar-group-frame-label small{font-size:10px}
 }
+
+
+/* Récapitulatif quotidien du planning */
+.planning-day-recap{margin:0 0 14px;padding:14px 16px;border:1px solid rgba(113,223,208,.2);border-radius:15px;background:linear-gradient(125deg,rgba(17,48,70,.72),rgba(9,25,43,.94))}
+.planning-day-recap-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.planning-day-recap-heading .eyebrow{margin-bottom:4px}
+.planning-day-recap-heading h3{margin:0;font-size:15px;text-transform:capitalize}
+.planning-recap-duration{padding:7px 10px;border-radius:9px;background:rgba(113,223,208,.12);color:#c9fff4;font-size:11px;font-weight:800;white-space:nowrap}
+.planning-day-recap-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.planning-day-recap-stats article{display:flex;align-items:baseline;gap:8px;padding:8px 10px;border-radius:9px;background:rgba(5,18,32,.45)}
+.planning-day-recap-stats strong{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+.planning-day-recap-stats span{color:#a9bdd0;font-size:10px}
+@media(max-width:760px){.planning-day-recap{padding:12px}.planning-day-recap-heading h3{font-size:13px}.planning-day-recap-stats{gap:5px}.planning-day-recap-stats article{display:grid;gap:2px;padding:8px 6px;text-align:center}.planning-day-recap-stats strong{font-size:18px}.planning-day-recap-stats span{font-size:9px}}
