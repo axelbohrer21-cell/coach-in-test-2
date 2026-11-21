@@ -1194,6 +1194,13 @@ function renderPlayerSheetDialog(playerId){
   '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">CHRONOLOGIE COMPLÈTE</p><h3>Parcours du joueur</h3></div><span class="tag">'+journeyEvents.length+' événement(s)</span></div><p class="tiny muted">Séances, bilans, réussites, défis et suivis vidéo réunis dans l’ordre chronologique.</p><div class="journey-timeline profile-journey-timeline">'+(journeyMarkup||'<p class="muted">Le parcours apparaîtra au fil des séances et des bilans.</p>')+'</div></section>'+  '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">JOURNAL SPORTIF</p><h3>Historique des bilans</h3></div><span class="tag">'+reports.length+'</span></div>'+(historyReports||'<p class="muted">Aucun bilan enregistré.</p>')+'</section>'+
   '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">TRAVAIL SUR LE COURT</p><h3>Historique des séances</h3></div><span class="tag">'+sessions.length+'</span></div>'+(historySessions||'<p class="muted">Aucune séance.</p>')+'</section>'+
   '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">ESPACE CONFIDENTIEL</p><h3>Notes privées du coach</h3></div><span class="tag">Privé</span></div>'+(privateNotes||'<p class="muted">Aucune note privée enregistrée.</p>')+'</section>');
+  const dialogContent=$('#dialog-content');
+  if(dialogContent&&!dialogContent.querySelector('[data-player-sheet-back]')){
+    const back=document.createElement('button');
+    back.type='button';back.className='btn subtle player-sheet-back';back.dataset.playerSheetBack='true';back.textContent='← Retour aux joueurs';
+    back.addEventListener('click',()=>closeDialog());
+    dialogContent.prepend(back);
+  }
   initializePlayerProfileTabs();
 }
 
