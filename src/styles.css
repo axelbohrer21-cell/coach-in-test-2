@@ -3953,3 +3953,32 @@ body.camera-fullscreen-open{overflow:hidden}
 .player-roster-actions{display:flex;align-items:center;gap:10px}
 .player-roster-actions [data-player-sheet]{margin-left:auto}
 .player-photo-quick-upload{display:none!important}
+
+/* Opened player card: retain the same metallic silver finish as the roster card */
+#dialog-content:has(.player-game-card) .player-game-card{
+ --tier-main:#aebed0!important;
+ --tier-light:#f4f7fb!important;
+ background:
+  radial-gradient(ellipse at 16% 0%,rgba(255,255,255,.34),transparent 45%),
+  linear-gradient(135deg,#f0f3f7 0%,#aebaca 17%,#53647a 42%,#dce5ef 62%,#64758a 82%,#27374b 100%)!important;
+ border:2px solid rgba(235,243,252,.9)!important;
+ box-shadow:inset 0 0 0 5px rgba(25,39,56,.72),inset 0 1px 0 #fff,0 14px 35px #0007!important;
+}
+#dialog-content:has(.player-game-card) .player-game-card .game-card-top,
+#dialog-content:has(.player-game-card) .player-game-card .game-card-bottom{color:#f7f9fc!important}
+#dialog-content:has(.player-game-card) .player-game-card .game-card-top b,
+#dialog-content:has(.player-game-card) .player-game-card .game-card-rating strong,
+#dialog-content:has(.player-game-card) .player-game-card .game-card-rating span{color:#f8fbff!important;text-shadow:0 2px 8px #182638}
+#dialog-content:has(.player-game-card) .player-game-card .game-card-tier{
+ background:linear-gradient(120deg,#e7edf4 0%,#a6b4c5 28%,#f7f9fc 50%,#8798ad 76%,#dce5ee 100%)!important;
+ border:1px solid #f6f9ff!important;
+ box-shadow:inset 0 1px 0 #fff,0 0 20px #dce8f455!important;
+}
+#dialog-content:has(.player-game-card) .player-game-card .game-tier-emblem{
+ background:linear-gradient(145deg,#f5f8fc,#9eafc2 52%,#5b6c82)!important;
+ color:#233349!important;border:2px solid #f5f8fc!important;
+ box-shadow:0 0 15px #e3edf755!important;
+}
+#dialog-content:has(.player-game-card) .player-game-card .game-card-tier>div small,
+#dialog-content:has(.player-game-card) .player-game-card .game-card-tier>div strong,
+#dialog-content:has(.player-game-card) .player-game-card .game-tier-tag{color:#26364b!important;text-shadow:0 1px 0 #fff8!important}
