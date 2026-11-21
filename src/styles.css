@@ -4120,6 +4120,17 @@ body.camera-fullscreen-open{overflow:hidden}
 }
 
 
+/* Créneaux horaires détaillés dans le récapitulatif quotidien */
+.planning-recap-timeline{display:grid;gap:7px;margin-top:12px}
+.planning-recap-slot{width:100%;display:grid;grid-template-columns:62px minmax(0,1fr) auto;align-items:center;gap:11px;padding:10px 12px;border:1px solid rgba(113,223,208,.16);border-left:4px solid var(--recap-accent,#43c7f5);border-radius:10px;background:rgba(4,17,31,.55);color:#eaf4ff;text-align:left;cursor:pointer}
+.planning-recap-slot.is-group{--recap-accent:#a78bfa}.planning-recap-slot.is-stage{--recap-accent:#ffad66}
+.planning-recap-slot:hover{background:rgba(31,65,91,.65);border-color:rgba(113,223,208,.42)}
+.planning-recap-time{font-size:14px;font-weight:900;font-variant-numeric:tabular-nums;color:#c9fff4}
+.planning-recap-copy{display:grid;gap:3px;min-width:0}.planning-recap-copy strong{font-size:13px;overflow-wrap:anywhere}.planning-recap-copy small{font-size:10px;color:#a9bdd0}
+.planning-recap-action{font-size:10px;font-weight:800;color:#8de8dc;white-space:nowrap}
+.planning-recap-empty{margin:8px 0 2px;color:#a9bdd0;font-size:12px}
+@media(max-width:520px){.planning-recap-slot{grid-template-columns:48px minmax(0,1fr);gap:8px;padding:9px}.planning-recap-time{font-size:12px}.planning-recap-copy strong{font-size:12px}.planning-recap-action{grid-column:2;justify-self:start;font-size:9px}}
+
 /* Récapitulatif quotidien du planning */
 .planning-day-recap{margin:0 0 14px;padding:14px 16px;border:1px solid rgba(113,223,208,.2);border-radius:15px;background:linear-gradient(125deg,rgba(17,48,70,.72),rgba(9,25,43,.94))}
 .planning-day-recap-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
