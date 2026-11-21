@@ -3470,3 +3470,17 @@ body.camera-fullscreen-open{overflow:hidden}
 .player-avatar-preset{font-size:27px;line-height:1}.player-avatar-photo img{width:100%;height:100%;object-fit:cover;border-radius:inherit}.passport-avatar-picker{min-width:0;margin:0;padding:15px;border:1px solid var(--border-color,rgba(130,150,180,.25));border-radius:16px}.passport-avatar-picker legend{padding:0 7px;font-weight:800}.passport-avatar-picker>p{margin:0 0 12px;color:var(--muted);font-size:12px}.passport-avatar-options{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}.passport-avatar-choice{position:relative;cursor:pointer}.passport-avatar-choice input{position:absolute;opacity:0}.passport-avatar-choice span{display:grid;place-items:center;min-height:58px;border:1px solid var(--border-color,rgba(130,150,180,.25));border-radius:14px;background:var(--surface-2,rgba(120,140,170,.07));font-size:29px;transition:.18s}.passport-avatar-choice input:checked+span{border-color:#43c9e4;background:rgba(67,201,228,.13);box-shadow:0 0 0 2px rgba(67,201,228,.2)}.passport-avatar-choice:focus-within span{outline:2px solid #43c9e4;outline-offset:2px}
 @media(max-width:900px){.mindmap-branches{grid-template-columns:repeat(2,minmax(0,1fr))}.mindmap-branches .mindmap-success{grid-column:1/-1}}
 @media(max-width:560px){.player-mindmap-card{padding:15px}.mindmap-heading{flex-direction:column}.mindmap-mark{display:none}.mindmap-branches{grid-template-columns:1fr}.mindmap-branches .mindmap-success{grid-column:auto}.mindmap-center{width:100%;max-width:240px}.passport-avatar-options{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Connexions visuelles de la carte mentale */
+@media(min-width:901px){
+  .mindmap-branches{position:relative;padding-top:13px}
+  .mindmap-branches:before{content:"";position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(91,211,235,.55),rgba(167,139,250,.55),transparent)}
+  .mindmap-branches .mindmap-node:before{content:"";position:absolute;left:25px;top:-14px;height:13px;border-left:1px solid rgba(91,211,235,.4)}
+  .mindmap-center:after{content:"";position:absolute;left:50%;bottom:-23px;height:22px;border-left:1px solid rgba(91,211,235,.45)}
+}
+@media(min-width:561px) and (max-width:900px){
+  .mindmap-branches{position:relative;padding-top:10px}
+  .mindmap-branches:before{content:"";position:absolute;top:0;left:20%;right:20%;height:1px;background:rgba(91,211,235,.45)}
+  .mindmap-branches .mindmap-node:before{content:"";position:absolute;left:24px;top:-11px;height:10px;border-left:1px solid rgba(91,211,235,.4)}
+  .mindmap-center:after{content:"";position:absolute;left:50%;bottom:-23px;height:22px;border-left:1px solid rgba(91,211,235,.45)}
+}
