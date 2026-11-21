@@ -27,7 +27,7 @@ export function playerTennisPage() {
   const avgScore = monthScores.length ? monthScores.reduce((a,b)=>a+b,0)/monthScores.length : null;
   const latestChallenge = (state.challenges||[]).find(row=>row.status==='active');
   const wins = matches.filter(row=>row.result==='Victoire').length;
-  const selectedAvatar=profile.avatar_url||'emoji:🎾';
+  const selectedAvatar=String(profile.avatar_url||'').startsWith('style:')?profile.avatar_url:'style:navy';
   const bestRecent = matches.find(row=>row.result==='Victoire');
   const skills = achievements.slice(0,6).map(row=>'<span class="passport-skill">✦ '+safe(row.criterion)+'</span>').join('');
   return `
