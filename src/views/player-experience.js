@@ -27,11 +27,12 @@ export function playerTennisPage() {
   const avgScore = monthScores.length ? monthScores.reduce((a,b)=>a+b,0)/monthScores.length : null;
   const latestChallenge = (state.challenges||[]).find(row=>row.status==='active');
   const wins = matches.filter(row=>row.result==='Victoire').length;
+  const selectedAvatar=profile.avatar_url||'emoji:🎾';
   const bestRecent = matches.find(row=>row.result==='Victoire');
   const skills = achievements.slice(0,6).map(row=>'<span class="passport-skill">✦ '+safe(row.criterion)+'</span>').join('');
   return `
     <section class="passport-hero">
-      <div class="passport-avatar">${safe(initials(profile))}</div>
+      <div class="passport-avatar passport-avatar-current">${String(profile.avatar_url||"").startsWith("emoji:")?safe(profile.avatar_url.slice(6)):safe(initials(profile))}</div>
       <div class="passport-identity"><p class="eyebrow">PASSEPORT TENNIS · COACH IN</p><h2>${safe(profile.first_name)} ${safe(profile.last_name)}</h2><p>${safe(profile.player_type||'Profil joueur')} · ${safe(profile.age_category||'Catégorie non renseignée')}</p><div class="passport-tags"><span>Classement FFT : <b>${safe(profile.fft_ranking||'Non renseigné')}</b></span><span>Depuis le ${formatDate(profile.created_at,{month:'long',year:'numeric'})}</span></div></div>
       <span class="passport-stamp">CI<span>+</span></span>
     </section>
@@ -44,6 +45,7 @@ export function playerTennisPage() {
     <section class="panel">
       <div class="section-heading"><div><p class="eyebrow">TON IDENTITÉ DE JOUEUR</p><h2>Ce qui te motive</h2></div><span class="tag">Modifiable par toi</span></div>
       <form id="player-profile-details-form" class="form-grid">
+        <fieldset class="passport-avatar-picker span-2"><legend>Choisis ton avatar</legend><p>Choisis le personnage qui te représentera sur ton passeport et dans ton effectif.</p><div class="passport-avatar-options"><label class="passport-avatar-choice" title="Choisir 🎾"><input type="radio" name="player_avatar" value="emoji:🎾"><span>🎾</span></label><label class="passport-avatar-choice" title="Choisir ⚡"><input type="radio" name="player_avatar" value="emoji:⚡"><span>⚡</span></label><label class="passport-avatar-choice" title="Choisir 🦊"><input type="radio" name="player_avatar" value="emoji:🦊"><span>🦊</span></label><label class="passport-avatar-choice" title="Choisir 🐼"><input type="radio" name="player_avatar" value="emoji:🐼"><span>🐼</span></label><label class="passport-avatar-choice" title="Choisir 🦁"><input type="radio" name="player_avatar" value="emoji:🦁"><span>🦁</span></label><label class="passport-avatar-choice" title="Choisir 🐯"><input type="radio" name="player_avatar" value="emoji:🐯"><span>🐯</span></label><label class="passport-avatar-choice" title="Choisir 🐺"><input type="radio" name="player_avatar" value="emoji:🐺"><span>🐺</span></label><label class="passport-avatar-choice" title="Choisir 🦅"><input type="radio" name="player_avatar" value="emoji:🦅"><span>🦅</span></label><label class="passport-avatar-choice" title="Choisir 🐬"><input type="radio" name="player_avatar" value="emoji:🐬"><span>🐬</span></label><label class="passport-avatar-choice" title="Choisir 🐸"><input type="radio" name="player_avatar" value="emoji:🐸"><span>🐸</span></label><label class="passport-avatar-choice" title="Choisir 🤖"><input type="radio" name="player_avatar" value="emoji:🤖"><span>🤖</span></label><label class="passport-avatar-choice" title="Choisir 👾"><input type="radio" name="player_avatar" value="emoji:👾"><span>👾</span></label></div></fieldset>
         <label class="span-2">Mon objectif principal<textarea name="objective" rows="2" maxlength="500" placeholder="Ex. : gagner en régularité, passer un classement…">${safe(details.objective)}</textarea></label>
         <label>Ce qui me motive<textarea name="motivation" rows="2" maxlength="500" placeholder="Ce qui me donne envie de jouer…">${safe(details.motivation)}</textarea></label>
         <label>Mes points forts<textarea name="strengths" rows="2" maxlength="500" placeholder="Mes qualités sur le court…">${safe(details.strengths)}</textarea></label>
