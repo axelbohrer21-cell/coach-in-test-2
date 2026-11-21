@@ -244,6 +244,39 @@ $('#dialog-content').addEventListener('click',async event=>{
   if(confirmVideoDelete){confirmVideoDelete.disabled=true;await deleteVideoAnalysis(confirmVideoDelete.dataset.confirmDeleteVideo);return;}
   if(event.target.closest('[data-close]'))closeDialog();
 });
+$('#dialog-content').addEventListener('change',async event=>{
+  const photoInput=event.target.closest('[data-player-card-photo]');
+  if(!photoInput)return;
+  const file=photoInput.files?.[0];
+  if(!file)return;
+  const playerId=photoInput.dataset.playerCardPhoto;
+  const allowed=['image/jpeg','image/png','image/webp'];
+  if(!allowed.includes(file.type)){toast('Format photo non accepté. Utilise JPG, PNG ou WebP.','error');photoInput.value='';return;}
+  if(file.size>8*1024*1024){toast('La photo doit faire 8 Mo maximum.','error');photoInput.value='';return;}
+  const player=state.players.find(row=>row.id===playerId);
+  if(!player){toast('Joueur introuvable dans ton effectif.','error');photoInput.value='';return;}
+  photoInput.disabled=true;
+  try{
+    const extension=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+    const path=playerId+'/'+crypto.randomUUID()+'.'+extension;
+    const {error:uploadError}=await supabase.storage.from('player-card-photos').upload(path,file,{contentType:file.type,upsert:false});
+    if(uploadError)throw uploadError;
+    const storageValue='storage:player-card-photos:'+path;
+    const {data:updated,error:updateError}=await supabase.from('profiles').update({avatar_url:storageValue}).eq('id',playerId).eq('role','player').select().single();
+    if(updateError){await supabase.storage.from('player-card-photos').remove([path]);throw updateError;}
+    const {data:signed,error:signedError}=await supabase.storage.from('player-card-photos').createSignedUrl(path,604800);
+    const visibleProfile={...updated,avatar_url:signedError?null:signed?.signedUrl||null,avatar_storage_path:path};
+    state.players=state.players.map(row=>row.id===playerId?visibleProfile:row);
+    toast(signedError?'Photo enregistrée. Elle sera visible après actualisation.':'Portrait du joueur enregistré sur sa carte.');
+    playerSheetDialog(playerId);
+  }catch(error){
+    console.error('Coach In · portrait joueur',error);
+    toast(error.message||'Impossible d’enregistrer le portrait.','error');
+  }finally{
+    photoInput.disabled=false;
+    photoInput.value='';
+  }
+});
 $('#dialog-content').addEventListener('change',event=>{
   if(event.target.matches('input[name=criterion]')){
     const row=event.target.closest('.criterion-measure-row');
@@ -311,9 +344,7 @@ $('#page-content').addEventListener('submit',async event=>{
     event.preventDefault();
     const formData=new FormData(profileDetailsForm);
     const payload={player_id:state.user.id,objective:String(formData.get('objective')||'').trim(),motivation:String(formData.get('motivation')||'').trim(),strengths:String(formData.get('strengths')||'').trim(),focus:String(formData.get('focus')||'').trim(),updated_at:new Date().toISOString()};
-    const avatarValue=String(formData.get('player_avatar')||'emoji:🎾');
-    if(!PLAYER_AVATAR_PRESETS.some(row=>row[0]===avatarValue))throw new Error('Choisis un avatar proposé.');
-    try{const {data:profile,error:profileError}=await supabase.from('profiles').update({avatar_url:avatarValue}).eq('id',state.user.id).select().single();if(profileError)throw profileError;const {data,error}=await supabase.from('player_profile_details').upsert(payload,{onConflict:'player_id'}).select().single();if(error)throw error;state.profile=profile;state.players=[profile];state.playerProfileDetails=data;render('passport');toast('Ton avatar et ton passeport joueur sont à jour.');}
+    try{const {data,error}=await supabase.from('player_profile_details').upsert(payload,{onConflict:'player_id'}).select().single();if(error)throw error;state.playerProfileDetails=data;render('passport');toast('Ton passeport joueur est à jour.');}
     catch(error){toast(error.message||'Impossible d’enregistrer ton profil.','error');}
     return;
   }
@@ -989,7 +1020,7 @@ function renderPlayerSheetDialog(playerId){
   const playerCardTier=playerCardScore>=85?{id:'platinum',name:'Platine',next:null,min:85,max:100,mark:'IV'}:playerCardScore>=70?{id:'gold',name:'Or',next:'Platine',min:70,max:85,mark:'III'}:playerCardScore>=55?{id:'silver',name:'Argent',next:'Or',min:55,max:70,mark:'II'}:{id:'bronze',name:'Bronze',next:'Argent',min:0,max:55,mark:'I'};
   const tierProgress=playerCardTier.next?Math.max(0,Math.min(100,(playerCardScore-playerCardTier.min)/(playerCardTier.max-playerCardTier.min)*100)):100;
   const playerCardStats=scoreStats.map(item=>'<div class="game-stat"><div><span>'+item.label+'</span><strong>'+(item.latest===null?'—':Math.round(item.latest*5))+'</strong></div><i><b style="width:'+(item.latest===null?0:item.latest/20*100)+'%"></b></i></div>').join('');
-  const progressionCardMarkup='<section class="player-game-card tier-'+playerCardTier.id+'"><div class="game-card-top"><span>COACH IN <b>ULTIMATE PLAYER</b></span><span>PLAYER CARD · '+playerCardTier.mark+'</span></div><div class="game-card-main"><div class="game-card-identity">'+playerGameAvatarMarkup(player)+'<div><small>CARTE JOUEUR · '+escapeHtml(player.age_category||'TENNIS')+'</small><h2>'+escapeHtml(player.first_name)+' '+escapeHtml(player.last_name)+'</h2><span>'+escapeHtml(player.fft_ranking||'Classement à renseigner')+' · '+escapeHtml(player.player_type||'Loisir')+'</span></div></div><div class="game-card-rating"><strong>'+(bestPerformanceScore===null?'—':playerCardScore)+'</strong><span>OVR</span><small>'+(bestPerformanceScore===null?'À ÉVALUER':bestPerformanceScore.toFixed(1).replace('.',',')+'/20')+'</small></div></div><div class="game-card-tier"><span class="game-tier-emblem">'+playerCardTier.mark+'</span><div><small>NIVEAU DE CARTE</small><strong>'+playerCardTier.name.toUpperCase()+'</strong></div><span class="game-tier-tag">'+(playerCardTier.next?'EN PROGRESSION':'RANG MAXIMAL')+'</span></div><div class="game-card-stats">'+playerCardStats+'</div><div class="game-card-progress"><div><span>'+(playerCardTier.next?'PROGRESSION VERS '+playerCardTier.next.toUpperCase():'NIVEAU PLATINE ATTEINT')+'</span><b>'+(playerCardTier.next?(playerCardScore-playerCardTier.min)+' / '+(playerCardTier.max-playerCardTier.min)+' pts':'MAX')+'</b></div><i><b style="width:'+tierProgress+'%"></b></i></div><div class="game-card-bottom"><span>'+sessions.length+' SÉANCES</span><span>'+achievements.length+' BADGES</span><span>MEILLEUR SCORE VALIDÉ</span></div></section>';
+  const progressionCardMarkup='<section class="player-game-card tier-'+playerCardTier.id+'"><div class="game-card-top"><span>COACH IN <b>PLAYER CARD</b></span><span>PLAYER CARD · '+playerCardTier.mark+'</span></div><label class="game-card-photo-upload"><span>📷 Ajouter / remplacer le portrait</span><input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" data-player-card-photo="'+escapeHtml(player.id)+'"><small>Portrait vertical, buste visible, bras croisés, regard sérieux. Vérifier l’autorisation du joueur ou de son représentant légal pour un mineur.</small></label><div class="game-card-main"><div class="game-card-identity">'+playerGameAvatarMarkup(player)+'<div><small>CARTE JOUEUR · '+escapeHtml(player.age_category||'TENNIS')+'</small><h2>'+escapeHtml(player.first_name)+' '+escapeHtml(player.last_name)+'</h2><span>'+escapeHtml(player.fft_ranking||'Classement à renseigner')+' · '+escapeHtml(player.player_type||'Loisir')+'</span></div></div><div class="game-card-rating"><strong>'+(bestPerformanceScore===null?'—':playerCardScore)+'</strong><span>OVR</span><small>'+(bestPerformanceScore===null?'À ÉVALUER':bestPerformanceScore.toFixed(1).replace('.',',')+'/20')+'</small></div></div><div class="game-card-tier"><span class="game-tier-emblem">'+playerCardTier.mark+'</span><div><small>NIVEAU DE CARTE</small><strong>'+playerCardTier.name.toUpperCase()+'</strong></div><span class="game-tier-tag">'+(playerCardTier.next?'EN PROGRESSION':'RANG MAXIMAL')+'</span></div><div class="game-card-stats">'+playerCardStats+'</div><div class="game-card-progress"><div><span>'+(playerCardTier.next?'PROGRESSION VERS '+playerCardTier.next.toUpperCase():'NIVEAU PLATINE ATTEINT')+'</span><b>'+(playerCardTier.next?(playerCardScore-playerCardTier.min)+' / '+(playerCardTier.max-playerCardTier.min)+' pts':'MAX')+'</b></div><i><b style="width:'+tierProgress+'%"></b></i></div><div class="game-card-bottom"><span>'+sessions.length+' SÉANCES</span><span>'+achievements.length+' BADGES</span><span>MEILLEUR SCORE VALIDÉ</span></div></section>';
   showDialog(progressionCardMarkup+'<p class="game-card-loading">Chargement du dossier joueur…</p>');
 
   const reportDayById=new Map(reports.map(report=>[report.id,String(report.evaluated_at||report.created_at||'').slice(0,10)]));
