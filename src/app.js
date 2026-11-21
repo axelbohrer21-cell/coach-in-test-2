@@ -217,6 +217,8 @@ $('#dialog-content').addEventListener('click',async event=>{
   const personalizedSession=event.target.closest('[data-personalized-session]');
   if(personalizedSession){const programStep=personalizedSession.dataset.programObjective?{objective:personalizedSession.dataset.programObjective,title:personalizedSession.dataset.programTitle,stage:personalizedSession.dataset.programStage,exerciseId:personalizedSession.dataset.programExercise||null}:null;sessionBuilderDialog(personalizedSession.dataset.personalizedSession,personalizedSession.dataset.sessionDate,personalizedSession.dataset.sessionTime,Number(personalizedSession.dataset.sessionDuration)||90,programStep);return;}
   if(event.target.closest('[data-use-generated-session]')){if(!generatedSessionPlan)return;const plan=generatedSessionPlan;closeDialog();sessionDialog(plan.session_date,plan.session_time,plan);return;}
+  const cancelSession=event.target.closest('[data-cancel-session]');
+  if(cancelSession){event.preventDefault();const button=cancelSession;button.disabled=true;await cancelPrivateSession(button.dataset.cancelSession);return;}
   const confirmCriteria=event.target.closest('[data-confirm-criteria]');
   if(confirmCriteria){
     const form=$('#evaluation-form');
