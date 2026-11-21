@@ -244,7 +244,7 @@ $('#dialog-content').addEventListener('click',async event=>{
   if(confirmVideoDelete){confirmVideoDelete.disabled=true;await deleteVideoAnalysis(confirmVideoDelete.dataset.confirmDeleteVideo);return;}
   if(event.target.closest('[data-close]'))closeDialog();
 });
-$('#dialog-content').addEventListener('change',async event=>{
+document.addEventListener('change',async event=>{
   const photoInput=event.target.closest('[data-player-card-photo]');
   if(!photoInput)return;
   const file=photoInput.files?.[0];
