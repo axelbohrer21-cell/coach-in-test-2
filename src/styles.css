@@ -2578,3 +2578,249 @@ body.camera-fullscreen-open{overflow:hidden}
   #session-builder-preview .session-builder-actions,
   #session-builder-preview .session-builder-actions .btn{width:100%}
 }
+
+
+/* ===== Coach In · critères du bilan : centrage, espace et lisibilité ===== */
+.dialog:has(#evaluation-form){
+  width:min(1120px,calc(100% - 36px));
+  max-width:1120px;
+  max-height:min(92vh,1000px);
+  padding:clamp(18px,2.4vw,30px);
+  overflow-y:auto;
+}
+.dialog:has(#evaluation-form) .evaluation-dialog-head{
+  max-width:100%;
+  margin-inline:auto;
+}
+#evaluation-form.evaluation-redesign{
+  width:100%;
+  max-width:100%;
+  margin:0 auto;
+  box-sizing:border-box;
+}
+#evaluation-form .evaluation-criteria-section{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  padding:clamp(16px,2vw,24px);
+}
+#evaluation-form .evaluation-block-heading{
+  width:100%;
+  align-items:center;
+  gap:14px;
+  margin-bottom:18px;
+}
+#evaluation-form .evaluation-block-heading>div{
+  min-width:0;
+  flex:1 1 auto;
+}
+#evaluation-form .evaluation-block-heading .form-section-title{
+  font-size:clamp(16px,1.5vw,19px);
+  line-height:1.3;
+}
+#evaluation-form .evaluation-block-heading small{
+  display:block;
+  margin-top:4px;
+  font-size:12px;
+  line-height:1.5;
+}
+#evaluation-form .selection-total{
+  flex:0 0 auto;
+  padding:8px 12px;
+  border:1px solid rgba(66,199,245,.3);
+  border-radius:999px;
+  background:rgba(66,199,245,.12);
+  color:#a9eaff;
+  font-size:12px;
+  font-weight:850;
+  white-space:nowrap;
+}
+#evaluation-form .criterion-theme{
+  width:100%;
+  margin:12px 0;
+  overflow:visible;
+  border:1px solid rgba(113,160,201,.28);
+  border-radius:15px;
+  background:linear-gradient(145deg,rgba(18,43,68,.94),rgba(9,25,43,.96));
+}
+#evaluation-form .criterion-theme>summary{
+  display:flex;
+  min-height:58px;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:13px 17px;
+  font-size:15px;
+  line-height:1.4;
+}
+#evaluation-form .theme-summary-main{min-width:0}
+#evaluation-form .theme-summary-main>span:last-child{
+  overflow-wrap:anywhere;
+}
+#evaluation-form .theme-summary-dot{
+  width:32px;
+  height:32px;
+  flex:0 0 32px;
+  font-size:15px;
+}
+#evaluation-form .theme-summary-meta{
+  flex:0 0 auto;
+  gap:12px;
+}
+#evaluation-form .theme-summary-meta small{
+  font-size:11px;
+  font-weight:750;
+}
+#evaluation-form .criterion-theme-content{
+  padding:10px 14px 15px;
+}
+#evaluation-form .criterion-subtheme-card{
+  margin:10px 0;
+  border-color:rgba(113,160,201,.24);
+  border-radius:13px;
+  background:rgba(5,19,34,.78);
+}
+#evaluation-form .criterion-subtheme-card>summary{
+  min-height:48px;
+  padding:12px 15px;
+  font-size:14px;
+  line-height:1.4;
+}
+#evaluation-form .subtheme-summary-meta small{font-size:11px}
+#evaluation-form .criterion-subtheme-body{
+  padding:13px;
+}
+#evaluation-form .criterion-columns{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;
+  gap:16px;
+  width:100%;
+}
+#evaluation-form .criterion-column-positive,
+#evaluation-form .criterion-column-improvement{
+  min-width:0;
+  padding:15px;
+  border:1px solid rgba(113,160,201,.17);
+  border-radius:13px;
+  background:rgba(3,15,28,.62);
+}
+#evaluation-form .criterion-column-positive{border-top:3px solid #45d69a}
+#evaluation-form .criterion-column-improvement{border-top:3px solid #f0a45e}
+#evaluation-form .criterion-positive-title,
+#evaluation-form .criterion-improvement-title{
+  min-height:30px;
+  align-items:center;
+  margin:0 0 12px;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.1px;
+}
+#evaluation-form .criterion-positive-title{color:#83edbd}
+#evaluation-form .criterion-improvement-title{color:#ffc18a}
+#evaluation-form .criterion-option{
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  width:100%;
+  min-height:50px;
+  box-sizing:border-box;
+  margin:7px 0;
+  padding:13px 14px;
+  border:1px solid rgba(126,160,197,.22);
+  border-radius:11px;
+  background:rgba(22,44,66,.82);
+  color:#edf5ff;
+  font-size:14px;
+  font-weight:650;
+  line-height:1.5;
+  text-align:left;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+}
+#evaluation-form .criterion-option input{
+  width:19px;
+  height:19px;
+  flex:0 0 19px;
+  margin:1px 0 0;
+  accent-color:#45d69a;
+}
+#evaluation-form .criterion-option.improvement input{accent-color:#f0a45e}
+#evaluation-form .criterion-option span{
+  display:block;
+  min-width:0;
+  flex:1 1 auto;
+  text-align:left;
+  overflow-wrap:anywhere;
+}
+#evaluation-form .criterion-option.positive:has(input:checked){
+  border-color:rgba(69,214,154,.72);
+  background:rgba(25,116,82,.25);
+  box-shadow:inset 0 0 0 1px rgba(69,214,154,.15);
+}
+#evaluation-form .criterion-option.improvement:has(input:checked){
+  border-color:rgba(240,164,94,.72);
+  background:rgba(127,76,39,.25);
+  box-shadow:inset 0 0 0 1px rgba(240,164,94,.15);
+}
+#evaluation-form .criterion-measure-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 100px;
+  align-items:center;
+  gap:9px;
+}
+#evaluation-form .criterion-measure{
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  box-sizing:border-box;
+  font-size:13px;
+}
+#evaluation-form .criteria-validation{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-top:18px;
+  padding:16px 18px;
+}
+#evaluation-form .criteria-validation>div{
+  display:grid;
+  gap:5px;
+  min-width:0;
+}
+#evaluation-form .criteria-validation strong{font-size:14px}
+#evaluation-form .criteria-validation small{font-size:12px;line-height:1.5}
+#evaluation-form .criteria-validation .btn{
+  flex:0 0 auto;
+  min-height:44px;
+  padding:11px 16px;
+  font-size:13px;
+}
+#evaluation-form .criterion-option:focus-within,
+#evaluation-form .criterion-subtheme-card>summary:focus-visible,
+#evaluation-form .criterion-theme>summary:focus-visible{
+  outline:2px solid rgba(66,199,245,.8);
+  outline-offset:3px;
+}
+@media(max-width:760px){
+  .dialog:has(#evaluation-form){
+    width:calc(100% - 16px);
+    max-height:94vh;
+    padding:14px;
+  }
+  #evaluation-form .criterion-columns{grid-template-columns:1fr;gap:12px}
+  #evaluation-form .criterion-column-positive,
+  #evaluation-form .criterion-column-improvement{padding:12px}
+  #evaluation-form .criterion-option{min-height:48px;font-size:14px}
+  #evaluation-form .criteria-validation{align-items:stretch;flex-direction:column}
+  #evaluation-form .criteria-validation .btn{width:100%}
+}
+@media(max-width:420px){
+  #evaluation-form .evaluation-block-heading{align-items:flex-start;flex-wrap:wrap}
+  #evaluation-form .selection-total{margin-left:46px}
+  #evaluation-form .criterion-measure-row{grid-template-columns:minmax(0,1fr) 82px;gap:6px}
+  #evaluation-form .criterion-theme>summary{padding:11px 12px}
+  #evaluation-form .theme-summary-meta{gap:6px}
+  #evaluation-form .theme-summary-meta small{font-size:10px}
+}
