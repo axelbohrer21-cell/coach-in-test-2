@@ -27,6 +27,21 @@ async function hydrateVideoAnalyses(rows) {
   return hydrateStorageUrls(rows, 'coach-in-videos', 'video_path', 'video_url');
 }
 
+async function hydratePlayerCardPhoto(profile) {
+  const prefix='storage:player-card-photos:';
+  const value=String(profile?.avatar_url||'');
+  if(!value.startsWith(prefix))return profile;
+  const path=value.slice(prefix.length);
+  try{
+    const {data,error}=await supabase.storage.from('player-card-photos').createSignedUrl(path,604800);
+    if(error||!data?.signedUrl)return {...profile,avatar_url:null};
+    return {...profile,avatar_url:data.signedUrl,avatar_storage_path:path};
+  }catch(error){
+    console.warn('Coach In: portrait joueur temporairement indisponible',error?.message||error);
+    return {...profile,avatar_url:null};
+  }
+}
+
 export const dataService = {
   async loadAdminWorkspace() {
     const { data, error } = await supabase.from('profiles').select('id,email,first_name,last_name,created_at,archived_at,is_admin').eq('role','coach').order('last_name');
@@ -104,7 +119,8 @@ export const dataService = {
       playerIds.length ? unwrap(supabase.from('player_profile_details').select('*').in('player_id',playerIds)) : Promise.resolve([])
     ]);
     const playerProfileDetailsById = Object.fromEntries(profileDetailsRows.map(row=>[row.player_id,row]));
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:loadedSessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
+    const hydratedPlayers=await Promise.all(players.map(hydratePlayerCardPhoto));
+    Object.assign(state, { players:hydratedPlayers, sessions, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:loadedSessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
   },
 
   async loadPlayerWorkspace() {
@@ -145,6 +161,7 @@ export const dataService = {
       unwrap(supabase.from('player_match_journal').select('*').order('match_date',{ascending:false})),
       unwrap(supabase.from('club_events').select('*').order('starts_at'))
     ]);
+    state.profile=await hydratePlayerCardPhoto(state.profile);
     Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, playerCoachHistory, weeklyAvailability, messages:hydratedMessages, videoAnalyses, playerProfileDetails, matchJournal, clubEvents });
   },
 
