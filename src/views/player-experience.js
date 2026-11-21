@@ -25,6 +25,27 @@ export function playerTennisPage() {
   const monthMinutes = monthSessions.reduce((sum,row)=>sum+Number(row.duration_minutes||0),0);
   const monthScores = monthReports.map(row=>Number(row.score)).filter(value=>Number.isFinite(value)&&value>=0&&value<=20);
   const avgScore = monthScores.length ? monthScores.reduce((a,b)=>a+b,0)/monthScores.length : null;
+
+  const playerScoreAxes=[['Technique','technical_score'],['Tactique','tactical_score'],['Physique','physical_score'],['Mental','mental_score']];
+  const orderedReports=[...reports].sort((a,b)=>String(b.evaluated_at||b.created_at||'').localeCompare(String(a.evaluated_at||a.created_at||'')));
+  const reportOverallScore=row=>{
+    const values=playerScoreAxes.map(([,key])=>row[key]===null||row[key]===undefined||row[key]===''?null:Number(row[key])).filter(value=>Number.isFinite(value)&&value>=0&&value<=20);
+    if(values.length)return values.reduce((sum,value)=>sum+value,0)/values.length;
+    const fallback=Number(row.score);
+    return Number.isFinite(fallback)&&fallback>=0&&fallback<=20?fallback:null;
+  };
+  const bestPlayerScore=orderedReports.map(reportOverallScore).filter(value=>value!==null).reduce((best,value)=>Math.max(best,value),-1);
+  const playerOvr=bestPlayerScore<0?null:Math.round(bestPlayerScore*5);
+  const playerTier=playerOvr===null||playerOvr<55?{id:'bronze',name:'Bronze',next:'Argent',min:0,max:55,mark:'I'}:playerOvr<70?{id:'silver',name:'Argent',next:'Or',min:55,max:70,mark:'II'}:playerOvr<85?{id:'gold',name:'Or',next:'Platine',min:70,max:85,mark:'III'}:{id:'platinum',name:'Platine',next:null,min:85,max:100,mark:'IV'};
+  const playerTierProgress=playerTier.next?Math.max(0,Math.min(100,((playerOvr||0)-playerTier.min)/(playerTier.max-playerTier.min)*100)):100;
+  const latestPlayerReport=orderedReports[0]||null;
+  const playerGameStats=playerScoreAxes.map(([label,key])=>{
+    const raw=latestPlayerReport?.[key],value=raw===null||raw===undefined||raw===''?null:Number(raw);
+    const valid=Number.isFinite(value)&&value>=0&&value<=20;
+    return '<div class="game-stat"><div><span>'+label+'</span><strong>'+(valid?Math.round(value*5):'—')+'</strong></div><i><b style="width:'+(valid?value/20*100:0)+'%"></b></i></div>';
+  }).join('');
+  const playerGameCard='<section class="player-game-card tier-'+playerTier.id+'"><div class="game-card-top"><span>COACH IN <b>ULTIMATE PLAYER</b></span><span>PLAYER CARD · '+playerTier.mark+'</span></div><div class="game-card-main"><div class="game-card-identity"><div class="passport-avatar game-card-avatar">'+safe(initials(profile))+'</div><div><small>MA CARTE JOUEUR · '+safe(profile.age_category||'TENNIS')+'</small><h2>'+safe(profile.first_name)+' '+safe(profile.last_name)+'</h2><span>'+safe(profile.fft_ranking||'Classement à renseigner')+' · '+safe(profile.player_type||'Joueur')+'</span></div></div><div class="game-card-rating"><strong>'+(playerOvr===null?'—':playerOvr)+'</strong><span>OVR</span><small>'+(bestPlayerScore<0?'À ÉVALUER':bestPlayerScore.toFixed(1).replace('.',',')+'/20')+'</small></div></div><div class="game-card-tier"><span class="game-tier-emblem">'+playerTier.mark+'</span><div><small>MON NIVEAU</small><strong>'+playerTier.name.toUpperCase()+'</strong></div><span class="game-tier-tag">'+(playerTier.next?'PROGRESSION':'RANG MAXIMAL')+'</span></div><div class="game-card-stats">'+playerGameStats+'</div><div class="game-card-progress"><div><span>'+(playerTier.next?'PROGRESSION VERS '+playerTier.next.toUpperCase():'NIVEAU PLATINE ATTEINT')+'</span><b>'+(playerTier.next?(playerOvr||0)-playerTier.min+' / '+(playerTier.max-playerTier.min)+' pts':'MAX')+'</b></div><i><b style="width:'+playerTierProgress+'%"></b></i></div><div class="game-card-bottom"><span>'+sessions.length+' SÉANCES</span><span>'+achievements.length+' BADGES</span><span>MEILLEUR SCORE VALIDÉ</span></div></section>';
+
   const latestChallenge = (state.challenges||[]).find(row=>row.status==='active');
   const wins = matches.filter(row=>row.result==='Victoire').length;
   const selectedAvatar=String(profile.avatar_url||'').startsWith('style:')?profile.avatar_url:'style:navy';
@@ -36,6 +57,7 @@ export function playerTennisPage() {
       <div class="passport-identity"><p class="eyebrow">PASSEPORT TENNIS · COACH IN</p><h2>${safe(profile.first_name)} ${safe(profile.last_name)}</h2><p>${safe(profile.player_type||'Profil joueur')} · ${safe(profile.age_category||'Catégorie non renseignée')}</p><div class="passport-tags"><span>Classement FFT : <b>${safe(profile.fft_ranking||'Non renseigné')}</b></span><span>Depuis le ${formatDate(profile.created_at,{month:'long',year:'numeric'})}</span></div></div>
       <span class="passport-stamp">CI<span>+</span></span>
     </section>
+    ${playerGameCard}
     <div class="stats-grid passport-stats">
       <article class="stat-card blue"><span>Séances réalisées</span><strong>${sessions.length}</strong><small>${Math.round(sessions.reduce((sum,row)=>sum+Number(row.duration_minutes||0),0)/60)} h sur le terrain</small></article>
       <article class="stat-card purple"><span>Bilans partagés</span><strong>${reports.length}</strong><small>Évaluations accessibles</small></article>
