@@ -221,72 +221,37 @@ function intelligencePage() {
 }
 function playersPage() {
   const q = (state.filters.search || '').toLowerCase();
-
-  const filtered = state.players.filter(p =>
+  const players = state.players || [];
+  const filtered = players.filter(p =>
     `${p.first_name} ${p.last_name} ${p.email}`.toLowerCase().includes(q) &&
     (state.filters.playerType === 'all' ||
     (p.player_type || 'Loisir') === state.filters.playerType)
   );
-
-
-  return `<section class="panel">
-    <div class="toolbar">
-      <input id="player-search" class="search-input"
-        placeholder="Rechercher un joueur…"
-        value="${escapeHtml(state.filters.search)}">
-
-      <select id="player-type-filter" class="select-input">
-        <option value="all">Tous les profils</option>
-        <option value="Loisir">Loisir</option>
-        <option value="Compétition">Compétition</option>
-      </select>
+  const competitionCount = players.filter(p => p.player_type === 'Compétition').length;
+  const leisureCount = players.length - competitionCount;
+  const initials = p => escapeHtml((p.first_name || '?').slice(0,1)) + escapeHtml((p.last_name || '').slice(0,1));
+  const cards = filtered.map(p => {
+    const color = p.player_color || playerAccent(p.id);
+    const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+    const sessions = (state.sessions || []).filter(row => row.player_id === p.id);
+    const latestSession = sessions.map(row => row.session_date).filter(Boolean).sort().pop();
+    return `<article class="player-card player-roster-card" data-player-search="${escapeHtml(`${p.first_name || ''} ${p.last_name || ''} ${p.email || ''}`.toLocaleLowerCase('fr'))}" data-player-type="${escapeHtml(p.player_type || 'Loisir')}" style="--player-accent:${color}">
+      <div class="player-roster-top"><div class="player-avatar">${initials(p)}</div><span class="player-profile-type ${p.player_type === 'Compétition' ? 'is-competition' : 'is-leisure'}">${escapeHtml(p.player_type || 'Loisir')}</span></div>
+      <div class="player-card-info"><h3>${escapeHtml(name || 'Joueur')}</h3><p class="player-roster-ranking">${escapeHtml(p.fft_ranking || 'Classement à renseigner')}</p><div class="player-roster-meta"><span>◈ ${escapeHtml(p.age_category || 'Catégorie à renseigner')}</span><span>✉ ${escapeHtml(p.email || 'E-mail non renseigné')}</span></div></div>
+      <div class="player-roster-stats"><div><strong>${sessions.length}</strong><small>Séance(s)</small></div><div><strong>${latestSession ? escapeHtml(formatDate(latestSession,{day:'2-digit',month:'short'})) : '—'}</strong><small>Dernière séance</small></div></div>
+      <div class="player-roster-actions"><button class="btn primary" data-player-sheet="${p.id}">Ouvrir la fiche <span>↗</span></button><button class="btn icon-btn" data-edit-player="${p.id}" aria-label="Modifier le joueur">⋯</button><button class="btn subtle" data-share-player="${p.id}">Partager</button></div>
+    </article>`;
+  }).join('');
+  return `<section class="player-roster-page">
+    <div class="player-roster-overview"><div><p class="eyebrow">TON EFFECTIF</p><h2>Chaque joueur, un parcours unique.</h2><p>Retrouve rapidement les profils, les séances et les suivis individuels de ton effectif.</p></div>
+      <div class="player-roster-kpis"><div><strong>${players.length}</strong><span>Joueurs</span></div><div><strong>${competitionCount}</strong><span>Compétition</span></div><div><strong>${leisureCount}</strong><span>Loisir</span></div></div>
     </div>
-
-    <div class="player-grid">
-      ${filtered.map(p => {
-        const color = p.player_color || playerAccent(p.id);
-        const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
-
-        return `<article class="player-card"
-          data-player-search="${escapeHtml(`${p.first_name || ''} ${p.last_name || ''} ${p.email || ''}`.toLocaleLowerCase('fr'))}"
-          data-player-type="${escapeHtml(p.player_type || 'Loisir')}"
-          style="--player-accent:${color}">
-
-          <div class="player-avatar">
-            ${escapeHtml((p.first_name || '?').slice(0,1))}
-            ${escapeHtml((p.last_name || '').slice(0,1))}
-          </div>
-
-          <div class="player-card-info">
-            <h3>${escapeHtml(name || 'Joueur')}</h3>
-            <p>${escapeHtml(p.fft_ranking || 'Classement à renseigner')}
-            · ${escapeHtml(p.age_category || 'Catégorie à renseigner')}</p>
-
-            <p>${escapeHtml(p.birth_date ? formatDate(p.birth_date) : 'Date de naissance à renseigner')}
-            · ${escapeHtml(p.email || 'E-mail non renseigné')}</p>
-
-            <span class="tag ${p.player_type === 'Compétition' ? 'tag-purple' : 'tag-blue'}">
-              ${escapeHtml(p.player_type || 'Loisir')}
-            </span>
-          </div>
-<button class="btn primary"
-  data-player-sheet="${p.id}">
-  Voir la fiche
-</button>
-          <button class="btn icon-btn"
-            data-edit-player="${p.id}">⋯</button>
-
-          <button class="btn subtle"
-            data-share-player="${p.id}">Partager</button>
-
-        </article>`;
-      }).join('') ||
-      emptyState('Aucun joueur trouvé',
-      'Modifie ta recherche ou associe un compte joueur.')}
-    </div>
+    <section class="panel player-roster-panel"><div class="player-roster-toolbar"><label class="player-search-wrap"><span>⌕</span><input id="player-search" class="search-input" placeholder="Rechercher un joueur, un e-mail…" value="${escapeHtml(state.filters.search)}"></label>
+      <select id="player-type-filter" class="select-input"><option value="all" ${state.filters.playerType === 'all' ? 'selected' : ''}>Tous les profils</option><option value="Loisir" ${state.filters.playerType === 'Loisir' ? 'selected' : ''}>Loisir</option><option value="Compétition" ${state.filters.playerType === 'Compétition' ? 'selected' : ''}>Compétition</option></select>
+      <span class="player-result-count">${filtered.length} / ${players.length} joueurs</span>
+    </div><div class="player-grid player-roster-grid">${cards || emptyState('Aucun joueur trouvé','Modifie ta recherche ou associe un compte joueur.')}</div></section>
   </section>`;
 }
-
 
 function planningPage() {
   const clock = value => formatTime(value).replace(':','h');
