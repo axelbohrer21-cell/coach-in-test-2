@@ -230,16 +230,25 @@ function playersPage() {
   const competitionCount = players.filter(p => p.player_type === 'Compétition').length;
   const leisureCount = players.length - competitionCount;
   const initials = p => escapeHtml((p.first_name || '?').slice(0,1)) + escapeHtml((p.last_name || '').slice(0,1));
+  const colorForAxis = key => ({technical_score:'#54c8ec',tactical_score:'#aa91f4',physical_score:'#66d9a5',mental_score:'#f4ae70'}[key]||'#54c8ec');
   const cards = filtered.map(p => {
     const color = p.player_color || playerAccent(p.id);
     const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
     const sessions = (state.sessions || []).filter(row => row.player_id === p.id);
     const latestSession = sessions.map(row => row.session_date).filter(Boolean).sort().pop();
     const photoMarkup=String(p.avatar_url||'').startsWith('https://')?'<img src="'+escapeHtml(p.avatar_url)+'" alt="Portrait de '+escapeHtml(name)+'">':initials(p);
-    return `<article class="player-card player-roster-card" data-player-search="${escapeHtml(`${p.first_name || ''} ${p.last_name || ''} ${p.email || ''}`.toLocaleLowerCase('fr'))}" data-player-type="${escapeHtml(p.player_type || 'Loisir')}" style="--player-accent:${color}">
-      <div class="player-roster-top"><div class="player-avatar player-roster-photo">${photoMarkup}</div><span class="player-profile-type ${p.player_type === 'Compétition' ? 'is-competition' : 'is-leisure'}">${escapeHtml(p.player_type || 'Loisir')}</span></div>
-      <div class="player-card-info"><h3>${escapeHtml(name || 'Joueur')}</h3><p class="player-roster-ranking">${escapeHtml(p.fft_ranking || 'Classement à renseigner')}</p><div class="player-roster-meta"><span>◈ ${escapeHtml(p.age_category || 'Catégorie à renseigner')}</span><span>✉ ${escapeHtml(p.email || 'E-mail non renseigné')}</span></div></div>
-      <div class="player-roster-stats"><div><strong>${sessions.length}</strong><small>Séance(s)</small></div><div><strong>${latestSession ? escapeHtml(formatDate(latestSession,{day:'2-digit',month:'short'})) : '—'}</strong><small>Dernière séance</small></div></div>
+    const playerReports=(state.evaluations||[]).filter(row=>row.player_id===p.id).sort((a,b)=>String(b.evaluated_at||b.created_at||'').localeCompare(String(a.evaluated_at||a.created_at||'')));
+    const latestReport=playerReports[0]||null;
+    const cardAxes=[['TECH','technical_score','#54c8ec'],['TACT','tactical_score','#aa91f4'],['PHYS','physical_score','#66d9a5'],['MENT','mental_score','#f4ae70']];
+    const cardValues=cardAxes.map(([label,key,color])=>({label,color,value:latestReport?.[key]===null||latestReport?.[key]===undefined||latestReport?.[key]===''?null:Number(latestReport[key])})).filter(item=>item.value!==null&&Number.isFinite(item.value)&&item.value>=0&&item.value<=20);
+    const cardAverage=cardValues.length?cardValues.reduce((sum,item)=>sum+item.value,0)/cardValues.length:null;
+    const cardOverall=cardAverage===null?null:Math.round(cardAverage*5);
+    const cardTier=cardOverall===null?'À ÉVALUER':cardOverall>=85?'PLATINE':cardOverall>=70?'OR':cardOverall>=55?'ARGENT':'BRONZE';
+    const statMarkup=cardAxes.map(([label,key])=>{const raw=latestReport?.[key],value=raw===null||raw===undefined||raw===''?null:Number(raw),valid=Number.isFinite(value)&&value>=0&&value<=20;return '<div class="roster-fut-stat"><span>'+label+'</span><b>'+(valid?Math.round(value*5):'—')+'</b><i><em style="width:'+(valid?value/20*100:0)+'%;background:'+colorForAxis(key)+'"></em></i></div>';}).join('');
+    return `<article class="player-card player-roster-card roster-fut-card tier-${cardOverall===null?'unrated':cardOverall>=85?'platinum':cardOverall>=70?'gold':cardOverall>=55?'silver':'bronze'}" data-player-search="${escapeHtml(`${p.first_name || ''} ${p.last_name || ''} ${p.email || ''}`.toLocaleLowerCase('fr'))}" data-player-type="${escapeHtml(p.player_type || 'Loisir')}" style="--player-accent:${color}">
+      <div class="roster-fut-top"><div class="player-avatar player-roster-photo">${photoMarkup}</div><div class="roster-fut-identity"><span class="roster-fut-tier">${cardTier}</span><h3>${escapeHtml(name || 'Joueur')}</h3><p>${escapeHtml(p.fft_ranking || 'Classement à renseigner')} · ${escapeHtml(p.age_category || 'Catégorie à renseigner')}</p></div><div class="roster-fut-ovr"><strong>${cardOverall===null?'—':cardOverall}</strong><small>OVR</small></div></div>
+      <div class="roster-fut-stats">${statMarkup}</div>
+      <div class="roster-fut-meta"><span>${escapeHtml(p.player_type || 'Loisir')}</span><span>${sessions.length} séances</span><span>Dernière : ${latestSession ? escapeHtml(formatDate(latestSession,{day:'2-digit',month:'short'})) : '—'}</span></div>
       <div class="player-roster-actions"><label class="btn subtle player-photo-quick-upload">📷 Photo<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" data-player-card-photo="${p.id}" aria-label="Photographier ou choisir le portrait de ${escapeHtml(name)}"></label><button class="btn primary" data-player-sheet="${p.id}">Ouvrir la fiche <span>↗</span></button><button class="btn icon-btn" data-edit-player="${p.id}" aria-label="Modifier le joueur">⋯</button><button class="btn subtle" data-share-player="${p.id}">Partager</button></div>
     </article>`;
   }).join('');
