@@ -4043,3 +4043,18 @@ body.camera-fullscreen-open{overflow:hidden}
 .message-expanded-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .message-expanded-header h3{margin:0;font-size:18px}
 @media(max-width:560px){.message-conversation-band{grid-template-columns:36px minmax(0,1fr) auto 12px;gap:8px;padding:10px}.message-conversation-avatar{width:34px;height:34px}.message-conversation-meta{font-size:9px}.message-conversation-copy strong{font-size:13px}.message-conversation-copy>span{max-width:46vw}.message-expanded-header{align-items:flex-start}}
+
+
+/* Player-coloured chat and compact attachment control */
+.message-conversation-band{border-left:4px solid var(--player-message-color,#2b7894)}
+.message-conversation-band.is-active{border-color:var(--player-message-color,#2b7894);box-shadow:inset 3px 0 0 var(--player-message-color,#2b7894),0 0 0 1px color-mix(in srgb,var(--player-message-color,#2b7894) 25%,transparent)}
+.message-conversation-avatar{background:var(--player-message-color,#2b7894);color:#fff}
+.message-expanded-conversation .message-expanded-header{border-left:4px solid var(--player-message-color,#2b7894);padding-left:12px}
+.message-expanded-conversation .message-thread{border-color:color-mix(in srgb,var(--player-message-color,#2b7894) 40%,var(--line))}
+.message-expanded-conversation .message-own{background:color-mix(in srgb,var(--player-message-color,#2b7894) 35%,#10243a)}
+.message-expanded-conversation .message-other{border:1px solid color-mix(in srgb,var(--player-message-color,#2b7894) 35%,transparent)}
+.message-compose-bottom{display:flex;align-items:center;gap:10px}
+.message-compose-bottom .btn{margin-left:auto}
+.message-plus-button{position:relative;width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border:1px solid var(--player-message-color,#2b7894);border-radius:50%;background:color-mix(in srgb,var(--player-message-color,#2b7894) 18%,#09182c);color:var(--text);font-size:25px;line-height:1;cursor:pointer}
+.message-plus-button input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+@media(max-width:560px){.message-compose-bottom{gap:8px}.message-compose-bottom .tiny{font-size:10px}}
