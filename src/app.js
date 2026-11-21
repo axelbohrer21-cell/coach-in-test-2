@@ -861,6 +861,32 @@ function evaluationDialog(){
   updateEvaluationSelectionUI();
 }
 
+function initializePlayerProfileTabs(){
+  const dialog=$('#dialog-content');
+  if(!dialog?.querySelector('.player-profile-head'))return;
+  const sections=[...dialog.querySelectorAll('.sheet-section')];
+  const groups=[
+    {id:'profile',label:'Profil',match:['IDENTITÉ SPORTIVE','PROJET DU JOUEUR','COLLABORATION MULTI-COACHS']},
+    {id:'performance',label:'Performance',match:['BILAN DE PERFORMANCE','POINTS D’APPUI','AXES DE PROGRESSION','OBJECTIF PERSONNALISÉ']},
+    {id:'objectives',label:'Objectifs',match:['COACH IN INTELLIGENCE','PROGRAMME','CYCLE ADAPTATIF']},
+    {id:'success',label:'Réussites',match:['BADGES DE PROGRESSION','VUE D’ENSEMBLE']},
+    {id:'history',label:'Historique',match:['CHRONOLOGIE COMPLÈTE','JOURNAL SPORTIF','TRAVAIL SUR LE COURT','ESPACE CONFIDENTIEL']}
+  ];
+  sections.forEach(section=>{
+    const label=(section.querySelector('.eyebrow')?.textContent||'').trim().toLocaleUpperCase('fr');
+    const group=groups.find(item=>item.match.some(match=>label.includes(match)));
+    section.dataset.profileSection=group?.id||'objectives';
+  });
+  const nav='<nav class="player-profile-tabs" aria-label="Rubriques de la fiche joueur">'+groups.map((group,index)=>'<button type="button" class="player-profile-tab '+(index===0?'is-active':'')+'" data-profile-tab="'+group.id+'">'+group.label+'</button>').join('')+'</nav>';
+  dialog.querySelector('.profile-hero-stats')?.insertAdjacentHTML('afterend',nav);
+  const activate=id=>{
+    dialog.querySelectorAll('[data-profile-section]').forEach(section=>{section.hidden=section.dataset.profileSection!==id;});
+    dialog.querySelectorAll('[data-profile-tab]').forEach(button=>{const active=button.dataset.profileTab===id;button.classList.toggle('is-active',active);button.setAttribute('aria-selected',String(active));});
+  };
+  activate('profile');
+  dialog.querySelectorAll('[data-profile-tab]').forEach(button=>button.addEventListener('click',()=>activate(button.dataset.profileTab)));
+}
+
 function playerSheetDialog(playerId){
   const player=state.players.find(p=>p.id===playerId);if(!player)return;
   const coachId=state.user?.id;
@@ -1017,6 +1043,7 @@ function playerSheetDialog(playerId){
   '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">CHRONOLOGIE COMPLÈTE</p><h3>Parcours du joueur</h3></div><span class="tag">'+journeyEvents.length+' événement(s)</span></div><p class="tiny muted">Séances, bilans, réussites, défis et suivis vidéo réunis dans l’ordre chronologique.</p><div class="journey-timeline profile-journey-timeline">'+(journeyMarkup||'<p class="muted">Le parcours apparaîtra au fil des séances et des bilans.</p>')+'</div></section>'+  '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">JOURNAL SPORTIF</p><h3>Historique des bilans</h3></div><span class="tag">'+reports.length+'</span></div>'+(historyReports||'<p class="muted">Aucun bilan enregistré.</p>')+'</section>'+
   '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">TRAVAIL SUR LE COURT</p><h3>Historique des séances</h3></div><span class="tag">'+sessions.length+'</span></div>'+(historySessions||'<p class="muted">Aucune séance.</p>')+'</section>'+
   '<section class="sheet-section"><div class="section-heading"><div><p class="eyebrow">ESPACE CONFIDENTIEL</p><h3>Notes privées du coach</h3></div><span class="tag">Privé</span></div>'+(privateNotes||'<p class="muted">Aucune note privée enregistrée.</p>')+'</section>');
+  initializePlayerProfileTabs();
 }
 
 function challengeDialog(playerId, criterion, criterionId){
