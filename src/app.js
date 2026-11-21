@@ -1491,7 +1491,7 @@ async function refreshMessagesOnly(){
 
 function stopRealtimeChannels(){
   if(messageChannel){const channel=messageChannel;messageChannel=null;supabase.removeChannel(channel);}
-  if(notificationChannel){const channel=notificationChannel;notificationChannel=null;supabase.removeChannel(channel);}
+  if(notificationChannel){const channel=notificationChannel;notificationChannel=null;supabase.removeChannel(channel).catch(()=>{});}
   messageRetryCount=0;notificationRetryCount=0;
 }
 
@@ -1543,7 +1543,7 @@ function subscribeToNotifications(){
  const isCoach=state.profile.role==='coach';
  const table=isCoach?'coach_notifications':'player_notifications';
  const field=isCoach?'coach_id':'player_id';
- const channel=supabase.channel('coach-in-notifications-'+state.user.id)
+ const channel=supabase.channel('coach-in-notifications-'+state.user.id+'-'+Date.now())
   .on('postgres_changes',{event:'INSERT',schema:'public',table,filter:field+'=eq.'+state.user.id},()=>{
    refreshNotificationsOnly().catch(error=>toast(error.message||'Actualisation des notifications impossible.','error'));
   });
@@ -1552,9 +1552,10 @@ function subscribeToNotifications(){
   if(status==='SUBSCRIBED')notificationRetryCount=0;
   if(['CHANNEL_ERROR','TIMED_OUT'].includes(status)&&notificationChannel===channel){
    notificationChannel=null;
+   supabase.removeChannel(channel).catch(()=>{});
    if(notificationRetryCount<3){
     notificationRetryCount++;
-    window.setTimeout(()=>{if(state.user&&state.profile&&!notificationChannel)subscribeToNotifications();},1500*notificationRetryCount);
+    window.setTimeout(()=>{if(state.user&&state.profile&&!notificationChannel)subscribeToNotifications();},2000*notificationRetryCount);
    }
   }
  });
