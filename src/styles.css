@@ -3484,3 +3484,20 @@ body.camera-fullscreen-open{overflow:hidden}
   .mindmap-branches .mindmap-node:before{content:"";position:absolute;left:24px;top:-11px;height:10px;border-left:1px solid rgba(91,211,235,.4)}
   .mindmap-center:after{content:"";position:absolute;left:50%;bottom:-23px;height:22px;border-left:1px solid rgba(91,211,235,.45)}
 }
+
+/* Identité joueur — direction artistique sobre et professionnelle */
+.player-avatar-monogram{background:#203b58!important;color:#f4f7fb!important;border:1px solid rgba(255,255,255,.16)!important;box-shadow:none!important;font-family:Inter,system-ui,sans-serif;font-weight:800;letter-spacing:.04em}
+.avatar-navy{--avatar-bg:#203b58;--avatar-fg:#e8f0fa}.avatar-emerald{--avatar-bg:#205548;--avatar-fg:#e8f5ef}.avatar-slate{--avatar-bg:#536273;--avatar-fg:#f1f4f7}.avatar-burgundy{--avatar-bg:#713d4a;--avatar-fg:#faedf0}.avatar-teal{--avatar-bg:#24616a;--avatar-fg:#e7f5f5}.avatar-graphite{--avatar-bg:#343b45;--avatar-fg:#f0f2f4}.avatar-indigo{--avatar-bg:#454b79;--avatar-fg:#eff0ff}.avatar-bronze{--avatar-bg:#76583b;--avatar-fg:#fff3e4}
+.player-profile-avatar.avatar-navy,.player-profile-avatar.avatar-emerald,.player-profile-avatar.avatar-slate,.player-profile-avatar.avatar-burgundy,.player-profile-avatar.avatar-teal,.player-profile-avatar.avatar-graphite,.player-profile-avatar.avatar-indigo,.player-profile-avatar.avatar-bronze,.mindmap-avatar.avatar-navy,.mindmap-avatar.avatar-emerald,.mindmap-avatar.avatar-slate,.mindmap-avatar.avatar-burgundy,.mindmap-avatar.avatar-teal,.mindmap-avatar.avatar-graphite,.mindmap-avatar.avatar-indigo,.mindmap-avatar.avatar-bronze{background:var(--avatar-bg)!important;color:var(--avatar-fg)!important;border:1px solid rgba(255,255,255,.18)!important;box-shadow:none!important;border-radius:16px!important}
+.passport-avatar-current{background:#203b58!important;color:#f4f7fb!important;border:1px solid rgba(255,255,255,.2)!important;border-radius:16px!important;box-shadow:none!important;font-family:Inter,system-ui,sans-serif;font-weight:800}
+.passport-avatar-options{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.passport-avatar-choice span.avatar-swatch{min-height:76px;display:flex;flex-direction:column;justify-content:center;gap:5px;background:var(--avatar-bg);color:var(--avatar-fg);border:2px solid transparent;border-radius:12px}
+.passport-avatar-choice span.avatar-swatch b{font-size:19px;letter-spacing:1px}.passport-avatar-choice span.avatar-swatch small{font-size:9px;opacity:.82}
+.passport-avatar-choice input:checked+span.avatar-swatch{border-color:#56c6df;box-shadow:0 0 0 2px rgba(86,198,223,.18)}
+.player-mindmap-card{background:#14253a;border:1px solid rgba(140,165,190,.22);border-radius:16px;box-shadow:none}
+.mindmap-heading .eyebrow{color:#8db6c8}.mindmap-heading h3{font-weight:750;letter-spacing:-.35px}.mindmap-mark{border-radius:7px;letter-spacing:.5px}
+.mindmap-center{background:#1d344d;border:1px solid rgba(140,165,190,.25);border-radius:14px;box-shadow:none}.mindmap-center>span{color:#c1d2e0}
+.mindmap-avatar{background:#203b58;border:1px solid rgba(255,255,255,.18);border-radius:16px;font-size:25px}
+.mindmap-node:not(.mindmap-center){border-radius:10px;background:rgba(255,255,255,.035);border-color:rgba(147,180,220,.13)}
+.mindmap-node-icon{border-radius:8px;background:rgba(140,165,190,.1);color:#b5c7d8}
+@media(max-width:560px){.passport-avatar-options{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
