@@ -4024,3 +4024,22 @@ body.camera-fullscreen-open{overflow:hidden}
 .group-upcoming-main{display:grid;gap:4px;min-width:0}
 .group-upcoming-main strong{overflow-wrap:anywhere}
 @media(max-width:600px){.group-upcoming-item{grid-template-columns:58px minmax(0,1fr);gap:9px;padding:10px}.group-upcoming-item>.tag{grid-column:2;justify-self:start}.group-upcoming-date strong{font-size:12px}.group-upcoming-main strong{font-size:13px}}
+
+
+/* Coach messaging: compact player conversation bands */
+.coach-messaging-panel{display:grid;gap:16px}
+.message-conversation-list{display:grid;gap:8px}
+.message-conversation-band{width:100%;display:grid;grid-template-columns:42px minmax(0,1fr) auto 18px;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(110deg,rgba(20,43,68,.9),rgba(11,29,49,.9));color:var(--text);text-align:left;cursor:pointer;transition:border-color .18s,background .18s,transform .18s}
+.message-conversation-band:hover{border-color:rgba(67,212,242,.45);transform:translateY(-1px)}
+.message-conversation-band.is-active{border-color:var(--cyan);background:linear-gradient(110deg,rgba(22,67,88,.8),rgba(19,39,65,.95));box-shadow:inset 3px 0 0 var(--cyan)}
+.message-conversation-avatar{width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(145deg,#277b9c,#454b8e);font-weight:850;font-size:16px}
+.message-conversation-copy{min-width:0;display:grid;gap:4px}
+.message-conversation-copy strong{font-size:14px}
+.message-conversation-copy>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:12px}
+.message-conversation-meta{display:grid;justify-items:end;gap:4px;color:var(--muted);font-size:10px;white-space:nowrap}
+.message-unread-count{min-width:20px;height:20px;padding:0 6px;display:grid;place-items:center;border-radius:99px;background:var(--cyan);color:#062033;font-size:11px}
+.message-band-chevron{font-size:20px;color:var(--cyan)}
+.message-expanded-conversation{margin-top:4px;padding-top:16px;border-top:1px solid var(--line)}
+.message-expanded-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.message-expanded-header h3{margin:0;font-size:18px}
+@media(max-width:560px){.message-conversation-band{grid-template-columns:36px minmax(0,1fr) auto 12px;gap:8px;padding:10px}.message-conversation-avatar{width:34px;height:34px}.message-conversation-meta{font-size:9px}.message-conversation-copy strong{font-size:13px}.message-conversation-copy>span{max-width:46vw}.message-expanded-header{align-items:flex-start}}
