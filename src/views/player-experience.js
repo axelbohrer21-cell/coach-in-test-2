@@ -52,12 +52,11 @@ export function playerTennisPage() {
 
   const latestChallenge = (state.challenges||[]).find(row=>row.status==='active');
   const wins = matches.filter(row=>row.result==='Victoire').length;
-  const selectedAvatar=String(profile.avatar_url||'').startsWith('style:')?profile.avatar_url:'style:navy';
   const bestRecent = matches.find(row=>row.result==='Victoire');
   const skills = achievements.slice(0,6).map(row=>'<span class="passport-skill">✦ '+safe(row.criterion)+'</span>').join('');
   return `
     <section class="passport-hero">
-      <div class="passport-avatar passport-avatar-current">${safe(initials(profile))}</div>
+      <div class="passport-avatar passport-avatar-current">${String(profile.avatar_url||'').startsWith('https://')?'<img src="'+safe(profile.avatar_url)+'" alt="Portrait du joueur">':safe(initials(profile))}</div>
       <div class="passport-identity"><p class="eyebrow">PASSEPORT TENNIS · COACH IN</p><h2>${safe(profile.first_name)} ${safe(profile.last_name)}</h2><p>${safe(profile.player_type||'Profil joueur')} · ${safe(profile.age_category||'Catégorie non renseignée')}</p><div class="passport-tags"><span>Classement FFT : <b>${safe(profile.fft_ranking||'Non renseigné')}</b></span><span>Depuis le ${formatDate(profile.created_at,{month:'long',year:'numeric'})}</span></div></div>
       <span class="passport-stamp">CI<span>+</span></span>
     </section>
