@@ -235,11 +235,12 @@ function playersPage() {
     const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
     const sessions = (state.sessions || []).filter(row => row.player_id === p.id);
     const latestSession = sessions.map(row => row.session_date).filter(Boolean).sort().pop();
+    const photoMarkup=String(p.avatar_url||'').startsWith('https://')?'<img src="'+escapeHtml(p.avatar_url)+'" alt="Portrait de '+escapeHtml(name)+'">':initials(p);
     return `<article class="player-card player-roster-card" data-player-search="${escapeHtml(`${p.first_name || ''} ${p.last_name || ''} ${p.email || ''}`.toLocaleLowerCase('fr'))}" data-player-type="${escapeHtml(p.player_type || 'Loisir')}" style="--player-accent:${color}">
-      <div class="player-roster-top"><div class="player-avatar player-avatar-monogram avatar-${String(p.avatar_url||"style:navy").replace("style:","").replace(/[^a-z-]/g,"")}">${initials(p)}</div><span class="player-profile-type ${p.player_type === 'Compétition' ? 'is-competition' : 'is-leisure'}">${escapeHtml(p.player_type || 'Loisir')}</span></div>
+      <div class="player-roster-top"><div class="player-avatar player-roster-photo">${photoMarkup}</div><span class="player-profile-type ${p.player_type === 'Compétition' ? 'is-competition' : 'is-leisure'}">${escapeHtml(p.player_type || 'Loisir')}</span></div>
       <div class="player-card-info"><h3>${escapeHtml(name || 'Joueur')}</h3><p class="player-roster-ranking">${escapeHtml(p.fft_ranking || 'Classement à renseigner')}</p><div class="player-roster-meta"><span>◈ ${escapeHtml(p.age_category || 'Catégorie à renseigner')}</span><span>✉ ${escapeHtml(p.email || 'E-mail non renseigné')}</span></div></div>
       <div class="player-roster-stats"><div><strong>${sessions.length}</strong><small>Séance(s)</small></div><div><strong>${latestSession ? escapeHtml(formatDate(latestSession,{day:'2-digit',month:'short'})) : '—'}</strong><small>Dernière séance</small></div></div>
-      <div class="player-roster-actions"><button class="btn primary" data-player-sheet="${p.id}">Ouvrir la fiche <span>↗</span></button><button class="btn icon-btn" data-edit-player="${p.id}" aria-label="Modifier le joueur">⋯</button><button class="btn subtle" data-share-player="${p.id}">Partager</button></div>
+      <div class="player-roster-actions"><label class="btn subtle player-photo-quick-upload">📷 Photo<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" data-player-card-photo="${p.id}" aria-label="Photographier ou choisir le portrait de ${escapeHtml(name)}"></label><button class="btn primary" data-player-sheet="${p.id}">Ouvrir la fiche <span>↗</span></button><button class="btn icon-btn" data-edit-player="${p.id}" aria-label="Modifier le joueur">⋯</button><button class="btn subtle" data-share-player="${p.id}">Partager</button></div>
     </article>`;
   }).join('');
   return `<section class="player-roster-page">
