@@ -10,6 +10,30 @@ const localToday = () => {
 const formatStamp = value => value ? new Date(value).toLocaleString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Date à préciser';
 const initials = profile => [profile?.first_name?.[0],profile?.last_name?.[0]].filter(Boolean).join('').toUpperCase() || 'CI';
 
+export function playerUltimateCard() {
+  const profile=state.profile||{}, sessions=state.sessions||[], achievements=state.achievements||[];
+  const reports=[...(state.evaluations||[])].sort((a,b)=>String(b.evaluated_at||b.created_at||'').localeCompare(String(a.evaluated_at||a.created_at||'')));
+  const axes=[['TEC','technical_score'],['TAC','tactical_score'],['PHY','physical_score'],['MEN','mental_score']];
+  const overall=row=>{
+    const values=axes.map(([,key])=>row[key]===null||row[key]===undefined||row[key]===''?null:Number(row[key])).filter(value=>Number.isFinite(value)&&value>=0&&value<=20);
+    if(values.length)return values.reduce((sum,value)=>sum+value,0)/values.length;
+    const fallback=Number(row.score);
+    return Number.isFinite(fallback)&&fallback>=0&&fallback<=20?fallback:null;
+  };
+  const best=reports.map(overall).filter(value=>value!==null).reduce((max,value)=>Math.max(max,value),-1);
+  const ovr=best<0?null:Math.round(best*5);
+  const tier=ovr===null||ovr<55?{id:'bronze',name:'Bronze',next:'Argent',min:0,max:55,mark:'I'}:ovr<70?{id:'silver',name:'Argent',next:'Or',min:55,max:70,mark:'II'}:ovr<85?{id:'gold',name:'Or',next:'Platine',min:70,max:85,mark:'III'}:{id:'platinum',name:'Platine',next:null,min:85,max:100,mark:'IV'};
+  const latest=reports[0]||null;
+  const stats=axes.map(([label,key])=>{
+    const raw=latest?.[key],value=raw===null||raw===undefined||raw===''?null:Number(raw),valid=Number.isFinite(value)&&value>=0&&value<=20;
+    return '<div class="fut-stat"><span>'+label+'</span><strong>'+(valid?Math.round(value*5):'—')+'</strong><i><b style="width:'+(valid?value/20*100:0)+'%"></b></i></div>';
+  }).join('');
+  const photo=String(profile.avatar_url||'');
+  const portrait=photo.startsWith('https://')?'<img src="'+safe(photo)+'" alt="Portrait du joueur">':'<div class="fut-card-photo-placeholder"><strong>'+safe(initials(profile))+'</strong><span>PHOTO JOUEUR</span><small>Portrait à ajouter</small></div>';
+  const progress=tier.next?Math.max(0,Math.min(100,((ovr||0)-tier.min)/(tier.max-tier.min)*100)):100;
+  return '<section class="player-game-card fut-inspired-card tier-'+tier.id+'"><div class="fut-card-top"><span>COACH IN <b>PLAYER CARD</b></span><span>SAISON 2026 / 2027</span></div><div class="fut-card-layout"><div class="fut-card-portrait">'+portrait+'<div class="fut-card-photo-shade"></div><div class="fut-card-overall"><strong>'+(ovr===null?'—':ovr)+'</strong><span>OVR</span></div><div class="fut-card-crest"><span>'+tier.mark+'</span><b>'+tier.name.toUpperCase()+'</b></div><div class="fut-card-player-name"><h2>'+safe(profile.first_name)+' '+safe(profile.last_name)+'</h2><span>'+safe(profile.fft_ranking||'Classement à renseigner')+' · '+safe(profile.age_category||'TENNIS')+'</span></div></div><div class="fut-card-details"><div class="fut-card-tierline"><span class="game-tier-emblem">'+tier.mark+'</span><div><small>CARTE ÉVOLUTIVE</small><strong>'+tier.name.toUpperCase()+'</strong></div><span class="fut-tier-level">NIVEAU '+tier.mark+'</span></div><div class="fut-card-stat-grid">'+stats+'</div><div class="game-card-progress"><div><span>'+(tier.next?'PROGRESSION VERS '+tier.next.toUpperCase():'RANG MAXIMAL ATTEINT')+'</span><b>'+(tier.next?(ovr||0)-tier.min+' / '+(tier.max-tier.min)+' pts':'MAX')+'</b></div><i><b style="width:'+progress+'%"></b></i></div><div class="fut-card-foot"><span><b>'+sessions.length+'</b> SÉANCES</span><span><b>'+achievements.length+'</b> BADGES</span><span>'+safe(profile.player_type||'JOUEUR')+'</span></div></div></div></section>';
+}
+
 export function playerTennisPage() {
   const profile = state.profile || {};
   const details = state.playerProfileDetails || {};
@@ -26,27 +50,6 @@ export function playerTennisPage() {
   const monthScores = monthReports.map(row=>Number(row.score)).filter(value=>Number.isFinite(value)&&value>=0&&value<=20);
   const avgScore = monthScores.length ? monthScores.reduce((a,b)=>a+b,0)/monthScores.length : null;
 
-  const playerScoreAxes=[['Technique','technical_score'],['Tactique','tactical_score'],['Physique','physical_score'],['Mental','mental_score']];
-  const orderedReports=[...reports].sort((a,b)=>String(b.evaluated_at||b.created_at||'').localeCompare(String(a.evaluated_at||a.created_at||'')));
-  const reportOverallScore=row=>{
-    const values=playerScoreAxes.map(([,key])=>row[key]===null||row[key]===undefined||row[key]===''?null:Number(row[key])).filter(value=>Number.isFinite(value)&&value>=0&&value<=20);
-    if(values.length)return values.reduce((sum,value)=>sum+value,0)/values.length;
-    const fallback=Number(row.score);
-    return Number.isFinite(fallback)&&fallback>=0&&fallback<=20?fallback:null;
-  };
-  const bestPlayerScore=orderedReports.map(reportOverallScore).filter(value=>value!==null).reduce((best,value)=>Math.max(best,value),-1);
-  const playerOvr=bestPlayerScore<0?null:Math.round(bestPlayerScore*5);
-  const playerTier=playerOvr===null||playerOvr<55?{id:'bronze',name:'Bronze',next:'Argent',min:0,max:55,mark:'I'}:playerOvr<70?{id:'silver',name:'Argent',next:'Or',min:55,max:70,mark:'II'}:playerOvr<85?{id:'gold',name:'Or',next:'Platine',min:70,max:85,mark:'III'}:{id:'platinum',name:'Platine',next:null,min:85,max:100,mark:'IV'};
-  const playerTierProgress=playerTier.next?Math.max(0,Math.min(100,((playerOvr||0)-playerTier.min)/(playerTier.max-playerTier.min)*100)):100;
-  const latestPlayerReport=orderedReports[0]||null;
-  const playerGameAvatar=String(profile.avatar_url||'').startsWith('https://')?'<div class="game-card-avatar player-avatar-photo"><img src="'+safe(profile.avatar_url)+'" alt="Avatar du joueur"></div>':'<div class="game-card-avatar game-avatar-illustration" role="img" aria-label="Avatar illustré de joueur de tennis"><svg viewBox="0 0 96 96" aria-hidden="true"><defs><linearGradient id="playerGameJersey" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#62d8f2"/><stop offset="1" stop-color="#2456a8"/></linearGradient><linearGradient id="playerGameSkin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f5c9a6"/><stop offset="1" stop-color="#b87556"/></linearGradient></defs><circle cx="48" cy="48" r="47" fill="#14243a"/><circle cx="48" cy="48" r="39" fill="#203d5b"/><g transform="rotate(18 75 52)" fill="none" stroke="#d8eaff" stroke-width="3"><ellipse cx="77" cy="36" rx="8" ry="13"/><path d="M77 49v19m-4-19 8-13m-8 0 8 13"/></g><path d="M13 96c2-20 14-31 35-31s33 11 35 31" fill="url(#playerGameJersey)"/><path d="M39 61h18v14H39z" fill="url(#playerGameSkin)"/><path d="M29 39c0-17 8-26 20-26s20 9 20 26v11c0 13-9 23-20 23S29 63 29 50z" fill="url(#playerGameSkin)"/><path d="M28 43c-3-20 7-32 22-32 14 0 22 10 20 28-5-2-9-7-11-12-8 8-18 12-31 12z" fill="#18202e"/><path d="M29 35c11 5 27 4 40-3l2 8c-15 7-30 8-43 2z" fill="#f4d34e"/><path d="M40 49h3m10 0h3" stroke="#563d35" stroke-width="2.5" stroke-linecap="round"/><path d="M44 59c3 2 6 2 9 0" fill="none" stroke="#8e4d42" stroke-width="2" stroke-linecap="round"/><path d="M30 78l18 11 18-11 8 18H22z" fill="#f3f7fb" opacity=".92"/><path d="M40 67l8 9 8-9" fill="none" stroke="#f3f7fb" stroke-width="2"/></svg></div>';
-  const playerGameStats=playerScoreAxes.map(([label,key])=>{
-    const raw=latestPlayerReport?.[key],value=raw===null||raw===undefined||raw===''?null:Number(raw);
-    const valid=Number.isFinite(value)&&value>=0&&value<=20;
-    return '<div class="game-stat"><div><span>'+label+'</span><strong>'+(valid?Math.round(value*5):'—')+'</strong></div><i><b style="width:'+(valid?value/20*100:0)+'%"></b></i></div>';
-  }).join('');
-  const playerGameCard='<section class="player-game-card tier-'+playerTier.id+'"><div class="game-card-top"><span>COACH IN <b>ULTIMATE PLAYER</b></span><span>PLAYER CARD · '+playerTier.mark+'</span></div><div class="game-card-main"><div class="game-card-identity">'+playerGameAvatar+'<div><small>MA CARTE JOUEUR · '+safe(profile.age_category||'TENNIS')+'</small><h2>'+safe(profile.first_name)+' '+safe(profile.last_name)+'</h2><span>'+safe(profile.fft_ranking||'Classement à renseigner')+' · '+safe(profile.player_type||'Joueur')+'</span></div></div><div class="game-card-rating"><strong>'+(playerOvr===null?'—':playerOvr)+'</strong><span>OVR</span><small>'+(bestPlayerScore<0?'À ÉVALUER':bestPlayerScore.toFixed(1).replace('.',',')+'/20')+'</small></div></div><div class="game-card-tier"><span class="game-tier-emblem">'+playerTier.mark+'</span><div><small>MON NIVEAU</small><strong>'+playerTier.name.toUpperCase()+'</strong></div><span class="game-tier-tag">'+(playerTier.next?'PROGRESSION':'RANG MAXIMAL')+'</span></div><div class="game-card-stats">'+playerGameStats+'</div><div class="game-card-progress"><div><span>'+(playerTier.next?'PROGRESSION VERS '+playerTier.next.toUpperCase():'NIVEAU PLATINE ATTEINT')+'</span><b>'+(playerTier.next?(playerOvr||0)-playerTier.min+' / '+(playerTier.max-playerTier.min)+' pts':'MAX')+'</b></div><i><b style="width:'+playerTierProgress+'%"></b></i></div><div class="game-card-bottom"><span>'+sessions.length+' SÉANCES</span><span>'+achievements.length+' BADGES</span><span>MEILLEUR SCORE VALIDÉ</span></div></section>';
-
   const latestChallenge = (state.challenges||[]).find(row=>row.status==='active');
   const wins = matches.filter(row=>row.result==='Victoire').length;
   const selectedAvatar=String(profile.avatar_url||'').startsWith('style:')?profile.avatar_url:'style:navy';
@@ -58,7 +61,7 @@ export function playerTennisPage() {
       <div class="passport-identity"><p class="eyebrow">PASSEPORT TENNIS · COACH IN</p><h2>${safe(profile.first_name)} ${safe(profile.last_name)}</h2><p>${safe(profile.player_type||'Profil joueur')} · ${safe(profile.age_category||'Catégorie non renseignée')}</p><div class="passport-tags"><span>Classement FFT : <b>${safe(profile.fft_ranking||'Non renseigné')}</b></span><span>Depuis le ${formatDate(profile.created_at,{month:'long',year:'numeric'})}</span></div></div>
       <span class="passport-stamp">CI<span>+</span></span>
     </section>
-    ${playerGameCard}
+    ${playerUltimateCard()}
     <div class="stats-grid passport-stats">
       <article class="stat-card blue"><span>Séances réalisées</span><strong>${sessions.length}</strong><small>${Math.round(sessions.reduce((sum,row)=>sum+Number(row.duration_minutes||0),0)/60)} h sur le terrain</small></article>
       <article class="stat-card purple"><span>Bilans partagés</span><strong>${reports.length}</strong><small>Évaluations accessibles</small></article>
@@ -68,7 +71,6 @@ export function playerTennisPage() {
     <section class="panel">
       <div class="section-heading"><div><p class="eyebrow">TON IDENTITÉ DE JOUEUR</p><h2>Ce qui te motive</h2></div><span class="tag">Modifiable par toi</span></div>
       <form id="player-profile-details-form" class="form-grid">
-        <fieldset class="passport-avatar-picker span-2"><legend>Style de profil</legend><p>Un monogramme sobre, avec une couleur au choix. Tes initiales restent associées à ton profil.</p><div class="passport-avatar-options"><label class="passport-avatar-choice" title="Bleu marine"><input type="radio" name="player_avatar" value="style:navy" ${selectedAvatar==="style:navy"?"checked":""}><span class="avatar-swatch avatar-navy"><b>AB</b><small>Bleu marine</small></span></label><label class="passport-avatar-choice" title="Vert profond"><input type="radio" name="player_avatar" value="style:emerald" ${selectedAvatar==="style:emerald"?"checked":""}><span class="avatar-swatch avatar-emerald"><b>AB</b><small>Vert profond</small></span></label><label class="passport-avatar-choice" title="Gris ardoise"><input type="radio" name="player_avatar" value="style:slate" ${selectedAvatar==="style:slate"?"checked":""}><span class="avatar-swatch avatar-slate"><b>AB</b><small>Gris ardoise</small></span></label><label class="passport-avatar-choice" title="Bordeaux"><input type="radio" name="player_avatar" value="style:burgundy" ${selectedAvatar==="style:burgundy"?"checked":""}><span class="avatar-swatch avatar-burgundy"><b>AB</b><small>Bordeaux</small></span></label><label class="passport-avatar-choice" title="Bleu pétrole"><input type="radio" name="player_avatar" value="style:teal" ${selectedAvatar==="style:teal"?"checked":""}><span class="avatar-swatch avatar-teal"><b>AB</b><small>Bleu pétrole</small></span></label><label class="passport-avatar-choice" title="Graphite"><input type="radio" name="player_avatar" value="style:graphite" ${selectedAvatar==="style:graphite"?"checked":""}><span class="avatar-swatch avatar-graphite"><b>AB</b><small>Graphite</small></span></label><label class="passport-avatar-choice" title="Indigo"><input type="radio" name="player_avatar" value="style:indigo" ${selectedAvatar==="style:indigo"?"checked":""}><span class="avatar-swatch avatar-indigo"><b>AB</b><small>Indigo</small></span></label><label class="passport-avatar-choice" title="Bronze"><input type="radio" name="player_avatar" value="style:bronze" ${selectedAvatar==="style:bronze"?"checked":""}><span class="avatar-swatch avatar-bronze"><b>AB</b><small>Bronze</small></span></label></div></fieldset>
         <label class="span-2">Mon objectif principal<textarea name="objective" rows="2" maxlength="500" placeholder="Ex. : gagner en régularité, passer un classement…">${safe(details.objective)}</textarea></label>
         <label>Ce qui me motive<textarea name="motivation" rows="2" maxlength="500" placeholder="Ce qui me donne envie de jouer…">${safe(details.motivation)}</textarea></label>
         <label>Mes points forts<textarea name="strengths" rows="2" maxlength="500" placeholder="Mes qualités sur le court…">${safe(details.strengths)}</textarea></label>
