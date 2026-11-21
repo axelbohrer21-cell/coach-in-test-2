@@ -888,7 +888,6 @@ function sessionReviewDialog(sessionId){
     '<div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer le bilan</button></div></form>');
 }
 async function cancelPrivateSession(sessionId){
-  if(!confirm('Annuler ce cours particulier ? Il restera visible dans le planning avec le statut ANNULÉ.'))return;
   try{await dataService.updateSession(sessionId,{status:'Annulée'},state.user.id);closeDialog();await refreshAndRender();toast('Cours particulier annulé.');}
   catch(error){toast(error.message||'Impossible d’annuler ce cours.','error');}
 }
