@@ -461,6 +461,10 @@ $('#page-content').addEventListener('input',event=>{
   if(event.target.id==='player-search'){state.filters.search=event.target.value;filterPlayerCards();}
   if(['library-search','library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
+$('#page-content').addEventListener('click',event=>{
+  const conversation=event.target.closest('[data-message-open]');
+  if(conversation){state.messagePartnerId=conversation.dataset.messageOpen;render('messages');}
+});
 $('#page-content').addEventListener('change',event=>{
   if(event.target.id==='message-partner'){state.messagePartnerId=event.target.value;render('messages');}
   if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;filterPlayerCards();}
