@@ -3619,3 +3619,25 @@ body.camera-fullscreen-open{overflow:hidden}
 .player-photo-quick-upload{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center}
 .player-photo-quick-upload input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .player-photo-quick-upload:focus-within{outline:2px solid var(--cyan);outline-offset:2px}
+
+/* Coach In · detailed tennis player profile */
+.shot-by-shot-section{margin-top:18px}
+.shot-domain-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.shot-domain-card{--shot-accent:#42b8df;background:linear-gradient(145deg,rgba(24,39,61,.96),rgba(12,22,37,.98));border:1px solid rgba(148,174,204,.2);border-top:3px solid var(--shot-accent);border-radius:16px;padding:16px;min-width:0;color:#edf5ff}
+.shot-forehand{--shot-accent:#f18b52}.shot-backhand{--shot-accent:#5eb5ee}.shot-service{--shot-accent:#d8b65b}.shot-return{--shot-accent:#9e8be9}.shot-volley{--shot-accent:#5fc99b}.shot-movement{--shot-accent:#e17b9e}
+.shot-domain-head,.shot-domain-totals,.shot-criterion-row,.next-objective-progress{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.shot-domain-head{font-weight:850;font-size:1rem}.shot-domain-head strong{font-size:1.35rem;color:var(--shot-accent)}
+.shot-domain-totals{justify-content:flex-start;flex-wrap:wrap;margin:10px 0 12px;font-size:.76rem;font-weight:750}
+.shot-positive{color:#71d5a8}.shot-improvement{color:#ffb17e}
+.shot-criterion-list{display:grid;gap:8px}
+.shot-criterion-row{border-top:1px solid rgba(255,255,255,.09);padding-top:8px;font-size:.82rem}
+.shot-criterion-row>span{min-width:0;overflow-wrap:anywhere}
+.shot-criterion-row small{display:flex;gap:8px;white-space:nowrap}.shot-criterion-row small b{font-size:.72rem}
+.next-objective-card{padding:18px;border-radius:16px;border:1px solid rgba(91,190,151,.35);background:linear-gradient(135deg,rgba(28,93,76,.22),rgba(16,34,49,.92));display:grid;gap:8px}
+.next-objective-card h4{font-size:1.2rem;margin:0;color:var(--text-primary,#f4f8ff)}
+.next-objective-card p{margin:0;color:var(--text-secondary,#bac8d8);line-height:1.55}
+.next-objective-card small{color:var(--text-secondary,#bac8d8)}
+.next-objective-progress{border-top:1px solid rgba(255,255,255,.12);padding-top:10px;font-size:.84rem}
+.next-objective-card.is-suggested{border-color:rgba(100,166,231,.42);background:linear-gradient(135deg,rgba(41,89,139,.24),rgba(16,34,49,.92))}
+.next-objective-card.is-empty{border-color:rgba(255,255,255,.14)}
+@media(max-width:680px){.shot-domain-grid{grid-template-columns:1fr}.shot-domain-card{padding:14px}.shot-criterion-row{align-items:flex-start}.shot-criterion-row>span{flex:1}}
