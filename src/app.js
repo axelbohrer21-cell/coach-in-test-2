@@ -889,13 +889,13 @@ function initializePlayerProfileTabs(){
   dialog.querySelectorAll('[data-profile-tab]').forEach(button=>button.addEventListener('click',()=>activate(button.dataset.profileTab)));
 }
 
-const PLAYER_AVATAR_PRESETS=[["emoji:🎾","🎾"],["emoji:⚡","⚡"],["emoji:🦊","🦊"],["emoji:🐼","🐼"],["emoji:🦁","🦁"],["emoji:🐯","🐯"],["emoji:🐺","🐺"],["emoji:🦅","🦅"],["emoji:🐬","🐬"],["emoji:🐸","🐸"],["emoji:🤖","🤖"],["emoji:👾","👾"]];
+const PLAYER_AVATAR_PRESETS=[["style:navy","Bleu marine"],["style:emerald","Vert profond"],["style:slate","Gris ardoise"],["style:burgundy","Bordeaux"],["style:teal","Bleu pétrole"],["style:graphite","Graphite"],["style:indigo","Indigo"],["style:bronze","Bronze"]];
 function playerAvatarMarkup(profile,className){
   const value=String(profile?.avatar_url||'');
-  const preset=PLAYER_AVATAR_PRESETS.find(row=>row[0]===value);
-  if(preset)return '<div class="'+className+' player-avatar-preset">'+preset[1]+'</div>';
   if(value.startsWith('https://'))return '<div class="'+className+' player-avatar-photo"><img src="'+escapeHtml(value)+'" alt="Avatar du joueur"></div>';
-  return '<div class="'+className+'">'+escapeHtml((profile?.first_name||'?').slice(0,1))+escapeHtml((profile?.last_name||'').slice(0,1))+'</div>';
+  const style=PLAYER_AVATAR_PRESETS.some(row=>row[0]===value)?value.replace('style:',''):'navy';
+  const initials=escapeHtml((profile?.first_name||'?').slice(0,1)+(profile?.last_name||'').slice(0,1));
+  return '<div class="'+className+' player-avatar-monogram avatar-'+style+'" aria-label="Initiales du joueur">'+initials+'</div>';
 }
 function playerMindmapMarkup(player,goals,average,reportCount,challenge,achievements){
   const node=(kind,icon,title,value,sub)=>'<article class="mindmap-node mindmap-'+kind+'"><span class="mindmap-node-icon">'+icon+'</span><div><small>'+title+'</small><strong>'+escapeHtml(value||'À compléter')+'</strong><span>'+escapeHtml(sub||'')+'</span></div></article>';
