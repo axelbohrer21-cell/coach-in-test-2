@@ -3881,3 +3881,70 @@ body.camera-fullscreen-open{overflow:hidden}
 #dialog-content [data-profile-section] .profile-program-weeks{text-align:left}
 #dialog-content [data-profile-section] .profile-hero-stats{display:grid}
 @media(max-width:640px){.game-card-main{flex-wrap:wrap;justify-content:center;text-align:center}.game-card-photo-trigger{flex-basis:104px;width:104px;height:124px}.game-card-identity{flex-basis:100%}.game-card-quick-facts{justify-content:center}.player-profile-tab{min-width:calc(50% - 8px);flex:1}.player-profile-tabs{gap:7px;padding:12px 4px}#dialog-content [data-profile-section]{padding:18px 10px}}
+
+
+/* Mobile repair: keep portrait, identity and rating in a deliberate grid */
+@media(max-width:760px){
+ #dialog-content:has(.player-game-card)>.player-game-card{
+   display:grid;
+   grid-template-columns:88px minmax(0,1fr);
+   grid-template-areas:"top top" "photo identity" "rating rating" "tier tier" "stats stats" "progress progress" "bottom bottom";
+   align-items:center;
+   gap:12px;
+   padding:14px;
+ }
+ #dialog-content:has(.player-game-card) .game-card-top{
+   grid-area:top;display:flex;align-items:center;justify-content:space-between;
+   gap:8px;min-width:0;font-size:9px;letter-spacing:.12em;line-height:1.35;
+ }
+ #dialog-content:has(.player-game-card) .game-card-top span{min-width:0;max-width:48%;overflow-wrap:normal}
+ #dialog-content:has(.player-game-card) .game-card-photo-trigger{
+   grid-area:photo;display:block;width:88px;height:112px;min-width:0;
+   flex:0 0 88px;align-self:center;border-radius:13px;
+ }
+ #dialog-content:has(.player-game-card) .game-card-photo-trigger .game-card-avatar{width:100%;height:100%;flex:none}
+ #dialog-content:has(.player-game-card) .game-card-photo-trigger img{width:100%;height:100%;object-fit:cover;object-position:center 24%}
+ #dialog-content:has(.player-game-card) .game-card-photo-trigger:after{font-size:8px;letter-spacing:.8px;padding:6px 2px}
+ #dialog-content:has(.player-game-card) .game-card-identity{
+   grid-area:identity;display:flex;flex-direction:column;align-items:flex-start;
+   justify-content:center;gap:5px;min-width:0;width:100%;text-align:left;
+ }
+ #dialog-content:has(.player-game-card) .game-card-identity>small{font-size:9px;letter-spacing:.12em;line-height:1.35}
+ #dialog-content:has(.player-game-card) .game-card-identity h2{font-size:clamp(1.15rem,5vw,1.55rem);line-height:1.12;overflow-wrap:anywhere;margin:2px 0}
+ #dialog-content:has(.player-game-card) .game-card-identity>span{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+ #dialog-content:has(.player-game-card) .game-card-quick-facts{
+   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;width:100%;margin-top:7px;
+ }
+ #dialog-content:has(.player-game-card) .game-card-quick-facts span{min-width:0;padding:6px 7px;font-size:8px;line-height:1.25;letter-spacing:.04em}
+ #dialog-content:has(.player-game-card) .game-card-quick-facts span:last-child{grid-column:1/-1}
+ #dialog-content:has(.player-game-card) .game-card-quick-facts b{font-size:10px;line-height:1.25;overflow-wrap:anywhere}
+ #dialog-content:has(.player-game-card) .game-card-rating{
+   grid-area:rating;display:flex;flex-direction:row;align-items:center;justify-content:center;
+   gap:10px;width:100%;min-width:0;padding:9px 12px;
+ }
+ #dialog-content:has(.player-game-card) .game-card-rating strong{font-size:2.5rem;line-height:1}
+ #dialog-content:has(.player-game-card) .game-card-rating span{font-size:10px}
+ #dialog-content:has(.player-game-card) .game-card-rating small{font-size:11px}
+ #dialog-content:has(.player-game-card) .game-card-tier{grid-area:tier;min-width:0;flex-wrap:wrap;padding:10px;gap:9px}
+ #dialog-content:has(.player-game-card) .game-tier-tag{font-size:9px;white-space:normal;text-align:right}
+ #dialog-content:has(.player-game-card) .game-card-stats{grid-area:stats;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #dialog-content:has(.player-game-card) .game-stat{min-width:0;padding:10px}
+ #dialog-content:has(.player-game-card) .game-stat>div{align-items:center;gap:4px}
+ #dialog-content:has(.player-game-card) .game-stat>div span{font-size:11px}
+ #dialog-content:has(.player-game-card) .game-stat>div strong{font-size:1.25rem}
+ #dialog-content:has(.player-game-card) .game-card-progress{grid-area:progress;min-width:0}
+ #dialog-content:has(.player-game-card) .game-card-progress>div{gap:8px;font-size:9px;letter-spacing:.1em}
+ #dialog-content:has(.player-game-card) .game-card-bottom{
+   grid-area:bottom;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+   align-items:center;justify-content:stretch;gap:7px;text-align:center;font-size:8px;letter-spacing:.1em;
+ }
+ #dialog-content:has(.player-game-card) .game-card-bottom span{min-width:0;overflow-wrap:anywhere;line-height:1.4}
+}
+@media(max-width:390px){
+ #dialog-content:has(.player-game-card)>.player-game-card{grid-template-columns:76px minmax(0,1fr);gap:10px;padding:12px}
+ #dialog-content:has(.player-game-card) .game-card-photo-trigger{width:76px;height:100px;flex-basis:76px}
+ #dialog-content:has(.player-game-card) .game-card-quick-facts{gap:4px}
+ #dialog-content:has(.player-game-card) .game-card-quick-facts span{padding:5px;font-size:7px}
+ #dialog-content:has(.player-game-card) .game-card-quick-facts b{font-size:9px}
+ #dialog-content:has(.player-game-card) .game-card-top{font-size:8px;letter-spacing:.09em}
+}
