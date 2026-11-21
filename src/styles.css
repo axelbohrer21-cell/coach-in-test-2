@@ -3612,3 +3612,10 @@ body.camera-fullscreen-open{overflow:hidden}
 .game-card-photo-upload small{flex-basis:100%;color:#fff9;font-size:9px;line-height:1.4}
 .passport-avatar-current img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
 @media(max-width:680px){.fut-inspired-card{padding:12px}.fut-card-layout{grid-template-columns:1fr}.fut-card-portrait{min-height:300px;max-height:390px}.fut-card-details{gap:12px}.fut-card-stat-grid{gap:12px}.fut-card-player-name h2{font-size:25px}.fut-card-top{font-size:8px;letter-spacing:1px}.game-card-photo-upload input{max-width:100%}}
+
+
+.player-roster-photo{overflow:hidden;display:grid;place-items:center}
+.player-roster-photo img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.player-photo-quick-upload{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center}
+.player-photo-quick-upload input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.player-photo-quick-upload:focus-within{outline:2px solid var(--cyan);outline-offset:2px}
