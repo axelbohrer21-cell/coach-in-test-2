@@ -3982,3 +3982,32 @@ body.camera-fullscreen-open{overflow:hidden}
 #dialog-content:has(.player-game-card) .player-game-card .game-card-tier>div small,
 #dialog-content:has(.player-game-card) .player-game-card .game-card-tier>div strong,
 #dialog-content:has(.player-game-card) .player-game-card .game-tier-tag{color:#26364b!important;text-shadow:0 1px 0 #fff8!important}
+
+/* Player sheet: larger portrait with the OVR score prominently beside it */
+#dialog-content:has(.player-game-card) .game-card-main{display:grid!important;grid-template-columns:148px minmax(0,1fr)!important;grid-template-areas:"photo identity"!important;align-items:center!important;gap:20px!important;padding:24px 5px 20px!important}
+#dialog-content:has(.player-game-card) .game-card-photo-trigger{grid-area:photo!important;width:148px!important;height:184px!important;flex:0 0 148px!important}
+#dialog-content:has(.player-game-card) .game-card-identity{grid-area:identity!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:7px!important;min-width:0!important}
+#dialog-content:has(.player-game-card) .game-card-rating{display:flex!important;flex-direction:row!important;align-items:baseline!important;justify-items:initial!important;justify-self:auto!important;gap:8px!important;min-width:0!important;width:auto!important;padding:5px 0!important;border:0!important;border-top:1px solid #ffffff2c!important;border-radius:0!important;background:none!important;box-shadow:none!important}
+#dialog-content:has(.player-game-card) .game-card-rating strong{font-size:clamp(3.8rem,8vw,5.4rem)!important;line-height:.9!important;font-weight:900!important;letter-spacing:-.06em!important}
+#dialog-content:has(.player-game-card) .game-card-rating>span{font-size:1rem!important;letter-spacing:.2em!important;font-weight:950!important}
+#dialog-content:has(.player-game-card) .game-card-rating small{font-size:.8rem!important;margin:0 0 0 4px!important}
+#dialog-content:has(.player-game-card) .game-card-quick-facts{width:100%!important;margin-top:4px!important}
+@media(max-width:760px){
+ #dialog-content:has(.player-game-card)>.player-game-card{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"top" "main" "stats" "progress" "bottom"!important}
+ #dialog-content:has(.player-game-card) .game-card-main{grid-area:main!important;grid-template-columns:116px minmax(0,1fr)!important;grid-template-areas:"photo identity"!important;gap:13px!important;padding:15px 0!important}
+ #dialog-content:has(.player-game-card) .game-card-photo-trigger{width:116px!important;height:148px!important;flex-basis:116px!important}
+ #dialog-content:has(.player-game-card) .game-card-identity{grid-area:identity!important;align-items:flex-start!important;text-align:left!important}
+ #dialog-content:has(.player-game-card) .game-card-identity h2{font-size:clamp(1.15rem,5vw,1.55rem)!important}
+ #dialog-content:has(.player-game-card) .game-card-rating{justify-content:flex-start!important;gap:6px!important}
+ #dialog-content:has(.player-game-card) .game-card-rating strong{font-size:3.5rem!important}
+ #dialog-content:has(.player-game-card) .game-card-rating>span{font-size:.8rem!important}
+ #dialog-content:has(.player-game-card) .game-card-rating small{font-size:.68rem!important}
+ #dialog-content:has(.player-game-card) .game-card-quick-facts{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important}
+ #dialog-content:has(.player-game-card) .game-card-quick-facts span:last-child{grid-column:1/-1!important}
+}
+@media(max-width:390px){
+ #dialog-content:has(.player-game-card) .game-card-main{grid-template-columns:100px minmax(0,1fr)!important;gap:10px!important}
+ #dialog-content:has(.player-game-card) .game-card-photo-trigger{width:100px!important;height:132px!important;flex-basis:100px!important}
+ #dialog-content:has(.player-game-card) .game-card-rating strong{font-size:3rem!important}
+ #dialog-content:has(.player-game-card) .game-card-quick-facts b{font-size:9px!important}
+}
