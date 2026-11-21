@@ -3503,7 +3503,7 @@ body.camera-fullscreen-open{overflow:hidden}
 @media(max-width:560px){.passport-avatar-options{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 
 /* Carte VIP — identité premium du dossier joueur */
-.dialog:has(.vip-player-card){width:min(1040px,calc(100vw - 34px));max-width:1040px;padding:22px;background:#0b1422;border:1px solid rgba(198,164,104,.3);box-shadow:0 28px 90px rgba(0,0,0,.55)}
+.dialog:has(.player-game-card){width:min(1040px,calc(100vw - 34px));max-width:1040px;padding:22px;background:#0b1422;border:1px solid rgba(198,164,104,.3);box-shadow:0 28px 90px rgba(0,0,0,.55)}
 .vip-player-card{position:relative;isolation:isolate;overflow:hidden;margin:0 0 18px;padding:22px 25px 0;border:1px solid rgba(201,171,119,.45);border-radius:17px;background:radial-gradient(ellipse at 82% 30%,rgba(187,151,89,.14),transparent 34%),linear-gradient(120deg,#101d2d 0%,#17263a 53%,#0d1928 100%);color:#f6f1e7;box-shadow:0 16px 34px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.06)}
 .vip-player-card:before{content:"";position:absolute;z-index:-1;inset:8px;border:1px solid rgba(205,174,121,.15);border-radius:11px;pointer-events:none}
 .vip-player-topline{display:flex;align-items:center;gap:15px;min-height:36px}
@@ -3523,16 +3523,16 @@ body.camera-fullscreen-open{overflow:hidden}
 .vip-player-footer{display:flex;align-items:center;gap:0;margin:0 -25px;padding:12px 25px;border-top:1px solid rgba(201,171,119,.25);background:rgba(4,11,19,.24)}
 .vip-player-footer span{padding:0 15px;border-right:1px solid rgba(201,171,119,.22);color:#c7b995;font-size:8px;font-weight:750;letter-spacing:1.35px}
 .vip-player-footer span:first-child{padding-left:0;color:#f0dfbd}.vip-player-footer span:last-child{border:0}
-.dialog:has(.vip-player-card) .player-mindmap-card{margin-top:0;border-color:rgba(194,164,111,.2);background:linear-gradient(145deg,#111f30,#142438);border-radius:14px}
-.dialog:has(.vip-player-card) .mindmap-heading .eyebrow{color:#c4a875}
-.dialog:has(.vip-player-card) .mindmap-center{border-color:rgba(194,164,111,.4);background:linear-gradient(145deg,#26394d,#18283a)}
-.dialog:has(.vip-player-card) .mindmap-center>span{color:#d9c59c}
-.dialog:has(.vip-player-card) .mindmap-node-icon{background:rgba(194,164,111,.1);color:#d5bd8e}
-.dialog:has(.vip-player-card) .mindmap-node:not(.mindmap-center){border-color:rgba(194,164,111,.15);background:rgba(255,255,255,.025)}
-.dialog:has(.vip-player-card) .profile-hero-stats>div{border-color:rgba(194,164,111,.2);background:linear-gradient(145deg,#17283b,#101d2d)}
-.dialog:has(.vip-player-card) .player-profile-tabs{background:#0b1422}
-.dialog:has(.vip-player-card) .player-profile-tab.is-active{border-color:rgba(202,173,119,.65);background:linear-gradient(120deg,rgba(194,164,111,.2),rgba(194,164,111,.07));color:#f2dfb8;box-shadow:inset 0 0 0 1px rgba(194,164,111,.08)}
-@media(max-width:620px){.dialog:has(.vip-player-card){padding:12px}.vip-player-card{padding:15px 15px 0}.vip-player-main{gap:12px;padding:20px 4px}.vip-player-card .player-profile-avatar{width:60px;height:60px;flex-basis:60px;font-size:19px}.vip-player-seal{display:none}.vip-card-label{font-size:7px;letter-spacing:1px}.vip-player-footer{margin:0 -15px;padding:10px 15px;flex-wrap:wrap;gap:7px}.vip-player-footer span{padding:0 8px;font-size:7px}.vip-player-copy h2{font-size:24px}}
+.dialog:has(.player-game-card) .player-mindmap-card{margin-top:0;border-color:rgba(194,164,111,.2);background:linear-gradient(145deg,#111f30,#142438);border-radius:14px}
+.dialog:has(.player-game-card) .mindmap-heading .eyebrow{color:#c4a875}
+.dialog:has(.player-game-card) .mindmap-center{border-color:rgba(194,164,111,.4);background:linear-gradient(145deg,#26394d,#18283a)}
+.dialog:has(.player-game-card) .mindmap-center>span{color:#d9c59c}
+.dialog:has(.player-game-card) .mindmap-node-icon{background:rgba(194,164,111,.1);color:#d5bd8e}
+.dialog:has(.player-game-card) .mindmap-node:not(.mindmap-center){border-color:rgba(194,164,111,.15);background:rgba(255,255,255,.025)}
+.dialog:has(.player-game-card) .profile-hero-stats>div{border-color:rgba(194,164,111,.2);background:linear-gradient(145deg,#17283b,#101d2d)}
+.dialog:has(.player-game-card) .player-profile-tabs{background:#0b1422}
+.dialog:has(.player-game-card) .player-profile-tab.is-active{border-color:rgba(202,173,119,.65);background:linear-gradient(120deg,rgba(194,164,111,.2),rgba(194,164,111,.07));color:#f2dfb8;box-shadow:inset 0 0 0 1px rgba(194,164,111,.08)}
+@media(max-width:620px){.dialog:has(.player-game-card){padding:12px}.vip-player-card{padding:15px 15px 0}.vip-player-main{gap:12px;padding:20px 4px}.vip-player-card .player-profile-avatar{width:60px;height:60px;flex-basis:60px;font-size:19px}.vip-player-seal{display:none}.vip-card-label{font-size:7px;letter-spacing:1px}.vip-player-footer{margin:0 -15px;padding:10px 15px;flex-wrap:wrap;gap:7px}.vip-player-footer span{padding:0 8px;font-size:7px}.vip-player-copy h2{font-size:24px}}
 
 
 /* Player Ultimate Card — ranks calculated from real player evaluations */
