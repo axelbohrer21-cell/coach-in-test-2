@@ -3663,3 +3663,28 @@ body.camera-fullscreen-open{overflow:hidden}
 .roster-fut-card .player-roster-actions{position:relative;z-index:1;display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:auto}
 .roster-fut-card .player-roster-actions .btn{font-size:.76rem;padding:8px 10px}
 @media(max-width:540px){.roster-fut-card{padding:13px}.roster-fut-stats{gap:6px}.roster-fut-stat span{font-size:.55rem}.roster-fut-stat b{font-size:.8rem}.roster-fut-card .player-roster-actions{gap:6px}}
+
+/* Player card portrait-first layout and automatic FUT score tiers */
+.roster-fut-card{gap:12px;padding:12px}
+.roster-fut-top{display:flex;flex-direction:column;align-items:stretch;gap:10px}
+.roster-fut-photo-wrap{position:relative;width:100%;height:232px;overflow:hidden;border-radius:15px;border:1px solid rgba(255,255,255,.25);background:rgba(5,12,23,.35)}
+.roster-fut-card .player-roster-photo{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;background:rgba(255,255,255,.06);font-size:2.2rem}
+.roster-fut-card .player-roster-photo img{width:100%;height:100%;object-fit:cover;object-position:center 28%}
+.roster-fut-photo-wrap:after{content:"";position:absolute;inset:35% 0 0;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(4,10,19,.52))}
+.roster-fut-ovr{position:absolute;z-index:2;top:10px;right:11px;min-width:78px;padding:8px 10px;border-radius:13px;background:rgba(5,12,22,.78);border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(8px);text-shadow:0 2px 10px rgba(0,0,0,.4)}
+.roster-fut-ovr strong{font-size:2.85rem;line-height:.95;font-weight:1000;letter-spacing:-.06em}
+.roster-fut-ovr small{font-size:.65rem;letter-spacing:.12em}
+.roster-fut-tier{position:absolute;z-index:2;left:11px;top:12px;padding:6px 10px;border-radius:8px;background:rgba(5,12,22,.72);border:1px solid rgba(255,255,255,.28);font-size:.7rem;letter-spacing:.16em;font-weight:950;color:#fff}
+.roster-fut-identity{width:100%;text-align:center;padding:2px 8px 4px}
+.roster-fut-identity h3{font-size:1.35rem;line-height:1.15;font-weight:950;letter-spacing:.01em;margin:0 0 5px;text-transform:uppercase}
+.roster-fut-identity p{font-size:.76rem}
+.roster-fut-card.tier-bronze .roster-fut-tier{color:#ffc18e;border-color:rgba(255,193,142,.55)}
+.roster-fut-card.tier-silver .roster-fut-tier{color:#f1f5fa;border-color:rgba(241,245,250,.65)}
+.roster-fut-card.tier-gold .roster-fut-tier{color:#ffe18a;border-color:rgba(255,225,138,.7)}
+.roster-fut-card.tier-platinum .roster-fut-tier{color:#a9fff1;border-color:rgba(169,255,241,.7)}
+.roster-fut-card.tier-bronze .roster-fut-ovr strong{color:#ffc18e}
+.roster-fut-card.tier-silver .roster-fut-ovr strong{color:#f1f5fa}
+.roster-fut-card.tier-gold .roster-fut-ovr strong{color:#ffe18a}
+.roster-fut-card.tier-platinum .roster-fut-ovr strong{color:#a9fff1}
+.roster-fut-stats{margin-top:1px}
+@media(max-width:540px){.roster-fut-photo-wrap{height:250px}.roster-fut-ovr strong{font-size:2.7rem}.roster-fut-identity h3{font-size:1.25rem}}
