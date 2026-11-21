@@ -459,6 +459,7 @@ $('#page-content').addEventListener('submit',async event=>{
 });
 $('#page-content').addEventListener('input',event=>{
   if(event.target.id==='player-search'){state.filters.search=event.target.value;filterPlayerCards();}
+  if(event.target.matches('#message-form input[name=attachment]')){const label=$('[data-message-file-name]');if(label)label.textContent=event.target.files?.[0]?.name||'Photo, vidéo ou document';}
   if(['library-search','library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
 $('#page-content').addEventListener('click',event=>{
