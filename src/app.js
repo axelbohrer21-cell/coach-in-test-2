@@ -250,6 +250,7 @@ document.addEventListener('change',async event=>{
   const file=photoInput.files?.[0];
   if(!file)return;
   const playerId=photoInput.dataset.playerCardPhoto;
+  const uploadFromDialog=!!photoInput.closest('#dialog-content');
   const allowed=['image/jpeg','image/png','image/webp'];
   if(!allowed.includes(file.type)){toast('Format photo non accepté. Utilise JPG, PNG ou WebP.','error');photoInput.value='';return;}
   if(file.size>8*1024*1024){toast('La photo doit faire 8 Mo maximum.','error');photoInput.value='';return;}
@@ -268,7 +269,7 @@ document.addEventListener('change',async event=>{
     const visibleProfile={...updated,avatar_url:signedError?null:signed?.signedUrl||null,avatar_storage_path:path};
     state.players=state.players.map(row=>row.id===playerId?visibleProfile:row);
     toast(signedError?'Photo enregistrée. Elle sera visible après actualisation.':'Portrait du joueur enregistré sur sa carte.');
-    playerSheetDialog(playerId);
+    if(uploadFromDialog)playerSheetDialog(playerId);else render('players');
   }catch(error){
     console.error('Coach In · portrait joueur',error);
     toast(error.message||'Impossible d’enregistrer le portrait.','error');
