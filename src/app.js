@@ -244,40 +244,84 @@ $('#dialog-content').addEventListener('click',async event=>{
   if(confirmVideoDelete){confirmVideoDelete.disabled=true;await deleteVideoAnalysis(confirmVideoDelete.dataset.confirmDeleteVideo);return;}
   if(event.target.closest('[data-close]'))closeDialog();
 });
+
+let pendingPlayerPortrait=null;
+let portraitSegmenterPromise=null;
+async function removePortraitBackground(file){
+  const image=await createImageBitmap(file);
+  const {FilesetResolver,ImageSegmenter}=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs');
+  if(!portraitSegmenterPromise)portraitSegmenterPromise=(async()=>{
+    const vision=await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+    return ImageSegmenter.createFromOptions(vision,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite',delegate:'GPU'},runningMode:'IMAGE',outputCategoryMask:true,outputConfidenceMasks:false});
+  })();
+  const segmenter=await portraitSegmenterPromise;
+  const result=segmenter.segment(image);
+  const mask=result.categoryMask;
+  if(!mask)throw new Error('Le détourage n’a pas produit de masque.');
+  const labels=mask.getAsUint8Array(),mw=mask.width,mh=mask.height;
+  const source=document.createElement('canvas');source.width=image.width;source.height=image.height;
+  const sourceCtx=source.getContext('2d',{willReadFrequently:true});sourceCtx.drawImage(image,0,0);
+  const pixels=sourceCtx.getImageData(0,0,image.width,image.height);
+  const maskCanvas=document.createElement('canvas');maskCanvas.width=mw;maskCanvas.height=mh;
+  const maskCtx=maskCanvas.getContext('2d');const maskImage=maskCtx.createImageData(mw,mh);
+  for(let i=0;i<labels.length;i++){const keep=labels[i]===0?0:255;const p=i*4;maskImage.data[p]=maskImage.data[p+1]=maskImage.data[p+2]=255;maskImage.data[p+3]=keep;}
+  maskCtx.putImageData(maskImage,0,0);
+  const alpha=document.createElement('canvas');alpha.width=image.width;alpha.height=image.height;
+  const alphaCtx=alpha.getContext('2d');alphaCtx.imageSmoothingEnabled=true;alphaCtx.drawImage(maskCanvas,0,0,image.width,image.height);
+  const alphaPixels=alphaCtx.getImageData(0,0,image.width,image.height).data;
+  for(let i=0;i<pixels.data.length;i+=4)pixels.data[i+3]=Math.round(pixels.data[i+3]*alphaPixels[i+3]/255);
+  sourceCtx.putImageData(pixels,0,0);
+  const blob=await new Promise((resolve,reject)=>source.toBlob(value=>value?resolve(value):reject(new Error('Export PNG impossible.')),'image/png'));
+  image.close?.();
+  return {blob,url:URL.createObjectURL(blob)};
+}
+async function uploadPlayerPortrait(playerId,blob,uploadFromDialog){
+  const player=state.players.find(row=>row.id===playerId);if(!player)throw new Error('Joueur introuvable dans ton effectif.');
+  const path=playerId+'/'+crypto.randomUUID()+'.png';
+  const {error:uploadError}=await supabase.storage.from('player-card-photos').upload(path,blob,{contentType:'image/png',upsert:false});
+  if(uploadError)throw uploadError;
+  const storageValue='storage:player-card-photos:'+path;
+  const {data:updated,error:updateError}=await supabase.from('profiles').update({avatar_url:storageValue}).eq('id',playerId).eq('role','player').select().single();
+  if(updateError){await supabase.storage.from('player-card-photos').remove([path]);throw updateError;}
+  const {data:signed,error:signedError}=await supabase.storage.from('player-card-photos').createSignedUrl(path,604800);
+  state.players=state.players.map(row=>row.id===playerId?{...updated,avatar_url:signedError?null:signed?.signedUrl||null,avatar_storage_path:path}:row);
+  toast(signedError?'Photo enregistrée. Elle sera visible après actualisation.':'Portrait détouré et enregistré sur la carte.');
+  if(uploadFromDialog)playerSheetDialog(playerId);else render('players');
+}
+function openPortraitCrop(playerId,url,uploadFromDialog){
+  pendingPlayerPortrait={playerId,url,uploadFromDialog};
+  showDialog('<div class="dialog-head"><div><p class="eyebrow">CARTE JOUEUR</p><h2>Recadrer le portrait</h2><p class="tiny muted">Déplace le cadrage et ajuste le zoom avant validation.</p></div><button class="btn icon-btn" data-close>✕</button></div><div class="portrait-crop-stage"><img id="portrait-crop-image" src="'+url+'" alt="Aperçu du portrait détouré"></div><div class="portrait-crop-controls"><label>Zoom <input type="range" min="1" max="2.8" step=".05" value="1" id="portrait-crop-zoom"></label><label>Horizontal <input type="range" min="0" max="100" value="50" id="portrait-crop-x"></label><label>Vertical <input type="range" min="0" max="100" value="35" id="portrait-crop-y"></label></div><div class="dialog-actions"><button type="button" class="btn subtle" data-close>Annuler</button><button type="button" class="btn primary" data-save-player-portrait>Valider le portrait</button></div>');
+  const update=()=>{const img=$('#portrait-crop-image');if(!img)return;img.style.transform='scale('+($('#portrait-crop-zoom')?.value||1)+')';img.style.objectPosition=($('#portrait-crop-x')?.value||50)+'% '+($('#portrait-crop-y')?.value||35)+'%';};
+  ['portrait-crop-zoom','portrait-crop-x','portrait-crop-y'].forEach(id=>$('#'+id)?.addEventListener('input',update));update();
+}
 document.addEventListener('change',async event=>{
-  const photoInput=event.target.closest('[data-player-card-photo]');
-  if(!photoInput)return;
-  const file=photoInput.files?.[0];
-  if(!file)return;
-  const playerId=photoInput.dataset.playerCardPhoto;
-  const uploadFromDialog=!!photoInput.closest('#dialog-content');
-  const allowed=['image/jpeg','image/png','image/webp'];
-  if(!allowed.includes(file.type)){toast('Format photo non accepté. Utilise JPG, PNG ou WebP.','error');photoInput.value='';return;}
+  const photoInput=event.target.closest('[data-player-card-photo]');if(!photoInput)return;
+  const file=photoInput.files?.[0];if(!file)return;
+  const playerId=photoInput.dataset.playerCardPhoto,uploadFromDialog=!!photoInput.closest('#dialog-content');
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('Format photo non accepté. Utilise JPG, PNG ou WebP.','error');photoInput.value='';return;}
   if(file.size>8*1024*1024){toast('La photo doit faire 8 Mo maximum.','error');photoInput.value='';return;}
-  const player=state.players.find(row=>row.id===playerId);
-  if(!player){toast('Joueur introuvable dans ton effectif.','error');photoInput.value='';return;}
-  photoInput.disabled=true;
-  try{
-    const extension=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
-    const path=playerId+'/'+crypto.randomUUID()+'.'+extension;
-    const {error:uploadError}=await supabase.storage.from('player-card-photos').upload(path,file,{contentType:file.type,upsert:false});
-    if(uploadError)throw uploadError;
-    const storageValue='storage:player-card-photos:'+path;
-    const {data:updated,error:updateError}=await supabase.from('profiles').update({avatar_url:storageValue}).eq('id',playerId).eq('role','player').select().single();
-    if(updateError){await supabase.storage.from('player-card-photos').remove([path]);throw updateError;}
-    const {data:signed,error:signedError}=await supabase.storage.from('player-card-photos').createSignedUrl(path,604800);
-    const visibleProfile={...updated,avatar_url:signedError?null:signed?.signedUrl||null,avatar_storage_path:path};
-    state.players=state.players.map(row=>row.id===playerId?visibleProfile:row);
-    toast(signedError?'Photo enregistrée. Elle sera visible après actualisation.':'Portrait du joueur enregistré sur sa carte.');
-    if(uploadFromDialog)playerSheetDialog(playerId);else render('players');
-  }catch(error){
-    console.error('Coach In · portrait joueur',error);
-    toast(error.message||'Impossible d’enregistrer le portrait.','error');
-  }finally{
-    photoInput.disabled=false;
-    photoInput.value='';
-  }
+  photoInput.disabled=true;toast('Détourage en cours sur cet appareil…');
+  try{const result=await removePortraitBackground(file);openPortraitCrop(playerId,result.url,uploadFromDialog);}
+  catch(error){console.error('Coach In · détourage portrait',error);toast(error.message||'Le détourage a échoué. Réessaie avec une photo où le joueur est bien visible.','error');}
+  finally{photoInput.disabled=false;photoInput.value='';}
 });
+$('#dialog-content').addEventListener('click',async event=>{
+  const save=event.target.closest('[data-save-player-portrait]');if(!save||!pendingPlayerPortrait)return;
+  save.disabled=true;
+  try{
+    const {playerId,url,uploadFromDialog}=pendingPlayerPortrait;
+    const img=$('#portrait-crop-image');if(!img?.complete)throw new Error('L’aperçu du portrait n’est pas prêt.');
+    const zoom=Number($('#portrait-crop-zoom')?.value||1),px=Number($('#portrait-crop-x')?.value||50)/100,py=Number($('#portrait-crop-y')?.value||35)/100;
+    const ratio=4/5,iw=img.naturalWidth,ih=img.naturalHeight;
+    let sw=iw/zoom,sh=sw/ratio;if(sh>ih){sh=ih/zoom;sw=sh*ratio;}
+    const sx=Math.max(0,Math.min(iw-sw,px*(iw-sw))),sy=Math.max(0,Math.min(ih-sh,py*(ih-sh)));
+    const canvas=document.createElement('canvas');canvas.width=960;canvas.height=1200;
+    canvas.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('Export du portrait impossible.')),'image/png'));
+    URL.revokeObjectURL(url);pendingPlayerPortrait=null;await uploadPlayerPortrait(playerId,blob,uploadFromDialog);closeDialog();
+  }catch(error){toast(error.message||'Impossible d’enregistrer le portrait.','error');save.disabled=false;}
+});
+
 $('#dialog-content').addEventListener('change',event=>{
   if(event.target.matches('input[name=criterion]')){
     const row=event.target.closest('.criterion-measure-row');
