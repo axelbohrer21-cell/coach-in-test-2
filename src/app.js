@@ -463,6 +463,8 @@ $('#page-content').addEventListener('input',event=>{
   if(['library-search','library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
 $('#page-content').addEventListener('click',event=>{
+  const closeConversation=event.target.closest('[data-message-close]');
+  if(closeConversation){state.messagePartnerId='';render('messages');return;}
   const conversation=event.target.closest('[data-message-open]');
   if(conversation){state.messagePartnerId=conversation.dataset.messageOpen;render('messages');}
 });
