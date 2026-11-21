@@ -464,9 +464,9 @@ $('#page-content').addEventListener('input',event=>{
 });
 $('#page-content').addEventListener('click',event=>{
   const closeConversation=event.target.closest('[data-message-close]');
-  if(closeConversation){state.messagePartnerId='';render('messages');return;}
+  if(closeConversation){event.preventDefault();event.stopPropagation();state.messagePartnerId='';render('messages');return;}
   const conversation=event.target.closest('[data-message-open]');
-  if(conversation){state.messagePartnerId=conversation.dataset.messageOpen;render('messages');}
+  if(conversation){event.preventDefault();event.stopPropagation();state.messagePartnerId=conversation.dataset.messageOpen;render('messages');return;}
 });
 $('#page-content').addEventListener('change',event=>{
   if(event.target.id==='message-partner'){state.messagePartnerId=event.target.value;render('messages');}
