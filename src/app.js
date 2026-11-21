@@ -209,7 +209,8 @@ $('#page-content').addEventListener('click', async event=>{
     return;
   }
   const read=event.target.closest('[data-read-notification]'); if(read) return markNotificationRead(read.dataset.readNotification);
-  const week=event.target.closest('[data-week]'); if(week){state.planningWeekOffset=Number(week.dataset.week)===0?0:(state.planningWeekOffset||0)+Number(week.dataset.week);render('planning');}
+  const dayTab=event.target.closest('[data-planning-day]'); if(dayTab){state.planningDayIndex=Number(dayTab.dataset.planningDay);render('planning');return;}
+  const week=event.target.closest('[data-week]'); if(week){state.planningWeekOffset=Number(week.dataset.week)===0?0:(state.planningWeekOffset||0)+Number(week.dataset.week);state.planningDayIndex=Math.max(0,Math.min(6,(new Date().getDay()+6)%7));render('planning');}
 });
 $('#dialog-content').addEventListener('click',async event=>{
   if(event.target.closest('[data-generate-session]')){event.preventDefault();const button=event.target.closest('[data-generate-session]');button.disabled=true;try{generateSessionPlan();}catch(error){console.error('Coach In · génération de séance',error);toast(error.message||'La génération de la séance a échoué. Vérifie les informations puis réessaie.','error');}finally{button.disabled=false;}return;}
