@@ -865,7 +865,7 @@ function evaluationDialog(){
 
 function initializePlayerProfileTabs(){
   const dialog=$('#dialog-content');
-  if(!dialog?.querySelector('.player-profile-head'))return;
+  if(!dialog?.querySelector('.vip-player-card'))return;
   const sections=[...dialog.querySelectorAll('.sheet-section')];
   const groups=[
     {id:'profile',label:'Profil',match:['IDENTITÉ SPORTIVE','PROJET DU JOUEUR','COLLABORATION MULTI-COACHS']},
@@ -908,6 +908,14 @@ function playerMindmapMarkup(player,goals,average,reportCount,challenge,achievem
   '</div></div></section>';
 }
 function playerSheetDialog(playerId){
+  try { return renderPlayerSheetDialog(playerId); }
+  catch(error) {
+    console.error('Coach In · chargement de la fiche joueur', error);
+    toast(error?.message || 'La fiche joueur n’a pas pu être chargée. Réessaie après actualisation.', 'error');
+  }
+}
+
+function renderPlayerSheetDialog(playerId){
   const player=state.players.find(p=>p.id===playerId);if(!player)return;
   const coachId=state.user?.id;
   const reports=state.evaluations.filter(r=>r.player_id===playerId&&(!coachId||r.created_by===coachId)).sort((a,b)=>String(b.evaluated_at||b.created_at).localeCompare(String(a.evaluated_at||a.created_at)));
