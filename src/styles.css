@@ -4312,3 +4312,16 @@ body.camera-fullscreen-open{overflow:hidden}
 .physical-plan>.physical-safety-note{margin-top:13px}
 .physical-plan-actions{display:flex;justify-content:flex-end;margin-top:13px}
 @media(max-width:600px){.physical-hero{align-items:flex-start}.physical-mark{width:64px;height:64px;border-radius:17px;font-size:20px}#physical-training-form{grid-template-columns:1fr}.physical-method-grid{grid-template-columns:1fr}.physical-plan-meta{grid-template-columns:1fr}.physical-phase{grid-template-columns:1fr;gap:6px}.physical-phase-time{display:flex;align-items:center;gap:8px}.physical-plan-actions,.physical-plan-actions .btn{width:100%}}
+
+/* Bibliothèque physique tennis */
+.physical-criteria-grid{display:grid;gap:10px}.physical-criteria-grid>strong{font-size:13px;color:#dce9f7}.physical-criteria-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.physical-criterion{display:flex!important;align-items:flex-start;gap:9px;padding:10px 11px;border:1px solid #294967;border-radius:11px;background:#091a2e;cursor:pointer}
+.physical-criterion input{flex:none;width:16px;height:16px;margin:2px 0 0;accent-color:#48c5e7}
+.physical-criterion span{display:grid;gap:4px}.physical-criterion b{font-size:11px;color:#e8f3ff}.physical-criterion small{font-size:10px;line-height:1.45;color:#9eb4ca}
+.physical-template-grid{display:grid;gap:10px}.physical-template-card{display:grid;gap:12px;padding:14px;border:1px solid #29415f;border-radius:14px;background:#091a2e}
+.physical-template-card>div:first-child{display:grid;gap:5px}.physical-template-card b{font-size:13px;color:#eaf5ff}.physical-template-card p{margin:0;color:#b6c9dd;font-size:11px}.physical-template-card small{color:#8edfff;font-size:10px}
+.physical-template-sessions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.physical-template-sessions .btn{font-size:11px;padding:9px 10px;text-align:left}
+.physical-saved{margin-top:16px}.physical-saved-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid #263e5c}.physical-saved-row>div:first-child{display:grid;gap:5px;min-width:0}.physical-saved-row b{font-size:12px}.physical-saved-row p{margin:0;color:#a9c1d7;font-size:10px;line-height:1.5}.physical-saved-row small{color:#829bb5;font-size:10px}.physical-saved-row>div:last-child{display:flex;gap:6px;flex:none}.physical-saved-row .btn{padding:8px 10px;font-size:10px}
+.physical-criteria-reference{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.physical-criteria-reference>div{display:grid;gap:5px;padding:10px;border:1px solid #29415f;border-radius:10px;background:#091a2e}.physical-criteria-reference b{font-size:11px;color:#8edfff}.physical-criteria-reference small{font-size:10px;line-height:1.5;color:#b4c6d9}
+.physical-phase-body>p b{color:#8edfff}
+@media(max-width:600px){.physical-criteria-options,.physical-criteria-reference{grid-template-columns:1fr}.physical-template-sessions{grid-template-columns:1fr}.physical-saved-row{align-items:flex-start;flex-direction:column}.physical-saved-row>div:last-child{width:100%}.physical-saved-row .btn{flex:1}}
