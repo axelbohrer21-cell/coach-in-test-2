@@ -253,8 +253,8 @@ $('#page-content').addEventListener('click', async event=>{
     return;
   }
   const read=event.target.closest('[data-read-notification]'); if(read) return markNotificationRead(read.dataset.readNotification);
-  const dayTab=event.target.closest('[data-planning-day]'); if(dayTab){state.planningDayIndex=Number(dayTab.dataset.planningDay);render('planning');return;}
-  const week=event.target.closest('[data-week]'); if(week){state.planningWeekOffset=Number(week.dataset.week)===0?0:(state.planningWeekOffset||0)+Number(week.dataset.week);state.planningDayIndex=Math.max(0,Math.min(6,(new Date().getDay()+6)%7));render('planning');}
+  const dayTab=event.target.closest('[data-planning-day]'); if(dayTab){state.planningDayIndex=Number(dayTab.dataset.planningDay);render(state.profile?.role==='coach'?'planning':'bookings');return;}
+  const week=event.target.closest('[data-week]'); if(week){state.planningWeekOffset=Number(week.dataset.week)===0?0:(state.planningWeekOffset||0)+Number(week.dataset.week);state.planningDayIndex=Math.max(0,Math.min(6,(new Date().getDay()+6)%7));render(state.profile?.role==='coach'?'planning':'bookings');}
 });
 $('#dialog-content').addEventListener('click',async event=>{
   const personalizedSession=event.target.closest('[data-personalized-session]');
