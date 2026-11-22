@@ -4142,3 +4142,9 @@ body.camera-fullscreen-open{overflow:hidden}
 .planning-day-recap-stats strong{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
 .planning-day-recap-stats span{color:#a9bdd0;font-size:10px}
 @media(max-width:760px){.planning-day-recap{padding:12px}.planning-day-recap-heading h3{font-size:13px}.planning-day-recap-stats{gap:5px}.planning-day-recap-stats article{display:grid;gap:2px;padding:8px 6px;text-align:center}.planning-day-recap-stats strong{font-size:18px}.planning-day-recap-stats span{font-size:9px}}
+
+
+/* Planning: blocs de cours opaques pour masquer les créneaux en arrière-plan */
+.calendar-event[data-event-kind="session"]{background:color-mix(in srgb,var(--event-accent,#43c7f5) 94%,#071326)!important;backdrop-filter:none!important;}
+.calendar-group-frame{background:color-mix(in srgb,#7c5bbe 94%,#071326)!important;backdrop-filter:none!important;}
+.calendar-group-frame-label{background:transparent!important;}
