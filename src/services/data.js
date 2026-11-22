@@ -90,6 +90,8 @@ export const dataService = {
     const evaluationCriteria = evaluationIds.length
       ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds))
       : [];
+    const sessionFavorites = await unwrap(supabase.from('coach_session_favorites').select('session_id').eq('coach_id',userId));
+    const favoriteSessionIds = sessionFavorites.map(row => row.session_id);
     const notesBySession = new Map(privateNotes.map(row => [row.session_id, row.note]));
     const sessions = sessionRows.map(row => {
       const note = notesBySession.get(row.id) || '';
@@ -120,7 +122,7 @@ export const dataService = {
     ]);
     const playerProfileDetailsById = Object.fromEntries(profileDetailsRows.map(row=>[row.player_id,row]));
     const hydratedPlayers=await Promise.all(players.map(hydratePlayerCardPhoto));
-    Object.assign(state, { players:hydratedPlayers, sessions, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:loadedSessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
+    Object.assign(state, { players:hydratedPlayers, sessions, favoriteSessionIds, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:loadedSessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
   },
 
   async loadPlayerWorkspace() {
@@ -222,6 +224,15 @@ export const dataService = {
       if (error) throw error;
     }
     return review;
+  },
+  async setSessionFavorite(sessionId, isFavorite, coachId) {
+    if (isFavorite) {
+      const { error } = await supabase.from('coach_session_favorites').insert({ coach_id: coachId, session_id: sessionId });
+      if (error && error.code !== '23505') throw error;
+    } else {
+      const { error } = await supabase.from('coach_session_favorites').delete().eq('coach_id', coachId).eq('session_id', sessionId);
+      if (error) throw error;
+    }
   },
   async createEvaluation(payload) {
     const { data, error } = await supabase.from('evaluations').insert(payload).select('id,player_id,session_id,evaluated_at,score,technical_score,tactical_score,physical_score,mental_score,player_visible_comment,created_by,created_at').single();
