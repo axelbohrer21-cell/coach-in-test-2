@@ -41,15 +41,6 @@ export function playerTennisPage() {
   const reports = state.evaluations || [];
   const achievements = state.achievements || [];
   const matches = state.matchJournal || [];
-  const monthKey = localToday().slice(0,7);
-  const monthLabel = new Date(monthKey+'-15T12:00:00').toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-  const monthSessions = sessions.filter(row => String(row.session_date||'').startsWith(monthKey));
-  const monthReports = reports.filter(row => String(row.evaluated_at||row.created_at||'').startsWith(monthKey));
-  const monthAchievements = achievements.filter(row => String(row.unlocked_at||'').startsWith(monthKey));
-  const monthMinutes = monthSessions.reduce((sum,row)=>sum+Number(row.duration_minutes||0),0);
-  const monthScores = monthReports.map(row=>Number(row.score)).filter(value=>Number.isFinite(value)&&value>=0&&value<=20);
-  const avgScore = monthScores.length ? monthScores.reduce((a,b)=>a+b,0)/monthScores.length : null;
-
   const latestChallenge = (state.challenges||[]).find(row=>row.status==='active');
   const wins = matches.filter(row=>row.result==='Victoire').length;
   const bestRecent = matches.find(row=>row.result==='Victoire');
@@ -60,12 +51,6 @@ export function playerTennisPage() {
       <div class="passport-identity"><p class="eyebrow">MON PROFIL TENNIS · COACH IN</p><h2>${safe(profile.first_name)} ${safe(profile.last_name)}</h2><p>${safe(profile.player_type||'Profil joueur')} · ${safe(profile.age_category||'Catégorie non renseignée')}</p><div class="passport-tags"><span>Classement FFT : <b>${safe(profile.fft_ranking||'Non renseigné')}</b></span><span>Depuis le ${formatDate(profile.created_at,{month:'long',year:'numeric'})}</span></div></div>
       <span class="passport-stamp">CI<span>+</span></span>
     </section>
-    <div class="stats-grid passport-stats">
-      <article class="stat-card blue"><span>Séances réalisées</span><strong>${sessions.length}</strong><small>${Math.round(sessions.reduce((sum,row)=>sum+Number(row.duration_minutes||0),0)/60)} h sur le terrain</small></article>
-      <article class="stat-card purple"><span>Bilans partagés</span><strong>${reports.length}</strong><small>Évaluations accessibles</small></article>
-      <article class="stat-card green"><span>Compétences validées</span><strong>${achievements.length}</strong><small>Réussites débloquées</small></article>
-      <article class="stat-card orange"><span>Matchs renseignés</span><strong>${matches.length}</strong><small>${wins} victoire(s) dans ton journal</small></article>
-    </div>
     <section class="panel">
       <div class="section-heading"><div><p class="eyebrow">TON IDENTITÉ DE JOUEUR</p><h2>Ce qui te motive</h2></div><span class="tag">Modifiable par toi</span></div>
       <form id="player-profile-details-form" class="form-grid">
@@ -81,20 +66,7 @@ export function playerTennisPage() {
       <div class="passport-skills">${skills||'<p class="chart-empty">Tes réussites validées par tes coachs apparaîtront ici. Elles ne sont jamais ajoutées automatiquement.</p>'}</div>
       ${bestRecent?'<p class="passport-highlight">🏆 Dernière victoire renseignée : <b>'+safe(bestRecent.opponent_name||'Adversaire')+'</b> · '+safe(bestRecent.score||'Score non renseigné')+'</p>':''}
     </section>
-    <section class="panel monthly-review">
-      <div class="section-heading"><div><p class="eyebrow">BILAN AUTOMATIQUE</p><h2>Ton mois de ${safe(monthLabel)}</h2></div><span class="tag">Données réelles</span></div>
-      <div class="monthly-review-grid">
-        <article><span>Séances</span><strong>${monthSessions.length}</strong><small>${Math.floor(monthMinutes/60)} h ${monthMinutes%60} min de tennis</small></article>
-        <article><span>Bilans partagés</span><strong>${monthReports.length}</strong><small>${avgScore===null?'Pas de score ce mois-ci':'Moyenne des scores : '+avgScore.toFixed(1).replace('.',',')+'/20'}</small></article>
-        <article><span>Réussites</span><strong>${monthAchievements.length}</strong><small>Débloquées ce mois-ci</small></article>
-      </div>
-      <div class="monthly-review-notes">
-        <div><b>Ce qui a été travaillé</b><p>${monthSessions.length?[...new Set(monthSessions.map(row=>row.theme).filter(Boolean))].map(safe).join(' · ')||'Séances enregistrées sans thème précisé':'Aucune séance enregistrée ce mois-ci.'}</p></div>
-        <div><b>Le regard de tes coachs</b><p>${monthReports.map(row=>row.player_visible_comment).filter(Boolean).slice(0,2).map(safe).join(' · ')||'Aucun commentaire partagé ce mois-ci.'}</p></div>
-        <div><b>Ton prochain cap</b><p>${latestChallenge?safe(latestChallenge.criterion)+' — '+safe(latestChallenge.objective||'Défi en cours'):'Ton prochain objectif sera affiché ici dès qu’un défi sera défini avec ton coach.'}</p></div>
-      </div>
-      <p class="tiny muted">Ce bilan résume les séances, scores, commentaires et réussites enregistrés pendant le mois. Il ne remplace pas l’analyse pédagogique de ton coach.</p>
-    </section>`;
+    `;
 }
 
 export function playerMatchesPage() {
