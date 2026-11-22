@@ -103,8 +103,7 @@ const CYCLE_TEMPLATES = [
   {title:'Équilibre et coordination',exercises:['mobility-flow','core','jump-land'],progression:'Tenir une position et coordonner un lancer.'},
   {title:'Agilité ludique',exercises:['mirror','star','color-start'],progression:'Parcours courts, consignes variées.'},
   {title:'Défis moteurs tennis',exercises:['relay','mobility-flow','split'],progression:'Petits défis collectifs sans classement éliminatoire.'}
- ]}
-
+ ]},
  {id:'first-step-acceleration',title:'Cycle 4 semaines – Premier pas et accélération',focus:['first_step','reaction','acceleration','sprint'],audience:'Joueurs capables de respecter les consignes de départ et de freinage',sessions:[
   {title:'Réagir et déclencher',exercises:['first-step-call','split','color-start'],progression:'Priorité au timing du split-step et à la qualité du premier appui ; peu de répétitions.'},
   {title:'Accélérer sur courte distance',exercises:['short-sprint','first-step-call','lateral-push'],progression:'Départs variés sur 5 à 8 m, récupération complète.'},
