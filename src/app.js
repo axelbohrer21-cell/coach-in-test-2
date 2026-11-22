@@ -232,7 +232,6 @@ $('#page-content').addEventListener('click', async event=>{
   const week=event.target.closest('[data-week]'); if(week){state.planningWeekOffset=Number(week.dataset.week)===0?0:(state.planningWeekOffset||0)+Number(week.dataset.week);state.planningDayIndex=Math.max(0,Math.min(6,(new Date().getDay()+6)%7));render('planning');}
 });
 $('#dialog-content').addEventListener('click',async event=>{
-  if(event.target.closest('[data-generate-session]')){event.preventDefault();const button=event.target.closest('[data-generate-session]');button.disabled=true;try{generateSessionPlan();}catch(error){console.error('Coach In · génération de séance',error);toast(error.message||'La génération de la séance a échoué. Vérifie les informations puis réessaie.','error');}finally{button.disabled=false;}return;}
   const personalizedSession=event.target.closest('[data-personalized-session]');
   if(personalizedSession){const programStep=personalizedSession.dataset.programObjective?{objective:personalizedSession.dataset.programObjective,title:personalizedSession.dataset.programTitle,stage:personalizedSession.dataset.programStage,exerciseId:personalizedSession.dataset.programExercise||null}:null;sessionBuilderDialog(personalizedSession.dataset.personalizedSession,personalizedSession.dataset.sessionDate,personalizedSession.dataset.sessionTime,Number(personalizedSession.dataset.sessionDuration)||90,programStep);return;}
   if(event.target.closest('[data-use-generated-session]')){if(!generatedSessionPlan)return;const plan=generatedSessionPlan;closeDialog();sessionDialog(plan.session_date,plan.session_time,plan);return;}
@@ -829,7 +828,7 @@ function updateSessionCriterionOptions(selectedId=''){
  const rows=(state.criteria||[]).filter(row=>normalize(row.main_theme)===normalize(theme));
  const groups=new Map();
  rows.forEach(row=>{const key=String(row.subtheme||row.main_theme||'Autres');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);});
- const markup=[...groups.entries()].map(([group,items])=>'<div class="session-criterion-group"><strong>'+escapeHtml(group)+'</strong><div class="session-criterion-list">'+items.map(row=>'<label class="session-criterion-option"><input type="radio" name="work_criterion_id" value="'+escapeHtml(String(row.id))+'" '+(String(row.id)===String(selectedId)?'checked':'')+' required><span>'+escapeHtml(row.criterion)+'</span></label>').join('')+'</div></div>').join('');
+ const markup=[...groups.entries()].map(([group,items])=>'<div class="session-criterion-group"><strong>'+escapeHtml(group)+'</strong><div class="session-criterion-list">'+items.map(row=>'<label class="session-criterion-option"><input type="radio" name="work_criterion_id" value="'+escapeHtml(String(row.id))+'" '+(String(row.id)===String(selectedId)?'checked':'')+'><span>'+escapeHtml(row.criterion)+'</span></label>').join('')+'</div></div>').join('');
  container.innerHTML=rows.length?'<p class="tiny muted">Clique sur le critère exact à travailler. Les exercices seront construits à partir de ce choix.</p>'+markup:'<p class="tiny muted">Aucun critère enregistré pour cette thématique. La séance sera construite à partir du thème et de l’objectif pédagogique.</p>';
 }
 
@@ -850,7 +849,7 @@ function sessionBuilderDialog(playerId=null, sessionDate=toLocalISO(new Date()),
  '<label class="span-2">Niveau de difficulté<select name="difficulty"><option value="very_easy">Très facile</option><option value="easy">Facile</option><option value="medium" selected>Moyen</option><option value="hard">Difficile</option><option value="very_hard">Très difficile</option></select></label>'+
  
  '<div class="span-2 session-builder-tip"><strong>'+(priority?'✦ Priorité issue des bilans : '+escapeHtml(priority.criterion):'Analyse en attente : priorité non confirmée')+'</strong><p>'+(priority?'Cette proposition s’appuie sur les critères d’amélioration retrouvés sur plusieurs journées d’évaluation.':'Coach In ne force pas de priorité sans observations suffisantes. Tu peux choisir un axe à partir du dernier bilan.')+'</p><small>Tu gardes la main : tu peux modifier le thème, l’objectif et le critère avant de générer la séance. La séance suivra le critère effectivement sélectionné.</small></div>'+
- '<div id="session-builder-preview" class="span-2"></div><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button type="button" class="btn primary" data-generate-session>Générer la séance</button></div></form>');
+ '<div id="session-builder-preview" class="span-2"></div><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button type="submit" class="btn primary" data-generate-session>Générer la séance</button></div></form>');
  const form=$('#session-builder-form');if(form){updateSessionObjectiveOptions();updateSessionCriterionOptions((state.criteria||[]).find(row=>normTheme(row.criterion)===normTheme(priority?.criterion))?.id||'');if(priority&&!programStep?.objective&&!programStep?.exerciseId){const recommended=coachObjectives().find(goal=>goal.criteria.some(item=>normTheme(item)===normTheme(priority.criterion)))||coachObjectives().find(goal=>normTheme(goal.theme)===normTheme(priority.main_theme));if(recommended){form.elements.theme.value=recommended.theme;updateSessionObjectiveOptions();form.elements.objective_id.value=recommended.id;updateSessionCriterionOptions((state.criteria||[]).find(row=>normTheme(row.criterion)===normTheme(priority?.criterion))?.id||'');}}form.elements.level.value=player?.player_type==='Compétition'?'Compétition':'Intermédiaire';const tip=form.querySelector('.session-builder-tip');if(tip&&programStep)tip.innerHTML='<strong>'+escapeHtml(programStep.title||'Séance du cycle')+' · '+escapeHtml(programStep.stage||'')+'</strong><p>Objectif du cycle préchargé : '+escapeHtml(programStep.objective||'')+'</p>';}
 }
 function normTheme(v){return String(v||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]/g,'');}
@@ -889,7 +888,6 @@ function sessionBuilderExerciseText(item){
 
 function generateSessionPlan(){
  const form=$('#session-builder-form');if(!form)return;const values=Object.fromEntries(new FormData(form));
- if(!isPrivateLessonDateAllowed(values.session_date)){toast('Cette date tombe pendant une période sans cours particuliers. Choisis une autre date.','error');return;}
  const duration=Number(values.duration_minutes),player=state.players.find(p=>p.id===values.player_id)||{},selectedObjective=findObjective(values.objective_id),selectedCriterion=(state.criteria||[]).find(row=>String(row.id)===String(values.work_criterion_id))||null;
  let exerciseOne='',exerciseTwo='',theme=values.theme||'Construction du point',visibleSummary='',coachingPlan=null,phases=[];
  const recent=state.sessions.filter(x=>x.player_id===values.player_id).sort((a,b)=>String(b.session_date||'').localeCompare(String(a.session_date||'')));
@@ -1303,6 +1301,14 @@ $('#dialog-content').addEventListener('click',event=>{if(event.target.closest('[
 $('#dialog-content').addEventListener('change',event=>{if(['theme','level','exercise_one'].includes(event.target.name)&&event.target.form?.id==='session-builder-form')updateSessionBuilderExerciseOptions();if(event.target.name==='audience' && event.target.form?.id==='group-series-form'){const target=event.target.form.elements.target_sessions;const weekday=event.target.form.elements.weekday;if(target)target.value=event.target.value==='adultes'?28:30;if(weekday)weekday.value=event.target.value==='adultes'?'1':'3';}if(event.target.name==='birth_date'){ const category=$('#player-form [name=age_category]');if(category)category.value=calculateAgeCategory(event.target.value, new Date().getFullYear());}if(event.target.matches('input[name=criterion]')){const row=event.target.closest('.criterion-measure-row');const measure=row?.querySelector('.criterion-measure');if(measure)measure.disabled=!event.target.checked;}});
 $('#dialog-content').addEventListener('submit',async event=>{
   event.preventDefault();const form=event.target;
+  if(form.id==='session-builder-form'){
+    const button=form.querySelector('[data-generate-session]');
+    if(button)button.disabled=true;
+    try{generateSessionPlan();}
+    catch(error){console.error('Coach In · génération de séance',error);toast(error?.message||'La génération a échoué. Vérifie les informations et réessaie.','error');}
+    finally{if(button)button.disabled=false;}
+    return;
+  }
   if(form.dataset.submitting==='true')return;
   form.dataset.submitting='true';
   const submitButtons=[...form.querySelectorAll('button[type="submit"],button:not([type])')];
