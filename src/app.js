@@ -20,6 +20,7 @@ let signupMode = false;
 let weatherRequest = 0;
 let messageChannel = null;
 let notificationChannel = null;
+let sharedScheduleChannel = null;
 let notificationRefreshPromise = null;
 let messageRefreshPromise = null;
 let notificationRetryCount = 0;
@@ -65,6 +66,7 @@ function render(page) {
   if (!navItems.some(item => item[0] === page)) page = 'dashboard';
   state.currentPage = page;
   subscribeToNotifications();
+  subscribeToSharedSchedule();
   $('#navigation').innerHTML = navItems.map(([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}</button>`).join('');
   const [kicker,title,description] = pageMeta[page];
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
@@ -1017,6 +1019,7 @@ async function refreshMessagesOnly(){
 function stopRealtimeChannels(){
   if(messageChannel){const channel=messageChannel;messageChannel=null;supabase.removeChannel(channel);}
   if(notificationChannel){const channel=notificationChannel;notificationChannel=null;supabase.removeChannel(channel);}
+  if(sharedScheduleChannel){const channel=sharedScheduleChannel;sharedScheduleChannel=null;supabase.removeChannel(channel);}
   messageRetryCount=0;notificationRetryCount=0;
 }
 
@@ -1051,6 +1054,27 @@ async function loadWeatherForecast(){
 }
 function weatherDescription(code){const c=Number(code);if(c===0)return'ciel dégagé';if([1,2,3].includes(c))return'nuageux';if([45,48].includes(c))return'brouillard';if([51,53,55,56,57].includes(c))return'bruine';if([61,63,65,66,67,80,81,82].includes(c))return'pluie';if([71,73,75,77,85,86].includes(c))return'neige';if([95,96,99].includes(c))return'orage';return'conditions météo';}
 
+
+function subscribeToSharedSchedule(){
+ if(sharedScheduleChannel||!state.user||!state.profile)return;
+ const channel=supabase.channel('coach-in-shared-courts-'+state.user.id)
+  .on('postgres_changes',{event:'*',schema:'public',table:'shared_court_occupancy'},async()=>{
+   try{
+    if(state.profile.role==='coach'){
+     if(['planning','bookings'].includes(state.currentPage))await refreshAndRender();
+    }else{
+     await dataService.loadSharedCourtOccupancy();
+     if(state.currentPage==='bookings')render('bookings');
+    }
+   }catch(error){toast(error.message||'Actualisation du planning partagé impossible.','error');}
+  });
+ sharedScheduleChannel=channel;
+ channel.subscribe(status=>{
+  if(['CHANNEL_ERROR','TIMED_OUT'].includes(status)&&sharedScheduleChannel===channel){
+   sharedScheduleChannel=null;
+  }
+ });
+}
 
 function subscribeToNotifications(){
  if(notificationChannel||!state.user||!state.profile)return;
