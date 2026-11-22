@@ -5,11 +5,11 @@ import { newlyUnlockedAchievements, recommendChallenge, challengeEvaluationResul
 async function rows(query) { const { data, error } = await query; if (error) throw error; return data || []; }
 
 export const progressionService = {
-  async saveEvaluation({ playerId, coachId, scores, selectedCriteria, playerVisibleComment = '', notifyPlayer = true }) {
+  async saveEvaluation({ playerId, coachId, scores, selectedCriteria, sessionId = null, playerVisibleComment = '', notifyPlayer = true }) {
     validateEvaluationCriteria(selectedCriteria);
     const score = calculateAverage(scores);
     const { data: evaluation, error } = await supabase.from('evaluations').insert({
-      player_id: playerId, created_by: coachId, ...scores, score,
+      player_id: playerId, session_id: sessionId || null, created_by: coachId, ...scores, score,
       player_visible_comment: String(playerVisibleComment || '').trim()
     }).select('id,player_id,session_id,evaluated_at,score,technical_score,tactical_score,physical_score,mental_score,player_visible_comment,created_by,created_at').single();
     if (error) throw error;
