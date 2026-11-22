@@ -3,7 +3,7 @@ import { state, resetState } from './core/state.js';
 import { supabase } from './core/supabase.js';
 import { authService } from './services/auth.js';
 import { dataService } from './services/data.js';
-import { pageMeta, renderPage, libraryItemsForCoach, libraryCard } from './views/pages.js';
+import { pageMeta, renderPage, libraryItemsForCoach, libraryCard, buildPhysicalSession } from './views/pages.js';
 import { bookingService } from './services/booking.js';
 import { notificationService } from './services/notifications.js';
 import { calculateAgeCategory, toLocalISO } from './domain/tennis.js';
@@ -33,7 +33,7 @@ let messageRetryCount = 0;
 let videoCameraStream = null;
 let videoCameraRecorder = null;
 let videoCameraChunks = [];
-const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
+const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['physical','Prépa physique','↗'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Accueil','⌂'], ['passport','Passeport','✦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
 
@@ -120,6 +120,16 @@ $('#page-actions').addEventListener('click', event => {
   if (button) addPlayerDialog();
 });
 
+$('#page-content').addEventListener('submit',event=>{
+ if(event.target?.id!=='physical-training-form')return;
+ event.preventDefault();
+ const values=Object.fromEntries(new FormData(event.target));
+ state.physicalTrainingPlan=buildPhysicalSession({focus:values.focus,groupSize:values.groupSize,ageGroup:values.ageGroup,level:values.level,equipment:values.equipment});
+ render('physical');
+});
+$('#page-content').addEventListener('click',event=>{
+ if(event.target.closest('[data-physical-reset]')){state.physicalTrainingPlan=null;render('physical');}
+});
 $('#page-content').addEventListener('keydown', event=>{
   const card=event.target.closest('[data-calendar-event]');
   if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();card.click();}
