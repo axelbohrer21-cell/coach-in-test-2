@@ -4386,3 +4386,18 @@ body.camera-fullscreen-open{overflow:hidden}
  .mobile-logout:active{transform:scale(.97);background:rgba(155,57,73,.32)}
 }
 @media(max-width:370px){.mobile-logout{padding:8px 9px;gap:4px;font-size:10px}.mobile-logout span:first-child{font-size:15px}}
+
+
+/* Profil joueur intégré à l'accueil */
+.player-home-profile{padding:0;overflow:hidden}
+.player-home-profile>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 19px;cursor:pointer;list-style:none}
+.player-home-profile>summary::-webkit-details-marker{display:none}
+.player-home-profile>summary:after{content:"＋";display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:10px;background:#183c55;color:#8ee6db;font-size:19px;font-weight:800}
+.player-home-profile[open]>summary:after{content:"−"}
+.player-home-profile>summary>span:first-child{display:grid;gap:4px}
+.player-home-profile>summary b{font-size:15px;color:#f4f8ff}
+.player-home-profile>summary small{font-size:11px;color:#9aacc5;line-height:1.4}
+.player-home-profile-content{display:grid;gap:14px;padding:0 16px 16px;border-top:1px solid #263e5c}
+.player-home-profile-content>.passport-hero{margin-top:14px}
+.player-home-profile-content>.player-game-card{margin-top:14px}
+@media(max-width:600px){.player-home-profile>summary{padding:14px}.player-home-profile-content{padding:0 10px 12px}}
