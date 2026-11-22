@@ -36,7 +36,7 @@ let videoCameraRecorder = null;
 let videoCameraChunks = [];
 const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['physical','Prépa physique','↗'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
-const playerNav = [ ['dashboard','Accueil','⌂'], ['passport','Passeport','✦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
+const playerNav = [ ['dashboard','Accueil','⌂'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
 
 function showAuth(message='') {
   $('#auth-view').classList.remove('hidden'); $('#app-view').classList.add('hidden');
