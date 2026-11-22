@@ -7,6 +7,12 @@ async function rows(query) { const { data, error } = await query; if (error) thr
 export const progressionService = {
   async saveEvaluation({ playerId, coachId, scores, selectedCriteria, sessionId = null, playerVisibleComment = '', notifyPlayer = true }) {
     validateEvaluationCriteria(selectedCriteria);
+    if (sessionId) {
+      const { data: linkedSession, error: sessionError } = await supabase.from('training_sessions')
+        .select('id').eq('id', sessionId).eq('player_id', playerId).eq('created_by', coachId).maybeSingle();
+      if (sessionError) throw sessionError;
+      if (!linkedSession) throw new Error('La séance sélectionnée ne correspond pas à ce joueur ou à ton espace coach.');
+    }
     const score = calculateAverage(scores);
     const { data: evaluation, error } = await supabase.from('evaluations').insert({
       player_id: playerId, session_id: sessionId || null, created_by: coachId, ...scores, score,
