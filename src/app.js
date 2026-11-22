@@ -155,6 +155,25 @@ $('#page-content').addEventListener('click', async event=>{
   const share=event.target.closest('[data-share-player]'); if(share) return sharePlayerDialog(share.dataset.sharePlayer);
   const invitation=event.target.closest('[data-coach-invitation]'); if(invitation) return respondCoachInvitation(invitation.dataset.coachInvitation, invitation.dataset.accept==='true');
   const revokeShare=event.target.closest('[data-revoke-coach-share]'); if(revokeShare) return revokeCoachShare(revokeShare.dataset.revokeCoachShare,revokeShare.dataset.playerId);
+  const favoriteSession=event.target.closest('[data-favorite-session]');
+  if(favoriteSession){
+    const sessionId=favoriteSession.dataset.favoriteSession;
+    const isFavorite=(state.favoriteSessionIds||[]).includes(sessionId);
+    favoriteSession.disabled=true;
+    try{
+      await dataService.setSessionFavorite(sessionId,!isFavorite,state.user.id);
+      state.favoriteSessionIds=isFavorite?(state.favoriteSessionIds||[]).filter(id=>id!==sessionId):[...(state.favoriteSessionIds||[]),sessionId];
+      render('sessions');toast(isFavorite?'Séance retirée des favoris.':'Séance ajoutée aux favoris.');
+    }catch(error){favoriteSession.disabled=false;toast(error.message||'Impossible de modifier les favoris.','error');}
+    return;
+  }
+  const duplicateSession=event.target.closest('[data-duplicate-session]');
+  if(duplicateSession){
+    const source=(state.sessions||[]).find(row=>row.id===duplicateSession.dataset.duplicateSession);
+    if(!source){toast('Séance introuvable.','error');return;}
+    sessionDialog(undefined,source.session_time||'17:00',{generated:true,player_id:source.player_id,duration_minutes:source.duration_minutes,theme:source.theme,exercise_1:source.exercise_1,exercise_2:source.exercise_2,player_visible_summary:source.player_visible_summary});
+    return;
+  }
   const action=event.target.closest('[data-action]')?.dataset.action;
   if(action==='generate-session') return sessionBuilderDialog();
   const reviewSession=event.target.closest('[data-review-session]'); if(reviewSession) return sessionReviewDialog(reviewSession.dataset.reviewSession);
