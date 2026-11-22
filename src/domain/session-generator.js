@@ -339,11 +339,11 @@ export function generateOriginalSession({
     curriculumActivities = buildCurriculumActivities(matchedObjective, minutes, customExercises);
     const fullCurriculum = buildCurriculumActivities(matchedObjective, 120, customExercises);
     exerciseOneOptions = fullCurriculum.slice(1, -1).map((row, index) => ({
-      title: row[0] || row.name || ('Variante ' + (index + 1)),
+      title: row.name || ('Variante ' + (index + 1)),
       content: [
-        row[1] ? 'Mise en place : ' + row[1] : '',
-        row[2] ? 'Consignes : ' + row[2] : '',
-        row[3] ? 'Réussite observée : ' + row[3] : ''
+        row.setup ? 'Mise en place : ' + row.setup : '',
+        row.procedure ? 'Consignes : ' + row.procedure : '',
+        row.scoring ? 'Réussite observée : ' + row.scoring : ''
       ].filter(Boolean).join(' ')
     })).filter(option => option.content);
     if (curriculumActivities.length >= 3) {
