@@ -98,6 +98,14 @@ export const dataService = {
     Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
   },
 
+  async loadSharedCourtOccupancy() {
+    const rows = await unwrap(supabase.from('shared_court_occupancy')
+      .select('id,coach_id,session_date,start_time,end_time,court_number,source_kind,status')
+      .order('session_date').order('start_time'));
+    state.sharedCourtOccupancy = rows;
+    return rows;
+  },
+
   async loadPlayerWorkspace() {
     const [sessions, evaluations, requests, notifications, notificationPreferences, challenges, achievements, coachLinks, videoRows] = await Promise.all([
       unwrap(supabase.from('player_sessions').select('*').order('session_date', { ascending: false })),
@@ -127,6 +135,7 @@ export const dataService = {
     ]);
     const activeCoachIds = playerCoaches.map(row => row.id);
     const weeklyAvailability = activeCoachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',activeCoachIds).eq('active',true).order('weekday').order('start_time')) : [];
+    const sharedCourtOccupancy = await this.loadSharedCourtOccupancy();
     const [hydratedMessages, videoAnalyses] = await Promise.all([
       hydrateMessages(messages),
       hydrateVideoAnalyses(videoRows)
@@ -136,7 +145,7 @@ export const dataService = {
       unwrap(supabase.from('player_match_journal').select('*').order('match_date',{ascending:false})),
       unwrap(supabase.from('club_events').select('*').order('starts_at'))
     ]);
-    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, playerCoachHistory, weeklyAvailability, messages:hydratedMessages, videoAnalyses, playerProfileDetails, matchJournal, clubEvents });
+    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, sharedCourtOccupancy, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, playerCoachHistory, weeklyAvailability, messages:hydratedMessages, videoAnalyses, playerProfileDetails, matchJournal, clubEvents });
   },
 
   async revokeCoachPlayerInvitation(invitationId) {
