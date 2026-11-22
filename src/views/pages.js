@@ -504,43 +504,54 @@ function libraryPage() {
   return '<section class="panel library-page"><div class="section-heading"><div><p class="eyebrow">RESSOURCES PÉDAGOGIQUES</p><h2>Bibliothèque de séances</h2><p class="tiny muted">Tes contenus personnels et les ateliers issus du programme collectif des 30 semaines.</p></div><button class="btn primary" data-action="new-library-item">＋ Ajouter un contenu</button></div><div class="toolbar library-toolbar"><input class="search-input" id="library-search" placeholder="Rechercher un exercice, un thème, un objectif…"><select class="select-input" id="library-category"><option value="all">Tous les formats</option><option value="collectif">Cours collectifs</option><option value="particulier">Cours particuliers</option></select><select class="select-input" id="library-theme"><option value="all">Tous les thèmes</option>'+themes.map(x=>'<option value="'+escapeHtml(x)+'">'+escapeHtml(x)+'</option>').join('')+'</select><select class="select-input" id="library-level"><option value="all">Tous les niveaux</option>'+levels.map(x=>'<option value="'+escapeHtml(x)+'">'+escapeHtml(x)+'</option>').join('')+'</select></div><div class="library-count-line"><span>'+items.length+' contenus disponibles</span><span>Classement alphabétique</span></div><div id="library-results" class="library-results">'+(cards||emptyState('Bibliothèque à construire','Ajoute tes contenus collectifs et particuliers pour les retrouver rapidement.'))+'</div></section>';
 }
 function bookingsPage(isCoach) {
-  const rows = state.bookingRequests.map(b=>`<article class="list-card"><div class="list-date"><strong>${formatDate(b.session_date,{day:'2-digit',month:'short'})}</strong><small>${formatTime(b.start_time)}</small></div><div class="list-main"><strong>${escapeHtml(isCoach?playerName(b.player_id):'Cours particulier')}</strong><span>${b.duration_minutes} min · Court ${b.court_number || '—'}</span></div><span class="tag">${escapeHtml(b.status)}</span>${isCoach&&b.status==='pending'?`<button class="btn subtle" data-booking="${b.id}" data-status="accepted">Accepter</button><button class="btn danger" data-booking="${b.id}" data-status="rejected">Refuser</button>`:''}${!isCoach&&['pending','accepted'].includes(b.status)?`<button class="btn danger" data-cancel-booking="${b.id}">Annuler</button>`:''}</article>`).join('');
-  if (isCoach) return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">COURS PARTICULIERS</p><h2>Demandes de réservation</h2></div></div>${rows || emptyState('Aucune réservation','Les demandes et cours particuliers apparaîtront ici.')}</section>`;
+  const rows = state.bookingRequests.map(b=>`<article class="list-card"><div class="list-date"><strong>${formatDate(b.session_date,{day:'2-digit',month:'short'})${</strong><small>${formatTime(b.start_time)${</small></div><div class="list-main"><strong>${escapeHtml(isCoach?playerName(b.player_id):'Cours particulier')${</strong><span>${b.duration_minutes${ min · Court ${b.court_number || '—'${</span></div><span class="tag">${escapeHtml(b.status)${</span>${isCoach&&b.status==='pending'?`<button class="btn subtle" data-booking="${b.id${" data-status="accepted">Accepter</button><button class="btn danger" data-booking="${b.id${" data-status="rejected">Refuser</button>`:''${${!isCoach&&['pending','accepted'].includes(b.status)?`<button class="btn danger" data-cancel-booking="${b.id${">Annuler</button>`:''${</article>`).join('');
+  if (isCoach) return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">COURS PARTICULIERS</p><h2>Demandes de réservation</h2></div></div>${rows || emptyState('Aucune réservation','Les demandes et cours particuliers apparaîtront ici.')${</section>`;
   const coaches=state.playerCoaches||[];
-  if(!coaches.length) return `<section class="panel">${emptyState('Aucun coach associé','Associe-toi à un coach pour consulter son planning et demander un cours particulier.')}</section>`;
+  if(!coaches.length) return `<section class="panel">${emptyState('Aucun coach associé','Associe-toi à un coach pour consulter son planning et demander un cours particulier.')${</section>`;
   const selected=coaches.find(c=>c.id===state.bookingCalendarCoachId)||coaches[0];
   state.bookingCalendarCoachId=selected.id;
   const offset=Number(state.bookingCalendarWeekOffset||0);
   const monday=new Date();monday.setHours(12,0,0,0);monday.setDate(monday.getDate()-((monday.getDay()+6)%7)+offset*7);
   const days=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return {date:toLocalISO(d),day:d,weekday:d.getDay()||7};});
   const occupied=(state.sharedCourtOccupancy||[]).filter(r=>r.coach_id===selected.id&&r.session_date>=days[0].date&&r.session_date<=days[6].date);
-  const availability=(state.weeklyAvailability||[]).filter(a=>a.coach_id===selected.id&&a.active);
+  const availability=(state.weeklyAvailability||[]).filter(av=>av.coach_id===selected.id&&av.active);
   const mins=t=>{const p=String(t||'00:00').split(':').map(Number);return p[0]*60+p[1];};
   const time=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
-  const coachOptions=coaches.map(c=>`<option value="${c.id}" ${c.id===selected.id?'selected':''}>${escapeHtml(c.first_name+' '+c.last_name)}</option>`).join('');
-  const dayCards=days.map(({date,day,weekday})=>{
-    const dayAvail=availability.filter(a=>Number(a.weekday)===weekday);
-    const dayBusy=occupied.filter(r=>r.session_date===date).sort((a,b)=>String(a.start_time).localeCompare(String(b.start_time)));
-    const busyHtml=dayBusy.map(r=>`<div class="coach-calendar-busy"><b>${formatTime(r.start_time)}–${formatTime(r.end_time)}</b><span>${r.source_kind==='group_session'?'Cours collectif':r.source_kind==='private_session'?'Cours particulier':'Réservation'}</span><small>${r.court_number?'Court '+r.court_number:'Tous les courts'}</small></div>`).join('');
-    const slots=[];
-    for(const a of dayAvail){
-      const start=mins(a.start_time),end=mins(a.end_time);
-      for(let t=Math.ceil(start/30)*30;t+60<=end;t+=30){
-        const courts=a.court_number?[Number(a.court_number)]:[1,2,3,4];
-        const freeCourt=courts.find(c=>!dayBusy.some(r=>(!r.court_number||Number(r.court_number)===c)&&mins(r.start_time)<t+60&&mins(r.end_time)>t));
-        if(freeCourt) slots.push({t,court:freeCourt});
+  const dayNames=days.map(({date,day})=>`<div class="coach-weekday ${date===toLocalISO(new Date())?'is-today':''${"><b>${day.toLocaleDateString('fr-FR',{weekday:'short'})${</b><span>${day.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})${</span></div>`).join('');
+  const axis=Array.from({length:15},(_,i)=>`<div class="coach-time-label" style="top:${i*60${px">${String(i+8).padStart(2,'0')${:00</div>`).join('');
+  const dayColumns=days.map(({date,weekday})=>{
+    const dayAvail=availability.filter(av=>Number(av.weekday)===weekday);
+    const dayBusy=occupied.filter(r=>r.session_date===date).sort((x,y)=>mins(x.start_time)-mins(y.start_time));
+    const busyHtml=dayBusy.map(r=>{
+      const start=Math.max(480,mins(r.start_time)),end=Math.min(1320,mins(r.end_time));
+      if(end<=start)return '';
+      const top=start-480,height=Math.max(25,end-start);
+      const kind=r.source_kind==='group_session'?'Cours collectif':r.source_kind==='private_session'?'Cours particulier':'Réservation';
+      const court=Number(r.court_number),lane=court>=1&&court<=4?court-1:0;
+      const left=court>=1&&court<=4?${lane*25${+'%':'0',width=court>=1&&court<=4?'25%':'100%';
+      return `<div class="coach-week-event ${r.source_kind==='group_session'?'is-group':'is-private'${" style="top:${top${px;height:${height${px;left:${left${;width:${width${" title="${kind${ · ${time(start)${–${time(end)${"><b>${kind${</b><span>${time(start)${–${time(end)${</span><small>${court?'Court '+court:'Tous les courts'${</small></div>`;
+    }).join('');
+    const slotMap=new Map();
+    for(const av of dayAvail){
+      const start=Math.max(480,mins(av.start_time)),end=Math.min(1320,mins(av.end_time));
+      const courts=av.court_number?[Number(av.court_number)]:[1,2,3,4];
+      for(let t=Math.ceil(start/30)*30;t+60<=end;t+=30)for(const court of courts){
+        if(court<1||court>4)continue;
+        const collision=dayBusy.some(r=>(!r.court_number||Number(r.court_number)===court)&&mins(r.start_time)<t+60&&mins(r.end_time)>t);
+        if(!collision)slotMap.set(${{t}-${{court}${,{t,court});
       }
     }
-    const unique=[...new Map(slots.map(s=>[s.t,s])).values()].sort((a,b)=>a.t-b.t);
-    const slotsHtml=unique.map(s=>`<button class="coach-calendar-slot" data-booking-slot data-coach="${selected.id}" data-date="${date}" data-time="${time(s.t)}" data-court="${s.court}">${time(s.t)} <small>Libre</small></button>`).join('');
     const past=date<toLocalISO(new Date());
-    return `<article class="coach-calendar-day ${past?'is-past':''}"><header><b>${day.toLocaleDateString('fr-FR',{weekday:'short'})}</b><span>${day.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})}</span></header><div class="coach-calendar-events">${busyHtml||'<p class="coach-calendar-empty">Aucun cours programmé</p>'}</div><div class="coach-calendar-free"><small>CRÉNEAUX DISPONIBLES</small>${past?'<span class="muted">Date passée</span>':slotsHtml||'<span class="muted">Aucun créneau libre publié</span>'}</div></article>`;
+    const freeHtml=[...slotMap.values()].sort((x,y)=>x.t-y.t||x.court-y.court).map(slot=>{
+      const lane=slot.court-1;
+      return `<button class="coach-week-free" ${past?'disabled':''${ data-booking-slot data-coach="${selected.id${" data-date="${date${" data-time="${time(slot.t)${" data-court="${slot.court${" style="top:${slot.t-480${px;left:${lane*25${%;width:25%;height:56px" title="Demander ${time(slot.t)${ · Court ${slot.court${"><b>${time(slot.t)${</b><small>C${slot.court${ · Libre</small></button>`;
+    }).join('');
+    return `<section class="coach-week-day ${past?'is-past':''${"><div class="coach-week-track">${Array.from({length:28},(_,i)=>`<i class="coach-half-hour-line" style="top:${i*30${px"></i>`).join('')${${busyHtml${${freeHtml${</div></section>`;
   }).join('');
   const startLabel=days[0].day.toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
   const endLabel=days[6].day.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-  const today = new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'});
-  const playerBookings=state.bookingRequests.map(b=>`<article class="list-card"><div class="list-date"><strong>${formatDate(b.session_date,{day:'2-digit',month:'short'})}</strong><small>${formatTime(b.start_time)}</small></div><div class="list-main"><strong>Cours particulier</strong><span>${b.duration_minutes} min · Court ${b.court_number||'—'}</span></div><span class="tag">${escapeHtml(b.status)}</span>${['pending','accepted'].includes(b.status)?`<button class="btn danger" data-cancel-booking="${b.id}">Annuler</button>`:''}</article>`).join('');
-  return `<section class="panel coach-calendar-panel"><div class="section-heading"><div><p class="eyebrow">PLANNING DE TON COACH</p><h2>Choisis ton prochain entraînement</h2><p class="tiny muted">Consulte les cours collectifs et particuliers déjà programmés, puis sélectionne un créneau libre. L’identité des autres joueurs reste privée.</p></div><span class="tag">${escapeHtml(selected.first_name+' '+selected.last_name)}</span></div><label class="coach-calendar-coach">Mon coach<select id="booking-calendar-coach">${coachOptions}</select></label><div class="coach-calendar-toolbar"><button class="btn subtle" data-booking-week="-1">← Semaine précédente</button><strong>${startLabel} – ${endLabel}</strong><button class="btn subtle" data-booking-week="1">Semaine suivante →</button></div><div class="coach-calendar-legend"><span><i class="free-dot"></i> Libre · sélectionnable</span><span><i class="busy-dot"></i> Occupé</span></div><div class="coach-calendar-grid">${dayCards}</div><p class="tiny muted">Les créneaux proposés respectent les disponibilités publiées par le coach et les occupations connues. La durée choisie et la disponibilité définitive seront revérifiées lors de l’envoi.</p></section><section class="panel"><div class="section-heading"><div><p class="eyebrow">COURS PARTICULIERS</p><h2>Mes demandes et réservations</h2></div><button class="btn primary" data-action="request-booking">＋ Demander un cours</button></div>${playerBookings||emptyState('Aucune réservation','Tes demandes et cours particuliers apparaîtront ici.')}</section>`;
+  const playerBookings=state.bookingRequests.map(b=>`<article class="list-card"><div class="list-date"><strong>${formatDate(b.session_date,{day:'2-digit',month:'short'})${</strong><small>${formatTime(b.start_time)${</small></div><div class="list-main"><strong>Cours particulier</strong><span>${b.duration_minutes${ min · Court ${b.court_number||'—'${</span></div><span class="tag">${escapeHtml(b.status)${</span>${['pending','accepted'].includes(b.status)?`<button class="btn danger" data-cancel-booking="${b.id${">Annuler</button>`:''${</article>`).join('');
+  return `<section class="panel coach-calendar-panel"><div class="section-heading"><div><p class="eyebrow">PLANNING DE TON COACH</p><h2>Réserve directement dans son agenda</h2><p class="tiny muted">Visualise sa semaine heure par heure. Les cours collectifs et particuliers sont affichés comme occupés ; les créneaux verts sont sélectionnables. Les noms des autres joueurs restent privés.</p></div><span class="tag">${escapeHtml(selected.first_name+' '+selected.last_name)${</span></div><label class="coach-calendar-coach">Mon coach<select id="booking-calendar-coach">${coaches.map(c=>`<option value="${c.id${" ${c.id===selected.id?'selected':''${>${escapeHtml(c.first_name+' '+c.last_name)${</option>`).join('')${</select></label><div class="coach-calendar-toolbar"><button class="btn subtle" data-booking-week="-1">← Semaine précédente</button><strong>${startLabel${ – ${endLabel${</strong><button class="btn subtle" data-booking-week="1">Semaine suivante →</button></div><div class="coach-calendar-legend"><span><i class="free-dot"></i> Créneau libre · cliquer pour réserver</span><span><i class="busy-dot"></i> Cours déjà programmé</span><span><i class="group-dot"></i> Cours collectif</span></div><div class="coach-week-scroll"><div class="coach-week-grid"><div class="coach-week-head"><div class="coach-week-corner">HEURE</div>${dayNames${</div><div class="coach-week-body"><div class="coach-time-axis">${axis${</div>${dayColumns${</div></div></div><p class="tiny muted">Planning de 8 h à 22 h · Pas de 30 minutes · Les disponibilités affichées sont celles publiées par le coach. La durée choisie (1 h, 1 h 30 ou 2 h) et les conflits seront contrôlés à nouveau avant l’envoi.</p></section><section class="panel"><div class="section-heading"><div><p class="eyebrow">COURS PARTICULIERS</p><h2>Mes demandes et réservations</h2></div><button class="btn primary" data-action="request-booking">＋ Demander un cours</button></div>${playerBookings||emptyState('Aucune réservation','Tes demandes et cours particuliers apparaîtront ici.')${</section>`;
 }
 
 function notificationsPage(isCoach) {
