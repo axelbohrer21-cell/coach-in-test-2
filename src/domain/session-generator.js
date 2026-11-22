@@ -336,47 +336,36 @@ export function generateOriginalSession({
   let curriculumActivities = [];
   let exerciseOneOptions = [];
   if (matchedObjective) {
-    curriculumActivities = buildCurriculumActivities(matchedObjective, minutes, customExercises);
-    const fullCurriculum = buildCurriculumActivities(matchedObjective, 120, customExercises);
-    exerciseOneOptions = fullCurriculum.slice(1, -1).map((row, index) => ({
-      title: row.name || ('Variante ' + (index + 1)),
+    curriculumActivities = buildCurriculumActivities(matchedObjective, minutes, customExercises, selectedCriterion?.criterion || '');
+    plan = {
+      ...plan,
+      label: matchedObjective.theme,
+      objective: matchedObjective.intent || plan.objective,
+      drills: curriculumActivities.map(activity => [
+        activity.name,
+        [
+          activity.setup ? 'Mise en place : ' + activity.setup : '',
+          activity.procedure ? 'Consignes : ' + activity.procedure : ''
+        ].filter(Boolean).join(' '),
+        activity.scoring || '',
+        activity.minutes,
+        activity.kind
+      ])
+    };
+    exerciseOneOptions = curriculumActivities.filter(activity => activity.kind === 'exercise').slice(0, 3).map(activity => ({
+      title: activity.name,
       content: [
-        row.setup ? 'Mise en place : ' + row.setup : '',
-        row.procedure ? 'Consignes : ' + row.procedure : '',
-        row.scoring ? 'Réussite observée : ' + row.scoring : ''
+        activity.setup ? 'Mise en place : ' + activity.setup : '',
+        activity.procedure ? 'Consignes : ' + activity.procedure : '',
+        activity.scoring ? 'Réussite observée : ' + activity.scoring : ''
       ].filter(Boolean).join(' ')
-    })).filter(option => option.content);
-    if (curriculumActivities.length >= 3) {
-      const compact = row => [row.name, [
-        row.setup ? 'Mise en place : ' + row.setup : '',
-        row.procedure ? 'Déroulement : ' + row.procedure : '',
-        row.scoring ? 'Réussite observée : ' + row.scoring : ''
-      ].filter(Boolean).join(' '), row.scoring || 'Observer la qualité du critère dans la situation.'];
-      const feedAndFirst = compact(curriculumActivities[0]);
-      const firstDrill = compact(curriculumActivities[1]);
-      const secondDrill = compact(minutes === 60 ? fullCurriculum[2] : curriculumActivities[2] || curriculumActivities[1]);
-      const matchDrill = compact(curriculumActivities[curriculumActivities.length - 1]);
-      plan = {
-        ...plan,
-        label: matchedObjective.theme,
-        objective: matchedObjective.intent || plan.objective,
-        drills: [
-          [feedAndFirst[0] + ' + ' + firstDrill[0], feedAndFirst[1] + ' ' + firstDrill[1], feedAndFirst[2] + ' ' + firstDrill[2]],
-          [secondDrill[0], secondDrill[1], secondDrill[2]],
-          [matchDrill[0], matchDrill[1], matchDrill[2]]
-        ]
-      };
-    }
+    }));
   }
   if (exerciseOneOptions.length < 2 && selectedCriterion?.criterion) {
-    exerciseOneOptions = plan.drills.map((drill, index) => ({
+    exerciseOneOptions = plan.drills.filter(drill => drill[4] !== 'corrective' && drill[4] !== 'game').slice(0, 3).map((drill, index) => ({
       title: drill[0] || ('Exercice ' + (index + 1)),
-      content: [
-        'Critère ciblé : ' + selectedCriterion.criterion + '.',
-        drill[1] || '',
-        drill[2] ? 'Réussite observée : ' + drill[2] : ''
-      ].filter(Boolean).join(' ')
-    })).slice(0, 3);
+      content: ['Critère ciblé : ' + selectedCriterion.criterion + '.', drill[1] || '', drill[2] ? 'Réussite observée : ' + drill[2] : ''].filter(Boolean).join(' ')
+    }));
   }
   const sourceWeek = sourceWeekFor(focus, recentSessions);
   const allocations = distributeMinutes(minutes);
@@ -459,46 +448,34 @@ export function generateOriginalSession({
   const focusKey = focus === 'smash' ? 'volley' : focus;
   const reference = coachingReference[focusKey] || coachingReference.construction;
   const phases = plan.drills.map((drill,index) => {
-    const successCriteria = 'Réussir le comportement attendu sur au moins ' + selectedDifficulty.target + ' tentatives sur 10.';
+    const kind = drill[4] || (index === plan.drills.length - 1 ? 'game' : 'exercise');
+    const successCriteria = drill[2] || ('Réussir le comportement ciblé sur au moins ' + selectedDifficulty.target + ' tentatives sur 10.');
     const coachCue = selectedCriterion?.criterion || priority?.criterion || matchedObjective?.intent || plan.objective;
+    const raw = String(drill[1] || '');
+    const setup = (raw.match(/Mise en place : ([\\s\\S]*?)(?= Consignes : |$)/)||[])[1] || raw.split(/(?<=[.!?])\\s+/)[0] || raw;
     const equipment = ['Raquettes','Balles'];
-    if (/repère|plot|pastille|cible|zone|délimité/i.test(drill[1])) equipment.push('Plots ou repères au sol','Cibles matérialisées');
-    if (/panier|distribu|coach envoie|coach alterne/i.test(drill[1])) equipment.push('Panier ou réserve de balles');
-    const setup = drill[1].split(/(?<=[.!?])\\s+/)[0] || drill[1];
-    const progression = [
-      'Contrôle : distribution régulière, une consigne technique et une cible large.',
-      'Variabilité : modifier la direction, la profondeur ou le déplacement sans changer le critère.',
-      'Transfert : jouer des points avec un contrat lié au critère, puis libérer le jeu.'
-    ][index];
-    const curriculumOrigin = matchedObjective
-      ? 'Objectif pédagogique associé : ' + matchedObjective.label + '. Situation issue de la banque Coach In, adaptée au critère sélectionné.'
-      : '';
-    const easierVariant = 'Ralentir l’envoi, agrandir la cible et réduire le déplacement tout en conservant le critère.';
-    const harderVariant = 'Réduire la cible, varier la trajectoire sans prévenir et ajouter une décision en situation de point.';
-    const focusCheckpoints = reference.checkpoints;
-    const selectedFocus = selectedCriterion?.criterion || priority?.criterion || plan.label;
-    const detailedInstructions = drill[1] + ' Organisation : ' + setup + ' Réaliser une première série de 8 à 12 répétitions avec une distribution régulière, puis une seconde série en ajoutant une seule variable (direction, profondeur, vitesse ou déplacement). Entre les séries, faire verbaliser au joueur le repère qu’il a réussi à conserver.';
-    const observation = focusCheckpoints.join(' ');
-    const commonErrors = reference.errors.join(' ');
-    const content = drill[0] + '\n' + detailedInstructions + '\nCritère travaillé : ' + selectedFocus + '\nPoints clés à observer : ' + observation + '\nErreurs fréquentes : ' + commonErrors + '\nCorrection prioritaire : ' + reference.correction + '\nCritère de réussite : ' + successCriteria + ' ' + reference.measurement;
+    if (/repère|plot|pastille|cible|zone|délimité/i.test(raw)) equipment.push('Plots ou repères au sol','Cibles matérialisées');
+    if (/panier|distribu|coach envoie|coach alterne/i.test(raw)) equipment.push('Panier ou réserve de balles');
+    const content = [
+      drill[0],
+      raw,
+      selectedCriterion?.criterion ? 'Critère ciblé : ' + selectedCriterion.criterion : '',
+      'Réussite : ' + successCriteria
+    ].filter(Boolean).join('\\n');
     return {
-      name: ['Situation de contrôle','Situation avec déplacement ou lecture','Transfert en points'][index],
-      minutes: allocations[index],
-      objective: plan.objective,
-      setup,
-      equipment,
-      coach_cue: coachCue,
-      technical_checkpoints: focusCheckpoints,
-      common_errors: reference.errors,
-      correction_method: reference.correction,
-      measurement: reference.measurement,
-      progression,
-      easier_variant: easierVariant,
-      harder_variant: harderVariant,
-      content,
-      success_criteria: successCriteria,
-      source_basis: ['FFT – Cahier de l’enseignant : objectif, organisation, déroulement, répétitions et adaptation de la difficulté.','Mouratoglou Academy – Coaching Corner : repères techniques, préparation, contact, accompagnement et lecture tactique.'],
-      origin: [curriculumOrigin, 'Situation Coach In adaptée au critère choisi à partir de principes pédagogiques publics ; ce n’est pas une reproduction mot pour mot.'].filter(Boolean).join(' ')
+      name: drill[0], kind,
+      minutes: Number(drill[3]) || allocations[Math.min(index,2)],
+      objective: plan.objective, setup, equipment, coach_cue: coachCue,
+      technical_checkpoints: kind === 'corrective' ? [coachCue] : [],
+      common_errors: kind === 'corrective' ? reference.errors.slice(0,2) : [],
+      correction_method: kind === 'corrective' ? reference.correction : '',
+      measurement: successCriteria,
+      progression: kind === 'game' ? 'Réinvestir le critère en jeu réel, sans interrompre chaque échange.' : kind === 'corrective' ? 'Faire sentir le mouvement à vitesse réduite, puis ajouter quelques balles faciles.' : 'Conserver le même critère et augmenter une seule contrainte.',
+      easier_variant: 'Ralentir l’envoi ou réduire le déplacement sans changer le critère.',
+      harder_variant: 'Augmenter progressivement la vitesse, l’incertitude ou la précision demandée.',
+      content, success_criteria: successCriteria,
+      source_basis: ['FFT – Cahier de l’enseignant : plusieurs exercices progressifs, répétitions, adaptation et transfert en formes jouées.','Mouratoglou Academy – Coaching Corner : correction individualisée, répétition, variation des situations et feedback.'],
+      origin: matchedObjective ? 'Objectif associé : ' + matchedObjective.label + '. Situation originale Coach In reliée au critère.' : 'Situation originale Coach In reliée au critère.'
     };
   });
   const sourceLabel = sourceWeek
@@ -541,9 +518,9 @@ export function generateOriginalSession({
       ...option,
       formatted:'EXERCICE 1 · OPTION '+(index+1)+' · '+option.title+'\n'+option.content
     })),
-    exercise_1_phase2:formatPhase(phases[1],1),
-    exercise_2:formatPhase(phases[2],2,'TRANSFERT EN POINTS'),
-    player_visible_summary:plan.objective+' Les situations évoluent du contrôle vers le jeu à thème.',
+    exercise_1_phase2:phases.slice(1,-1).map((phase,index)=>formatPhase(phase,index+1,'EXERCICE')).join('\\n\\n'),
+    exercise_2:formatPhase(phases[phases.length-1],phases.length-1,'SITUATION DE JEU'),
+    player_visible_summary:plan.objective+' Un correctif gestuel, des exercices progressifs et une situation de jeu permettent de transférer le critère.',
     success_criteria:phases.map(phase=>phase.success_criteria).join(' '),
     selected_criterion:selectedCriterion ? {id:selectedCriterion.id,main_theme:selectedCriterion.main_theme,subtheme:selectedCriterion.subtheme,criterion:selectedCriterion.criterion} : null,
     adaptation:adaptationLabel,
