@@ -133,7 +133,8 @@ export function buildCurriculumActivities(goal,duration=90,customExercises=[],cr
  const customRows=(customExercises||[]).filter(x=>x.active!==false&&(x.objective_id===goal?.id||(!x.objective_id&&x.theme===goal?.theme))).map(x=>({name:x.title,setup:x.setup,procedure:x.instructions,scoring:x.success_criteria,coachCue:x.coaching_cue||goal?.intent}));
  const customVariants=TACTICAL_ACTIVITY_VARIANTS[goal?.id]||[];
  const standard=(d.drills||[]).map(row=>({name:row[0],setup:'Deux joueurs sur le terrain ; matérialiser les zones mentionnées et alterner les rôles.',procedure:row[1],scoring:row[2],coachCue:goal?.intent}));
- let variants=[...customRows,...customVariants.map(row=>({name:row[0],setup:'Matérialiser les zones et alterner les rôles.',procedure:row[1],scoring:row[2],coachCue:goal?.intent})),...standard];
+ const tactical=customVariants.map(row=>({name:row[0],setup:row.length>=5?row[1]:'Matérialiser les zones et alterner les rôles.',procedure:row.length>=5?row[2]:row[1],scoring:row.length>=5?row[3]:row[2],coachCue:row.length>=5?row[4]:goal?.intent}));
+ let variants=[...customRows,...tactical,...standard];
  const exerciseCount=Number(duration)===60?2:Number(duration)===120?4:3;
  const correction=buildCorrectiveActivity(goal,criterion);
  const used=[];
