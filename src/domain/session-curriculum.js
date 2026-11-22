@@ -102,22 +102,53 @@ decision:{
 };
 export function objectivesForTheme(theme){return OBJECTIVES.filter(x=>norm(x.theme)===norm(theme));}
 export function findObjective(id){return OBJECTIVES.find(x=>x.id===id)||null;}
-export function buildCurriculumActivities(goal,duration=90,customExercises=[]){
+function buildCorrectiveActivity(goal, criterion='') {
+ const key=norm(criterion);
+ const profile=goal?.profile||'decision';
+ let title='Correctif gestuel · ressentir le repère';
+ let setup='Le coach se place à proximité, sans opposition. Départ à l’arrêt, puis mouvement au ralenti.';
+ let procedure='Sans chercher la performance, réaliser 3 répétitions à vide en exagérant le repère du critère. Le coach démontre, fait verbaliser la sensation recherchée, puis ajoute 3 balles faciles. Arrêter dès que le joueur retrouve le bon mouvement.';
+ let scoring='Le joueur reproduit le repère sur 4 répétitions consécutives sans accélérer le geste.';
+ const has=(...words)=>words.some(word=>key.includes(norm(word)));
+ if(profile==='serveplus'||profile==='second'){
+  if(has('coude','bras armé','position armée')){title='Correctif gestuel · coude haut et position armée';setup='Sans balle, de profil au filet, raquette en main et bras libre levé.';procedure='Monter lentement le coude dans la position armée, marquer un arrêt, puis effectuer 4 gestes d’ombre jusqu’au contact imaginaire. Le coach guide visuellement l’alignement sans forcer l’amplitude. Ajouter ensuite 4 lancers faciles et frappes à intensité réduite.';scoring='Retrouver une position armée stable et un coude placé sans crispation sur 4 répétitions sur 5.';}
+  else if(has('lancer','toss')){title='Correctif gestuel · sentir le lancer';setup='Debout sans raquette, près d’une ligne repère et avec une cible au sol.';procedure='Réaliser 5 lancers sans frapper, laisser retomber la balle et observer sa fenêtre. Recommencer avec la raquette en position de départ, puis ajouter le geste complet à faible intensité.';scoring='Obtenir 4 lancers sur 5 dans la fenêtre définie avec une posture équilibrée.';}
+  else {title='Correctif gestuel · dissocier préparation et frappe';setup='Sans balle, de profil au filet, avec une raquette.';procedure='Réaliser lentement la préparation, marquer la position armée, puis dérouler la frappe sans accélération. Enchaîner avec 5 services à 50 % en conservant le même rythme.';scoring='Conserver le rythme préparation-frappe sur 4 services sur 5.';}
+ } else if(profile==='returnfirst'||profile==='returnsecond'){
+  title='Correctif gestuel · reprise d’appuis et déclenchement';setup='Le coach se place au service, le joueur en position de retour sans balle.';procedure='Synchroniser 5 reprises d’appuis avec le geste de lancer/frappe du coach. Ajouter ensuite 5 services annoncés, en déclenchant une préparation courte dès la lecture de trajectoire.';scoring='Déclencher la préparation au bon moment sur 4 services sur 5.';}
+ else if(profile==='early'){
+  title='Correctif gestuel · sentir le contact devant et tôt';setup='Le coach se place à côté du joueur avec une balle tenue à hauteur de frappe.';procedure='Faire répéter le plan de frappe sans déplacement : préparation, petit ajustement, contact imaginaire devant le corps. Le coach présente ensuite 5 balles faciles à laisser tomber ou à frapper en phase montante.';scoring='Retrouver un contact devant le corps et un timing précoce sur 4 répétitions sur 5.';}
+ else if(profile==='movement'){
+  title='Correctif gestuel · sentir le premier pas et le freinage';setup='Deux repères au sol : position d’attente et zone de frappe.';procedure='Sans balle, déclencher le premier pas au signal, rejoindre la zone en petits pas et freiner avant le geste de frappe. Répéter des deux côtés, puis ajouter 4 balles faciles.';scoring='Déclencher, ajuster et freiner avant la frappe sur 4 déplacements sur 5.';}
+ else if(profile==='transition'||profile==='volleyfinish'||profile==='volleylow'){
+  title='Correctif gestuel · sentir le contact compact devant soi';setup='Le joueur au filet, coach à 2-3 mètres avec une balle à la main.';procedure='Répéter le bloc de volée sans balle, tamis devant le corps. Le coach présente ensuite des balles lentes à hauteur connue ; le joueur avance ou fléchit selon la hauteur sans grand geste arrière.';scoring='Garder un contact devant et un geste compact sur 4 volées sur 5.';}
+ else if(profile==='open'||profile==='insideout'||profile==='depth'||profile==='line'){
+  title='Correctif gestuel · ressentir le repère de frappe';setup='Une pastille matérialise la zone de contact et une grande cible la zone de jeu.';procedure='Répéter 3 gestes à vide en marquant le point clé du critère (« '+(criterion||goal?.label||'repère technique')+' »). Le coach présente ensuite 5 balles faciles, sans déplacement, puis ajoute un seul ajustement de placement.';scoring='Reproduire le repère demandé sur 4 balles sur 5 sans perdre l’équilibre.';}
+ else if(profile==='decision'){
+  title='Correctif de décision · ressentir le bon choix';setup='Trois zones matérialisées : défense, construction et attaque.';procedure='Le coach montre successivement une balle profonde, neutre puis courte. Le joueur annonce la réponse adaptée avant de jouer à vitesse réduite. Refaire la séquence sans annonce du coach.';scoring='Identifier et annoncer la bonne intention sur 4 situations sur 5.';}
+ return {name:title,minutes:0,objective:goal?.intent||'Installer le repère associé au critère.',setup,procedure,scoring,coachCue:criterion||goal?.intent||''};
+}
+export function buildCurriculumActivities(goal,duration=90,customExercises=[],criterion=''){
  const d=D[goal?.profile]||D.decision;
- const customRows=(customExercises||[]).filter(x=>x.active!==false&&(x.objective_id===goal?.id||(!x.objective_id&&x.theme===goal?.theme))).map(x=>[x.title,x.setup,x.instructions,x.success_criteria,x.coaching_cue]);
- const customVariants=TACTICAL_ACTIVITY_VARIANTS[goal?.id];
- const variants=[...customRows,...(customVariants||d.drills)];
- const mins=Number(duration)===60?[12,20,28]:Number(duration)===120?[12,18,18,20,52]:[12,18,18,42];
- const selected=Number(duration)===60?[d.feed,variants[0],d.point]:Number(duration)===120?[d.feed,...variants.slice(0,3),d.point]:[d.feed,...variants.slice(0,2),d.point];
- return selected.map((row,i)=>{
-  const feed=i===0,point=i===selected.length-1,custom=!feed&&!point&&((i-1)<customRows.length||Boolean(customVariants));
-  return {
-   name:row[0],minutes:mins[i],objective:goal.intent,
-   setup:feed?row[1]:point?'Deux joueurs sur un terrain complet ; matérialiser les zones mentionnées et alterner les rôles à chaque série.':custom?row[1]:'Deux joueurs sur un terrain complet ; matérialiser les zones mentionnées et alterner les rôles à chaque série.',
-   procedure:feed?row[2]:point?row[1]:custom?row[2]:row[1],
-   scoring:feed?row[3]:point?row[2]:custom?row[3]:row[2],
-   coachCue:(custom&&row[4])||goal.intent
-  };
- });
+ const customRows=(customExercises||[]).filter(x=>x.active!==false&&(x.objective_id===goal?.id||(!x.objective_id&&x.theme===goal?.theme))).map(x=>({name:x.title,setup:x.setup,procedure:x.instructions,scoring:x.success_criteria,coachCue:x.coaching_cue||goal?.intent}));
+ const customVariants=TACTICAL_ACTIVITY_VARIANTS[goal?.id]||[];
+ const standard=(d.drills||[]).map(row=>({name:row[0],setup:'Deux joueurs sur le terrain ; matérialiser les zones mentionnées et alterner les rôles.',procedure:row[1],scoring:row[2],coachCue:goal?.intent}));
+ let variants=[...customRows,...customVariants.map(row=>({name:row[0],setup:'Matérialiser les zones et alterner les rôles.',procedure:row[1],scoring:row[2],coachCue:goal?.intent})),...standard];
+ const exerciseCount=Number(duration)===60?2:Number(duration)===120?4:3;
+ const correction=buildCorrectiveActivity(goal,criterion);
+ const used=[];
+ for(const candidate of variants){
+  const signature=norm(candidate.name+' '+candidate.procedure);
+  if(!used.some(x=>x.signature===signature)){used.push({signature,...candidate});}
+ }
+ if(used.length<exerciseCount){
+  const seed=used[0]||standard[0];
+  if(seed)used.push({...seed,name:'Défi de consolidation · '+seed.name,procedure:seed.procedure+' Refaire la situation en séries courtes avec une contrainte supplémentaire : le coach varie le départ ou la trajectoire, tout en conservant exactement le même critère.',scoring:'Réussir le critère dans 4 situations sur 5 malgré la variation.'});
+ }
+ const selected=used.slice(0,exerciseCount);
+ const game={name:d.point[0],setup:'Deux joueurs sur un terrain complet ; conserver le thème travaillé et compter les points.',procedure:d.point[1],scoring:d.point[2],coachCue:goal?.intent||''};
+ const minutes=Number(duration)===60?[8,10,12,30]:Number(duration)===120?[10,15,15,15,15,50]:[10,12,13,20,35];
+ const rows=[correction,...selected,game];
+ return rows.map((row,index)=>({...row,minutes:minutes[index],objective:goal?.intent||'' ,kind:index===0?'corrective':index===rows.length-1?'game':'exercise'}));
 }
 function norm(v){return String(v||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
