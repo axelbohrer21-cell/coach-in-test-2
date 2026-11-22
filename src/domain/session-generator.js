@@ -332,6 +332,76 @@ export function generateOriginalSession({
     very_hard: { label: 'Très difficile', target: 9, instruction: 'Forte exigence de précision, vitesse et décision sous pression.' }
   };
   const selectedDifficulty = difficultySettings[difficulty] || difficultySettings.medium;
+  const coachingReference = {
+    'coup-droit': {
+      checkpoints:['Préparation déclenchée dès la lecture de trajectoire.','Distance à la balle réglée par des petits pas avant le dernier appui.','Contact devant le corps, avec une hauteur adaptée à la trajectoire demandée.','Tamis orienté vers la cible et accompagnement continu après l’impact.','Replacement déclenché dès la fin de frappe, en fonction de la zone jouée.'],
+      errors:['Préparer après le rebond et subir la balle.','Chercher la puissance avec le bras seul ou perdre l’équilibre.','Confondre variation d’effet et changement de direction.'],
+      correction:'Revenir à une distribution régulière, réduire l’intensité et ne corriger qu’un repère à la fois : préparation, distance, contact ou finition.',
+      measurement:'Noter séparément la qualité du contact, la zone de rebond et l’équilibre final ; ne pas compter une balle réussie uniquement parce qu’elle passe le filet.'
+    },
+    revers: {
+      checkpoints:['Épaules tournées dès la lecture de balle.','Préparation précoce et mains organisées selon le revers à une ou deux mains.','Plan de frappe devant le corps et distance réglée par petits pas.','Accompagnement fluide, sans arrêt brutal du geste.','Replacement après la frappe.'],
+      errors:['Préparation tardive.','Contact trop proche du corps ou derrière la hanche.','Bras crispés et geste interrompu après l’impact.'],
+      correction:'Ralentir la distribution, isoler le contact devant soi puis réintroduire progressivement le déplacement et la variation de profondeur.',
+      measurement:'Comptabiliser les contacts devant le corps, les trajectoires dans la zone et les frappes réalisées en équilibre.'
+    },
+    service: {
+      checkpoints:['Routine stable et rythme continu entre préparation, lancer et frappe.','Lancer reproductible dans la fenêtre adaptée à la variante travaillée.','Coude et bras de lancer organisés sans tension excessive.','Contact haut et intention de zone annoncée avant le lancer.','Finir équilibré et préparer immédiatement le coup suivant.'],
+      errors:['Modifier plusieurs éléments du geste simultanément.','Lancer non reproductible ou précipiter la frappe.','Chercher la vitesse avant de stabiliser la zone et la régularité.'],
+      correction:'Séparer d’abord le lancer, puis le rythme de préparation, puis le service complet. Conserver une seule variable de correction par série.',
+      measurement:'Relever premières et deuxièmes balles séparément, zone visée/atteinte, qualité du lancer et capacité à enchaîner service + 1.'
+    },
+    retour: {
+      checkpoints:['Position de départ adaptée à la qualité et au profil du serveur.','Reprise d’appuis synchronisée avec la frappe adverse.','Lecture précoce de la direction et de la longueur.','Préparation compacte sur première balle rapide ; prise d’initiative possible sur deuxième balle exploitable.','Retour dirigé avec une marge de sécurité et replacement pour le coup suivant.'],
+      errors:['Reprise d’appuis trop tôt ou trop tard.','Préparation trop ample face à une première balle rapide.','Chercher systématiquement le gagnant au retour, quelle que soit la qualité du service.'],
+      correction:'Séparer les séries première balle et deuxième balle. Sur première : priorité au bloc et à la profondeur ; sur deuxième : avancer seulement si la qualité du service le permet.',
+      measurement:'Mesurer séparément taux de retours en jeu, profondeur, zone choisie et qualité du premier coup après retour.'
+    },
+    volley: {
+      checkpoints:['Position d’attente active et raquette devant soi.','Préparation courte dès la lecture de trajectoire.','Contact devant le corps et tamis orienté vers la cible.','Appuis adaptés : avancer sur balle accessible, fléchir et stabiliser sur balle basse.','Replacement et couverture de l’angle après la volée.'],
+      errors:['Grand geste arrière.','Contact tardif ou derrière le corps.','Volée basse jouée en reculant ou tamis excessivement ouvert.'],
+      correction:'Rapprocher le coach, ralentir la vitesse et matérialiser une cible large. Réintroduire ensuite déplacement, profondeur et choix de zone.',
+      measurement:'Distinguer volée coup droit et revers ; compter les contacts devant soi, les volées dans la cible et les enchaînements approche-finition.'
+    },
+    defense: {
+      checkpoints:['Lecture de la situation et déclenchement du premier pas.','Appuis de course et ajustements pour retrouver une distance de frappe jouable.','Choix d’une trajectoire de sécurité, souvent haute et croisée lorsque la situation le permet.','Contact équilibré autant que possible, même en bout de course.','Replacement progressif pour repasser de défense à neutralisation.'],
+      errors:['Tenter le gagnant en position défensive.','Frapper en déséquilibre sans marge au-dessus du filet.','Oublier la couverture après la frappe.'],
+      correction:'Agrandir la zone cible et imposer d’abord une balle de neutralisation ; augmenter ensuite la difficulté de déplacement ou la vitesse de distribution.',
+      measurement:'Compter les balles défendues qui donnent du temps, les retours dans une zone de sécurité et les situations où le joueur reprend une position de jeu.'
+    },
+    attaque: {
+      checkpoints:['Identifier la qualité de balle avant de décider.','Avancer dans le terrain lorsque la balle est réellement favorable.','Préparer tôt et régler la distance pour un contact devant soi.','Choisir une cible cohérente avec la position adverse.','Après l’attaque, accompagner la transition vers l’avant ou couvrir le retour.'],
+      errors:['Attaquer une balle trop profonde ou trop basse.','Confondre frapper fort et jouer dans l’espace pertinent.','Rester sur place après une attaque qui appelle une transition.'],
+      correction:'Alterner volontairement balles neutres et balles courtes ; demander au joueur d’annoncer défendre/construire/attaquer avant de frapper.',
+      measurement:'Mesurer la justesse de décision séparément de la réussite de la frappe ; noter si l’attaque crée un avantage exploitable.'
+    },
+    construction: {
+      checkpoints:['Installer une hauteur et une profondeur avec marge.','Déplacer l’adversaire avant de chercher l’espace libre.','Varier les effets, les trajectoires ou les longueurs sans perdre le contrôle.','Observer la position adverse avant de changer de direction.','Choisir le moment de transition vers l’attaque.'],
+      errors:['Changer de direction depuis une position déséquilibrée.','Jouer trop court sans intention.','Répéter une trajectoire sans observer l’adversaire.'],
+      correction:'Définir un contrat simple (par exemple deux balles profondes avant variation), puis retirer progressivement la contrainte pour retrouver le jeu libre.',
+      measurement:'Compter les séquences où la profondeur précède une variation pertinente et celles où la variation crée réellement un déplacement adverse.'
+    },
+    physique: {
+      checkpoints:['Position d’attente dynamique et lecture du signal.','Reprise d’appuis synchronisée avec la frappe adverse.','Premier pas orienté vers la trajectoire.','Petits pas d’ajustement avant le contact.','Replacement efficace sans multiplier les pas inutiles.'],
+      errors:['Départ avant la lecture réelle.','Grandes foulées d’ajustement trop tardives.','Accumuler la fatigue au détriment de la qualité technique.'],
+      correction:'Réduire le nombre de répétitions, augmenter la récupération et réintroduire la vitesse seulement lorsque les appuis restent propres.',
+      measurement:'Noter le bon déclenchement, le nombre de déplacements équilibrés et le maintien de la qualité sur les répétitions successives.'
+    },
+    mental: {
+      checkpoints:['Routine courte, reproductible et personnelle entre les points.','Respiration et recentrage après une erreur.','Intention tactique formulée simplement avant le point.','Engagement dans le plan sans jugement immédiat sur le résultat.','Bilan factuel après la séquence.'],
+      errors:['Multiplier les consignes mentales.','Confondre résultat du point et respect de l’intention.','Routine trop longue ou difficile à reproduire en match.'],
+      correction:'Choisir un seul repère (respirer, se recentrer, annoncer une intention) et l’évaluer sur plusieurs points consécutifs.',
+      measurement:'Mesurer le respect de la routine et de l’intention, indépendamment du gain ou de la perte du point.'
+    },
+    tactique: {
+      checkpoints:['Lire la qualité de balle et la position adverse.','Choisir entre défendre, neutraliser, construire ou attaquer.','Utiliser les zones de sécurité adaptées à la situation.','Anticiper la réponse probable et préparer le coup suivant.','Adapter le schéma à la réponse réelle de l’adversaire.'],
+      errors:['Appliquer un schéma de façon automatique.','Choisir une zone sans tenir compte de son propre équilibre.','Confondre intention tactique et résultat ponctuel.'],
+      correction:'Faire verbaliser le choix avant la frappe, puis comparer la décision à la situation réellement observée.',
+      measurement:'Noter la pertinence de la décision, l’exécution et la conséquence tactique dans trois colonnes distinctes.'
+    }
+  };
+  const focusKey = focus === 'smash' ? 'volley' : focus;
+  const reference = coachingReference[focusKey] || coachingReference.construction;
   const phases = plan.drills.map((drill,index) => {
     const successCriteria = 'Réussir le comportement attendu sur au moins ' + selectedDifficulty.target + ' tentatives sur 10.';
     const coachCue = selectedCriterion?.criterion || priority?.criterion || plan.objective;
@@ -346,7 +416,12 @@ export function generateOriginalSession({
     ][index];
     const easierVariant = 'Ralentir l’envoi, agrandir la cible et réduire le déplacement tout en conservant le critère.';
     const harderVariant = 'Réduire la cible, varier la trajectoire sans prévenir et ajouter une décision en situation de point.';
-    const content = drill[0] + '\n' + drill[1] + '\nCritère de réussite : ' + successCriteria;
+    const focusCheckpoints = reference.checkpoints;
+    const selectedFocus = selectedCriterion?.criterion || priority?.criterion || plan.label;
+    const detailedInstructions = drill[1] + ' Organisation : ' + setup + ' Réaliser une première série de 8 à 12 répétitions avec une distribution régulière, puis une seconde série en ajoutant une seule variable (direction, profondeur, vitesse ou déplacement). Entre les séries, faire verbaliser au joueur le repère qu’il a réussi à conserver.';
+    const observation = focusCheckpoints.join(' ');
+    const commonErrors = reference.errors.join(' ');
+    const content = drill[0] + '\n' + detailedInstructions + '\nCritère travaillé : ' + selectedFocus + '\nPoints clés à observer : ' + observation + '\nErreurs fréquentes : ' + commonErrors + '\nCorrection prioritaire : ' + reference.correction + '\nCritère de réussite : ' + successCriteria + ' ' + reference.measurement;
     return {
       name: ['Situation de contrôle','Situation avec déplacement ou lecture','Transfert en points'][index],
       minutes: allocations[index],
@@ -354,12 +429,17 @@ export function generateOriginalSession({
       setup,
       equipment,
       coach_cue: coachCue,
+      technical_checkpoints: focusCheckpoints,
+      common_errors: reference.errors,
+      correction_method: reference.correction,
+      measurement: reference.measurement,
       progression,
       easier_variant: easierVariant,
       harder_variant: harderVariant,
       content,
       success_criteria: successCriteria,
-      origin: 'Situation originale Coach In, conçue à partir du critère sélectionné, du programme du coach et des principes pédagogiques FFT/USTA.'
+      source_basis: ['FFT – Cahier de l’enseignant : objectif, organisation, déroulement, répétitions et adaptation de la difficulté.','Mouratoglou Academy – Coaching Corner : repères techniques, préparation, contact, accompagnement et lecture tactique.'],
+      origin: 'Situation originale Coach In. Contenu inspiré de principes pédagogiques publics, adapté au critère choisi ; ce n’est pas un exercice reproduit mot pour mot.'
     };
   });
   const sourceLabel = sourceWeek
@@ -377,7 +457,8 @@ export function generateOriginalSession({
     evidenceLabel,
     'Objectif : ' + plan.objective,
     sourceLabel,
-    'Principes de conception : contrôle technique, répétition de qualité, ajout progressif de lecture et de décision, puis transfert en opposition ; précision avant vitesse (repères pédagogiques FFT et USTA).',
+    'Principes de conception : objectif explicite, organisation claire, répétitions suffisantes, observation factuelle, adaptation par une seule variable à la fois et transfert progressif en opposition (FFT – Cahier de l’enseignant).',
+    'Références techniques complémentaires : FFT et Coaching Corner Mouratoglou Academy. Les exercices sont des créations Coach In reformulées et adaptées, non des reproductions de leurs contenus.',
     recentHistoryLabel,
     challenge?.objective ? 'Défi actif à réinvestir : ' + challenge.objective : '',
     Number(age) > 0 && Number(age) <= 12 && /débutant|initiation/i.test(level) ? 'Séries de 4 à 6 balles, cible large, pauses fréquentes et consigne unique.' : '',
