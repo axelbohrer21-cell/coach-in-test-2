@@ -540,7 +540,7 @@ function bookingsPage(isCoach) {
         if(court<1||court>4)continue;
         if(date===today&&t<=currentMinutes)continue;
         const collision=dayBusy.some(r=>(!r.court_number||Number(r.court_number)===court)&&mins(r.start_time)<t+60&&mins(r.end_time)>t);
-        if(!collision)slotMap.set(${t}-${court},{t,court});
+        if(!collision)slotMap.set(t+'-'+court,{t,court});
       }
     }
     const past=date<today;
