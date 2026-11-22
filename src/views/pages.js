@@ -593,7 +593,26 @@ function libraryPage() {
 }
 function bookingsPage(isCoach) {
   const rows = state.bookingRequests.map(b=>`<article class="list-card"><div class="list-date"><strong>${formatDate(b.session_date,{day:'2-digit',month:'short'})}</strong><small>${formatTime(b.start_time)}</small></div><div class="list-main"><strong>${escapeHtml(isCoach?playerName(b.player_id):'Cours particulier')}</strong><span>${b.duration_minutes} min · Court ${b.court_number || '—'}</span></div><span class="tag">${escapeHtml(b.status)}</span>${isCoach&&b.status==='pending'?`<button class="btn subtle" data-booking="${b.id}" data-status="accepted">Accepter</button><button class="btn danger" data-booking="${b.id}" data-status="rejected">Refuser</button>`:''}${!isCoach&&['pending','accepted'].includes(b.status)?`<button class="btn danger" data-cancel-booking="${b.id}">Annuler</button>`:''}</article>`).join('');
-  return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">COURS PARTICULIERS</p><h2>${isCoach?'Demandes de réservation':'Mes réservations'}</h2></div>${!isCoach?'<button class="btn primary" data-action="request-booking">＋ Demander un cours</button>':''}</div>${rows || emptyState('Aucune réservation','Les demandes et cours particuliers apparaîtront ici.')}${!isCoach?'<p class="tiny muted">Une demande reste en attente jusqu’à la décision du coach. L’annulation par le joueur est possible jusqu’à 24 h avant le cours.</p>':''}</section>`;
+  
+  const coachCalendar = !isCoach ? (state.playerCoaches||[]).map(coach=>{
+    const availability=(state.weeklyAvailability||[]).filter(row=>row.coach_id===coach.id&&row.active);
+    const days=Array.from({length:21},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+i);return d;});
+    const cards=days.map(date=>{
+      const iso=date.toISOString().slice(0,10), weekday=(date.getDay()+6)%7;
+      const rules=availability.filter(row=>Number(row.weekday)===weekday), slots=[];
+      const toMin=v=>{const [h,m]=String(v||'00:00').slice(0,5).split(':').map(Number);return h*60+m;};
+      rules.forEach(rule=>{const start=toMin(rule.start_time),end=toMin(rule.end_time);for(let minute=start;minute+60<=end;minute+=30){
+        const time=String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0');
+        const taken=(state.bookingRequests||[]).some(b=>b.coach_id===coach.id&&b.session_date===iso&&['pending','accepted','confirmed'].includes(String(b.status).toLowerCase())&&minute<toMin(b.start_time||b.session_time)+Number(b.duration_minutes||60)&&toMin(b.start_time||b.session_time)<minute+60);
+        const past=iso===new Date().toISOString().slice(0,10)&&minute<=new Date().getHours()*60+new Date().getMinutes();
+        if(!taken&&!past)slots.push({time,court:rule.court_number||1});
+      }});
+      if(!slots.length)return '';
+      return `<article class="list-card"><div class="list-date"><strong>${date.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit'})}</strong><small>${date.toLocaleDateString('fr-FR',{month:'short'})}</small></div><div class="list-main"><strong>${slots.length} créneau(x) disponible(s)</strong><div class="player-quick-actions">${slots.map(slot=>`<button class="btn subtle" data-book-slot data-coach="${coach.id}" data-date="${iso}" data-time="${slot.time}" data-court="${slot.court}">${slot.time}</button>`).join('')}</div></div></article>`;
+    }).join('');
+    return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">PLANNING DU COACH</p><h2>${escapeHtml(coach.first_name)} ${escapeHtml(coach.last_name)}</h2></div></div><p class="tiny muted">Disponibilités publiées sur les 21 prochains jours. Clique sur une heure pour demander ce créneau.</p>${cards||emptyState('Aucun créneau disponible','Aucune disponibilité publiée sur les 21 prochains jours.')}</section>`;
+  }).join('') : '';
+  return `${coachCalendar}<section class="panel"><div class="section-heading"><div><p class="eyebrow">COURS PARTICULIERS</p><h2>${isCoach?'Demandes de réservation':'Mes réservations'}</h2></div>${!isCoach?'<button class="btn primary" data-action="request-booking">＋ Demander un cours</button>':''}</div>${rows || emptyState('Aucune réservation','Les demandes et cours particuliers apparaîtront ici.')}${!isCoach?'<p class="tiny muted">Une demande reste en attente jusqu’à la décision du coach. L’annulation par le joueur est possible jusqu’à 24 h avant le cours.</p>':''}</section>`;
 }
 
 function notificationsPage(isCoach) {
