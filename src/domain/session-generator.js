@@ -323,14 +323,29 @@ export function generateOriginalSession({
   const focus = classifyFocus(selectedCriterion ? explicitFocus : (priority?.criterion ? evidenceFocus : explicitFocus || evidenceFocus));
   const basePlan = DRILLS[focus] || DRILLS.construction;
   let plan = criterionSpecificPlan(selectedCriterion, basePlan, focus);
-  // Relie le critère sélectionné au meilleur objectif pédagogique existant.
-  const normalizeCriterion = value => normalize(value).replace(/s$/, '');
-  const matchedObjective = selectedObjective || (selectedCriterion?.criterion
-    ? OBJECTIVES.find(goal => (goal.criteria || []).some(value => normalizeCriterion(value) === normalizeCriterion(selectedCriterion.criterion)))
-    : null);
+  // Un objectif n'est utilisable que s'il est explicitement relié au critère choisi.
+  // Pas de rapprochement approximatif : en cas d'absence de correspondance, on reste sur le plan critère-spécifique.
+  const normalizeCriterion = value => normalize(value);
+  const objectiveMatchesCriterion = goal => Boolean(goal && selectedCriterion?.criterion &&
+    (goal.criteria || []).some(value => normalizeCriterion(value) === normalizeCriterion(selectedCriterion.criterion)));
+  const matchedObjective = selectedCriterion?.criterion
+    ? (objectiveMatchesCriterion(selectedObjective)
+        ? selectedObjective
+        : OBJECTIVES.find(objectiveMatchesCriterion) || null)
+    : selectedObjective;
   let curriculumActivities = [];
+  let exerciseOneOptions = [];
   if (matchedObjective) {
     curriculumActivities = buildCurriculumActivities(matchedObjective, minutes, customExercises);
+    const fullCurriculum = buildCurriculumActivities(matchedObjective, 120, customExercises);
+    exerciseOneOptions = fullCurriculum.slice(1, -1).map((row, index) => ({
+      title: row[0] || row.name || ('Variante ' + (index + 1)),
+      content: [
+        row[1] ? 'Mise en place : ' + row[1] : '',
+        row[2] ? 'Consignes : ' + row[2] : '',
+        row[3] ? 'Réussite observée : ' + row[3] : ''
+      ].filter(Boolean).join(' ')
+    })).filter(option => option.content);
     if (curriculumActivities.length >= 3) {
       const compact = row => [row.name, [
         row.setup ? 'Mise en place : ' + row.setup : '',
@@ -512,6 +527,11 @@ export function generateOriginalSession({
     objective_criteria:selectedCriterion?.criterion ? [selectedCriterion.criterion] : (priority?.criterion ? [priority.criterion] : (selectedObjective?.criteria || [])),
     duration_minutes:minutes, objective:plan.objective, coaching_notes:coachingNotes,
     exercise_1:phases.slice(0,2).map((phase,index)=>formatPhase(phase,index)).join('\n\n'),
+    exercise_1_options:exerciseOneOptions.map((option,index)=>({
+      ...option,
+      formatted:'EXERCICE 1 · OPTION '+(index+1)+' · '+option.title+'\n'+option.content
+    })),
+    exercise_1_phase2:formatPhase(phases[1],1),
     exercise_2:formatPhase(phases[2],2,'TRANSFERT EN POINTS'),
     player_visible_summary:plan.objective+' Les situations évoluent du contrôle vers le jeu à thème.',
     success_criteria:phases.map(phase=>phase.success_criteria).join(' '),
