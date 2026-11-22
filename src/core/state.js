@@ -3,6 +3,7 @@ export const state = {
   profile: null,
   players: [],
   sessions: [],
+  favoriteSessionIds: [],
   evaluations: [],
   groupSessions: [],
   groupSeries: [],
