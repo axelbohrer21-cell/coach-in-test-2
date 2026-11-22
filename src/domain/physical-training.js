@@ -73,6 +73,16 @@ const EXERCISES = [
  {id:'hip-mobility-flow',criteria:['mobility_hip','mobility','hip_groin'],title:'Mobilité active hanche-cheville',setup:'Espace individuel, mur ou support stable.',how:'Enchaîner bascule de cheville genou vers l’avant, ouverture de hanche, fente courte avec rotation thoracique et retour contrôlé.',dose:'2 passages de 5–6 répétitions par mouvement.',cue:'Amplitude progressive et active, sans rebond forcé ni douleur.',young:'Imiter des positions d’animaux et des fentes courtes ludiques.'}
 ];
 
+
+const CRITERION_BY_ID = Object.fromEntries(PHYSICAL_CRITERIA.map(item=>[item.id,item]));
+EXERCISES.forEach(ex=>{
+ ex.objective=ex.objective||ex.criteria.map(id=>CRITERION_BY_ID[id]?.label||id).join(' · ');
+ ex.tennisTransfer=ex.tennisTransfer||'Transfert : améliorer la qualité du déplacement, du replacement ou de la production de force pendant les échanges, sans dégrader la technique de frappe.';
+ ex.progression=ex.progression||'Progression : augmenter une seule variable à la fois (distance, vitesse, répétitions ou complexité) après maîtrise de la technique.';
+ ex.regression=ex.regression||ex.young||'Régression : réduire amplitude, distance, vitesse ou charge et revenir à une version stable du mouvement.';
+ ex.quality=ex.quality||'Critère de réussite : répétitions techniquement propres et reproductibles ; arrêter la série dès que l’alignement ou la qualité du geste se dégrade.';
+});
+
 const CYCLE_TEMPLATES = [
  {id:'foundation-movement',title:'Cycle 4 semaines – Fondations des déplacements',focus:['footwork','acceleration','deceleration','cod'],audience:'Tous niveaux · priorité coordination et appuis',sessions:[
   {title:'Appuis et replacement',exercises:['split','star','mirror'],progression:'Apprendre les trajectoires, priorité au contrôle.'},
@@ -129,7 +139,7 @@ const CYCLE_TEMPLATES = [
   {title:'Puissance spécifique tennis',exercises:['medball-rotational','star','jump-land'],progression:'Associer impulsion, rotation contrôlée et déplacement tennis.'}
  ]},
  {id:'tennis-intermittent-endurance',title:'Cycle 4 semaines – Endurance intermittente spécifique tennis',focus:['repeat_efforts','aerobic_recovery','repeat_sprint','aerobic','footwork'],audience:'Joueurs capables de maintenir une technique de déplacement stable',sessions:[
-  {title:'Base intermittente maîtrisée',exercises:['tennis-interval-15-15','shadow','mirror'],progression:'Densité modérée, apprendre à récupérer activement.'},
+  {title:'Base intermittente maîtrisée',exercises:['tennis-interval-15-15','aerobic-shadow','mirror'],progression:'Densité modérée, apprendre à récupérer activement.'},
   {title:'Répéter les efforts courts',exercises:['tennis-interval-8-20','rally-interval','star'],progression:'Efforts courts de qualité avec récupération définie.'},
   {title:'Maintenir la qualité sous fatigue',exercises:['tennis-interval-15-15','relay','brake'],progression:'Surveiller la précision des appuis ; réduire le volume si elle chute.'},
   {title:'Enchaîner des séquences de points',exercises:['tennis-interval-8-20','rally-interval','mirror'],progression:'Transférer l’effort intermittent dans des séquences proches du jeu.'}
