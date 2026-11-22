@@ -537,14 +537,15 @@ function bookingsPage(isCoach) {
       const courts=av.court_number?[Number(av.court_number)]:[1,2,3,4];
       for(let t=Math.ceil(start/30)*30;t+60<=end;t+=30)for(const court of courts){
         if(court<1||court>4)continue;
+        if(date===toLocalISO(now)&&t<=currentMinutes)continue;
         const collision=dayBusy.some(r=>(!r.court_number||Number(r.court_number)===court)&&mins(r.start_time)<t+60&&mins(r.end_time)>t);
         if(!collision)slotMap.set(${{t}-${{court}${,{t,court});
       }
     }
-    const past=date<toLocalISO(new Date());
+    const now=new Date(),past=date<toLocalISO(now),currentMinutes=now.getHours()*60+now.getMinutes();
     const freeHtml=[...slotMap.values()].sort((x,y)=>x.t-y.t||x.court-y.court).map(slot=>{
       const lane=slot.court-1;
-      return `<button class="coach-week-free" ${past?'disabled':''${ data-booking-slot data-coach="${selected.id${" data-date="${date${" data-time="${time(slot.t)${" data-court="${slot.court${" style="top:${slot.t-480${px;left:${lane*25${%;width:25%;height:56px" title="Demander ${time(slot.t)${ · Court ${slot.court${"><b>${time(slot.t)${</b><small>C${slot.court${ · Libre</small></button>`;
+      return `<button class="coach-week-free" ${past?'disabled':''${ data-booking-slot data-coach="${selected.id${" data-date="${date${" data-time="${time(slot.t)${" data-court="${slot.court${" style="top:${slot.t-480${px;left:${lane*25${%;width:25%;height:26px" title="Demander ${time(slot.t)${ · Court ${slot.court${"><b>${time(slot.t)${</b><small>C${slot.court${ · Libre</small></button>`;
     }).join('');
     return `<section class="coach-week-day ${past?'is-past':''${"><div class="coach-week-track">${Array.from({length:28},(_,i)=>`<i class="coach-half-hour-line" style="top:${i*30${px"></i>`).join('')${${busyHtml${${freeHtml${</div></section>`;
   }).join('');
