@@ -14,7 +14,6 @@
   <link rel="apple-touch-icon" href="./icons/coach-in.svg">
   <title>Coach In</title>
   <link rel="stylesheet" href="./src/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -52,7 +51,48 @@
     </main>
   </div>
   <dialog id="app-dialog" class="dialog"><div id="dialog-content"></div></dialog>
-  <script type="module" src="./src/app.js"></script>
+  <script>
+    // Démarrage tolérant aux pannes CDN : le formulaire reste explicite si un module ne charge pas.
+    (async () => {
+      const errorBox = document.getElementById('auth-error');
+      const showBootError = (message) => {
+        if (!errorBox) return;
+        errorBox.textContent = message;
+        errorBox.classList.remove('hidden');
+      };
+      const loadScript = (src) => new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Chargement impossible : ' + src));
+        document.head.appendChild(script);
+      });
+      try {
+        const cdns = [
+          'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+          'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'
+        ];
+        let loaded = false;
+        for (const cdn of cdns) {
+          try {
+            await loadScript(cdn);
+            if (window.supabase && window.supabase.createClient) {
+              loaded = true;
+              break;
+            }
+          } catch (error) {
+            console.warn('Coach In : CDN Supabase indisponible', error);
+          }
+        }
+        if (!loaded) throw new Error('La bibliothèque de connexion ne répond pas.');
+        await import('./src/app.js');
+      } catch (error) {
+        console.error('Coach In : démarrage impossible', error);
+        showBootError('Coach In n’a pas pu démarrer correctement. Vérifie ta connexion puis actualise la page. Détail : ' + (error.message || 'erreur de chargement'));
+      }
+    })();
+  </script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
