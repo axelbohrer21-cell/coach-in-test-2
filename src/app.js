@@ -133,6 +133,8 @@ $('#page-content').addEventListener('click', async event=>{
   }
 
   const go=event.target.closest('[data-go]'); if(go){render(go.dataset.go);return;}
+  const bookingSlot=event.target.closest('[data-booking-slot]'); if(bookingSlot){bookingDialog({coachId:bookingSlot.dataset.coach,date:bookingSlot.dataset.date,time:bookingSlot.dataset.time,court:bookingSlot.dataset.court});return;}
+  const bookingWeek=event.target.closest('[data-booking-week]'); if(bookingWeek){state.bookingCalendarWeekOffset=Number(state.bookingCalendarWeekOffset||0)+Number(bookingWeek.dataset.bookingWeek);render('bookings');return;}
   const planSlot=event.target.closest('[data-plan-slot]'); if(planSlot)return sessionDialog(planSlot.dataset.slotDate,planSlot.dataset.slotTime);
   const share=event.target.closest('[data-share-player]'); if(share) return sharePlayerDialog(share.dataset.sharePlayer);
   const invitation=event.target.closest('[data-coach-invitation]'); if(invitation) return respondCoachInvitation(invitation.dataset.coachInvitation, invitation.dataset.accept==='true');
@@ -279,6 +281,7 @@ $('#page-content').addEventListener('input',event=>{
   if(['library-search','library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
 $('#page-content').addEventListener('change',event=>{
+  if(event.target.id==='booking-calendar-coach'){state.bookingCalendarCoachId=event.target.value;render('bookings');}
   if(event.target.id==='message-partner'){state.messagePartnerId=event.target.value;render('messages');}
   if(event.target.id==='player-type-filter'){state.filters.playerType=event.target.value;filterPlayerCards();}
   if(['library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
@@ -776,8 +779,11 @@ function updateBookingAvailability(form){
   box.className='span-2 booking-slot-status error-text';box.textContent='Indisponible : '+labels.join(' et ')+' déjà présent(s) sur le court '+court+'. Choisis un autre créneau.';
  }else{box.className='span-2 booking-slot-status success-text';box.textContent='Aucune occupation connue sur le court '+court+' à cet horaire. La disponibilité sera revérifiée à l’envoi.';}
 }
-function bookingDialog(){
-  showDialog(`<div class="dialog-head"><div><p class="eyebrow">COURS PARTICULIER</p><h2>Demander un créneau</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Choisis une date, une heure, une durée et un court. Le créneau sera soumis au contrôle des conflits puis restera en attente de validation.</p><form id="booking-form" class="form-grid"><label class="span-2">Coach<select name="coach_id" required>${(state.playerCoaches||[]).map(c=>`<option value="${c.id}">${escapeHtml(c.first_name)} ${escapeHtml(c.last_name)}</option>`).join('')}</select></label><label>Date<input name="date" type="date" required min="${toLocalISO(new Date())}"></label><label>Heure<input name="time" type="time" required></label><label>Durée<select name="duration"><option value="60">1 heure</option><option value="90">1 h 30</option><option value="120">2 heures</option></select></label><label>Court<select name="court"><option value="1">Court 1</option><option value="2">Court 2</option><option value="3">Court 3</option><option value="4">Court 4</option></select></label><div class="span-2 booking-slot-status muted" data-booking-availability>Choisis une date et une heure pour vérifier les courts déjà occupés.</div><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Envoyer la demande</button></div></form>`);
+function bookingDialog(prefill={}){
+  const coachId=prefill.coachId||state.bookingCalendarCoachId||state.playerCoaches?.[0]?.id||'';
+  const date=prefill.date||'',time=prefill.time||'',court=String(prefill.court||1);
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">COURS PARTICULIER</p><h2>Demander un créneau</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Le créneau sélectionné sera soumis au contrôle final des conflits et restera en attente de validation du coach.</p><form id="booking-form" class="form-grid"><label class="span-2">Coach<select name="coach_id" required>${(state.playerCoaches||[]).map(c=>`<option value="${c.id}" ${c.id===coachId?'selected':''}>${escapeHtml(c.first_name)} ${escapeHtml(c.last_name)}</option>`).join('')}</select></label><label>Date<input name="date" type="date" required min="${toLocalISO(new Date())}" value="${date}"></label><label>Heure<input name="time" type="time" required value="${time}"></label><label>Durée<select name="duration"><option value="60">1 heure</option><option value="90">1 h 30</option><option value="120">2 heures</option></select></label><label>Court<select name="court"><option value="1" ${court==='1'?'selected':''}>Court 1</option><option value="2" ${court==='2'?'selected':''}>Court 2</option><option value="3" ${court==='3'?'selected':''}>Court 3</option><option value="4" ${court==='4'?'selected':''}>Court 4</option></select></label><div class="span-2 booking-slot-status muted" data-booking-availability>Vérification du créneau…</div><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Envoyer la demande</button></div></form>`);
+  const form=document.querySelector('#booking-form');if(form)updateBookingAvailability(form);
 }
 function sharePlayerDialog(playerId){
   const player=state.players.find(item=>item.id===playerId); if(!player)return;
