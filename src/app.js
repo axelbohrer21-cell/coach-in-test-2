@@ -3,7 +3,7 @@ import { state, resetState } from './core/state.js';
 import { supabase } from './core/supabase.js';
 import { authService } from './services/auth.js';
 import { dataService } from './services/data.js';
-import { pageMeta, renderPage, libraryItemsForCoach, libraryCard, buildPhysicalSession } from './views/pages.js';
+import { pageMeta, renderPage, libraryItemsForCoach, libraryCard } from './views/pages.js';
 import { bookingService } from './services/booking.js';
 import { notificationService } from './services/notifications.js';
 import { calculateAgeCategory, toLocalISO } from './domain/tennis.js';
@@ -15,6 +15,7 @@ import { progressionService } from './services/progression.js';
 import { recommendSessionExercises, buildMatchTransfer, buildSessionCoachingPlan } from './domain/session-recommendations.js';
 import { generateOriginalSession } from './domain/session-generator.js';
 import { OBJECTIVES, objectivesForTheme, findObjective } from './domain/session-curriculum.js';
+import { buildPhysicalProgram, buildTemplateSession } from './domain/physical-training.js';
 const coachObjectives=()=>state.sessionObjectives?.length?state.sessionObjectives:OBJECTIVES;
 import { buildSessionProgression } from './domain/session-progression.js';
 import { buildAdaptiveTrainingProgram } from './domain/intelligence.js';
@@ -123,12 +124,22 @@ $('#page-actions').addEventListener('click', event => {
 $('#page-content').addEventListener('submit',event=>{
  if(event.target?.id!=='physical-training-form')return;
  event.preventDefault();
- const values=Object.fromEntries(new FormData(event.target));
- state.physicalTrainingPlan=buildPhysicalSession({focus:values.focus,groupSize:values.groupSize,ageGroup:values.ageGroup,level:values.level,equipment:values.equipment});
+ const form=new FormData(event.target);
+ state.physicalTrainingPlan=buildPhysicalProgram({criteria:form.getAll('criteria'),groupSize:form.get('groupSize'),ageGroup:form.get('ageGroup'),level:form.get('level'),equipment:form.get('equipment')});
  render('physical');
 });
-$('#page-content').addEventListener('click',event=>{
- if(event.target.closest('[data-physical-reset]')){state.physicalTrainingPlan=null;render('physical');}
+$('#page-content').addEventListener('click',async event=>{
+ const template=event.target.closest('[data-physical-template]');
+ if(template){state.physicalTrainingPlan=buildTemplateSession(template.dataset.physicalTemplate,Number(template.dataset.physicalSession),{groupSize:6,ageGroup:'11-14',level:'intermediaire'});render('physical');return;}
+ if(event.target.closest('[data-physical-reset]')){state.physicalTrainingPlan=null;render('physical');return;}
+ if(event.target.closest('[data-physical-save]')){
+  const plan=state.physicalTrainingPlan;if(!plan)return;
+  try{const saved=await dataService.createPhysicalProgram({title:plan.title,program_type:plan.program_type||'generated',focus_criteria:plan.criteria||[],group_size:plan.groupSize,age_group:plan.ageGroup,level:plan.level,equipment:plan.equipment||'basic',duration_minutes:60,content:plan});state.physicalPrograms=[saved,...(state.physicalPrograms||[])];toast('Séance enregistrée dans ta bibliothèque.');render('physical');}catch(error){toast(error.message||'Impossible d’enregistrer la séance.','error');}return;
+ }
+ const open=event.target.closest('[data-physical-open]');
+ if(open){const row=(state.physicalPrograms||[]).find(x=>x.id===open.dataset.physicalOpen);if(row){state.physicalTrainingPlan=row.content;render('physical');}return;}
+ const remove=event.target.closest('[data-physical-delete]');
+ if(remove){if(!confirm('Supprimer définitivement cette séance de ta bibliothèque ?'))return;try{await dataService.deletePhysicalProgram(remove.dataset.physicalDelete);state.physicalPrograms=(state.physicalPrograms||[]).filter(x=>x.id!==remove.dataset.physicalDelete);toast('Séance supprimée.');render('physical');}catch(error){toast(error.message||'Suppression impossible.','error');}}
 });
 $('#page-content').addEventListener('keydown', event=>{
   const card=event.target.closest('[data-calendar-event]');
