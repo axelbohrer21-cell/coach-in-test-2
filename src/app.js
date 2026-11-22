@@ -890,7 +890,7 @@ function sessionBuilderExerciseText(item){
 function generateSessionPlan(){
  const form=$('#session-builder-form');if(!form)return;const values=Object.fromEntries(new FormData(form));
  if(!isPrivateLessonDateAllowed(values.session_date)){toast('Cette date tombe pendant une période sans cours particuliers. Choisis une autre date.','error');return;}
- const duration=Number(values.duration_minutes),player=state.players.find(p=>p.id===values.player_id)||{},selectedObjective=findObjective(values.objective_id),selectedCriterion=(state.criteria||[]).find(row=>String(row.id)===String(values.work_criterion_id))||null;const availableCriteria=(state.criteria||[]).filter(row=>normTheme(row.main_theme)===normTheme(values.theme));if(availableCriteria.length&&!selectedCriterion){toast('Sélectionne le critère précis à travailler avant de générer la séance.','error');return;}
+ const duration=Number(values.duration_minutes),player=state.players.find(p=>p.id===values.player_id)||{},selectedObjective=findObjective(values.objective_id),selectedCriterion=(state.criteria||[]).find(row=>String(row.id)===String(values.work_criterion_id))||null;
  let exerciseOne='',exerciseTwo='',theme=values.theme||'Construction du point',visibleSummary='',coachingPlan=null,phases=[];
  const recent=state.sessions.filter(x=>x.player_id===values.player_id).sort((a,b)=>String(b.session_date||'').localeCompare(String(a.session_date||'')));
  const age=player.date_of_birth?Math.floor((Date.now()-new Date(player.date_of_birth).getTime())/31557600000):player.age||null;
