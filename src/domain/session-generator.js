@@ -328,10 +328,22 @@ export function generateOriginalSession({
   const normalizeCriterion = value => normalize(value);
   const objectiveMatchesCriterion = goal => Boolean(goal && selectedCriterion?.criterion &&
     (goal.criteria || []).some(value => normalizeCriterion(value) === normalizeCriterion(selectedCriterion.criterion)));
+  const profileByFocus = {
+    service:'serveplus', retour:'returnfirst', volley:'volleyfinish',
+    'coup-droit':'early', revers:'early', defense:'movement',
+    attaque:'line', physique:'movement', mental:'decision', construction:'depth', smash:'volleyfinish'
+  };
   const matchedObjective = selectedCriterion?.criterion
     ? (objectiveMatchesCriterion(selectedObjective)
         ? selectedObjective
-        : OBJECTIVES.find(objectiveMatchesCriterion) || null)
+        : OBJECTIVES.find(objectiveMatchesCriterion) || {
+            id:'criterion-'+normalize(selectedCriterion.criterion).replace(/ /g,'-'),
+            theme:selectedCriterion.main_theme || plan.label,
+            label:selectedCriterion.criterion,
+            profile:profileByFocus[focus] || 'decision',
+            criteria:[selectedCriterion.criterion],
+            intent:plan.objective
+          })
     : selectedObjective;
   let curriculumActivities = [];
   let exerciseOneOptions = [];
@@ -503,12 +515,8 @@ export function generateOriginalSession({
   const formatPhase = (phase,index,label='SITUATION') => [
     label + ' ' + String(index+1).padStart(2,'0') + ' · ' + phase.minutes + ' min',
     phase.content,
-    'Matériel : ' + phase.equipment.join(', '),
-    'Repère coach : ' + phase.coach_cue,
-    'Progression : ' + phase.progression,
-    'Faciliter : ' + phase.easier_variant,
-    'Complexifier : ' + phase.harder_variant
-  ].join('\n');
+    phase.kind === 'corrective' ? 'Repère coach : ' + phase.coach_cue : ''
+  ].filter(Boolean).join('\n');
   return {
     generated:true, generation_mode:'original', theme:plan.label, focus:plan.label,
     objective_criteria:selectedCriterion?.criterion ? [selectedCriterion.criterion] : (priority?.criterion ? [priority.criterion] : (selectedObjective?.criteria || [])),
