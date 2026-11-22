@@ -122,7 +122,8 @@ export const dataService = {
     ]);
     const playerProfileDetailsById = Object.fromEntries(profileDetailsRows.map(row=>[row.player_id,row]));
     const hydratedPlayers=await Promise.all(players.map(hydratePlayerCardPhoto));
-    Object.assign(state, { players:hydratedPlayers, sessions, favoriteSessionIds, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:loadedSessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
+    const physicalPrograms = await unwrap(supabase.from('coach_physical_programs').select('*').eq('coach_id',userId).order('created_at',{ascending:false}));
+    Object.assign(state, { physicalPrograms, players:hydratedPlayers, sessions, favoriteSessionIds, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:loadedSessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
   },
 
   async loadPlayerWorkspace() {
@@ -258,6 +259,8 @@ export const dataService = {
     if (error) throw error;
     return data;
   },
+  async createPhysicalProgram(payload) { const {data,error}=await supabase.from('coach_physical_programs').insert({...payload,coach_id:state.user.id}).select().single(); if(error)throw error; return data; },
+  async deletePhysicalProgram(id) { const {error}=await supabase.from('coach_physical_programs').delete().eq('id',id).eq('coach_id',state.user.id); if(error)throw error; },
   async loadMessagesForCurrentUser() {
     const isCoach = state.profile?.role === 'coach';
     const field = isCoach ? 'coach_id' : 'player_id';
