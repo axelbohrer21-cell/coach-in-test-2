@@ -354,7 +354,7 @@ export function generateOriginalSession({
       ].filter(Boolean).join(' '), row.scoring || 'Observer la qualité du critère dans la situation.'];
       const feedAndFirst = compact(curriculumActivities[0]);
       const firstDrill = compact(curriculumActivities[1]);
-      const secondDrill = compact(curriculumActivities.length > 3 ? curriculumActivities[2] : curriculumActivities[1]);
+      const secondDrill = compact(minutes === 60 ? fullCurriculum[2] : curriculumActivities[2] || curriculumActivities[1]);
       const matchDrill = compact(curriculumActivities[curriculumActivities.length - 1]);
       plan = {
         ...plan,
@@ -367,6 +367,16 @@ export function generateOriginalSession({
         ]
       };
     }
+  }
+  if (exerciseOneOptions.length < 2 && selectedCriterion?.criterion) {
+    exerciseOneOptions = plan.drills.map((drill, index) => ({
+      title: drill[0] || ('Exercice ' + (index + 1)),
+      content: [
+        'Critère ciblé : ' + selectedCriterion.criterion + '.',
+        drill[1] || '',
+        drill[2] ? 'Réussite observée : ' + drill[2] : ''
+      ].filter(Boolean).join(' ')
+    })).slice(0, 3);
   }
   const sourceWeek = sourceWeekFor(focus, recentSessions);
   const allocations = distributeMinutes(minutes);
