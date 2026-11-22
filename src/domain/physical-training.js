@@ -12,7 +12,7 @@ export const PHYSICAL_CRITERIA = [
  {id:'shoulder',label:'Stabilité scapulaire et épaule',family:'Prévention / force',goal:'Développer le contrôle de la ceinture scapulaire et l’endurance des muscles stabilisateurs.',tags:['épaule','omoplate','élastique']},
  {id:'repeat_sprint',label:'Répétition des efforts courts',family:'Endurance spécifique',goal:'Répéter des séquences intenses de déplacements courts avec récupération incomplète mais maîtrisée.',tags:['intermittent','efforts répétés','récupération']},
  {id:'aerobic',label:'Endurance aérobie spécifique',family:'Endurance',goal:'Soutenir une activité intermittente prolongée et faciliter la récupération entre les efforts.',tags:['aérobie','continuité','récupération']},
- {id:'mobility',label:'Mobilité dynamique',family:'Mobilité',goal:'Entretenir les amplitudes utiles des chevilles, hanches, rachis thoracique et épaules.',tags:['mobilité','amplitude','contrôle']}
+ {id:'mobility',label:'Mobilité dynamique',family:'Mobilité',goal:'Entretenir les amplitudes utiles des chevilles, hanches, rachis thoracique et épaules.',tags:['mobilité','amplitude','contrôle']},
  {id:'first_step',label:'Premier pas et vitesse de démarrage',family:'Vitesse',goal:'Réduire le temps entre la lecture de la trajectoire et le premier appui utile.',tags:['premier pas','split-step','réactivité']},
  {id:'sprint',label:'Vitesse linéaire courte (5–15 m)',family:'Vitesse',goal:'Améliorer l’accélération et la vitesse sur les distances courtes réellement utiles au court.',tags:['sprint','accélération','5 m','10 m']},
  {id:'lateral',label:'Déplacements latéraux et diagonaux',family:'Déplacements',goal:'Améliorer la vitesse et l’efficacité des déplacements latéraux, croisés et diagonaux.',tags:['latéral','diagonal','pas chassés']},
