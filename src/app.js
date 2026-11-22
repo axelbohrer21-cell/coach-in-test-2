@@ -840,14 +840,14 @@ $('#dialog-content').addEventListener('submit',async event=>{
       if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isTeachingDate(values.session_date,values.audience)) throw new Error('Ce cours collectif ne peut pas être programmé ce jour : vérifie le jour autorisé, les vacances Zone B et les jours fériés.');
       if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isWithinTeachingWindow(values.session_date,values.start_time,values.end_time)) throw new Error('Les cours enfants doivent respecter les horaires du mercredi (9 h 30–18 h) ou du samedi (9 h 30–14 h 30).');
       const groupDuration=timeToMinutes(values.end_time)-timeToMinutes(values.start_time);
-      const conflict=findScheduleConflict({session_date:values.session_date,session_time:values.start_time,duration_minutes:groupDuration,excludeGroupId:values.id});
+      const conflict=findScheduleConflict({session_date:values.session_date,session_time:values.start_time,duration_minutes:groupDuration,court_number:Number(values.court_number),excludeGroupId:values.id});
       if(conflict)throw new Error('Ce créneau chevauche déjà '+conflict+'. Choisis un autre horaire.');
       const groupPayload={title:values.title.trim(),theme:values.theme||'',session_date:values.session_date,start_time:values.start_time,end_time:values.end_time,court_number:Number(values.court_number),audience:values.audience};
       if(values.id){await dataService.updateGroupSession(values.id,groupPayload,state.user.id);toast('Cours collectif modifié.');}
       else{await dataService.createGroupSession({coach_id:state.user.id,...groupPayload,status:'scheduled'});toast('Cours collectif ajouté au planning.');}
     } else if(form.id==='session-form'){
       if(!isPrivateLessonDateAllowed(values.session_date)) throw new Error('Les cours particuliers sont suspendus pendant les vacances scolaires et les jours fériés (sauf le 8 mai).');
-      const conflict=findScheduleConflict({session_date:values.session_date,session_time:values.session_time,duration_minutes:Number(values.duration_minutes)});
+      const conflict=findScheduleConflict({session_date:values.session_date,session_time:values.session_time,duration_minutes:Number(values.duration_minutes),court_number:Number(values.court_number)});
       if(conflict)throw new Error('Ce créneau chevauche déjà '+conflict+'. Choisis un autre horaire.');
       const payload={...values,player_id:values.player_id,created_by:state.user.id,duration_minutes:Number(values.duration_minutes),court_number:Number(values.court_number),status:'Prévue'};
       await dataService.createSession(payload);toast('Séance enregistrée.');
@@ -917,19 +917,19 @@ function timeToMinutes(value){
   return (Number.isFinite(hours)?hours:0)*60+(Number.isFinite(minutes)?minutes:0);
 }
 
-function findScheduleConflict({session_date,session_time,duration_minutes,excludeGroupId=null}){
+function findScheduleConflict({session_date,session_time,duration_minutes,court_number=null,excludeGroupId=null}){
   const start=timeToMinutes(session_time),end=start+Number(duration_minutes||0);
   if(!session_date||end<=start)return null;
   const events=[
-    ...(state.sessions||[]).filter(row=>row.session_date===session_date&&!['cancelled','annulée','annulee'].includes(String(row.status||'').toLowerCase())).map(row=>({
+    ...(state.sessions||[]).filter(row=>row.session_date===session_date&&!['cancelled','annulée','annulee'].includes(String(row.status||'').toLowerCase())&&(!court_number||!row.court_number||Number(row.court_number)===Number(court_number))).map(row=>({
       start:timeToMinutes(row.session_time),end:timeToMinutes(row.session_time)+Number(row.duration_minutes||60),
       label:'un cours particulier ('+((state.players||[]).find(player=>player.id===row.player_id)?.first_name||'joueur')+')'
     })),
-    ...(state.groupSessions||[]).filter(row=>row.session_date===session_date&&row.status!=='cancelled'&&row.id!==excludeGroupId).map(row=>({
+    ...(state.groupSessions||[]).filter(row=>row.session_date===session_date&&row.status!=='cancelled'&&row.id!==excludeGroupId&&(!court_number||!row.court_number||Number(row.court_number)===Number(court_number))).map(row=>({
       start:timeToMinutes(row.start_time),end:timeToMinutes(row.end_time),
       label:'un cours collectif (« '+(row.title||'cours collectif')+' »)'
     })),
-    ...(state.bookingRequests||[]).filter(row=>row.session_date===session_date&&(row.start_time||row.session_time)&&['pending','accepted','confirmed'].includes(String(row.status||'').toLowerCase())).map(row=>({
+    ...(state.bookingRequests||[]).filter(row=>row.session_date===session_date&&(row.start_time||row.session_time)&&['pending','accepted','confirmed'].includes(String(row.status||'').toLowerCase())&&(!court_number||!row.court_number||Number(row.court_number)===Number(court_number))).map(row=>({
       start:timeToMinutes(row.start_time||row.session_time),
       end:timeToMinutes(row.start_time||row.session_time)+Number(row.duration_minutes||row.duration||60),
       label:'une réservation '+(String(row.status).toLowerCase()==='pending'?'en attente':'confirmée')
