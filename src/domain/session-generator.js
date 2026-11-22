@@ -364,7 +364,7 @@ export function generateOriginalSession({
         activity.kind
       ])
     };
-    exerciseOneOptions = curriculumActivities.filter(activity => activity.kind === 'exercise').slice(0, 3).map(activity => ({
+    exerciseOneOptions = curriculumActivities.filter(activity => activity.kind === 'exercise').map(activity => ({
       title: activity.name,
       content: [
         activity.setup ? 'Mise en place : ' + activity.setup : '',
