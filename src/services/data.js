@@ -96,6 +96,7 @@ export const dataService = {
     ]);
     const playerProfileDetailsById = Object.fromEntries(profileDetailsRows.map(row=>[row.player_id,row]));
     Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
+    await this.loadSharedCourtOccupancy();
   },
 
   async loadSharedCourtOccupancy() {
