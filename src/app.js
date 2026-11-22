@@ -113,7 +113,9 @@ $('#auth-form').addEventListener('submit', async event => {
   finally { button.disabled=false; }
 });
 
-$('#logout').addEventListener('click', async()=>{try{stopRealtimeChannels();await authService.signOut();resetState();showAuth();}catch(e){toast(e.message,'error');}});
+async function logoutCurrentAccount(){try{stopRealtimeChannels();await authService.signOut();resetState();showAuth();}catch(e){toast(e.message,'error');}}
+$('#logout').addEventListener('click',logoutCurrentAccount);
+$('#logout-mobile')?.addEventListener('click',logoutCurrentAccount);
 $('#navigation').addEventListener('click',event=>{const button=event.target.closest('[data-page]');if(button)render(button.dataset.page);});
 
 $('#page-actions').addEventListener('click', event => {
