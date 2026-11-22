@@ -4169,3 +4169,55 @@ body.camera-fullscreen-open{overflow:hidden}
 .group-accordion-content .group-upcoming-panel{padding:0;border:0;background:transparent}
 .group-accordion-content .group-upcoming-panel .section-heading{margin-bottom:12px}
 @media(max-width:600px){.group-info-accordion>summary{gap:9px;min-height:70px;padding:13px 12px}.group-accordion-icon{flex-basis:36px;width:36px;height:36px;border-radius:11px;font-size:18px}.group-accordion-copy b{font-size:12px}.group-accordion-copy small{font-size:10px}.group-accordion-count{padding:5px 7px;font-size:9px}.group-accordion-content{padding:9px}}
+
+/* Carnet de séances : cartes lisibles et adaptées au mobile */
+.sessions-page-panel>.section-heading{align-items:flex-start}
+.sessions-page-panel .section-heading>div:first-child{min-width:0}
+.sessions-list{display:grid;gap:12px;margin-top:14px}
+.session-card{min-width:0;padding:15px;border:1px solid rgba(112,153,190,.25);border-radius:17px;background:linear-gradient(135deg,rgba(17,40,62,.98),rgba(10,27,46,.98));box-shadow:0 8px 22px rgba(0,0,0,.1)}
+.session-card[hidden]{display:none}
+.session-card-top{display:grid;grid-template-columns:68px minmax(0,1fr) auto;align-items:center;gap:12px}
+.session-date-badge{display:grid;justify-items:center;gap:4px;padding:9px 5px;border-radius:12px;background:rgba(190,239,100,.09);border:1px solid rgba(190,239,100,.18)}
+.session-date-badge strong{color:#c7f477;font-size:14px;white-space:nowrap}
+.session-date-badge small{color:#a8bbcf;font-size:12px}
+.session-card-main{display:grid;gap:5px;min-width:0}
+.session-player-name{color:var(--text,#edf4ff);font-size:16px;line-height:1.25;overflow-wrap:anywhere}
+.session-theme{color:#b9d8e5;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.session-card-meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px;color:var(--muted,#9aacc2);font-size:11px}
+.session-meta-dot{opacity:.6}
+.session-card-tags{display:flex;justify-content:flex-end;align-self:start}
+.session-card-details{margin-top:13px;border-top:1px solid rgba(112,153,190,.17);padding-top:10px}
+.session-card-details>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#a9e8dd;font-size:12px;font-weight:750;cursor:pointer;list-style:none}
+.session-card-details>summary::-webkit-details-marker{display:none}
+.session-card-details>summary span{font-size:17px;transition:transform .18s}
+.session-card-details[open]>summary span{transform:rotate(180deg)}
+.session-card-detail-content{display:grid;gap:10px;padding-top:12px}
+.session-detail-block{padding:11px 12px;border-radius:11px;background:rgba(94,139,177,.09);min-width:0}
+.session-detail-block b{display:block;color:#9de1d6;font-size:11px;margin-bottom:6px}
+.session-detail-block p{margin:0;color:#d0dceb;font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.session-private-note{border:1px solid rgba(190,151,255,.2);background:rgba(151,113,218,.08)}
+.session-private-note b{color:#c6a8ff}
+.session-card-actions{display:flex;justify-content:flex-end;margin-top:10px}
+.session-review-button{min-height:36px;padding:7px 11px;font-size:11px}
+.session-search-wrap{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center;gap:2px 8px;margin:16px 0 8px;padding:11px 13px;border:1px solid rgba(112,153,190,.28);border-radius:13px;background:rgba(7,22,39,.55);color:#a9e8dd}
+.session-search-wrap>span{font-size:22px;line-height:1}
+.session-search-wrap input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--text,#edf4ff);font:inherit;font-size:13px}
+.session-search-wrap input::placeholder{color:#8299b2}
+.session-search-wrap small{grid-column:2;color:var(--muted,#91a4ba);font-size:10px}
+.session-search-empty{padding:12px;text-align:center}
+@media(max-width:600px){
+ .sessions-page-panel>.section-heading{display:grid;gap:12px}
+ .sessions-page-panel>.section-heading .toolbar{display:grid;grid-template-columns:1fr 1fr;width:100%}
+ .sessions-page-panel>.section-heading .toolbar .btn{min-width:0;padding:10px 8px;font-size:12px}
+ .session-card{padding:12px;border-radius:15px}
+ .session-card-top{grid-template-columns:57px minmax(0,1fr);gap:10px}
+ .session-date-badge{padding:8px 3px}
+ .session-date-badge strong{font-size:12px}
+ .session-date-badge small{font-size:11px}
+ .session-player-name{font-size:14px}
+ .session-theme{font-size:12px}
+ .session-card-tags{grid-column:2;justify-content:flex-start;margin-top:-3px}
+ .session-card-meta{font-size:10px}
+ .session-card-actions{justify-content:stretch}
+ .session-review-button{width:100%}
+}
