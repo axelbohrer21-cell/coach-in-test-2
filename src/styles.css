@@ -4325,3 +4325,49 @@ body.camera-fullscreen-open{overflow:hidden}
 .physical-criteria-reference{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.physical-criteria-reference>div{display:grid;gap:5px;padding:10px;border:1px solid #29415f;border-radius:10px;background:#091a2e}.physical-criteria-reference b{font-size:11px;color:#8edfff}.physical-criteria-reference small{font-size:10px;line-height:1.5;color:#b4c6d9}
 .physical-phase-body>p b{color:#8edfff}
 @media(max-width:600px){.physical-criteria-options,.physical-criteria-reference{grid-template-columns:1fr}.physical-template-sessions{grid-template-columns:1fr}.physical-saved-row{align-items:flex-start;flex-direction:column}.physical-saved-row>div:last-child{width:100%}.physical-saved-row .btn{flex:1}}
+
+
+/* Coach In – préparation physique : hiérarchie et lisibilité */
+.physical-hero{position:relative;overflow:hidden;min-height:180px;background:radial-gradient(circle at 82% 20%,rgba(94,224,185,.2),transparent 28%),linear-gradient(120deg,#102c49 0%,#13213d 62%,#172b45 100%)}
+.physical-hero:after{content:"";position:absolute;inset:auto -8% -65% 40%;height:190px;border:1px solid rgba(135,231,206,.16);border-radius:50%;pointer-events:none}
+.physical-hero-pills{display:flex;flex-wrap:wrap;gap:7px;margin-top:15px}
+.physical-hero-pills span{padding:6px 10px;border:1px solid rgba(150,226,211,.22);border-radius:999px;background:rgba(7,20,37,.3);color:#c9f5e9;font-size:10px;font-weight:800;letter-spacing:.02em}
+.physical-builder{border-color:rgba(91,202,219,.28)}
+.physical-selection-intro{display:grid;gap:5px;padding:13px 15px;border:1px solid rgba(105,204,222,.22);border-radius:13px;background:linear-gradient(110deg,rgba(40,145,174,.12),rgba(40,145,174,.025))}
+.physical-selection-intro strong,.physical-section-kicker b{color:#c7f2f4;font-size:14px}
+.physical-selection-intro p,.physical-section-kicker span{margin:0;color:#a9bfd3;font-size:11px;line-height:1.55}
+.physical-family-list{display:grid;gap:12px}
+.physical-family-group{padding:12px;border:1px solid #29445f;border-radius:13px;background:rgba(6,20,36,.45)}
+.physical-family-group h3{margin:0 0 9px;color:#8ee5dc;font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+.physical-family-group .physical-criteria-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.physical-criterion{height:100%;transition:border-color .16s ease,background .16s ease}
+.physical-criterion:has(input:checked){border-color:#72d9bb;background:linear-gradient(120deg,rgba(90,211,174,.16),rgba(90,211,174,.055));box-shadow:inset 3px 0 #78e0b8}
+.physical-criterion:has(input:checked) b{color:#d5fff0}
+.physical-section-kicker{display:grid;gap:4px;padding:5px 0 0}
+.physical-plan{overflow:hidden;border-color:rgba(100,208,193,.28)}
+.physical-plan-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:4px 0 13px}
+.physical-plan-heading h2{margin:4px 0 5px;color:#f4f8ff;font-size:clamp(19px,3vw,25px)}
+.physical-plan-heading p:not(.eyebrow){margin:0;color:#a9bfd3;font-size:11px}
+.physical-plan-total{display:grid;place-content:center;flex:none;width:68px;height:68px;border:1px solid rgba(116,225,193,.38);border-radius:19px;background:rgba(81,197,160,.12);color:#c6ffe7;font-size:24px;font-weight:950;text-align:center}
+.physical-plan-total small{font-size:9px;letter-spacing:.15em}
+.physical-plan-progress{height:4px;margin-bottom:15px;overflow:hidden;border-radius:99px;background:#243c53}
+.physical-plan-progress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#79dfb6,#75d7e8)}
+.physical-phase{grid-template-columns:76px minmax(0,1fr);gap:14px;padding:15px;border-color:#2c4661;background:linear-gradient(135deg,#0c2035,#0a192b)}
+.physical-phase-time span{display:grid;place-content:center;width:34px;height:34px;border:1px solid rgba(120,214,220,.28);border-radius:11px;background:rgba(89,190,199,.1);color:#a8f0e5;font-size:12px;font-weight:900}
+.physical-phase-time small{font-size:10px;line-height:1.4}
+.physical-phase-label{margin:1px 0 5px;color:#8edbd4;font-size:9px;font-weight:900;letter-spacing:.13em}
+.physical-phase-body h3{font-size:15px;line-height:1.35}
+.physical-phase-body>p{margin:7px 0 0}
+.physical-phase-body>p b{display:inline-block;min-width:112px;color:#9ee6df;font-size:10px;text-transform:uppercase;letter-spacing:.035em}
+.physical-phase-detail{padding:10px 12px;border:1px solid rgba(113,167,192,.12);background:rgba(255,255,255,.025)}
+.physical-phase-detail b{color:#9ee6df}
+.physical-phase-detail p{font-size:11px;line-height:1.65}
+.physical-phase.warmup{border-left:3px solid #72cde4}
+.physical-phase:not(.warmup):not(.cooldown){border-left:3px solid #8bdab7}
+.physical-phase.cooldown{border-left:3px solid #c1df7b}
+.physical-template-card{position:relative;overflow:hidden;grid-template-columns:minmax(0,1fr);background:linear-gradient(135deg,#0d2238,#09192c)}
+.physical-template-card>div:first-child{padding-right:8px}
+.physical-template-card b{font-size:14px;line-height:1.4}
+.physical-template-sessions .btn{min-height:40px;border-color:#31536b;background:rgba(84,156,177,.07)}
+.physical-recommendations{border-color:rgba(123,218,173,.3);background:linear-gradient(145deg,rgba(32,90,75,.12),rgba(12,29,47,.85))}
+@media(max-width:600px){.physical-family-group .physical-criteria-options{grid-template-columns:1fr}.physical-plan-heading{align-items:flex-start}.physical-plan-total{width:58px;height:58px;border-radius:16px;font-size:21px}.physical-phase{grid-template-columns:1fr;gap:8px}.physical-phase-time{display:flex;align-items:center;gap:8px}.physical-phase-time span{width:29px;height:29px}.physical-phase-body>p b{display:block;margin-bottom:3px}.physical-hero-pills{gap:5px}}
