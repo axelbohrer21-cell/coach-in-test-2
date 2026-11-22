@@ -4271,3 +4271,44 @@ body.camera-fullscreen-open{overflow:hidden}
  .session-builder-instruction{padding:10px 11px}
  .session-builder-instruction p{font-size:13px!important;line-height:1.6!important}
 }
+/* Coach In · rubrique préparation physique */
+.physical-hero{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:clamp(20px,4vw,30px);border-color:rgba(76,205,232,.28);background:radial-gradient(circle at 90% 10%,rgba(83,219,187,.16),transparent 34%),linear-gradient(135deg,#102d49,#111d38)}
+.physical-hero h2{margin:4px 0 9px;font-size:clamp(22px,3vw,30px)}
+.physical-hero p:not(.eyebrow){max-width:690px;margin:0;color:#b8cbe0;font-size:13px;line-height:1.7}
+.physical-mark{display:grid;place-content:center;flex:none;width:82px;height:82px;border:1px solid rgba(142,223,255,.3);border-radius:22px;background:rgba(58,190,216,.12);color:#a8edff;font-size:25px;font-weight:950;text-align:center}
+.physical-mark span{font-size:10px;letter-spacing:.14em}
+.physical-builder,.physical-method,.physical-plan{margin-top:16px}
+#physical-training-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+#physical-training-form>label{display:grid;gap:7px;color:#dce9f7;font-size:12px;font-weight:800}
+#physical-training-form select{min-height:44px;padding:10px 12px;border:1px solid #385574;border-radius:11px;background:#0a1a2e;color:#f2f7ff;font-size:13px}
+.physical-safety-note{padding:13px 15px;border:1px solid rgba(151,211,128,.2);border-radius:12px;background:rgba(124,181,95,.07)}
+.physical-safety-note strong{color:#c6f28e;font-size:12px}
+.physical-safety-note p{margin:6px 0 0;color:#bfd0df;font-size:12px;line-height:1.6}
+.physical-empty{margin-top:16px;padding:24px;text-align:center}
+.physical-empty strong{color:#dcecff}
+.physical-empty p{margin:7px auto 0;max-width:480px;color:#9fb4ca;font-size:12px;line-height:1.6}
+.physical-method h2{margin:4px 0 14px;font-size:19px}
+.physical-method-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.physical-method-grid article{padding:13px;border:1px solid #29415f;border-radius:12px;background:#091a2e}
+.physical-method-grid strong{color:#8edfff;font-size:12px}
+.physical-method-grid p{margin:7px 0 0;color:#b4c6d9;font-size:12px;line-height:1.6}
+.physical-plan-goal{margin:0 0 14px;color:#c5d6e8;font-size:13px;line-height:1.65}
+.physical-plan-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.physical-plan-meta span{display:grid;gap:5px;padding:10px;border:1px solid rgba(142,223,255,.16);border-radius:10px;background:rgba(142,223,255,.045);color:#d6e6f5;font-size:11px;line-height:1.5}
+.physical-plan-meta b{color:#8edfff;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.physical-plan-organisation{padding:12px 14px;margin-bottom:14px;border:1px solid #315477;border-radius:12px;background:#102943}
+.physical-plan-organisation strong{color:#aee9ff;font-size:12px}
+.physical-plan-organisation p{margin:5px 0 0;color:#c0d1e2;font-size:12px;line-height:1.55}
+.physical-timeline{display:grid;gap:10px}
+.physical-phase{display:grid;grid-template-columns:82px minmax(0,1fr);gap:12px;padding:13px;border:1px solid #29415f;border-radius:13px;background:#091a2e}
+.physical-phase-time{display:grid;align-content:start;gap:4px;color:#8edfff;font-size:12px;font-weight:900}
+.physical-phase-time small{color:#aabbd0;font-size:10px}
+.physical-phase-body h3{margin:0 0 6px;color:#f0f6ff;font-size:14px}
+.physical-phase-body>p,.physical-phase-detail p{margin:0;color:#c2d2e3;font-size:12px;line-height:1.65;white-space:pre-line}
+.physical-phase-detail{margin-top:9px;padding:9px 10px;border-radius:9px;background:rgba(255,255,255,.035)}
+.physical-phase-detail b{display:block;margin-bottom:4px;color:#8edfff;font-size:10px;letter-spacing:.05em;text-transform:uppercase}
+.physical-phase.warmup{border-left:3px solid #8edfff}
+.physical-phase.cooldown{border-left:3px solid #b7e96b}
+.physical-plan>.physical-safety-note{margin-top:13px}
+.physical-plan-actions{display:flex;justify-content:flex-end;margin-top:13px}
+@media(max-width:600px){.physical-hero{align-items:flex-start}.physical-mark{width:64px;height:64px;border-radius:17px;font-size:20px}#physical-training-form{grid-template-columns:1fr}.physical-method-grid{grid-template-columns:1fr}.physical-plan-meta{grid-template-columns:1fr}.physical-phase{grid-template-columns:1fr;gap:6px}.physical-phase-time{display:flex;align-items:center;gap:8px}.physical-plan-actions,.physical-plan-actions .btn{width:100%}}
