@@ -304,11 +304,13 @@ function planningPage() {
       const slotStart=hour*60,slotEnd=slotStart+60;
       const blockedByGroup=events.find(event=>event.kind==='group'&&event.status!=='cancelled'&&timeToMinutes(event.time)<slotEnd&&timeToMinutes(event.time)+event.duration>slotStart);
       const blockedByBooking=events.find(event=>event.kind==='booking'&&timeToMinutes(event.time)<slotEnd&&timeToMinutes(event.time)+event.duration>slotStart);
+      const blockedBySession=events.find(event=>event.kind==='session'&&timeToMinutes(event.time)<slotEnd&&timeToMinutes(event.time)+event.duration>slotStart);
       const groupBlock=blockedByGroup&&!inSlot.some(event=>event.id===blockedByGroup.id)?'<div class="calendar-blocked-slot" aria-label="Indisponible : cours collectif">🔒 COURS COLLECTIF · INDISPONIBLE</div>':'';
       const bookingBlock=blockedByBooking&&!inSlot.some(event=>event.id===blockedByBooking.id)?'<div class="calendar-blocked-slot" aria-label="Indisponible : réservation">🔒 '+(blockedByBooking.status==='pending'?'DEMANDE EN ATTENTE':'COURT RÉSERVÉ')+' · COURT '+(blockedByBooking.court||'—')+'</div>':'';
+      const sessionBlock=blockedBySession&&!inSlot.some(event=>event.id===blockedBySession.id)?'<div class="calendar-blocked-slot" aria-label="Indisponible : cours particulier">🔒 COURS PARTICULIER · '+escapeHtml(blockedBySession.title)+'</div>':'';
       const activeInSlot=inSlot.filter(event=>event.kind!=='group'||event.status!=='cancelled');
-      const addButton=!disabled&&!blockedByGroup&&!blockedByBooking&&!activeInSlot.length&&isPrivateLessonDateAllowed(iso)?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'">＋ Cours particulier</button>':'';
-      return '<div class="calendar-hour-row"><span class="calendar-hour-label">'+time+'</span><div class="calendar-hour-content">'+cards+groupBlock+bookingBlock+addButton+'</div></div>';
+      const addButton=!disabled&&!blockedByGroup&&!blockedByBooking&&!blockedBySession&&!activeInSlot.length&&isPrivateLessonDateAllowed(iso)?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'">＋ Cours particulier</button>':'';
+      return '<div class="calendar-hour-row"><span class="calendar-hour-label">'+time+'</span><div class="calendar-hour-content">'+cards+groupBlock+bookingBlock+sessionBlock+addButton+'</div></div>';
     }).join('');
     return '<div class="calendar-day '+(disabled?'calendar-day-disabled':'')+'"><div class="calendar-day-head"><strong>'+['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()]+'</strong><span>'+d.getDate()+'</span></div>'+(reason?'<p class="calendar-day-reason">'+escapeHtml(reason)+'</p>':'')+'<div class="calendar-hours">'+slots+'</div></div>';
   }).join('');
