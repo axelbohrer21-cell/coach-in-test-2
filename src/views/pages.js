@@ -9,7 +9,7 @@ import { recommendSessionExercises } from '../domain/session-recommendations.js'
 import { generateOriginalSession } from '../domain/session-generator.js';
 import { buildDaySeriesOverview, buildHolidayStageOccurrences, getWeekProgram, GROUP_SEASON, isPublicHoliday, isTeachingDate, isPrivateLessonDateAllowed, ZONE_B_HOLIDAYS_2026_2027 } from '../domain/group-calendar.js';
 import { buildSeriesCounters } from '../domain/group-series.js';
-import groupProgram from '../data/group-course-program.json' with { type: 'json' };
+import groupProgram from '../data/group-course-program.js';
 import { playerTennisPage, playerUltimateCard, playerMatchesPage, clubLifePage } from './player-experience.js';
 import { PLAYER_COLORS } from '../domain/player-colors.js';
 import { PHYSICAL_CRITERIA, physicalTemplates, physicalExercise, buildPhysicalProgram, buildTemplateSession } from '../domain/physical-training.js';
