@@ -4221,3 +4221,38 @@ body.camera-fullscreen-open{overflow:hidden}
  .session-card-actions{justify-content:stretch}
  .session-review-button{width:100%}
 }
+
+/* Espace pédagogique du carnet de séances */
+.session-overview-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:15px 0}
+.session-overview-stats>div{display:grid;gap:4px;min-width:0;padding:12px;border:1px solid rgba(112,153,190,.2);border-radius:13px;background:rgba(13,32,51,.62)}
+.session-overview-stats strong{color:#c8f477;font-size:22px;line-height:1.1}
+.session-overview-stats span{color:var(--muted,#9aacc2);font-size:10px;line-height:1.3}
+.session-library-sections{display:grid;gap:10px;margin-top:15px}
+.session-hub-section{overflow:hidden;border:1px solid rgba(112,153,190,.25);border-radius:16px;background:linear-gradient(130deg,rgba(17,40,62,.88),rgba(10,27,46,.95))}
+.session-hub-section>summary{display:flex;align-items:center;gap:11px;min-height:69px;padding:13px 14px;cursor:pointer;list-style:none}
+.session-hub-section>summary::-webkit-details-marker,.session-player-history>summary::-webkit-details-marker{display:none}
+.session-hub-icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid rgba(190,239,100,.2);border-radius:12px;background:rgba(190,239,100,.08);color:#c7f477;font-size:20px}
+.session-hub-section>summary>span:nth-child(2),.session-player-history>summary>span{display:grid;gap:4px;flex:1;min-width:0}
+.session-hub-section>summary b,.session-player-history>summary b{color:var(--text,#edf4ff);font-size:13px}
+.session-hub-section>summary small,.session-player-history>summary small{color:var(--muted,#9aacc2);font-size:10px;line-height:1.3}
+.session-hub-section>summary em{padding:5px 8px;border-radius:999px;background:rgba(111,153,190,.13);color:#b6d9e8;font-size:10px;font-style:normal;font-weight:800}
+.session-hub-section>summary>i,.session-player-history>summary>i{color:#9fb5c9;font-size:17px;font-style:normal;transition:transform .2s}
+.session-hub-section[open]>summary,.session-player-history[open]>summary{border-bottom:1px solid rgba(112,153,190,.17);background:rgba(83,145,177,.07)}
+.session-hub-section[open]>summary>i,.session-player-history[open]>summary>i{transform:rotate(180deg)}
+.session-hub-content{display:grid;gap:12px;padding:12px}
+.session-library-list{display:grid;gap:10px}
+.session-library-card{padding:12px;border:1px solid rgba(112,153,190,.2);border-radius:13px;background:rgba(7,22,39,.36)}
+.session-library-head{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}
+.session-library-head>div{display:grid;gap:5px;min-width:0}
+.session-library-head strong{color:var(--text,#edf4ff);font-size:13px;overflow-wrap:anywhere}
+.session-library-head span,.session-library-card>p{color:var(--muted,#9aacc2);font-size:11px;line-height:1.45}
+.session-library-card>p{margin:9px 0 0}
+.session-library-link,.session-player-profile-link{color:#9fe7dc;font-size:11px;font-weight:750;text-decoration:none}
+.session-player-history{border:1px solid rgba(112,153,190,.19);border-radius:12px;overflow:hidden;background:rgba(7,22,39,.32)}
+.session-player-history>summary{display:flex;align-items:center;gap:10px;padding:12px;cursor:pointer;list-style:none}
+.session-player-history .sessions-list{padding:10px}
+.session-player-profile-link{display:inline-block;margin:0 12px 12px}
+.session-favorite-button.is-favorite{border-color:rgba(197,239,113,.45);background:rgba(197,239,113,.12);color:#d0f58b}
+.session-linked-evaluations{border:1px solid rgba(166,139,255,.2);background:rgba(166,139,255,.08)}
+.session-linked-evaluations b{color:#c6a8ff}
+@media(max-width:600px){.session-overview-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.session-overview-stats>div{padding:10px}.session-overview-stats strong{font-size:20px}.session-hub-section>summary{gap:8px;padding:11px 10px}.session-hub-icon{flex-basis:34px;width:34px;height:34px;font-size:17px}.session-hub-section>summary b{font-size:12px}.session-hub-section>summary small{font-size:9px}.session-hub-content{padding:9px}.session-card-actions{flex-wrap:wrap;gap:7px}.session-card-actions .btn{flex:1 1 auto}}
