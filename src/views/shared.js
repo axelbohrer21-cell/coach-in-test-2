@@ -37,6 +37,6 @@ export function sessionCard(session, isCoach) {
       <div class="session-card-tags">${reviewTag}</div>
     </div>
     ${details ? `<details class="session-card-details"><summary>Voir le contenu de la séance <span>⌄</span></summary><div class="session-card-detail-content">${details}</div></details>` : ''}
-    <div class="session-card-actions">${reviewAction}</div>
+    <div class="session-card-actions">${isCoach ? `<button class="btn subtle session-favorite-button ${state.favoriteSessionIds?.includes(session.id)?'is-favorite':''}" data-favorite-session="${escapeHtml(session.id)}" aria-label="${state.favoriteSessionIds?.includes(session.id)?'Retirer des favoris':'Ajouter aux favoris'}">${state.favoriteSessionIds?.includes(session.id)?'★ Favori':'☆ Favoris'}</button><button class="btn subtle" data-duplicate-session="${escapeHtml(session.id)}">Dupliquer</button>` : ''}${reviewAction}</div>
   </article>`;
 }
