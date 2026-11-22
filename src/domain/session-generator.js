@@ -1,4 +1,5 @@
 import groupProgram from '../data/group-course-program.json' with { type: 'json' };
+import { OBJECTIVES, buildCurriculumActivities } from './session-curriculum.js';
 
 const normalize = value => String(value || '')
   .toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -321,7 +322,37 @@ export function generateOriginalSession({
   const evidenceFocus = [priority?.criterion, priority?.subtheme, priority?.main_theme].filter(Boolean).join(' ');
   const focus = classifyFocus(selectedCriterion ? explicitFocus : (priority?.criterion ? evidenceFocus : explicitFocus || evidenceFocus));
   const basePlan = DRILLS[focus] || DRILLS.construction;
-  const plan = criterionSpecificPlan(selectedCriterion, basePlan, focus);
+  let plan = criterionSpecificPlan(selectedCriterion, basePlan, focus);
+  // Relie le critère sélectionné au meilleur objectif pédagogique existant.
+  const normalizeCriterion = value => normalize(value).replace(/s$/, '');
+  const matchedObjective = selectedObjective || (selectedCriterion?.criterion
+    ? OBJECTIVES.find(goal => (goal.criteria || []).some(value => normalizeCriterion(value) === normalizeCriterion(selectedCriterion.criterion)))
+    : null);
+  let curriculumActivities = [];
+  if (matchedObjective) {
+    curriculumActivities = buildCurriculumActivities(matchedObjective, minutes, customExercises);
+    if (curriculumActivities.length >= 3) {
+      const compact = row => [row.name, [
+        row.setup ? 'Mise en place : ' + row.setup : '',
+        row.procedure ? 'Déroulement : ' + row.procedure : '',
+        row.scoring ? 'Réussite observée : ' + row.scoring : ''
+      ].filter(Boolean).join(' '), row.scoring || 'Observer la qualité du critère dans la situation.'];
+      const feedAndFirst = compact(curriculumActivities[0]);
+      const firstDrill = compact(curriculumActivities[1]);
+      const secondDrill = compact(curriculumActivities.length > 3 ? curriculumActivities[2] : curriculumActivities[1]);
+      const matchDrill = compact(curriculumActivities[curriculumActivities.length - 1]);
+      plan = {
+        ...plan,
+        label: matchedObjective.theme,
+        objective: matchedObjective.intent || plan.objective,
+        drills: [
+          [feedAndFirst[0] + ' + ' + firstDrill[0], feedAndFirst[1] + ' ' + firstDrill[1], feedAndFirst[2] + ' ' + firstDrill[2]],
+          [secondDrill[0], secondDrill[1], secondDrill[2]],
+          [matchDrill[0], matchDrill[1], matchDrill[2]]
+        ]
+      };
+    }
+  }
   const sourceWeek = sourceWeekFor(focus, recentSessions);
   const allocations = distributeMinutes(minutes);
   const difficultySettings = {
@@ -404,7 +435,7 @@ export function generateOriginalSession({
   const reference = coachingReference[focusKey] || coachingReference.construction;
   const phases = plan.drills.map((drill,index) => {
     const successCriteria = 'Réussir le comportement attendu sur au moins ' + selectedDifficulty.target + ' tentatives sur 10.';
-    const coachCue = selectedCriterion?.criterion || priority?.criterion || plan.objective;
+    const coachCue = selectedCriterion?.criterion || priority?.criterion || matchedObjective?.intent || plan.objective;
     const equipment = ['Raquettes','Balles'];
     if (/repère|plot|pastille|cible|zone|délimité/i.test(drill[1])) equipment.push('Plots ou repères au sol','Cibles matérialisées');
     if (/panier|distribu|coach envoie|coach alterne/i.test(drill[1])) equipment.push('Panier ou réserve de balles');
@@ -414,6 +445,9 @@ export function generateOriginalSession({
       'Variabilité : modifier la direction, la profondeur ou le déplacement sans changer le critère.',
       'Transfert : jouer des points avec un contrat lié au critère, puis libérer le jeu.'
     ][index];
+    const curriculumOrigin = matchedObjective
+      ? 'Objectif pédagogique associé : ' + matchedObjective.label + '. Situation issue de la banque Coach In, adaptée au critère sélectionné.'
+      : '';
     const easierVariant = 'Ralentir l’envoi, agrandir la cible et réduire le déplacement tout en conservant le critère.';
     const harderVariant = 'Réduire la cible, varier la trajectoire sans prévenir et ajouter une décision en situation de point.';
     const focusCheckpoints = reference.checkpoints;
@@ -439,7 +473,7 @@ export function generateOriginalSession({
       content,
       success_criteria: successCriteria,
       source_basis: ['FFT – Cahier de l’enseignant : objectif, organisation, déroulement, répétitions et adaptation de la difficulté.','Mouratoglou Academy – Coaching Corner : repères techniques, préparation, contact, accompagnement et lecture tactique.'],
-      origin: 'Situation originale Coach In. Contenu inspiré de principes pédagogiques publics, adapté au critère choisi ; ce n’est pas un exercice reproduit mot pour mot.'
+      origin: [curriculumOrigin, 'Situation Coach In adaptée au critère choisi à partir de principes pédagogiques publics ; ce n’est pas une reproduction mot pour mot.'].filter(Boolean).join(' ')
     };
   });
   const sourceLabel = sourceWeek
