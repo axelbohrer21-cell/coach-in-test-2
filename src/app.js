@@ -447,7 +447,7 @@ $('#page-content').addEventListener('submit',async event=>{
     event.preventDefault();
     const formData=new FormData(profileDetailsForm);
     const payload={player_id:state.user.id,objective:String(formData.get('objective')||'').trim(),motivation:String(formData.get('motivation')||'').trim(),strengths:String(formData.get('strengths')||'').trim(),focus:String(formData.get('focus')||'').trim(),updated_at:new Date().toISOString()};
-    try{const {data,error}=await supabase.from('player_profile_details').upsert(payload,{onConflict:'player_id'}).select().single();if(error)throw error;state.playerProfileDetails=data;render('passport');toast('Ton passeport joueur est à jour.');}
+    try{const {data,error}=await supabase.from('player_profile_details').upsert(payload,{onConflict:'player_id'}).select().single();if(error)throw error;state.playerProfileDetails=data;render('dashboard');toast('Ton profil tennis est à jour.');}
     catch(error){toast(error.message||'Impossible d’enregistrer ton profil.','error');}
     return;
   }
