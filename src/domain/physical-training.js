@@ -104,19 +104,71 @@ const CYCLE_TEMPLATES = [
   {title:'Agilité ludique',exercises:['mirror','star','color-start'],progression:'Parcours courts, consignes variées.'},
   {title:'Défis moteurs tennis',exercises:['relay','mobility-flow','split'],progression:'Petits défis collectifs sans classement éliminatoire.'}
  ]}
+
+ {id:'first-step-acceleration',title:'Cycle 4 semaines – Premier pas et accélération',focus:['first_step','reaction','acceleration','sprint'],audience:'Joueurs capables de respecter les consignes de départ et de freinage',sessions:[
+  {title:'Réagir et déclencher',exercises:['first-step-call','split','color-start'],progression:'Priorité au timing du split-step et à la qualité du premier appui ; peu de répétitions.'},
+  {title:'Accélérer sur courte distance',exercises:['short-sprint','first-step-call','lateral-push'],progression:'Départs variés sur 5 à 8 m, récupération complète.'},
+  {title:'Démarrer dans plusieurs directions',exercises:['lateral-push','crossover-run','short-sprint'],progression:'Ajouter des départs latéraux et diagonaux sans augmenter fortement le volume.'},
+  {title:'Transfert vers le point',exercises:['split','first-step-call','star'],progression:'Associer lecture, premier pas, déplacement et replacement avec balle.'}
+ ]},
+ {id:'braking-change-direction',title:'Cycle 4 semaines – Freinage et changements de direction',focus:['deceleration','eccentric','cod','balance','lateral'],audience:'Joueurs ayant acquis les positions de base',sessions:[
+  {title:'Apprendre à freiner',exercises:['brake','snap-down','slow-step-down'],progression:'Freinage progressif, stabilité de la réception et contrôle des genoux.'},
+  {title:'Freiner en déplacement latéral',exercises:['lateral-push','lateral-bound-stick','slow-step-down'],progression:'Introduire des trajectoires latérales courtes et des arrêts contrôlés.'},
+  {title:'Enchaîner freinage et relance',exercises:['brake','crossover-run','lateral-bound-stick'],progression:'Augmenter la vitesse seulement si les positions restent stables.'},
+  {title:'Freinage en situation tennis',exercises:['star','mirror','snap-down'],progression:'Lire la cible, freiner, stabiliser et repartir dans une autre direction.'}
+ ]},
+ {id:'lower-body-strength',title:'Cycle 4 semaines – Force des jambes et robustesse',focus:['unilateral_strength','strength','eccentric','hip_groin','calf_ankle'],audience:'Adolescents et adultes avec technique maîtrisée',sessions:[
+  {title:'Contrôle unilatéral',exercises:['split-squat','single-leg-squat','calf-raise'],progression:'Installer les alignements et une amplitude confortable.'},
+  {title:'Force et contrôle excentrique',exercises:['slow-step-down','split-squat','copenhagen-short'],progression:'Augmenter légèrement les répétitions, garder une descente contrôlée.'},
+  {title:'Force latérale et cheville',exercises:['copenhagen-short','calf-raise','lateral-push'],progression:'Renforcer le plan frontal et le complexe pied-cheville.'},
+  {title:'Transfert force-déplacement',exercises:['single-leg-squat','brake','star'],progression:'Conserver la qualité des appuis après un effort de force.'}
+ ]},
+ {id:'power-rotation',title:'Cycle 4 semaines – Puissance et transfert rotatoire',focus:['power','plyometric','rotational_power','trunk_rotation','coordination'],audience:'Adolescents avancés et adultes, supervision requise',sessions:[
+  {title:'Produire de la force rapidement',exercises:['jump-land','medball-chest','core'],progression:'Faible volume, intention explosive et récupération complète.'},
+  {title:'Réactivité et impulsion',exercises:['pogo-low','lateral-bound-stick','snap-down'],progression:'Introduire des contacts rapides de faible amplitude.'},
+  {title:'Transfert rotatoire',exercises:['medball-rotational','medball-rotation','deadbug-press'],progression:'Coordonner jambes, bassin et tronc avant le lancer.'},
+  {title:'Puissance spécifique tennis',exercises:['medball-rotational','star','jump-land'],progression:'Associer impulsion, rotation contrôlée et déplacement tennis.'}
+ ]},
+ {id:'tennis-intermittent-endurance',title:'Cycle 4 semaines – Endurance intermittente spécifique tennis',focus:['repeat_efforts','aerobic_recovery','repeat_sprint','aerobic','footwork'],audience:'Joueurs capables de maintenir une technique de déplacement stable',sessions:[
+  {title:'Base intermittente maîtrisée',exercises:['tennis-interval-15-15','shadow','mirror'],progression:'Densité modérée, apprendre à récupérer activement.'},
+  {title:'Répéter les efforts courts',exercises:['tennis-interval-8-20','rally-interval','star'],progression:'Efforts courts de qualité avec récupération définie.'},
+  {title:'Maintenir la qualité sous fatigue',exercises:['tennis-interval-15-15','relay','brake'],progression:'Surveiller la précision des appuis ; réduire le volume si elle chute.'},
+  {title:'Enchaîner des séquences de points',exercises:['tennis-interval-8-20','rally-interval','mirror'],progression:'Transférer l’effort intermittent dans des séquences proches du jeu.'}
+ ]}
+
 ];
 
+export function recommendPhysicalCycles(criteria=[]){
+ const selected=Array.isArray(criteria)?criteria:[criteria];
+ return CYCLE_TEMPLATES.map(template=>({...template,matchCount:template.focus.filter(id=>selected.includes(id)).length}))
+  .filter(template=>template.matchCount>0)
+  .sort((a,b)=>b.matchCount-a.matchCount);
+}
 export function physicalExercise(id){return EXERCISES.find(item=>item.id===id)||EXERCISES[0];}
 export function physicalCriteria(){return PHYSICAL_CRITERIA;}
 export function physicalTemplates(){return CYCLE_TEMPLATES;}
 export function buildPhysicalProgram({criteria=['footwork'],groupSize=4,ageGroup='11-14',level='intermediaire',equipment='basic'}={}){
- const selected=PHYSICAL_CRITERIA.filter(c=>criteria.includes(c.id));
- const ids=selected.length?selected.map(c=>c.id):['footwork'];
+ const requested=PHYSICAL_CRITERIA.filter(c=>criteria.includes(c.id));
+ const selected=requested.length?requested:[PHYSICAL_CRITERIA.find(c=>c.id==='footwork')];
+ const ids=selected.map(c=>c.id);
  const pool=EXERCISES.filter(ex=>ex.criteria.some(c=>ids.includes(c)));
  const count=Math.max(4,Math.min(10,Number(groupSize)||4));
  const young=['4-6','7-10'].includes(ageGroup);
  const ageName={'4-6':'4–6 ans','7-10':'7–10 ans','11-14':'11–14 ans','15-17':'15–17 ans',adult:'Adultes'}[ageGroup]||'11–14 ans';
- const chosen=pool.slice(0,3);
+ const chosen=[];
+ const covered=new Set();
+ const candidates=[...pool];
+ while(chosen.length<3&&candidates.length){
+  candidates.sort((a,b)=>{
+   const score=ex=>ex.criteria.reduce((n,id)=>n+(ids.includes(id)&&!covered.has(id)?3:ids.includes(id)?1:0),0);
+   return score(b)-score(a);
+  });
+  const next=candidates.shift();
+  if(chosen.some(ex=>ex.id===next.id))continue;
+  chosen.push(next);
+  next.criteria.filter(id=>ids.includes(id)).forEach(id=>covered.add(id));
+ }
+ if(chosen.length<3)throw new Error('Pas assez d’exercices disponibles pour ces critères.');
  const warm=young?'Jeu de locomotion et mobilité dynamique, 8 min : déplacements variés, imitation et réactions simples.':'Échauffement progressif, 10 min : 4 min de déplacement général, 3 min de mobilité dynamique, 3 min d’activation spécifique.';
  const doseAdjust=young?'Efforts ludiques de 6 à 10 s, récupération généreuse, pas de charge externe ni de recherche d’effort maximal.':ageGroup==='11-14'?'Poids du corps et technique d’abord ; volumes modestes, récupération complète et supervision rapprochée.':ageGroup==='15-17'?'Progression graduelle selon expérience et maturité ; pas de charge lourde sans compétence et encadrement appropriés.':'Ajuster le volume à l’expérience, à la charge tennis de la semaine et à la récupération.';
  const total=60, warmMin=young?8:10, blockMin=12, gameMin=young?10:8, coolMin=6;
