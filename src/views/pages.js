@@ -397,7 +397,13 @@ function groupCalendarPage() {
 }
 
 function sessionsPage(isCoach) {
-  return `<section class="panel"><div class="section-heading"><div><p class="eyebrow">CARNET DE TERRAIN</p><h2>${isCoach?'Toutes les séances':'Mon historique'}</h2></div>${isCoach?'<div class="toolbar"><button class="btn primary" data-action="generate-session">✦ Composer une séance</button><button class="btn subtle" data-action="new-session">＋ Saisie libre</button></div>':''}</div>${state.sessions.map(s=>sessionCard(s,isCoach)).join('') || emptyState('Aucune séance enregistrée','Les séances apparaîtront ici après leur création.')}</section>`;
+  const sessions = [...(state.sessions || [])].sort((a,b) => String(b.session_date || '').localeCompare(String(a.session_date || '')) || String(b.session_time || '').localeCompare(String(a.session_time || '')));
+  return `<section class="panel sessions-page-panel">
+    <div class="section-heading"><div><p class="eyebrow">CARNET DE TERRAIN</p><h2>${isCoach?'Toutes les séances':'Mon historique'}</h2><p class="tiny muted">${sessions.length} séance${sessions.length>1?'s':''} enregistrée${sessions.length>1?'s':''}</p></div>${isCoach?'<div class="toolbar"><button class="btn primary" data-action="generate-session">✦ Composer une séance</button><button class="btn subtle" data-action="new-session">＋ Saisie libre</button></div>':''}</div>
+    ${isCoach?`<label class="session-search-wrap"><span>⌕</span><input id="session-search" type="search" placeholder="Rechercher un joueur, un thème…" autocomplete="off"><small>Recherche dans les noms et les contenus</small></label>`:''}
+    <div class="sessions-list" id="sessions-list">${sessions.map(s=>sessionCard(s,isCoach)).join('') || emptyState('Aucune séance enregistrée','Les séances apparaîtront ici après leur création.')}</div>
+    ${isCoach?'<p class="tiny muted session-search-empty" id="session-search-empty" hidden>Aucune séance ne correspond à cette recherche.</p>':''}
+  </section>`;
 }
 
 function radarChart(report){
