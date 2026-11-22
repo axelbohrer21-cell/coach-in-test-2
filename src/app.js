@@ -461,6 +461,7 @@ $('#page-content').addEventListener('submit',async event=>{
   catch(error){toast(error.message||'Impossible d’enregistrer les préférences.','error');}
 });
 $('#page-content').addEventListener('input',event=>{
+  if(event.target.id==='session-search')filterSessionCards();
   if(event.target.id==='player-search'){state.filters.search=event.target.value;filterPlayerCards();}
   if(event.target.matches('#message-form input[name=attachment]')){const label=$('[data-message-file-name]');if(label)label.textContent=event.target.files?.[0]?.name||'Photo, vidéo ou document';}
   if(['library-search','library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
@@ -477,6 +478,14 @@ $('#page-content').addEventListener('change',event=>{
   if(['library-category','library-theme','library-level'].includes(event.target.id))filterLibrary();
 });
 
+function filterSessionCards(){
+  const normalize=value=>String(value||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
+  const query=normalize($('#session-search')?.value||'');
+  const cards=[...$('#page-content').querySelectorAll('[data-session-card]')];
+  let visible=0;
+  cards.forEach(card=>{const match=normalize(card.dataset.sessionSearch).includes(query);card.hidden=!match;if(match)visible++;});
+  const empty=$('#session-search-empty');if(empty)empty.hidden=visible>0||!query;
+}
 function filterPlayerCards(){
   const normalize=value=>String(value||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');
   const query=normalize(state.filters.search);
