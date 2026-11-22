@@ -43,7 +43,6 @@ export const pageMeta = {
   coaches: ['Administration', 'Gestion des coachs', 'Consulte les comptes coachs et leur statut.'],
   availability: ['Organisation', 'Mes disponibilités', 'Définis les plages pendant lesquelles les joueurs peuvent demander un cours.'],
   messages: ['Communication', 'Messages', 'Échange des messages, photos, vidéos et documents avec tes coachs ou tes joueurs.'],
-  passport: ['Mon tennis', 'Passeport tennis', 'Ton identité de joueur, tes acquis et ton bilan mensuel.'],
   matches: ['Mon tennis', 'Journal de match', 'Garde une trace de tes matchs, de tes sensations et de tes axes de travail.'],
   club: ['Vie du club', 'Mon club', 'Retrouve les tournois, stages et animations du club.']
 };
@@ -53,7 +52,6 @@ export function renderPage(page) {
   const isAdmin = state.profile.is_admin === true || state.profile.role === 'admin';
   if (isAdmin && page === 'coaches') return adminCoachesPage();
   if (page === 'dashboard') return dashboard(isCoach);
-  if (page === 'passport' && !isCoach) return playerTennisPage();
   if (page === 'matches' && !isCoach) return playerMatchesPage();
   if (page === 'club') return clubLifePage(isCoach);
   if (page === 'intelligence' && isCoach) return intelligencePage();
