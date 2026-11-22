@@ -328,6 +328,7 @@ $('#dialog-content').addEventListener('click',async event=>{
 });
 
 $('#dialog-content').addEventListener('change',event=>{
+  if(event.target.name==='player_id'&&event.target.form?.id==='evaluation-form'){updateEvaluationSessionOptions(event.target.value);}
   if(event.target.matches('input[name=criterion]')){
     const row=event.target.closest('.criterion-measure-row');
     const measure=row?.querySelector('.criterion-measure');
@@ -928,6 +929,11 @@ function applyLibraryItemToSessionForm(item){
   if(form.elements.exercise_2)form.elements.exercise_2.value=[item.rotations,item.variations].filter(Boolean).join('\n\n');
   if(form.elements.duration_minutes&&[60,90,120].includes(Number(item.duration_minutes)))form.elements.duration_minutes.value=String(item.duration_minutes);
 }
+function updateEvaluationSessionOptions(playerId, selectedSessionId = '') {
+  const form=$('#evaluation-form');if(!form?.elements.session_id)return;
+  const rows=(state.sessions||[]).filter(row=>row.player_id===playerId).sort((a,b)=>String(b.session_date||'').localeCompare(String(a.session_date||'')));
+  form.elements.session_id.innerHTML='<option value="">Aucune séance associée</option>'+rows.map(row=>'<option value="'+escapeHtml(row.id)+'" '+(row.id===selectedSessionId?'selected':'')+'>'+escapeHtml(formatDate(row.session_date,{day:'2-digit',month:'short',year:'numeric'}))+' · '+escapeHtml(row.theme||'Séance')+' · '+Number(row.duration_minutes||60)+' min</option>').join('');
+}
 function updateEvaluationSelectionUI(){
   const form=$('#evaluation-form');if(!form)return;
   const checked=[...form.querySelectorAll('input[name=criterion]:checked')];
@@ -949,13 +955,14 @@ function evaluationDialog(){
   <form id="evaluation-form" class="form-grid evaluation-form evaluation-redesign">
     <div class="evaluation-intro-card span-2"><div class="evaluation-intro-icon">✦</div><div><strong>Le parcours de progression</strong><p>Choisis le joueur, relève les observations sur le terrain, puis attribue une note à chaque secteur.</p></div></div>
     <div class="evaluation-stepper span-2"><span class="step-current"><b>01</b> Joueur</span><i></i><span><b>02</b> Observations</span><i></i><span><b>03</b> Évaluation</span><i></i><span><b>04</b> Enregistrer</span></div>
-    <section class="evaluation-player-section span-2"><div class="evaluation-block-heading"><span class="evaluation-block-number">01</span><div><p class="form-section-title">Joueur évalué</p><small>À qui s’adresse ce bilan ?</small></div></div><label class="evaluation-player-select"><span>Joueur</span><select name="player_id" required>${state.players.map(p=>`<option value="${p.id}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label></section>
+    <section class="evaluation-player-section span-2"><div class="evaluation-block-heading"><span class="evaluation-block-number">01</span><div><p class="form-section-title">Joueur évalué</p><small>À qui s’adresse ce bilan ?</small></div></div><label class="evaluation-player-select"><span>Joueur</span><select name="player_id" required>${state.players.map(p=>`<option value="${p.id}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}</select></label><label class="evaluation-player-select"><span>Séance associée (facultatif)</span><select name="session_id"><option value="">Aucune séance associée</option></select><small>Relie ce bilan à un entraînement déjà enregistré.</small></label></section>
     <section class="evaluation-criteria-section span-2"><div class="evaluation-block-heading"><span class="evaluation-block-number">02</span><div><p class="form-section-title">Observations du terrain</p><small>Repère les réussites et les points à faire progresser.</small></div><span class="selection-total" data-selection-total>0 critère</span></div>${criteriaMarkup}
       <div class="criteria-validation"><div><strong data-validation-title>Sélection à confirmer</strong><small data-validation-hint>Plusieurs réussites et axes de progression peuvent être sélectionnés.</small></div><button type="button" class="btn subtle" data-confirm-criteria>Confirmer les observations ✓</button></div>
     </section>
     <section class="evaluation-scores-section span-2"><div class="evaluation-block-heading"><span class="evaluation-block-number">03</span><div><p class="form-section-title">Évaluation par secteur</p><small>Attribue une note de 0 à 20 selon ton observation.</small></div></div><div class="score-grid evaluation-score-grid">${[['technical_score','Technique','01','score-technique'],['tactical_score','Tactique','02','score-tactique'],['physical_score','Physique','03','score-physique'],['mental_score','Mental','04','score-mental']].map(([key,label,num,cls])=>`<label class="evaluation-score-card ${cls}"><span class="evaluation-score-top"><b>${label}</b><i>${num}</i></span><span class="evaluation-score-input"><input type="number" name="${key}" min="0" max="20" step="0.5" placeholder="—"><small>/ 20</small></span><span class="evaluation-score-scale">Note du coach</span></label>`).join('')}</div><p class="evaluation-score-note">La moyenne générale est calculée uniquement à partir des secteurs renseignés.</p></section>
     <div class="dialog-actions span-2 evaluation-dialog-actions"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Enregistrer le bilan <span>↗</span></button></div>
   </form>`);
+  updateEvaluationSessionOptions(state.players[0]?.id||'');
   updateEvaluationSelectionUI();
 }
 
@@ -1344,7 +1351,7 @@ $('#dialog-content').addEventListener('submit',async event=>{
       }).filter(Boolean);
       if(selected.length && form.dataset.criteriaConfirmed!=='true') throw new Error('Valide ta sélection de critères avant d’enregistrer le bilan.');
       if(!hasEvaluationContent(scores,selected)) throw new Error('Renseigne au moins une note ou sélectionne un critère observé.');
-      await progressionService.saveEvaluation({playerId:values.player_id,coachId:state.user.id,scores,selectedCriteria:selected});
+      await progressionService.saveEvaluation({playerId:values.player_id,coachId:state.user.id,scores,selectedCriteria:selected,sessionId:values.session_id||null});
       toast('Bilan enregistré. Les réussites et le défi actif ont été actualisés.');
     } else if(form.id==='library-form'){
       if(values.illustration_url && !/^https:\/\//i.test(values.illustration_url)) throw new Error('L’illustration doit utiliser une adresse HTTPS.');
