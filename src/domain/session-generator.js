@@ -513,7 +513,8 @@ export function generateOriginalSession({
     generated:true, generation_mode:'original', theme:plan.label, focus:plan.label,
     objective_criteria:selectedCriterion?.criterion ? [selectedCriterion.criterion] : (priority?.criterion ? [priority.criterion] : (selectedObjective?.criteria || [])),
     duration_minutes:minutes, objective:plan.objective, coaching_notes:coachingNotes,
-    exercise_1:phases.slice(0,2).map((phase,index)=>formatPhase(phase,index)).join('\n\n'),
+    exercise_1:phases.slice(0,-1).map((phase,index)=>formatPhase(phase,index,phase.kind==='corrective'?'CORRECTIF':'EXERCICE')).join('\n\n'),
+    exercise_1_corrective:phases[0]?.kind==='corrective'?formatPhase(phases[0],0,'CORRECTIF'):'',
     exercise_1_options:exerciseOneOptions.map((option,index)=>({
       ...option,
       formatted:'EXERCICE 1 · OPTION '+(index+1)+' · '+option.title+'\n'+option.content
