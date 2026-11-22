@@ -60,7 +60,6 @@ export function playerTennisPage() {
       <div class="passport-identity"><p class="eyebrow">MON PROFIL TENNIS · COACH IN</p><h2>${safe(profile.first_name)} ${safe(profile.last_name)}</h2><p>${safe(profile.player_type||'Profil joueur')} · ${safe(profile.age_category||'Catégorie non renseignée')}</p><div class="passport-tags"><span>Classement FFT : <b>${safe(profile.fft_ranking||'Non renseigné')}</b></span><span>Depuis le ${formatDate(profile.created_at,{month:'long',year:'numeric'})}</span></div></div>
       <span class="passport-stamp">CI<span>+</span></span>
     </section>
-    ${playerUltimateCard()}
     <div class="stats-grid passport-stats">
       <article class="stat-card blue"><span>Séances réalisées</span><strong>${sessions.length}</strong><small>${Math.round(sessions.reduce((sum,row)=>sum+Number(row.duration_minutes||0),0)/60)} h sur le terrain</small></article>
       <article class="stat-card purple"><span>Bilans partagés</span><strong>${reports.length}</strong><small>Évaluations accessibles</small></article>
