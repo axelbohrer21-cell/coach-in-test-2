@@ -279,6 +279,7 @@ function playerCoachPlanningPage() {
   const weekEnd=new Date(weekStart);weekEnd.setDate(weekStart.getDate()+6);
   const isoDate=date=>toLocalISO(date);
   const toMinutes=value=>{const [h,m]=String(value||'00:00').slice(0,5).split(':').map(Number);return h*60+(m||0);};
+  const fromMinutes=value=>String(Math.floor(value/60)).padStart(2,'0')+':'+String(value%60).padStart(2,'0');
   const coachesButtons=coaches.map(coach=>{
     const active=coach.id===selected.id;
     return '<button type="button" class="player-coach-switch '+(active?'active':'')+'" data-select-coach="'+escapeHtml(coach.id)+'" aria-pressed="'+active+'"><span class="player-coach-switch-avatar">'+escapeHtml((coach.first_name||'C').slice(0,1)+(coach.last_name||'').slice(0,1))+'</span><span><strong>'+escapeHtml((coach.first_name+' '+coach.last_name).trim()||'Coach')+'</strong><small>'+((state.weeklyAvailability||[]).filter(row=>row.coach_id===coach.id&&row.active).length)+' plage(s) de disponibilité</small></span><span class="player-coach-switch-check">'+(active?'✓':'›')+'</span></button>';
@@ -290,7 +291,10 @@ function playerCoachPlanningPage() {
     const date=new Date(weekStart);date.setDate(weekStart.getDate()+index);
     const iso=isoDate(date),weekday=(date.getDay()+6)%7;
     const rules=availability.filter(row=>Number(row.weekday)===weekday);
-    const events=occupancy.filter(row=>row.session_date===iso&&!['cancelled','canceled','annulé','annulee','rejected'].includes(String(row.status||'').toLowerCase()));
+    const actualEvents=occupancy.filter(row=>row.session_date===iso&&!['cancelled','canceled','annulé','annulee','rejected'].includes(String(row.status||'').toLowerCase()));
+    const recurringEvents=GROUP_SEASON.weeklySchedule.filter(row=>row.weekday===date.getDay()&&isTeachingDate(iso,row.audience)&&!actualEvents.some(event=>String(event.start_time||'').slice(0,5)===row.start)).map(row=>({coach_id:selected.id,session_date:iso,start_time:row.start,end_time:row.end,court_number:null,source_kind:'group_session',status:'scheduled'}));
+    const stageEvents=buildHolidayStageOccurrences({startDate:iso,endDate:iso}).flatMap(stage=>stage.courts.map(court=>({coach_id:selected.id,session_date:iso,start_time:stage.start_time,end_time:fromMinutes(toMinutes(stage.start_time)+420),court_number:court,source_kind:'group_session',status:'scheduled'})));
+    const events=[...actualEvents,...recurringEvents,...stageEvents];
     const slots=Array.from({length:28},(_,slotIndex)=>{
       const start=480+slotIndex*30,end=start+30;
       const time=String(Math.floor(start/60)).padStart(2,'0')+':'+String(start%60).padStart(2,'0');
