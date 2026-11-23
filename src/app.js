@@ -36,7 +36,7 @@ let videoCameraRecorder = null;
 let videoCameraChunks = [];
 const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['physical','Prépa physique','↗'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
-const playerNav = [ ['dashboard','Accueil','⌂'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
+const playerNav = [ ['dashboard','Accueil','⌂'], ['planning','Planning des coachs','▦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
 
 function showAuth(message='') {
   $('#auth-view').classList.remove('hidden'); $('#app-view').classList.add('hidden');
@@ -256,8 +256,9 @@ $('#page-content').addEventListener('click', async event=>{
     return;
   }
   const read=event.target.closest('[data-read-notification]'); if(read) return markNotificationRead(read.dataset.readNotification);
-  const dayTab=event.target.closest('[data-planning-day]'); if(dayTab){state.planningDayIndex=Number(dayTab.dataset.planningDay);render(state.profile?.role==='coach'?'planning':'bookings');return;}
-  const week=event.target.closest('[data-week]'); if(week){state.planningWeekOffset=Number(week.dataset.week)===0?0:(state.planningWeekOffset||0)+Number(week.dataset.week);state.planningDayIndex=Math.max(0,Math.min(6,(new Date().getDay()+6)%7));render(state.profile?.role==='coach'?'planning':'bookings');}
+  const coachChoice=event.target.closest('[data-select-coach]'); if(coachChoice){state.selectedPlayerCoachId=coachChoice.dataset.selectCoach;render('planning');return;}
+  const dayTab=event.target.closest('[data-planning-day]'); if(dayTab){state.planningDayIndex=Number(dayTab.dataset.planningDay);render(state.currentPage==='planning'?'planning':'bookings');return;}
+  const week=event.target.closest('[data-week]'); if(week){state.planningWeekOffset=Number(week.dataset.week)===0?0:(state.planningWeekOffset||0)+Number(week.dataset.week);state.planningDayIndex=Math.max(0,Math.min(6,(new Date().getDay()+6)%7));render(state.currentPage==='planning'?'planning':'bookings');}
 });
 $('#dialog-content').addEventListener('click',async event=>{
   const personalizedSession=event.target.closest('[data-personalized-session]');
