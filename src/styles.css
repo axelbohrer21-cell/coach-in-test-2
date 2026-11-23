@@ -4413,4 +4413,5 @@ body.camera-fullscreen-open{overflow:hidden}
 .player-coach-switch>span:nth-child(2){display:grid;gap:3px;min-width:0}.player-coach-switch strong{font-size:13px}.player-coach-switch small{font-size:11px;color:var(--muted,#68758a)}
 .player-coach-switch-check{margin-left:auto;font-weight:800;color:var(--accent,#4779bd)}
 .player-calendar-unavailable{display:block;padding:7px 10px;color:var(--muted,#8a94a5);font-size:11px}
+.player-calendar-blocked{color:#f3bd87;background:rgba(180,105,45,.12);border-left:2px solid #c9874b;border-radius:5px;padding-left:8px}
 @media(max-width:760px){.player-coach-planning-intro{grid-template-columns:1fr}.player-coach-switch{min-width:100%}}
