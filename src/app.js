@@ -841,7 +841,7 @@ $('#dialog-content').addEventListener('submit',async event=>{
       await dataService.inviteCoachToPlayer(values.player_id,values.coach_email.trim().toLowerCase());toast('Invitation envoyée au coach. Le partage sera actif après son acceptation.');
     } else if(form.id==='group-series-form'){
       const weekday=Number(values.weekday), audience=values.audience;
-      const allowed=audience==='adultes'?[1,2,4,5]:[3,6]; if(!allowed.includes(weekday)) throw new Error('Ce jour ne correspond pas au public choisi.');
+      const allowed=audience==='adultes'?[1,2,3,4,5]:[3,6]; if(!allowed.includes(weekday)) throw new Error('Ce jour ne correspond pas au public choisi.');
       if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
       const seriesPayload={title:values.title.trim(),audience,weekday,start_time:values.start_time,end_time:values.end_time,court_number:Number(values.court_number),target_sessions:Number(values.target_sessions),theme:values.theme||''};
       if(values.id){await dataService.updateGroupSeries(values.id,seriesPayload,state.user.id);toast('Créneau annuel et séances futures actualisés.');}
@@ -849,7 +849,7 @@ $('#dialog-content').addEventListener('submit',async event=>{
     } else if(form.id==='group-session-form'){
       if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
       if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isTeachingDate(values.session_date,values.audience)) throw new Error('Ce cours collectif ne peut pas être programmé ce jour : vérifie le jour autorisé, les vacances Zone B et les jours fériés.');
-      if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isWithinTeachingWindow(values.session_date,values.start_time,values.end_time)) throw new Error('Les cours enfants doivent respecter les horaires du mercredi (9 h 30–18 h) ou du samedi (9 h 30–14 h 30).');
+      if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isWithinTeachingWindow(values.session_date,values.start_time,values.end_time,values.audience)) throw new Error('Les cours enfants doivent respecter les horaires du mercredi (9 h 30–18 h) ou du samedi (9 h 30–14 h 30).');
       const groupDuration=timeToMinutes(values.end_time)-timeToMinutes(values.start_time);
       const conflict=findScheduleConflict({session_date:values.session_date,session_time:values.start_time,duration_minutes:groupDuration,court_number:Number(values.court_number),excludeGroupId:values.id});
       if(conflict)throw new Error('Ce créneau chevauche déjà '+conflict+'. Choisis un autre horaire.');
