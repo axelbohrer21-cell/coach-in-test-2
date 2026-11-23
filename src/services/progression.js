@@ -5,11 +5,18 @@ import { newlyUnlockedAchievements, recommendChallenge, challengeEvaluationResul
 async function rows(query) { const { data, error } = await query; if (error) throw error; return data || []; }
 
 export const progressionService = {
-  async saveEvaluation({ playerId, coachId, scores, selectedCriteria }) {
+  async saveEvaluation({ playerId, coachId, scores, selectedCriteria, sessionId = null, playerVisibleComment = '', notifyPlayer = true }) {
     validateEvaluationCriteria(selectedCriteria);
+    if (sessionId) {
+      const { data: linkedSession, error: sessionError } = await supabase.from('training_sessions')
+        .select('id').eq('id', sessionId).eq('player_id', playerId).eq('created_by', coachId).maybeSingle();
+      if (sessionError) throw sessionError;
+      if (!linkedSession) throw new Error('La séance sélectionnée ne correspond pas à ce joueur ou à ton espace coach.');
+    }
     const score = calculateAverage(scores);
     const { data: evaluation, error } = await supabase.from('evaluations').insert({
-      player_id: playerId, created_by: coachId, ...scores, score
+      player_id: playerId, session_id: sessionId || null, created_by: coachId, ...scores, score,
+      player_visible_comment: String(playerVisibleComment || '').trim()
     }).select('id,player_id,session_id,evaluated_at,score,technical_score,tactical_score,physical_score,mental_score,player_visible_comment,created_by,created_at').single();
     if (error) throw error;
 
@@ -28,16 +35,19 @@ export const progressionService = {
     }
 
 
-await this.refreshAchievements(playerId, coachId);
-const hadActiveChallenge = await this.updateActiveChallenge(playerId, coachId, detailRows);
-if (!hadActiveChallenge) await this.createNextChallenge(playerId, coachId);
+if (detailRows.length) {
+  await this.refreshAchievements(playerId, coachId);
+  const hadActiveChallenge = await this.updateActiveChallenge(playerId, coachId, detailRows);
+  if (!hadActiveChallenge) await this.createNextChallenge(playerId, coachId);
+}
 
-const { error: notificationError } = await supabase.rpc(
-  'notify_player_existing_evaluation',
-  { p_evaluation_id: evaluation.id }
-);
-
-if (notificationError) throw notificationError;
+if (notifyPlayer) {
+  const { error: notificationError } = await supabase.rpc(
+    'notify_player_existing_evaluation',
+    { p_evaluation_id: evaluation.id }
+  );
+  if (notificationError) throw notificationError;
+}
 
 return evaluation;
 

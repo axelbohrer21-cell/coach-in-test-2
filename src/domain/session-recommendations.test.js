@@ -8,8 +8,8 @@ const library = [
   { id:'c', category:'collectif', title:'Revers collectif', theme:'Revers', instructions:'Atelier collectif' },
   { id:'d', category:'particulier', title:'Service ciblé', theme:'Service', instructions:'Zones de service' }
 ];
-const evaluations = [{id:'e2',player_id:'p1',evaluated_at:'2026-11-10'},{id:'e1',player_id:'p1',evaluated_at:'2026-11-03'}];
-const evaluationCriteria = ['e2','e1'].map(evaluation_id => ({evaluation_id,player_id:'p1',criterion_id:'c1',criterion:'Régularité revers',main_theme:'Technique',subtheme:'Revers',criterion_type:'improvement'}));
+const evaluations = [{id:'e2',player_id:'p1',evaluated_at:'2026-11-10'},{id:'e1',player_id:'p1',evaluated_at:'2026-11-03'},{id:'e0',player_id:'p1',evaluated_at:'2026-10-27'}];
+const evaluationCriteria = ['e2','e1','e0'].map(evaluation_id => ({evaluation_id,player_id:'p1',criterion_id:'c1',criterion:'Régularité revers',main_theme:'Technique',subtheme:'Revers',criterion_type:'improvement'}));
 
 test('recommande deux exercices particuliers reliés au critère récurrent', () => {
   const result = recommendSessionExercises({playerId:'p1',evaluations,evaluationCriteria,library});
