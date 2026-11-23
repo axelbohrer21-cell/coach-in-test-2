@@ -345,7 +345,7 @@ async function uploadPlayerPortrait(playerId,blob,uploadFromDialog){
   const storageValue='storage:player-card-photos:'+path;
   const {data:updated,error:updateError}=await supabase.from('profiles').update({avatar_url:storageValue}).eq('id',playerId).eq('role','player').select().single();
   if(updateError){await supabase.storage.from('player-card-photos').remove([path]);throw updateError;}
-  const {data:signed,error:signedError}=await supabase.storage.from('player-card-photos').createSignedUrl(path,604800);
+  const {data:signed,error:signedError}=await supabase.storage.from('player-card-photos').createSignedUrl(path,3600);
   state.players=state.players.map(row=>row.id===playerId?{...updated,avatar_url:signedError?null:signed?.signedUrl||null,avatar_storage_path:path}:row);
   toast(signedError?'Photo enregistrée. Elle sera visible après actualisation.':'Portrait détouré et enregistré sur la carte.');
   if(uploadFromDialog)playerSheetDialog(playerId);else render('players');
