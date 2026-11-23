@@ -2,7 +2,7 @@
 export const CONFIG = Object.freeze({
   supabaseUrl: 'https://whyylgiscrpqoahdzdkv.supabase.co',
   // Clé publishable publique du projet de production. Ne jamais placer une clé service_role ici.
-  supabaseAnonKey: 'sb_publishable_C-ZG8_bqBAwAPb9gW6cRZg_lhfsIMr',
+  supabaseAnonKey: 'sb_publishable_C-ZG8_bqBAwAPb9gW6cRZg_lhfsIMrB',
   appName: 'Coach In',
   timezone: 'Europe/Paris',
   coachEmail: 'Axel.bohrer21@gmail.com'
