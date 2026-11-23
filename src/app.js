@@ -72,7 +72,7 @@ function render(page) {
   $('#navigation').innerHTML = navItems.map(([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}</button>`).join('');
   const [kicker,title,description] = pageMeta[page];
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
-  $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
+  $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : (!isCoach && !isAdmin ? '<button class="btn ghost" data-player-logout>↪ Déconnexion</button>' : '');
   $('#page-content').innerHTML=renderPage(page);
   if(page==='planning') loadWeatherForecast();
   if(page==='messages'){subscribeToMessages();markVisibleConversationRead();}
@@ -105,7 +105,9 @@ $('#auth-form').addEventListener('submit', async event => {
   finally { button.disabled=false; }
 });
 
-$('#logout').addEventListener('click', async()=>{try{stopRealtimeChannels();await authService.signOut();resetState();showAuth();}catch(e){toast(e.message,'error');}});
+async function logoutUser(){try{stopRealtimeChannels();await authService.signOut();resetState();showAuth();}catch(e){toast(e.message,'error');}}
+$('#logout').addEventListener('click', logoutUser);
+$('#page-actions').addEventListener('click', event=>{if(event.target.closest('[data-player-logout]'))logoutUser();});
 $('#navigation').addEventListener('click',event=>{const button=event.target.closest('[data-page]');if(button)render(button.dataset.page);});
 
 $('#page-actions').addEventListener('click', event => {
