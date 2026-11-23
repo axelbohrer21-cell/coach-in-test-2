@@ -23,8 +23,10 @@ let notificationChannel = null;
 let sharedScheduleChannel = null;
 let notificationRefreshPromise = null;
 let messageRefreshPromise = null;
+let playerScheduleRefreshPromise = null;
 let notificationRetryCount = 0;
 let messageRetryCount = 0;
+let scheduleRetryCount = 0;
 const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['availability','Disponibilités','◷'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
 const playerNav = [ ['dashboard','Accueil','⌂'], ['passport','Passeport','✦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
@@ -1037,7 +1039,7 @@ function stopRealtimeChannels(){
   if(messageChannel){const channel=messageChannel;messageChannel=null;supabase.removeChannel(channel);}
   if(notificationChannel){const channel=notificationChannel;notificationChannel=null;supabase.removeChannel(channel);}
   if(sharedScheduleChannel){const channel=sharedScheduleChannel;sharedScheduleChannel=null;supabase.removeChannel(channel);}
-  messageRetryCount=0;notificationRetryCount=0;
+  messageRetryCount=0;notificationRetryCount=0;scheduleRetryCount=0;
 }
 
 supabase.auth.onAuthStateChange((_event,session)=>{
@@ -1072,26 +1074,76 @@ async function loadWeatherForecast(){
 function weatherDescription(code){const c=Number(code);if(c===0)return'ciel dégagé';if([1,2,3].includes(c))return'nuageux';if([45,48].includes(c))return'brouillard';if([51,53,55,56,57].includes(c))return'bruine';if([61,63,65,66,67,80,81,82].includes(c))return'pluie';if([71,73,75,77,85,86].includes(c))return'neige';if([95,96,99].includes(c))return'orage';return'conditions météo';}
 
 
-function subscribeToSharedSchedule(){
- if(sharedScheduleChannel||!state.user||!state.profile)return;
- const channel=supabase.channel('coach-in-shared-courts-'+state.user.id)
-  .on('postgres_changes',{event:'*',schema:'public',table:'shared_court_occupancy'},async()=>{
-   try{
-    if(state.profile.role==='coach'){
-     if(['planning','bookings'].includes(state.currentPage))await refreshAndRender();
-    }else{
-     await dataService.loadSharedCourtOccupancy();
-     if(state.currentPage==='bookings')render('bookings');
-    }
-   }catch(error){toast(error.message||'Actualisation du planning partagé impossible.','error');}
-  });
- sharedScheduleChannel=channel;
- channel.subscribe(status=>{
-  if(['CHANNEL_ERROR','TIMED_OUT'].includes(status)&&sharedScheduleChannel===channel){
-   sharedScheduleChannel=null;
+async function refreshPlayerSchedule() {
+  if (playerScheduleRefreshPromise) return playerScheduleRefreshPromise;
+  playerScheduleRefreshPromise = (async () => {
+    await dataService.loadPlayerSchedule();
+    if (state.currentPage === 'bookings') render('bookings');
+  })();
+  try {
+    return await playerScheduleRefreshPromise;
+  } finally {
+    playerScheduleRefreshPromise = null;
   }
- });
 }
+
+function subscribeToSharedSchedule() {
+  if (sharedScheduleChannel || !state.user || !state.profile) return;
+  const isCoach = state.profile.role === 'coach';
+  const channel = supabase.channel('coach-in-shared-schedule-' + state.user.id);
+
+  channel.on('postgres_changes', {
+    event: '*', schema: 'public', table: 'shared_court_occupancy'
+  }, async () => {
+    try {
+      if (isCoach) {
+        if (['planning', 'bookings'].includes(state.currentPage)) await refreshAndRender();
+      } else {
+        await refreshPlayerSchedule();
+      }
+    } catch (error) {
+      toast(error.message || 'Actualisation du planning partagé impossible.', 'error');
+    }
+  });
+
+  if (!isCoach) {
+    channel.on('postgres_changes', {
+      event: '*', schema: 'public', table: 'coach_weekly_availability'
+    }, () => {
+      refreshPlayerSchedule().catch(error => toast(error.message || 'Actualisation des disponibilités impossible.', 'error'));
+    });
+    channel.on('postgres_changes', {
+      event: '*', schema: 'public', table: 'coach_players', filter: 'player_id=eq.' + state.user.id
+    }, () => {
+      refreshAndRender().catch(error => toast(error.message || 'Actualisation des coachs associés impossible.', 'error'));
+    });
+  }
+
+  sharedScheduleChannel = channel;
+  channel.subscribe(status => {
+    if (status === 'SUBSCRIBED') {
+      scheduleRetryCount = 0;
+      if (isCoach) {
+        if (['planning', 'bookings'].includes(state.currentPage)) {
+          refreshAndRender().catch(error => toast(error.message || 'Actualisation du planning impossible.', 'error'));
+        }
+      } else {
+        refreshPlayerSchedule().catch(error => toast(error.message || 'Synchronisation initiale du planning impossible.', 'error'));
+      }
+    }
+    if (['CHANNEL_ERROR', 'TIMED_OUT'].includes(status) && sharedScheduleChannel === channel) {
+      sharedScheduleChannel = null;
+      if (scheduleRetryCount < 5) {
+        scheduleRetryCount++;
+        const delay = Math.min(30000, 1000 * (2 ** scheduleRetryCount));
+        window.setTimeout(() => {
+          if (state.user && state.profile && !sharedScheduleChannel) subscribeToSharedSchedule();
+        }, delay);
+      }
+    }
+  });
+}
+
 
 function subscribeToNotifications(){
  if(notificationChannel||!state.user||!state.profile)return;
