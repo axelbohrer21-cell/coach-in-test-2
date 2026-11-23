@@ -135,6 +135,7 @@ $('#page-content').addEventListener('click', async event=>{
   }
 
   const go=event.target.closest('[data-go]'); if(go){render(go.dataset.go);return;}
+  const bookingCoach=event.target.closest('[data-booking-coach]'); if(bookingCoach){state.bookingCalendarCoachId=bookingCoach.dataset.bookingCoach;render('bookings');return;}
   const bookingSlot=event.target.closest('[data-booking-slot]'); if(bookingSlot){bookingDialog({coachId:bookingSlot.dataset.coach,date:bookingSlot.dataset.date,time:bookingSlot.dataset.time,court:bookingSlot.dataset.court});return;}
   const bookingWeek=event.target.closest('[data-booking-week]'); if(bookingWeek){state.bookingCalendarWeekOffset=Number(state.bookingCalendarWeekOffset||0)+Number(bookingWeek.dataset.bookingWeek);render('bookings');return;}
   const planSlot=event.target.closest('[data-plan-slot]'); if(planSlot)return sessionDialog(planSlot.dataset.slotDate,planSlot.dataset.slotTime);
