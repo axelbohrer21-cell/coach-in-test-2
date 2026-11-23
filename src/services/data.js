@@ -33,7 +33,7 @@ async function hydratePlayerCardPhoto(profile) {
   if(!value.startsWith(prefix))return profile;
   const path=value.slice(prefix.length);
   try{
-    const {data,error}=await supabase.storage.from('player-card-photos').createSignedUrl(path,604800);
+    const {data,error}=await supabase.storage.from('player-card-photos').createSignedUrl(path,3600);
     if(error||!data?.signedUrl)return {...profile,avatar_url:null};
     return {...profile,avatar_url:data.signedUrl,avatar_storage_path:path};
   }catch(error){
