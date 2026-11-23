@@ -4,10 +4,12 @@ export const GROUP_SEASON = Object.freeze({
   zone: 'B',
   adultTarget: 28,
   childTarget: 30,
-  weekdays: Object.freeze({ adultes: [1, 2, 4, 5], enfants: [3, 6] }),
-  // Les horaires adultes sont à renseigner bloc par bloc depuis le planning source.
-  // Les plages enfants sont celles confirmées : mercredi 9 h 30–18 h, samedi 9 h 30–14 h 30.
-  availabilityWindows: Object.freeze({3:[['09:30','18:00']],6:[['09:30','14:30']]})
+  weekdays: Object.freeze({ adultes: [1, 2, 3, 4, 5], enfants: [3, 6] }),
+  // Fenêtres par public : le mercredi accueille les enfants en journée puis les adultes en soirée.
+  availabilityWindows: Object.freeze({
+    adultes: Object.freeze({3:[['18:00','21:00']]}),
+    enfants: Object.freeze({3:[['09:30','18:00']],6:[['09:30','14:30']]})
+  })
 });
 
 // Vacances scolaires Zone B 2026-2027 (dates inclusives).
@@ -46,9 +48,9 @@ export function isPrivateLessonDateAllowed(dateISO, options = {}) {
   const { holidays = ZONE_B_HOLIDAYS_2026_2027, publicHolidays = PUBLIC_HOLIDAYS_2026_2027 } = options;
   return parseISO(dateISO).getUTCDay() !== 0 && !isSchoolHoliday(dateISO, holidays) && (!isPublicHoliday(dateISO, publicHolidays) || dateISO === '2027-05-08');
 }
-export function isWithinTeachingWindow(dateISO, startTime, endTime) {
+export function isWithinTeachingWindow(dateISO, startTime, endTime, audience = 'enfants') {
   const day = parseISO(dateISO).getUTCDay();
-  const windows = GROUP_SEASON.availabilityWindows[day];
+  const windows = GROUP_SEASON.availabilityWindows[audience]?.[day];
   if (!windows) return true;
   return windows.some(([start, end]) => startTime >= start && endTime <= end && endTime > startTime);
 }
@@ -81,6 +83,7 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
   const definitions = [
     { key:'adultes-lundi', audience:'adultes', weekday:1, target:GROUP_SEASON.adultTarget },
     { key:'adultes-mardi', audience:'adultes', weekday:2, target:GROUP_SEASON.adultTarget },
+    { key:'adultes-mercredi', audience:'adultes', weekday:3, target:GROUP_SEASON.adultTarget },
     { key:'adultes-jeudi', audience:'adultes', weekday:4, target:GROUP_SEASON.adultTarget },
     { key:'adultes-vendredi', audience:'adultes', weekday:5, target:GROUP_SEASON.adultTarget },
     { key:'enfants-mercredi', audience:'enfants', weekday:3, target:GROUP_SEASON.childTarget },
@@ -89,9 +92,10 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
   return definitions.map(def => {
     const eligibleDates = generateTeachingDates({ audience:def.audience, weekday:def.weekday });
     const sessions = groupSessions.filter(s => s.audience === def.audience && parseISO(s.session_date).getUTCDay() === def.weekday && s.status !== 'cancelled');
-    const completed = sessions.filter(s => s.status === 'completed').length;
-    const planned = sessions.filter(s => s.status === 'scheduled' && s.session_date >= now).length;
-    const pastUnrecorded = sessions.filter(s => s.status === 'scheduled' && s.session_date < now).length;
+    const countDates = rows => new Set(rows.map(s => s.session_date)).size;
+    const completed = countDates(sessions.filter(s => s.status === 'completed'));
+    const planned = countDates(sessions.filter(s => s.status === 'scheduled' && s.session_date >= now));
+    const pastUnrecorded = countDates(sessions.filter(s => s.status === 'scheduled' && s.session_date < now));
     const remaining = Math.max(0, def.target - completed);
     const catchUp = Math.max(0, def.target - completed - planned);
     const expectedByNow = Math.min(def.target, eligibleDates.filter(date => date < now).length);
