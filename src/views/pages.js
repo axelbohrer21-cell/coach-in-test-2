@@ -31,7 +31,7 @@ export const pageMeta = {
   dashboard: ['Vue d’ensemble', 'Tableau de bord', 'Le résumé de ton activité tennis.'],
   intelligence: ['Coach In Intelligence', 'Intelligence', 'Des observations fondées sur tes bilans, tes séances et les données de ton effectif.'],
   players: ['Effectif', 'Mes joueurs', 'Retrouve les profils et les informations de ton effectif.'],
-  planning: ['Organisation', 'Planning', 'Visualise les séances et les créneaux à organiser.'],
+  planning: ['Organisation', 'Planning des coachs', 'Consulte séparément les créneaux de chacun de tes coachs.'],
   'group-calendar': ['Saison 2026–2027', 'Cours collectifs', 'Calendrier annuel, objectifs de séances et programme pédagogique.'],
   sessions: ['Terrain', 'Séances', 'Prépare et retrouve le contenu des entraînements.'],
   physical: ['Préparation athlétique', 'Préparation physique', 'Des séances physiques de 60 minutes adaptées aux exigences du tennis et aux effectifs de 4 à 10 joueurs.'],
@@ -269,7 +269,51 @@ function playersPage() {
   </section>`;
 }
 
+function playerCoachPlanningPage() {
+  const coaches=(state.playerCoaches||[]).filter(coach=>coach?.id);
+  if(!coaches.length) return '<section class="panel"><div class="empty-state"><div class="empty-icon">▦</div><h3>Aucun coach associé</h3><p>Lorsque ton compte sera relié à un coach, son planning apparaîtra ici.</p></div></section>';
+  const selected=coaches.find(coach=>coach.id===state.selectedPlayerCoachId)||coaches[0];
+  state.selectedPlayerCoachId=selected.id;
+  const weekOffset=Number(state.planningWeekOffset||0);
+  const weekStart=new Date();weekStart.setHours(12,0,0,0);weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7)+weekOffset*7);
+  const weekEnd=new Date(weekStart);weekEnd.setDate(weekStart.getDate()+6);
+  const isoDate=date=>toLocalISO(date);
+  const toMinutes=value=>{const [h,m]=String(value||'00:00').slice(0,5).split(':').map(Number);return h*60+(m||0);};
+  const coachesButtons=coaches.map(coach=>{
+    const active=coach.id===selected.id;
+    return '<button type="button" class="player-coach-switch '+(active?'active':'')+'" data-select-coach="'+escapeHtml(coach.id)+'" aria-pressed="'+active+'"><span class="player-coach-switch-avatar">'+escapeHtml((coach.first_name||'C').slice(0,1)+(coach.last_name||'').slice(0,1))+'</span><span><strong>'+escapeHtml((coach.first_name+' '+coach.last_name).trim()||'Coach')+'</strong><small>'+((state.weeklyAvailability||[]).filter(row=>row.coach_id===coach.id&&row.active).length)+' plage(s) de disponibilité</small></span><span class="player-coach-switch-check">'+(active?'✓':'›')+'</span></button>';
+  }).join('');
+  const availability=(state.weeklyAvailability||[]).filter(row=>row.coach_id===selected.id&&row.active);
+  const occupancy=(state.sharedCourtOccupancy||[]).filter(row=>row.coach_id===selected.id);
+  const dayNames=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  const days=Array.from({length:7},(_,index)=>{
+    const date=new Date(weekStart);date.setDate(weekStart.getDate()+index);
+    const iso=isoDate(date),weekday=(date.getDay()+6)%7;
+    const rules=availability.filter(row=>Number(row.weekday)===weekday);
+    const events=occupancy.filter(row=>row.session_date===iso&&!['cancelled','canceled','annulé','annulee','rejected'].includes(String(row.status||'').toLowerCase()));
+    const slots=Array.from({length:28},(_,slotIndex)=>{
+      const start=480+slotIndex*30,end=start+30;
+      const time=String(Math.floor(start/60)).padStart(2,'0')+':'+String(start%60).padStart(2,'0');
+      const event=events.find(row=>toMinutes(row.start_time)<end&&toMinutes(row.end_time)>start);
+      const rule=rules.find(row=>start>=toMinutes(row.start_time)&&end<=toMinutes(row.end_time));
+      const past=iso<isoDate(new Date())||(iso===isoDate(new Date())&&start<=new Date().getHours()*60+new Date().getMinutes());
+      const available=Boolean(rule&&!event&&!past);
+      const eventLabel=event?(event.source_kind==='group_session'?'Cours collectif':'Créneau occupé'):'';
+      const content=event?'<div class="calendar-event '+(event.source_kind==='group_session'?'group-event':'player-event')+'"><div class="calendar-event-main"><b>'+time.replace(':','h')+'</b><strong>'+eventLabel+'</strong><small>'+(event.court_number?'Terrain '+escapeHtml(String(event.court_number)):'Horaire réservé')+'</small></div></div>':available?'<button type="button" class="calendar-hour-slot" data-book-slot data-coach="'+escapeHtml(selected.id)+'" data-date="'+iso+'" data-time="'+time+'" data-court="'+escapeHtml(String(rule.court_number||1))+'" aria-label="Demander un cours à '+time+'"></button>':'<span class="player-calendar-unavailable">'+(past?'Passé':'—')+'</span>';
+      return '<div class="calendar-hour-row"><span class="calendar-hour-label">'+time.replace(':','h')+'</span><div class="calendar-hour-content">'+content+'</div></div>';
+    }).join('');
+    const dayCount=events.length;
+    return '<div class="calendar-day '+(iso===isoDate(new Date())?'calendar-day-today':'')+'"><div class="calendar-day-head"><strong>'+dayNames[index]+'</strong><span>'+date.getDate()+'</span><small>'+date.toLocaleDateString('fr-FR',{month:'short'})+'</small><small class="calendar-day-count">'+dayCount+' occupation(s)</small></div><div class="calendar-hours">'+slots+'</div></div>';
+  }).join('');
+  const label=formatDate(weekStart,{day:'2-digit',month:'short'})+' – '+formatDate(weekEnd,{day:'2-digit',month:'short',year:'numeric'});
+  const weekOccupancy=occupancy.filter(row=>row.session_date>=isoDate(weekStart)&&row.session_date<=isoDate(weekEnd)&&!['cancelled','canceled','annulé','annulee','rejected'].includes(String(row.status||'').toLowerCase()));
+  const weekAvailability=availability.filter(row=>true).length;
+  return '<section class="panel player-coach-planning-intro"><div><p class="eyebrow">TON ESPACE · PLANNINGS PARTAGÉS</p><h2>Choisis le coach dont tu veux consulter le planning.</h2><p class="muted">Les créneaux occupés sont synchronisés avec le planning du coach. Les disponibilités affichées sont celles qu’il a ouvertes aux demandes de cours.</p></div><div class="player-coach-switch-list">'+coachesButtons+'</div></section>'+
+  '<section class="panel"><div class="section-heading"><div><p class="eyebrow">PLANNING DU COACH</p><h2>'+escapeHtml((selected.first_name+' '+selected.last_name).trim())+'</h2><p class="tiny muted">'+label+' · 7 jours · créneaux de 30 minutes</p></div><div class="toolbar planning-week-controls"><button class="btn subtle" data-week="-1">← Semaine</button><button class="btn subtle" data-week="0">Aujourd’hui</button><button class="btn subtle" data-week="1">Semaine →</button></div></div><div class="planning-week-summary"><article><strong>'+weekOccupancy.length+'</strong><span>Créneaux occupés</span></article><article><strong>'+weekAvailability+'</strong><span>Plages ouvertes chaque semaine</span></article><article><strong>'+weekOccupancy.filter(row=>row.source_kind==='group_session').length+'</strong><span>Cours collectifs</span></article></div><div class="planning-legend"><span><i class="legend-private"></i>Créneau occupé</span><span><i class="legend-adults"></i>Cours collectif</span><span><i class="legend-completed"></i>Disponible · demander un cours</span></div><div class="calendar-week">'+days+'</div><p class="tiny muted">Les noms des autres joueurs et les informations privées du coach ne sont jamais affichés. Seuls les créneaux occupés et les disponibilités de réservation sont visibles.</p></section>';
+}
+
 function planningPage() {
+  if(state.profile?.role!=='coach') return playerCoachPlanningPage();
   const clock = value => formatTime(value).replace(':','h');
   const start = new Date(); start.setHours(12,0,0,0); start.setDate(start.getDate() - ((start.getDay()+6)%7) + (state.planningWeekOffset||0)*7);
   const days = Array.from({length:7},(_,i)=>{
