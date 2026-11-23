@@ -1,4 +1,4 @@
-const CACHE_NAME = "coach-in-shell-v6";
+const CACHE_NAME = "coach-in-shell-v7";
 const APP_SHELL = [
   "./",
   "./index.html",
