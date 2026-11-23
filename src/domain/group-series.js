@@ -1,4 +1,4 @@
-import { GROUP_SEASON, generateTeachingDates, isWithinTeachingWindow } from './group-calendar.js';
+import { GROUP_SEASON, generateTeachingDates, isWithinTeachingWindow, SPECIAL_VACATION_SATURDAYS } from './group-calendar.js';
 
 export function buildSeriesCounters(series, sessions, today = new Date().toISOString().slice(0,10)) {
   return series.map(item => {
@@ -8,7 +8,9 @@ export function buildSeriesCounters(series, sessions, today = new Date().toISOSt
     const cancelled = rows.filter(row => row.status === 'cancelled').length;
     const pastUnrecorded = rows.filter(row => row.status === 'scheduled' && row.session_date < today).length;
     const target = Number(item.target_sessions || (item.audience === 'adultes' ? GROUP_SEASON.adultTarget : GROUP_SEASON.childTarget));
-    const eligibleDates = generateTeachingDates({ start: item.season_start || GROUP_SEASON.start, end: item.season_end || GROUP_SEASON.end, audience: item.audience, weekday: Number(item.weekday) });
+    const regularDates = generateTeachingDates({ start: item.season_start || GROUP_SEASON.start, end: item.season_end || GROUP_SEASON.end, audience: item.audience, weekday: Number(item.weekday) });
+    const specialDates = item.audience === 'enfants' && Number(item.weekday) === 6 ? SPECIAL_VACATION_SATURDAYS : [];
+    const eligibleDates = [...new Set([...regularDates, ...specialDates].filter(date => date >= (item.season_start || GROUP_SEASON.start) && date <= (item.season_end || GROUP_SEASON.end)))].sort();
     const expectedByNow = Math.min(target, eligibleDates.filter(date => date < today).length);
     const paceGap = Math.max(0, expectedByNow - completed);
     return { ...item, completed, planned, pastUnrecorded, cancelled, target, eligibleDates, expectedByNow, paceGap, remaining: Math.max(0,target-completed), toSchedule: Math.max(0,target-completed-planned), reached: completed >= target };
