@@ -94,7 +94,7 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
   ];
   return definitions.map(def => {
     const eligibleDates = generateTeachingDates({ audience:def.audience, weekday:def.weekday });
-    const sessions = groupSessions.filter(s => s.audience === def.audience && parseISO(s.session_date).getUTCDay() === def.weekday && s.status !== 'cancelled');
+    const sessions = groupSessions.filter(s => s.audience === def.audience && s.theme !== 'Stage enfants' && parseISO(s.session_date).getUTCDay() === def.weekday && s.status !== 'cancelled');
     const countDates = rows => new Set(rows.map(s => s.session_date)).size;
     const completed = countDates(sessions.filter(s => s.status === 'completed'));
     const planned = countDates(sessions.filter(s => s.status === 'scheduled' && s.session_date >= now));
