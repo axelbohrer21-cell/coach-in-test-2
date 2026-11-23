@@ -107,6 +107,25 @@ export const dataService = {
     return rows;
   },
 
+  async loadPlayerSchedule(coachIds = (state.playerCoaches || []).map(row => row.id)) {
+    const ids = [...new Set((coachIds || []).filter(Boolean))];
+    if (!ids.length) {
+      state.weeklyAvailability = [];
+      state.sharedCourtOccupancy = [];
+      return { weeklyAvailability: [], sharedCourtOccupancy: [] };
+    }
+    const [weeklyAvailability, sharedCourtOccupancy] = await Promise.all([
+      unwrap(supabase.from('coach_weekly_availability').select('*')
+        .in('coach_id', ids).eq('active', true).order('weekday').order('start_time')),
+      unwrap(supabase.from('shared_court_occupancy')
+        .select('id,coach_id,session_date,start_time,end_time,court_number,source_kind,status')
+        .in('coach_id', ids).order('session_date').order('start_time'))
+    ]);
+    state.weeklyAvailability = weeklyAvailability;
+    state.sharedCourtOccupancy = sharedCourtOccupancy;
+    return { weeklyAvailability, sharedCourtOccupancy };
+  },
+
   async loadPlayerWorkspace() {
     const [sessions, evaluations, requests, notifications, notificationPreferences, challenges, achievements, coachLinks, videoRows] = await Promise.all([
       unwrap(supabase.from('player_sessions').select('*').order('session_date', { ascending: false })),
@@ -135,8 +154,7 @@ export const dataService = {
       evaluationIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : Promise.resolve([])
     ]);
     const activeCoachIds = playerCoaches.map(row => row.id);
-    const weeklyAvailability = activeCoachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',activeCoachIds).eq('active',true).order('weekday').order('start_time')) : [];
-    const sharedCourtOccupancy = await this.loadSharedCourtOccupancy();
+    const { weeklyAvailability, sharedCourtOccupancy } = await this.loadPlayerSchedule(activeCoachIds);
     const [hydratedMessages, videoAnalyses] = await Promise.all([
       hydrateMessages(messages),
       hydrateVideoAnalyses(videoRows)
