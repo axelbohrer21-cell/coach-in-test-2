@@ -1,6 +1,7 @@
 import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
 import { notificationService } from './notifications.js';
+import { OBJECTIVES } from '../domain/session-curriculum.js';
 
 async function unwrap(query) {
   const { data, error } = await query;
@@ -26,6 +27,21 @@ async function hydrateVideoAnalyses(rows) {
   return hydrateStorageUrls(rows, 'coach-in-videos', 'video_path', 'video_url');
 }
 
+async function hydratePlayerCardPhoto(profile) {
+  const prefix='storage:player-card-photos:';
+  const value=String(profile?.avatar_url||'');
+  if(!value.startsWith(prefix))return profile;
+  const path=value.slice(prefix.length);
+  try{
+    const {data,error}=await supabase.storage.from('player-card-photos').createSignedUrl(path,604800);
+    if(error||!data?.signedUrl)return {...profile,avatar_url:null};
+    return {...profile,avatar_url:data.signedUrl,avatar_storage_path:path};
+  }catch(error){
+    console.warn('Coach In: portrait joueur temporairement indisponible',error?.message||error);
+    return {...profile,avatar_url:null};
+  }
+}
+
 export const dataService = {
   async loadAdminWorkspace() {
     const { data, error } = await supabase.from('profiles').select('id,email,first_name,last_name,created_at,archived_at,is_admin').eq('role','coach').order('last_name');
@@ -42,15 +58,18 @@ export const dataService = {
   async loadCoachWorkspace(userId) {
     const links = await unwrap(supabase.from('coach_players').select('player_id').eq('coach_id', userId));
     const playerIds = links.map(link => link.player_id);
-    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages, videoRows] = await Promise.all([
+    const [players, sessionRows, privateNotes, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives, notifications, notificationPreferences, criteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages, videoRows] = await Promise.all([
       playerIds.length ? unwrap(supabase.from('profiles').select('*').in('id', playerIds).eq('role', 'player').order('last_name')) : Promise.resolve([]),
       playerIds.length ? unwrap(supabase.from('training_sessions').select('*').in('player_id', playerIds).eq('created_by', userId).order('session_date', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('coach_session_notes').select('session_id,note').eq('coach_id', userId)),
       playerIds.length ? unwrap(supabase.from('evaluations').select('id,player_id,session_id,evaluated_at,score,technical_score,tactical_score,physical_score,mental_score,player_visible_comment,created_by,created_at').in('player_id', playerIds).eq('created_by', userId).order('evaluated_at', { ascending: false })) : Promise.resolve([]),
       unwrap(supabase.from('group_sessions').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('group_course_series').select('*').eq('coach_id', userId).order('weekday').order('start_time')),
+      unwrap(supabase.from('group_course_cancellations').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('booking_requests').select('*').eq('coach_id', userId).order('session_date')),
       unwrap(supabase.from('session_library').select('*').eq('coach_id', userId).order('title')),
+      unwrap(supabase.from('coach_session_exercises').select('*').eq('coach_id', userId).eq('active',true).order('theme').order('title')),
+      unwrap(supabase.from('coach_session_objectives').select('*').eq('coach_id', userId).eq('active',true).order('display_order')),
       notificationService.listCoach(),
       notificationService.getPreferences(userId),
       unwrap(supabase.from('criteria_catalog').select('*').eq('coach_id', userId).order('display_order')),
@@ -62,10 +81,17 @@ export const dataService = {
       unwrap(supabase.from('coach_player_messages').select('*').eq('coach_id',userId).order('created_at')),
       unwrap(supabase.from('coach_video_analyses').select('*').eq('coach_id',userId).order('created_at',{ascending:false}))
     ]);
+    let loadedSessionObjectives=sessionObjectives;
+    if(!loadedSessionObjectives.length){
+      const defaults=OBJECTIVES.map((item,index)=>({coach_id:userId,objective_id:item.id,theme:item.theme,label:item.label,profile:item.profile,criteria:item.criteria,intent:item.intent,success:item.success,display_order:index+1,active:true}));
+      loadedSessionObjectives=await unwrap(supabase.from('coach_session_objectives').insert(defaults).select('*'));
+    }
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const evaluationCriteria = evaluationIds.length
       ? await unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds))
       : [];
+    const sessionFavorites = await unwrap(supabase.from('coach_session_favorites').select('session_id').eq('coach_id',userId));
+    const favoriteSessionIds = sessionFavorites.map(row => row.session_id);
     const notesBySession = new Map(privateNotes.map(row => [row.session_id, row.note]));
     const sessions = sessionRows.map(row => {
       const note = notesBySession.get(row.id) || '';
@@ -95,35 +121,9 @@ export const dataService = {
       playerIds.length ? unwrap(supabase.from('player_profile_details').select('*').in('player_id',playerIds)) : Promise.resolve([])
     ]);
     const playerProfileDetailsById = Object.fromEntries(profileDetailsRows.map(row=>[row.player_id,row]));
-    Object.assign(state, { players, sessions, evaluations, groupSessions, groupSeries, bookingRequests, library, notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
-    await this.loadSharedCourtOccupancy();
-  },
-
-  async loadSharedCourtOccupancy() {
-    const rows = await unwrap(supabase.from('shared_court_occupancy')
-      .select('id,coach_id,session_date,start_time,end_time,court_number,source_kind,status')
-      .order('session_date').order('start_time'));
-    state.sharedCourtOccupancy = rows;
-    return rows;
-  },
-
-  async loadPlayerSchedule(coachIds = (state.playerCoaches || []).map(row => row.id)) {
-    const ids = [...new Set((coachIds || []).filter(Boolean))];
-    if (!ids.length) {
-      state.weeklyAvailability = [];
-      state.sharedCourtOccupancy = [];
-      return { weeklyAvailability: [], sharedCourtOccupancy: [] };
-    }
-    const [weeklyAvailability, sharedCourtOccupancy] = await Promise.all([
-      unwrap(supabase.from('coach_weekly_availability').select('*')
-        .in('coach_id', ids).eq('active', true).order('weekday').order('start_time')),
-      unwrap(supabase.from('shared_court_occupancy')
-        .select('id,coach_id,session_date,start_time,end_time,court_number,source_kind,status')
-        .in('coach_id', ids).order('session_date').order('start_time'))
-    ]);
-    state.weeklyAvailability = weeklyAvailability;
-    state.sharedCourtOccupancy = sharedCourtOccupancy;
-    return { weeklyAvailability, sharedCourtOccupancy };
+    const hydratedPlayers=await Promise.all(players.map(hydratePlayerCardPhoto));
+    const physicalPrograms = await unwrap(supabase.from('coach_physical_programs').select('*').eq('coach_id',userId).order('created_at',{ascending:false}));
+    Object.assign(state, { physicalPrograms, players:hydratedPlayers, sessions, favoriteSessionIds, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:loadedSessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
   },
 
   async loadPlayerWorkspace() {
@@ -139,6 +139,7 @@ export const dataService = {
       unwrap(supabase.from('player_video_analyses').select('*').order('created_at',{ascending:false}))
     ]);
     const coachIds = coachLinks.map(row => row.coach_id);
+    const sharedCourtOccupancy = coachIds.length ? await unwrap(supabase.from('shared_court_occupancy').select('id,coach_id,session_date,start_time,end_time,court_number,source_kind,status').in('coach_id',coachIds).order('session_date').order('start_time')) : [];
     const historicalCoachIds = [...new Set([
       ...sessions.map(row => row.created_by),
       ...evaluations.map(row => row.created_by),
@@ -154,7 +155,7 @@ export const dataService = {
       evaluationIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : Promise.resolve([])
     ]);
     const activeCoachIds = playerCoaches.map(row => row.id);
-    const { weeklyAvailability, sharedCourtOccupancy } = await this.loadPlayerSchedule(activeCoachIds);
+    const weeklyAvailability = activeCoachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',activeCoachIds).eq('active',true).order('weekday').order('start_time')) : [];
     const [hydratedMessages, videoAnalyses] = await Promise.all([
       hydrateMessages(messages),
       hydrateVideoAnalyses(videoRows)
@@ -164,6 +165,7 @@ export const dataService = {
       unwrap(supabase.from('player_match_journal').select('*').order('match_date',{ascending:false})),
       unwrap(supabase.from('club_events').select('*').order('starts_at'))
     ]);
+    state.profile=await hydratePlayerCardPhoto(state.profile);
     Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, sharedCourtOccupancy, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, playerCoachHistory, weeklyAvailability, messages:hydratedMessages, videoAnalyses, playerProfileDetails, matchJournal, clubEvents });
   },
 
@@ -193,6 +195,22 @@ export const dataService = {
     }
     return data;
   },
+  async updateSession(id, changes, coachId) {
+    const { coach_private_notes = '', ...sessionChanges } = changes;
+    const { data, error } = await supabase.from('training_sessions').update(sessionChanges).eq('id', id).eq('created_by', coachId).select().single();
+    if (error) throw error;
+    const { data: existing, error: readError } = await supabase.from('coach_session_notes').select('session_id,note').eq('session_id',id).eq('coach_id',coachId).maybeSingle();
+    if (readError) throw readError;
+    const note=String(coach_private_notes||'').trim();
+    if(existing){
+      const {error:noteError}=await supabase.from('coach_session_notes').update({note}).eq('session_id',id).eq('coach_id',coachId);
+      if(noteError)throw noteError;
+    }else if(note){
+      const {error:noteError}=await supabase.from('coach_session_notes').insert({session_id:id,coach_id:coachId,note});
+      if(noteError)throw noteError;
+    }
+    return data;
+  },
   async saveSessionReview(sessionId, coachId, review) {
     const marker = '<!--COACH_IN_PROGRESS:' + btoa(unescape(encodeURIComponent(JSON.stringify(review)))) + '-->';
     const { data: existing, error: readError } = await supabase.from('coach_session_notes')
@@ -209,6 +227,15 @@ export const dataService = {
     }
     return review;
   },
+  async setSessionFavorite(sessionId, isFavorite, coachId) {
+    if (isFavorite) {
+      const { error } = await supabase.from('coach_session_favorites').insert({ coach_id: coachId, session_id: sessionId });
+      if (error && error.code !== '23505') throw error;
+    } else {
+      const { error } = await supabase.from('coach_session_favorites').delete().eq('coach_id', coachId).eq('session_id', sessionId);
+      if (error) throw error;
+    }
+  },
   async createEvaluation(payload) {
     const { data, error } = await supabase.from('evaluations').insert(payload).select('id,player_id,session_id,evaluated_at,score,technical_score,tactical_score,physical_score,mental_score,player_visible_comment,created_by,created_at').single();
     if (error) throw error;
@@ -219,6 +246,10 @@ export const dataService = {
     if (error) throw error;
     return data;
   },
+  async updateCoachSessionObjective(id,changes) { const {data,error}=await supabase.from('coach_session_objectives').update({...changes,updated_at:new Date().toISOString()}).eq('objective_id',id).eq('coach_id',state.user.id).select().single(); if(error)throw error; return data; },
+  async createCoachSessionExercise(payload) { const {data,error}=await supabase.from('coach_session_exercises').insert({...payload,coach_id:state.user.id}).select().single(); if(error)throw error; return data; },
+  async updateCoachSessionExercise(id,changes) { const {data,error}=await supabase.from('coach_session_exercises').update({...changes,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id).select().single(); if(error)throw error; return data; },
+  async deleteCoachSessionExercise(id) { const {error}=await supabase.from('coach_session_exercises').delete().eq('id',id).eq('coach_id',state.user.id); if(error)throw error; },
   async createLibraryItem(payload) {
     const { data, error } = await supabase.from('session_library').insert(payload).select().single();
     if (error) throw error;
@@ -229,6 +260,8 @@ export const dataService = {
     if (error) throw error;
     return data;
   },
+  async createPhysicalProgram(payload) { const {data,error}=await supabase.from('coach_physical_programs').insert({...payload,coach_id:state.user.id}).select().single(); if(error)throw error; return data; },
+  async deletePhysicalProgram(id) { const {error}=await supabase.from('coach_physical_programs').delete().eq('id',id).eq('coach_id',state.user.id); if(error)throw error; },
   async loadMessagesForCurrentUser() {
     const isCoach = state.profile?.role === 'coach';
     const field = isCoach ? 'coach_id' : 'player_id';
@@ -269,5 +302,16 @@ export const dataService = {
     const { data, error } = await supabase.from('group_sessions').insert(payload).select();
     if (error) throw error;
     return data || [];
+  },
+  async setGroupCourseRainDay({ coachId, sessionDate, audience, weekday, rainy }) {
+    const query = supabase.from('group_course_cancellations');
+    if (rainy) {
+      const { data, error } = await query.upsert({ coach_id:coachId, session_date:sessionDate, audience, weekday, reason:'Pluie' }, { onConflict:'coach_id,session_date,audience' }).select().single();
+      if (error) throw error;
+      return data;
+    }
+    const { error } = await query.delete().eq('coach_id',coachId).eq('session_date',sessionDate).eq('audience',audience);
+    if (error) throw error;
+    return null;
   }
 };

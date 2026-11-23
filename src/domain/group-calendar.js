@@ -5,19 +5,27 @@ export const GROUP_SEASON = Object.freeze({
   adultTarget: 28,
   childTarget: 30,
   weekdays: Object.freeze({ adultes: [1, 2, 3, 4, 5], enfants: [3, 6] }),
-  // Fenêtres par public : le mercredi accueille les enfants en journée puis les adultes en soirée.
-  availabilityWindows: Object.freeze({
-    adultes: Object.freeze({3:[['18:00','21:00']]}),
-    enfants: Object.freeze({3:[['09:30','18:00']],6:[['09:30','14:30']]})
-  })
+  // Planning collectif hebdomadaire confirmé par le coach.
+  weeklySchedule: Object.freeze([
+    { key:'adultes-lundi', audience:'adultes', weekday:1, start:'17:00', end:'21:00', courts:[1,2] },
+    { key:'adultes-mardi', audience:'adultes', weekday:2, start:'17:30', end:'20:30', courts:[1,2,3] },
+    { key:'enfants-mercredi', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courts:[1,2,3] },
+    { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courts:[1,2,3] },
+    { key:'adultes-jeudi', audience:'adultes', weekday:4, start:'17:30', end:'19:00', courts:[1,2] },
+    { key:'adultes-vendredi', audience:'adultes', weekday:5, start:'17:30', end:'20:00', courts:[1,2] },
+    { key:'enfants-samedi', audience:'enfants', weekday:6, start:'09:30', end:'14:30', courts:[1,2,3] }
+  ]),
+  holidayStage: Object.freeze({ start:'09:30', end:'16:30', courts:[1,2,3], weekdays:[1,2,3,4,5] }),
+  // Fenêtres historiques utilisées par le contrôle des demandes de cours particuliers.
+  availabilityWindows: Object.freeze({3:[['09:30','18:00']],6:[['09:30','14:30']]})
 });
 
-// Vacances scolaires Zone B 2026-2027 (dates inclusives).
+// Vacances scolaires Zone B 2026-2027 : fin la veille de la reprise officielle.
 export const ZONE_B_HOLIDAYS_2026_2027 = Object.freeze([
-  { start: '2026-10-17', end: '2026-11-02', label: 'Toussaint' },
-  { start: '2026-12-19', end: '2027-01-04', label: 'Noël' },
-  { start: '2027-02-20', end: '2027-03-08', label: 'Hiver' },
-  { start: '2027-04-17', end: '2027-05-03', label: 'Printemps' }
+  { start: '2026-10-17', end: '2026-11-01', label: 'Toussaint' },
+  { start: '2026-12-19', end: '2027-01-03', label: 'Noël' },
+  { start: '2027-02-20', end: '2027-03-07', label: 'Hiver' },
+  { start: '2027-04-17', end: '2027-05-02', label: 'Printemps' }
 ]);
 
 // Samedis spéciaux de début de vacances demandés pour les cours enfants.
@@ -29,16 +37,19 @@ export const PUBLIC_HOLIDAYS_2026_2027 = Object.freeze([
   '2027-04-05', '2027-05-01', '2027-05-06', '2027-05-08', '2027-05-17'
 ]);
 
-// Annulations exceptionnelles de cours collectifs confirmées pour la saison.
-export const CANCELLED_GROUP_DATES = Object.freeze({
-  '2026-11-02': 'Tous les cours collectifs annulés',
-  '2026-11-12': 'Tous les cours collectifs annulés'
-});
+// Les jours de pluie sont désormais gérés manuellement dans le calendrier annuel.
+export const CANCELLED_GROUP_DATES = Object.freeze({});
 
 const DAY_LABELS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 function parseISO(value) { const [y,m,d] = value.split('-').map(Number); return new Date(Date.UTC(y,m-1,d,12)); }
 function isoUTC(date) { return date.toISOString().slice(0,10); }
 function addDays(date, amount) { const copy = new Date(date); copy.setUTCDate(copy.getUTCDate()+amount); return copy; }
+function firstSaturdayOfHoliday(period) {
+  for (let date = parseISO(period.start); isoUTC(date) <= period.end; date = addDays(date, 1)) {
+    if (date.getUTCDay() === 6) return isoUTC(date);
+  }
+  return null;
+}
 
 export function isSchoolHoliday(dateISO, holidays = ZONE_B_HOLIDAYS_2026_2027) {
   return holidays.some(period => dateISO >= period.start && dateISO <= period.end);
@@ -53,18 +64,22 @@ export function isPrivateLessonDateAllowed(dateISO, options = {}) {
 }
 export function isWithinTeachingWindow(dateISO, startTime, endTime, audience = 'enfants') {
   const day = parseISO(dateISO).getUTCDay();
-  const windows = GROUP_SEASON.availabilityWindows[audience]?.[day];
-  if (!windows) return true;
+  const windows = audience === 'adultes'
+    ? GROUP_SEASON.weeklySchedule.filter(row => row.audience === 'adultes' && row.weekday === day).map(row => [row.start, row.end])
+    : GROUP_SEASON.availabilityWindows[day];
+  if (!windows?.length) return false;
   return windows.some(([start, end]) => startTime >= start && endTime <= end && endTime > startTime);
 }
 
 export function isTeachingDate(dateISO, audience, options = {}) {
   const { holidays = ZONE_B_HOLIDAYS_2026_2027, publicHolidays = PUBLIC_HOLIDAYS_2026_2027 } = options;
-  if (Object.prototype.hasOwnProperty.call(CANCELLED_GROUP_DATES, dateISO)) return false;
   const day = parseISO(dateISO).getUTCDay();
   const weekdays = GROUP_SEASON.weekdays[audience];
   if (!weekdays?.includes(day)) return false;
-  if (isSchoolHoliday(dateISO, holidays)) return false;
+  // Le premier samedi de chaque période de vacances reste un cours collectif enfants.
+  const firstHolidaySaturday = audience === 'enfants' && day === 6
+    && holidays.some(period => firstSaturdayOfHoliday(period) === dateISO);
+  if (isSchoolHoliday(dateISO, holidays) && !firstHolidaySaturday) return false;
   if (audience === 'adultes' && isPublicHoliday(dateISO, publicHolidays) && dateISO !== '2027-05-08') return false;
   return true;
 }
@@ -82,7 +97,39 @@ export function generateTeachingDates({ start = GROUP_SEASON.start, end = GROUP_
   return dates;
 }
 
-export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' } = {}) {
+
+/**
+ * Construit les occurrences visuelles des stages enfants pendant les vacances Zone B.
+ * Ces occurrences sont calculées à l'affichage et ne créent pas de lignes en base.
+ */
+export function buildHolidayStageOccurrences({ holidays = ZONE_B_HOLIDAYS_2026_2027, startDate, endDate } = {}) {
+  const stage = GROUP_SEASON.holidayStage;
+  const occurrences = [];
+  for (const period of holidays) {
+    const firstDay = startDate && startDate > period.start ? startDate : period.start;
+    const lastDay = endDate && endDate < period.end ? endDate : period.end;
+    if (firstDay > lastDay) continue;
+    for (let date = parseISO(firstDay); isoUTC(date) <= lastDay; date = addDays(date, 1)) {
+      const dateISO = isoUTC(date);
+      const weekday = date.getUTCDay();
+      if (!stage.weekdays.includes(weekday)) continue;
+      occurrences.push({
+        id: `holiday-stage-${dateISO}`,
+        session_date: dateISO,
+        weekday,
+        audience: 'enfants',
+        title: `Stage enfants · ${period.label}`,
+        start_time: stage.start,
+        end_time: stage.end,
+        courts: [...stage.courts],
+        status: 'scheduled'
+      });
+    }
+  }
+  return occurrences;
+}
+
+export function buildDaySeriesOverview({ groupSessions = [], manualCancellations = [], now = '2026-09-14' } = {}) {
   const definitions = [
     { key:'adultes-lundi', audience:'adultes', weekday:1, target:GROUP_SEASON.adultTarget },
     { key:'adultes-mardi', audience:'adultes', weekday:2, target:GROUP_SEASON.adultTarget },
@@ -94,14 +141,19 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
   ];
   return definitions.map(def => {
     const eligibleDates = generateTeachingDates({ audience:def.audience, weekday:def.weekday });
-    const sessions = groupSessions.filter(s => s.audience === def.audience && s.theme !== 'Stage enfants' && parseISO(s.session_date).getUTCDay() === def.weekday && s.status !== 'cancelled');
-    const countDates = rows => new Set(rows.map(s => s.session_date)).size;
-    const completed = countDates(sessions.filter(s => s.status === 'completed'));
-    const planned = countDates(sessions.filter(s => s.status === 'scheduled' && s.session_date >= now));
-    const pastUnrecorded = countDates(sessions.filter(s => s.status === 'scheduled' && s.session_date < now));
+    const matchingSessions = groupSessions.filter(s => s.audience === def.audience && parseISO(s.session_date).getUTCDay() === def.weekday);
+    const cancelledDates = new Set([
+      ...matchingSessions.filter(s => s.status === 'cancelled').map(s => s.session_date),
+      ...manualCancellations.filter(row => row.audience === def.audience && Number(row.weekday) === def.weekday).map(row => row.session_date)
+    ]);
+    // Les dates passées comptent par défaut ; seules les pluies/annulations cochées sont retirées.
+    const pastDates = eligibleDates.filter(date => date < now);
+    const completed = pastDates.filter(date => !cancelledDates.has(date)).length;
+    const planned = matchingSessions.filter(s => s.status === 'scheduled' && s.session_date >= now).length;
+    const pastUnrecorded = 0;
     const remaining = Math.max(0, def.target - completed);
     const catchUp = Math.max(0, def.target - completed - planned);
-    const expectedByNow = Math.min(def.target, eligibleDates.filter(date => date < now).length);
+    const expectedByNow = Math.min(def.target, completed);
     const paceGap = Math.max(0, expectedByNow - completed);
     return {
       ...def,
@@ -121,10 +173,17 @@ export function buildDaySeriesOverview({ groupSessions = [], now = '2026-09-14' 
   });
 }
 
-export function getWeekProgram(program, seasonStart = GROUP_SEASON.start) {
+export function getWeekProgram(program, seasonStart = GROUP_SEASON.start, seasonEnd = GROUP_SEASON.end) {
+  const teachingWeeks = [];
   const start = parseISO(seasonStart);
+  for (let monday = start; isoUTC(monday) <= seasonEnd; monday = addDays(monday, 7)) {
+    const hasCollectiveCourses = Array.from({length:6}, (_,index) => addDays(monday,index))
+      .some(date => !isSchoolHoliday(isoUTC(date)) && date.getUTCDay() !== 0);
+    if (hasCollectiveCourses) teachingWeeks.push(monday);
+  }
   return (program?.weeks || []).map((week,index) => {
-    const monday = addDays(start,index*7);
+    const monday = teachingWeeks[index];
+    if (!monday) return { ...week, startDate:null, endDate:null };
     const sunday = addDays(monday,6);
     return { ...week, startDate:isoUTC(monday), endDate:isoUTC(sunday) };
   });
