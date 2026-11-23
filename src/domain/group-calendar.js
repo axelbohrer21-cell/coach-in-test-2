@@ -20,6 +20,9 @@ export const ZONE_B_HOLIDAYS_2026_2027 = Object.freeze([
   { start: '2027-04-17', end: '2027-05-03', label: 'Printemps' }
 ]);
 
+// Samedis spéciaux de début de vacances demandés pour les cours enfants.
+export const SPECIAL_VACATION_SATURDAYS = Object.freeze(['2026-10-17','2026-12-19','2027-02-20','2027-04-17']);
+
 // Jours fériés nationaux rencontrés pendant la saison.
 export const PUBLIC_HOLIDAYS_2026_2027 = Object.freeze([
   '2026-11-01', '2026-11-11', '2026-12-25', '2027-01-01',
