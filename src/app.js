@@ -7,7 +7,7 @@ import { pageMeta, renderPage, libraryItemsForCoach, libraryCard } from './views
 import { bookingService } from './services/booking.js';
 import { notificationService } from './services/notifications.js';
 import { calculateAgeCategory, toLocalISO } from './domain/tennis.js';
-import { isTeachingDate, isWithinTeachingWindow, isPrivateLessonDateAllowed, GROUP_SEASON } from './domain/group-calendar.js';
+import { isTeachingDate, isWithinTeachingWindow, isPrivateLessonDateAllowed, GROUP_SEASON, ZONE_B_HOLIDAYS_2026_2027 } from './domain/group-calendar.js';
 import { groupCriteria, recommendChallenge, hasEvaluationContent } from './domain/progression.js';
 import { buildSeriesOccurrences } from './domain/group-series.js';
 import { progressionService } from './services/progression.js';
@@ -848,8 +848,11 @@ $('#dialog-content').addEventListener('submit',async event=>{
       else{await dataService.createGroupSeries({coach_id:state.user.id,...seriesPayload});toast('Créneau annuel créé. Tu peux maintenant générer ses dates.');}
     } else if(form.id==='group-session-form'){
       if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
-      if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isTeachingDate(values.session_date,values.audience)) throw new Error('Ce cours collectif ne peut pas être programmé ce jour : vérifie le jour autorisé, les vacances Zone B et les jours fériés.');
-      if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isWithinTeachingWindow(values.session_date,values.start_time,values.end_time,values.audience)) throw new Error('Les cours enfants doivent respecter les horaires du mercredi (9 h 30–18 h) ou du samedi (9 h 30–14 h 30).');
+      const holidayStage=values.audience==='enfants'&&values.theme==='Stage enfants'&&ZONE_B_HOLIDAYS_2026_2027.some(period=>values.session_date>=period.start&&values.session_date<=period.end)&&[1,2,3,4,5].includes(new Date(values.session_date+'T12:00:00').getDay())&&values.start_time==='09:30'&&values.end_time==='16:30'&&[1,2,3].includes(Number(values.court_number));
+      const vacationSaturday=values.audience==='enfants'&&['2026-10-17','2026-12-19','2027-02-20','2027-04-17'].includes(values.session_date)&&values.start_time==='09:30'&&values.end_time==='14:30'&&[1,2,3].includes(Number(values.court_number));
+      const specialHolidaySession=holidayStage||vacationSaturday;
+      if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isTeachingDate(values.session_date,values.audience)&&!specialHolidaySession) throw new Error('Ce cours collectif ne peut pas être programmé ce jour : vérifie le jour autorisé, les vacances Zone B et les jours fériés.');
+      if(values.session_date>=GROUP_SEASON.start&&values.session_date<=GROUP_SEASON.end&&!isWithinTeachingWindow(values.session_date,values.start_time,values.end_time,values.audience)&&!specialHolidaySession) throw new Error('Les horaires de ce cours collectif ne correspondent pas au créneau autorisé.');
       const groupDuration=timeToMinutes(values.end_time)-timeToMinutes(values.start_time);
       const conflict=findScheduleConflict({session_date:values.session_date,session_time:values.start_time,duration_minutes:groupDuration,court_number:Number(values.court_number),excludeGroupId:values.id});
       if(conflict)throw new Error('Ce créneau chevauche déjà '+conflict+'. Choisis un autre horaire.');
