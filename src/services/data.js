@@ -156,6 +156,10 @@ export const dataService = {
     ]);
     const activeCoachIds = playerCoaches.map(row => row.id);
     const weeklyAvailability = activeCoachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',activeCoachIds).eq('active',true).order('weekday').order('start_time')) : [];
+    const { data: playerUnavailability = [], error: unavailabilityError } = activeCoachIds.length
+      ? await supabase.rpc('get_player_coach_unavailability', { p_coach_ids: activeCoachIds })
+      : { data: [], error: null };
+    if (unavailabilityError) throw unavailabilityError;
     const [hydratedMessages, videoAnalyses] = await Promise.all([
       hydrateMessages(messages),
       hydrateVideoAnalyses(videoRows)
@@ -166,7 +170,7 @@ export const dataService = {
       unwrap(supabase.from('club_events').select('*').order('starts_at'))
     ]);
     state.profile=await hydratePlayerCardPhoto(state.profile);
-    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, sharedCourtOccupancy, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, playerCoachHistory, weeklyAvailability, messages:hydratedMessages, videoAnalyses, playerProfileDetails, matchJournal, clubEvents });
+    Object.assign(state, { players: [state.profile], sessions, evaluations, bookingRequests: requests, sharedCourtOccupancy, notifications, notificationPreferences, challenges, achievements, evaluationCriteria, playerCoaches, playerCoachHistory, weeklyAvailability, playerUnavailability, messages:hydratedMessages, videoAnalyses, playerProfileDetails, matchJournal, clubEvents });
   },
 
   async revokeCoachPlayerInvitation(invitationId) {
