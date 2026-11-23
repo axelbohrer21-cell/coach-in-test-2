@@ -21,11 +21,21 @@ test('le quatrième court est accepté',()=>{
  assert.ok(rows.length>0); assert.equal(rows[0].court_number,4);
 });
 
+test('le mercredi adulte est accepté et respecte le créneau du soir',()=>{
+ const rows=buildSeriesOccurrences({...series,weekday:3,start_time:'18:00',end_time:'21:00'});
+ assert.equal(rows.length,31);
+ assert.ok(rows.every(x=>x.start_time==='18:00'&&x.end_time==='21:00'));
+});
 test('un jour incompatible avec le public est refusé plutôt que de créer une série vide',()=>{
- assert.throws(()=>buildSeriesOccurrences({...series,weekday:3}),/Jour incompatible/);
+ assert.throws(()=>buildSeriesOccurrences({...series,weekday:6}),/Jour incompatible/);
  assert.throws(()=>buildSeriesOccurrences({...series,audience:'enfants',weekday:1}),/Jour incompatible/);
 });
 
+test('les quatre samedis spéciaux de vacances comptent dans le potentiel annuel enfants',()=>{
+ const childSaturday={...series,id:'child-sat',audience:'enfants',weekday:6,start_time:'09:30',end_time:'14:30',target_sessions:30};
+ const row=buildSeriesCounters([childSaturday],[],'2026-09-14')[0];
+ assert.equal(row.eligibleDates.length,32);
+});
 test('un public inconnu est refusé',()=>{
  assert.throws(()=>buildSeriesOccurrences({...series,audience:'ados'}),/Public/);
 });
