@@ -12,11 +12,13 @@ test('cours enfants : mercredi et samedi, hors vacances Zone B', () => {
   assert.equal(saturdays.includes('2027-04-24'),false); // vacances de printemps
 });
 
-test('cours adultes : lundi, mardi, jeudi et vendredi, hors vacances et jours fériés', () => {
+test('cours adultes : du lundi au vendredi, hors vacances et jours fériés', () => {
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:1 }).length,26);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:2 }).length,32);
+  assert.equal(generateTeachingDates({ audience:'adultes', weekday:3 }).length,31);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:4 }).length,30);
   assert.equal(generateTeachingDates({ audience:'adultes', weekday:5 }).length,32);
+  assert.equal(isTeachingDate('2026-11-11','adultes'),false); // mercredi férié
   assert.equal(isTeachingDate('2027-05-06','adultes'),false); // Ascension
 });
 
