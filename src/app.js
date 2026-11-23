@@ -26,6 +26,8 @@ const courtCalibrationSelections=new Map();
 let signupMode = false;
 let weatherRequest = 0;
 let messageChannel = null;
+let scheduleChannel = null;
+let scheduleRefreshPromise = null;
 let notificationChannel = null;
 let notificationRefreshPromise = null;
 let messageRefreshPromise = null;
@@ -56,6 +58,7 @@ async function loadWorkspace() {
     if (state.profile.role === 'coach') await dataService.loadCoachWorkspace(user.id);
     else if (!isAdmin) await dataService.loadPlayerWorkspace();
     if (isAdmin) await dataService.loadAdminWorkspace();
+    if (state.profile.role !== 'coach' && !isAdmin) subscribeToPlayerSchedule();
     showApp();
     const roleLabel = state.profile.role === 'coach' && isAdmin ? 'Coach · Administrateur' : state.profile.role === 'admin' ? 'Administrateur' : state.profile.role === 'coach' ? 'Coach' : 'Joueur';
     $('#account-label').textContent = `${state.profile.first_name || ''} ${state.profile.last_name || ''} · ${roleLabel}`;
@@ -1598,6 +1601,8 @@ async function refreshMessagesOnly(){
 
 function stopRealtimeChannels(){
   if(messageChannel){const channel=messageChannel;messageChannel=null;supabase.removeChannel(channel);}
+  if(scheduleChannel){const channel=scheduleChannel;scheduleChannel=null;supabase.removeChannel(channel).catch(()=>{});}
+  scheduleRefreshPromise=null;
   if(notificationChannel){const channel=notificationChannel;notificationChannel=null;supabase.removeChannel(channel).catch(()=>{});}
   messageRetryCount=0;notificationRetryCount=0;
 }
@@ -1664,6 +1669,32 @@ function subscribeToNotifications(){
     notificationRetryCount++;
     window.setTimeout(()=>{if(state.user&&state.profile&&!notificationChannel)subscribeToNotifications();},2000*notificationRetryCount);
    }
+  }
+ });
+}
+
+function subscribeToPlayerSchedule(){
+ if(scheduleChannel||!state.user||!state.profile||state.profile.role==='coach'||state.profile.is_admin===true)return;
+ const userId=state.user.id;
+ const refresh=()=>{
+  if(scheduleRefreshPromise)return;
+  scheduleRefreshPromise=(async()=>{
+   try{
+    await dataService.loadPlayerWorkspace();
+    if(state.user?.id===userId&&state.profile?.role!=='coach')render(state.currentPage||'planning');
+   }catch(error){toast(error.message||'Actualisation du planning des coachs impossible.','error');}
+   finally{scheduleRefreshPromise=null;}
+  })();
+ };
+ const channel=supabase.channel('coach-in-player-schedule-'+userId)
+  .on('postgres_changes',{event:'*',schema:'public',table:'shared_court_occupancy'},refresh)
+  .on('postgres_changes',{event:'*',schema:'public',table:'coach_weekly_availability'},refresh)
+  .on('postgres_changes',{event:'*',schema:'public',table:'coach_players',filter:'player_id=eq.'+userId},refresh);
+ scheduleChannel=channel;
+ channel.subscribe(status=>{
+  if(['CHANNEL_ERROR','TIMED_OUT'].includes(status)&&scheduleChannel===channel){
+   scheduleChannel=null;
+   supabase.removeChannel(channel).catch(()=>{});
   }
  });
 }
