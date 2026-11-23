@@ -57,3 +57,13 @@ test('les compteurs annuels retirent les deux journées annulées des attentes',
   assert.equal(monday.expectedByNow, monday.eligibleDates.filter(date => date < '2026-11-17').length);
   assert.equal(thursday.expectedByNow, thursday.eligibleDates.filter(date => date < '2026-11-17').length);
 });
+
+
+test('les stages vacances ne gonflent pas les compteurs des cours hebdomadaires',()=>{
+  const overview=buildDaySeriesOverview({groupSessions:[
+    {audience:'enfants',session_date:'2026-10-21',status:'scheduled',theme:'Stage enfants'},
+    {audience:'enfants',session_date:'2026-09-16',status:'scheduled',theme:'Cours collectif'}
+  ],now:'2026-09-14'});
+  const wednesday=overview.find(row=>row.key==='enfants-mercredi');
+  assert.equal(wednesday.planned,1);
+});
