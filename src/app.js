@@ -6,6 +6,7 @@ import { dataService } from './services/data.js';
 import { pageMeta, renderPage, libraryItemsForCoach, libraryCard } from './views/pages.js';
 import { bookingService } from './services/booking.js';
 import { notificationService } from './services/notifications.js';
+import { pushService } from './services/push.js';
 import { calculateAgeCategory, toLocalISO } from './domain/tennis.js';
 import { PLAYER_COLORS } from './domain/player-colors.js';
 import { isTeachingDate, isWithinTeachingWindow, isPrivateLessonDateAllowed, GROUP_SEASON } from './domain/group-calendar.js';
@@ -46,6 +47,47 @@ function showAuth(message='') {
 }
 function showApp() { $('#auth-view').classList.add('hidden'); $('#app-view').classList.remove('hidden'); }
 
+function showFirstConnectionPermissions() {
+  if (!state.user?.id) return;
+  const key = 'coach-in-permissions-v1-' + state.user.id;
+  if (localStorage.getItem(key) === 'seen') return;
+  const panel = document.createElement('div');
+  panel.className = 'permissions-onboarding-backdrop';
+  panel.innerHTML = `
+    <section class="permissions-onboarding" role="dialog" aria-modal="true" aria-labelledby="permissions-title">
+      <p class="eyebrow">BIENVENUE SUR COACH IN</p>
+      <h2 id="permissions-title">Préparons ton expérience</h2>
+      <p>Active les notifications pour recevoir les demandes de cours et les décisions de réservation, même lorsque Coach In est fermé.</p>
+      <div class="permission-row"><span class="permission-icon">♧</span><div><strong>Notifications</strong><small>Alertes de réservation et informations importantes.</small></div><span class="permission-status">${'Notification' in window ? 'Disponible' : 'Non disponible'}</span></div>
+      <div class="permission-row"><span class="permission-icon">📷</span><div><strong>Caméra</strong><small>Coach In demandera l’accès lorsque tu lanceras une prise de vue ou une vidéo.</small></div></div>
+      <div class="permission-row"><span class="permission-icon">▧</span><div><strong>Photos et vidéos</strong><small>Tu pourras choisir tes médias depuis la galerie au moment de les joindre.</small></div></div>
+      <p class="permissions-note">Tu peux continuer même si tu refuses. Sur iPhone, les notifications nécessitent d’ajouter Coach In à l’écran d’accueil avant de les activer.</p>
+      <p class="permissions-feedback" data-permissions-feedback aria-live="polite"></p>
+      <div class="permissions-actions"><button class="btn subtle" type="button" data-permissions-later>Plus tard</button><button class="btn primary" type="button" data-permissions-enable>Activer les notifications</button></div>
+    </section>`;
+  document.body.appendChild(panel);
+  const close = () => { localStorage.setItem(key, 'seen'); panel.remove(); };
+  panel.querySelector('[data-permissions-later]').addEventListener('click', close);
+  panel.querySelector('[data-permissions-enable]').addEventListener('click', async event => {
+    const button = event.currentTarget;
+    const feedback = panel.querySelector('[data-permissions-feedback]');
+    button.disabled = true;
+    feedback.textContent = 'Activation en cours…';
+    try {
+      await pushService.enable(state.user.id);
+      feedback.textContent = 'Notifications activées sur cet appareil.';
+      localStorage.setItem(key, 'seen');
+      window.setTimeout(() => panel.remove(), 900);
+    } catch (error) {
+      feedback.textContent = error.message || 'Activation impossible pour le moment. Tu pourras réessayer dans les réglages.';
+      button.disabled = false;
+      localStorage.setItem(key, 'seen');
+      const later = panel.querySelector('[data-permissions-later]');
+      later.textContent = 'Fermer';
+    }
+  });
+}
+
 let workspaceLoadPromise = null;
 async function loadWorkspace() {
   if (workspaceLoadPromise) return workspaceLoadPromise;
@@ -60,6 +102,7 @@ async function loadWorkspace() {
     if (isAdmin) await dataService.loadAdminWorkspace();
     if (state.profile.role !== 'coach' && !isAdmin) subscribeToPlayerSchedule();
     showApp();
+    showFirstConnectionPermissions();
     const roleLabel = state.profile.role === 'coach' && isAdmin ? 'Coach · Administrateur' : state.profile.role === 'admin' ? 'Administrateur' : state.profile.role === 'coach' ? 'Coach' : 'Joueur';
     $('#account-label').textContent = `${state.profile.first_name || ''} ${state.profile.last_name || ''} · ${roleLabel}`;
     render('dashboard');
