@@ -138,23 +138,23 @@ export const dataService = {
       unwrap(supabase.from('coach_players').select('coach_id').eq('player_id', state.user.id)),
       unwrap(supabase.from('player_video_analyses').select('*').order('created_at',{ascending:false}))
     ]);
-    const coachIds = coachLinks.map(row => row.coach_id);
-    const sharedCourtOccupancy = coachIds.length ? await unwrap(supabase.from('shared_court_occupancy').select('id,coach_id,session_date,start_time,end_time,court_number,source_kind,status').in('coach_id',coachIds).order('session_date').order('start_time')) : [];
+    const linkedCoachIds = coachLinks.map(row => row.coach_id);
     const historicalCoachIds = [...new Set([
       ...sessions.map(row => row.created_by),
       ...evaluations.map(row => row.created_by),
       ...challenges.map(row => row.coach_id),
       ...achievements.map(row => row.coach_id)
     ].filter(Boolean))];
-    const historyOnlyIds = historicalCoachIds.filter(id => !coachIds.includes(id));
+    const historyOnlyIds = historicalCoachIds.filter(id => !linkedCoachIds.includes(id));
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const [playerCoaches, playerCoachHistory, messages, evaluationCriteria] = await Promise.all([
-      coachIds.length ? unwrap(supabase.from('profiles').select('id,first_name,last_name,email').in('id', coachIds).is('archived_at',null).order('last_name')) : Promise.resolve([]),
+      unwrap(supabase.from('profiles').select('id,first_name,last_name').eq('role','coach').is('archived_at',null).order('last_name')),
       historyOnlyIds.length ? unwrap(supabase.from('profiles').select('id,first_name,last_name,email,archived_at').in('id', historyOnlyIds).order('last_name')) : Promise.resolve([]),
       unwrap(supabase.from('coach_player_messages').select('*').eq('player_id',state.user.id).order('created_at')),
       evaluationIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : Promise.resolve([])
     ]);
     const activeCoachIds = playerCoaches.map(row => row.id);
+    const sharedCourtOccupancy = activeCoachIds.length ? await unwrap(supabase.from('shared_court_occupancy').select('id,coach_id,session_date,start_time,end_time,court_number,source_kind,source_id,status').in('coach_id',activeCoachIds).order('session_date').order('start_time')) : [];
     const weeklyAvailability = activeCoachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',activeCoachIds).eq('active',true).order('weekday').order('start_time')) : [];
     const { data: playerUnavailability = [], error: unavailabilityError } = activeCoachIds.length
       ? await supabase.rpc('get_player_coach_unavailability', { p_coach_ids: activeCoachIds })
