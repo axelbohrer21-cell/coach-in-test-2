@@ -24,7 +24,15 @@ import { analyzeVideoPose } from './domain/video-pose.js';
 import { solveCourtHomography, calibratedFootDistances } from './domain/court-calibration.js';
 const courtCalibrationSelections=new Map();
 
-let signupMode = false;
+const coachInviteToken = new URLSearchParams(window.location.search).get('coach_invite');
+let signupMode = Boolean(coachInviteToken);
+if (coachInviteToken) {
+  $('#auth-title').textContent = 'Créer mon compte coach';
+  $('#auth-submit').textContent = 'Créer mon compte coach';
+  $('#auth-toggle').hidden = true;
+  $('#signup-fields').classList.remove('hidden');
+  $('#auth-note').textContent = 'Invitation parrainée : ce lien est personnel, valable 14 jours et utilisable une seule fois.';
+}
 let weatherRequest = 0;
 let messageChannel = null;
 let scheduleChannel = null;
@@ -136,7 +144,7 @@ function render(page) {
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
   const isPlayer = !isCoach && !isAdmin;
   const showTopbarLogout = page==='dashboard' && (isPlayer || isCoach);
-  $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
+  $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : page==='dashboard' && isCoach ? '<button class="btn primary" data-action="invite-coach">＋ Parrainer un coach</button>' : '';
   $('#logout-mobile').hidden = !showTopbarLogout;
   $('#logout').hidden = isPlayer && !showTopbarLogout;
   $('#page-content').innerHTML=renderPage(page);
@@ -161,7 +169,7 @@ $('#auth-form').addEventListener('submit', async event => {
   const button=$('#auth-submit'); button.disabled=true;
   try {
     if (signupMode) {
-      const result=await authService.signUp({email:String(form.get('email')).trim().toLowerCase(),password:form.get('password'),firstName:form.get('first_name'),lastName:form.get('last_name')});
+      const result=await authService.signUp({email:String(form.get('email')).trim().toLowerCase(),password:form.get('password'),firstName:form.get('first_name'),lastName:form.get('last_name'),inviteToken:coachInviteToken});
       if (!result.session) showAuth('Compte créé. Vérifie ta boîte mail pour confirmer ton adresse avant de te connecter.');
       else await loadWorkspace();
     } else {
@@ -1374,8 +1382,17 @@ function challengeDialog(playerId, criterion, criterionId){
   const player=state.players.find(row=>row.id===playerId); if(!player)return;
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">DÉFI PERSONNALISÉ</p><h2>${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="challenge-form" class="form-grid"><input type="hidden" name="player_id" value="${playerId}"><input type="hidden" name="criterion" value="${escapeHtml(criterion)}"><input type="hidden" name="criterion_id" value="${escapeHtml(criterionId||'')}"><label class="span-2">Critère prioritaire<input value="${escapeHtml(criterion)}" disabled></label><label class="span-2">Objectif concret et mesurable<textarea name="objective" rows="3" required placeholder="Ex. Réussir 8 retours sur 10 dans la zone ciblée"></textarea></label><label>Opérateur<select name="comparison_operator"><option value="gte">Atteindre ou dépasser</option><option value="lte">Être inférieur ou égal</option><option value="eq">Atteindre exactement</option></select></label><label>Valeur cible numérique<input type="number" name="target_value" step="0.1" required placeholder="Ex. 8"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Créer le défi</button></div></form>`);
 }
-function inviteCoachDialog(){
- showDialog(`<div class="dialog-head"><div><p class="eyebrow">ADMINISTRATION</p><h2>Inviter un coach</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Le coach recevra un e-mail d’invitation pour créer son accès.</p><form id="invite-coach-form" class="form-grid"><label>Prénom<input name="first_name" required></label><label>Nom<input name="last_name" required></label><label class="span-2">Adresse e-mail<input type="email" name="email" required></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Envoyer l’invitation</button></div></form>`);
+async function inviteCoachDialog(){
+ showDialog(`<div class="dialog-head"><div><p class="eyebrow">PARRAINAGE COACH</p><h2>Créer un lien d’invitation</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Ce lien permet à une seule personne de créer un compte coach. Il expire après 14 jours et sera automatiquement rattaché à ton parrainage.</p><p class="muted">Création du lien sécurisé…</p>`);
+ try{
+  const {data,error}=await supabase.rpc('create_coach_referral_invite');
+  if(error)throw error;
+  const token=typeof data==='string'?data:data?.token;
+  if(!token)throw new Error('Le lien de parrainage n’a pas pu être généré.');
+  const url=new URL(window.location.href);url.search='';url.hash='';url.searchParams.set('coach_invite',token);
+  $('#dialog-content').innerHTML=`<div class="dialog-head"><div><p class="eyebrow">PARRAINAGE COACH</p><h2>Ton lien est prêt</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="muted">Envoie ce lien à la personne que tu souhaites parrainer. Il ne peut servir qu’une seule fois et expire dans 14 jours.</p><label class="stack">Lien personnel<input id="coach-referral-link" type="text" readonly value="${escapeHtml(url.toString())}"></label><div class="dialog-actions"><button type="button" class="btn subtle" data-close>Fermer</button><button type="button" class="btn primary" id="copy-coach-referral-link">Copier le lien</button></div>`;
+  $('#copy-coach-referral-link').addEventListener('click',async()=>{const field=$('#coach-referral-link');try{await navigator.clipboard.writeText(field.value);toast('Lien de parrainage copié.');}catch(_){field.select();document.execCommand('copy');toast('Lien sélectionné : copie-le.');}});
+ }catch(error){$('#dialog-content').innerHTML=`<div class="dialog-head"><div><p class="eyebrow">PARRAINAGE COACH</p><h2>Impossible de créer le lien</h2></div><button class="btn icon-btn" data-close>✕</button></div><p class="feedback">${escapeHtml(error.message||'Erreur lors de la création du lien.')}</p><div class="dialog-actions"><button class="btn subtle" data-close>Fermer</button></div>`;}
 }
 async function setCoachState(action,id){try{const {error}=await supabase.functions.invoke('manage-coaches',{body:{action,coach_id:id}});if(error)throw error;toast(action==='archive'?'Compte coach suspendu.':'Compte coach réactivé.');await refreshAndRender();}catch(e){toast(e.message||'Action impossible.','error');}}
 
