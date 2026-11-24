@@ -4442,3 +4442,10 @@ body.camera-fullscreen-open{overflow:hidden}
 .booking-duration-option small{color:#8fa9c1;font-size:9px;line-height:1.3}
 .booking-duration-option:has(input:checked){border-color:#71dfd0;background:rgba(76,190,169,.13);box-shadow:inset 0 0 0 1px rgba(113,223,208,.24)}
 @media(max-width:480px){.booking-duration-options{grid-template-columns:1fr}.booking-duration-option{padding:10px 12px}.booking-duration-option small{font-size:10px}}
+
+/* Réservations individuelles : statut visible et durée exacte par demi-heure */
+.booking-calendar-event{border-left-color:#f59e0b!important;background:#3b2d18!important}
+.booking-calendar-event.booking-accepted{border-left-color:#38bdf8!important;background:#143552!important}
+.booking-calendar-continuation{margin:0 0 2px!important;padding:3px 7px!important;min-height:24px;border-left:2px solid #f59e0b;background:#302719;color:#f8d49b;font-size:9px}
+.booking-calendar-event .calendar-event-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.booking-calendar-event .calendar-event-actions .btn{font-size:9px;padding:4px 7px}
