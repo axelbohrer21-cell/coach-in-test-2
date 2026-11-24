@@ -4599,3 +4599,158 @@ body.camera-fullscreen-open{overflow:hidden}
 .notification-device-settings .tiny{margin-top:8px}
 .notification-settings-compact .notification-preferences-grid{padding:8px 0 14px;border-top:1px solid rgba(126,157,190,.16)}
 @media(max-width:560px){.notification-item{grid-template-columns:30px minmax(0,1fr) auto;gap:8px;padding:9px 7px}.notification-item-icon{width:29px;height:29px}.notification-open{font-size:9px;padding:6px}.notification-total-pill{padding:6px 9px}.notification-total-pill strong{font-size:19px}}
+
+
+/* ===== COACH IN — même interface mobile sur ordinateur =====
+   Le bureau reprend la navigation haute, les cartes et l'empilement
+   de la version téléphone. Seule la largeur disponible augmente. */
+@media (min-width: 761px) {
+  html { scroll-padding-top: 112px; }
+  .app {
+    display: block !important;
+    min-height: 100vh;
+    grid-template-columns: none !important;
+  }
+  .sidebar {
+    position: sticky !important;
+    z-index: 50;
+    top: 0;
+    width: 100%;
+    height: auto !important;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 11px 18px 9px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(132,177,190,.2) !important;
+    background: rgba(5,18,30,.97) !important;
+    box-shadow: 0 10px 28px rgba(0,0,0,.16) !important;
+    backdrop-filter: blur(20px);
+  }
+  .sidebar > .brand {
+    display: flex;
+    align-items: center;
+    min-height: 27px;
+    padding: 0 3px !important;
+    font-size: 21px !important;
+  }
+  .side-caption, .sidebar-bottom { display: none !important; }
+  .navigation {
+    display: flex !important;
+    align-items: center;
+    gap: 6px !important;
+    width: 100%;
+    margin-top: 9px !important;
+    padding: 0 0 3px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .navigation::-webkit-scrollbar { display: none; }
+  .nav-item {
+    width: auto !important;
+    min-height: 42px;
+    flex: 0 0 auto;
+    padding: 9px 11px !important;
+    border-radius: 10px !important;
+    font-size: 11px !important;
+    white-space: nowrap;
+  }
+  .nav-item.active {
+    box-shadow: inset 0 -2px 0 var(--accent-lime, var(--cyan)) !important;
+  }
+  .main-area {
+    width: 100%;
+    max-width: 1120px !important;
+    margin: 0 auto;
+    padding: 20px 18px 38px !important;
+  }
+  .topbar {
+    align-items: flex-start !important;
+    gap: 10px !important;
+    margin-bottom: 22px !important;
+    padding-bottom: 14px;
+  }
+  .topbar h1 { font-size: 29px !important; }
+  .page-content { gap: 14px !important; }
+  .panel {
+    padding: 17px !important;
+    border-radius: 19px !important;
+  }
+  .section-heading {
+    align-items: flex-start !important;
+    margin-bottom: 15px;
+  }
+  .section-heading h2 { font-size: 19px !important; }
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+    gap: 9px !important;
+  }
+  .stat-card {
+    min-width: 0;
+    padding: 15px !important;
+    border-radius: 16px !important;
+  }
+  .player-grid,
+  .intelligence-player-grid,
+  .performance-report-grid,
+  .fut-card-layout,
+  .shot-domain-grid,
+  .physical-method-grid,
+  .match-reflection-grid,
+  .video-segment-grid,
+  .coach-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .coach-dashboard-grid-bottom { grid-template-columns: 1fr !important; }
+  .form-grid { grid-template-columns: 1fr !important; }
+  .form-grid .span-2, .span-2 { grid-column: span 1 !important; }
+  .notification-row {
+    display: grid !important;
+    grid-template-columns: 12px minmax(0,1fr) !important;
+    align-items: start;
+  }
+  .notification-row .notification-state-dot {
+    grid-column: 1;
+    grid-row: 1;
+    margin-top: 5px;
+  }
+  .notification-row .list-main { grid-column: 2; grid-row: 1; }
+  .notification-row .btn,
+  .notification-row .tag {
+    grid-column: 2;
+    width: 100%;
+    text-align: center;
+  }
+  .notification-inbox-heading h2 { font-size: 19px !important; }
+  .notification-counter {
+    min-width: 66px !important;
+    height: 66px !important;
+    border-radius: 18px !important;
+  }
+  .notification-item {
+    grid-template-columns: 30px minmax(0,1fr) auto !important;
+    gap: 8px !important;
+    padding: 9px 7px !important;
+  }
+  .calendar-week {
+    grid-template-columns: repeat(7, minmax(235px,1fr)) !important;
+    gap: 10px !important;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .calendar-day { min-height: unset; padding: 11px; }
+  .calendar-hour-row { grid-template-columns: 43px minmax(0,1fr) !important; }
+  .toolbar { align-items: stretch; }
+  .toolbar .search-input,
+  .toolbar .select-input { min-height: 46px; }
+  .coach-quick-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+  .coach-quick-actions .btn { width: 100%; }
+  .dialog {
+    max-width: min(560px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+  }
+}
