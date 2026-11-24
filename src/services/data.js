@@ -81,6 +81,11 @@ export const dataService = {
       unwrap(supabase.from('coach_player_messages').select('*').eq('coach_id',userId).order('created_at')),
       unwrap(supabase.from('coach_video_analyses').select('*').eq('coach_id',userId).order('created_at',{ascending:false}))
     ]);
+    const pendingBookingPlayerIds=[...new Set(bookingRequests.filter(row=>row.status==='pending').map(row=>row.player_id).filter(id=>id&&!playerIds.includes(id)))];
+    const pendingBookingPlayers=pendingBookingPlayerIds.length
+      ? await unwrap(supabase.from('profiles').select('*').in('id',pendingBookingPlayerIds).eq('role','player').order('last_name'))
+      : [];
+    const visiblePlayers=[...players,...pendingBookingPlayers];
     let loadedSessionObjectives=sessionObjectives;
     if(!loadedSessionObjectives.length){
       const defaults=OBJECTIVES.map((item,index)=>({coach_id:userId,objective_id:item.id,theme:item.theme,label:item.label,profile:item.profile,criteria:item.criteria,intent:item.intent,success:item.success,display_order:index+1,active:true}));
@@ -121,7 +126,7 @@ export const dataService = {
       playerIds.length ? unwrap(supabase.from('player_profile_details').select('*').in('player_id',playerIds)) : Promise.resolve([])
     ]);
     const playerProfileDetailsById = Object.fromEntries(profileDetailsRows.map(row=>[row.player_id,row]));
-    const hydratedPlayers=await Promise.all(players.map(hydratePlayerCardPhoto));
+    const hydratedPlayers=await Promise.all(visiblePlayers.map(hydratePlayerCardPhoto));
     const physicalPrograms = await unwrap(supabase.from('coach_physical_programs').select('*').eq('coach_id',userId).order('created_at',{ascending:false}));
     Object.assign(state, { physicalPrograms, players:hydratedPlayers, sessions, favoriteSessionIds, evaluations, groupSessions, groupSeries, groupCourseCancellations, bookingRequests, library, customSessionExercises, sessionObjectives:loadedSessionObjectives.map(row=>({...row,id:row.objective_id,db_id:row.id})), notifications, notificationPreferences, criteria, evaluationCriteria, challenges, achievements, coachInvitations, coachPlayerShares, weeklyAvailability, messages:hydratedMessages, videoAnalyses, videoCorrectionFollowups, clubEvents, playerProfileDetailsById });
   },
