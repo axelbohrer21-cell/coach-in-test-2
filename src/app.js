@@ -1692,6 +1692,7 @@ function subscribeToPlayerSchedule(){
  };
  const channel=supabase.channel('coach-in-player-schedule-'+userId)
   .on('postgres_changes',{event:'*',schema:'public',table:'shared_court_occupancy'},refresh)
+  .on('postgres_changes',{event:'*',schema:'public',table:'booking_requests',filter:'player_id=eq.'+userId},refresh)
   .on('postgres_changes',{event:'*',schema:'public',table:'coach_weekly_availability'},refresh)
   .on('postgres_changes',{event:'*',schema:'public',table:'coach_unavailability'},refresh)
   .on('postgres_changes',{event:'*',schema:'public',table:'coach_players',filter:'player_id=eq.'+userId},refresh);
