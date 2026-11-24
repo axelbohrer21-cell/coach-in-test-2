@@ -1644,6 +1644,13 @@ async function refreshNotificationsOnly(){
       ?await notificationService.listCoach()
       :await notificationService.listPlayer();
     state.notifications=rows;
+    const unread=rows.filter(item=>!item.read_at).length;
+    const navButton=$('#navigation [data-page="notifications"]');
+    if(navButton){
+      let badge=navButton.querySelector('.nav-count');
+      if(unread&&!badge){badge=document.createElement('span');badge.className='nav-count';navButton.appendChild(badge);}
+      if(badge){badge.textContent=unread>99?'99+':String(unread);badge.setAttribute('aria-label',unread+' notifications non lues');badge.hidden=!unread;}
+    }
     if(state.currentPage==='notifications')render('notifications');
   })();
   try{return await notificationRefreshPromise;}
