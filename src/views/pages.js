@@ -298,10 +298,13 @@ function playerCoachPlanningPage() {
     const disabled=date.getDay()===0||(Boolean(schoolBreak)&&!hasHolidayStage)||publicHolidayBlocks;
     const reason=date.getDay()===0?'Dimanche':schoolBreak?('Vacances de '+schoolBreak.label):publicHoliday?(childCollectiveDay?'Jour férié · cours enfants maintenus':'Jour férié'):'';
     const rules=availability.filter(row=>Number(row.weekday)===weekday);
-    const actualEvents=occupancy.filter(row=>row.session_date===iso&&!['rejected'].includes(String(row.status||'').toLowerCase())&&(!['cancelled','canceled','annulé','annulee'].includes(String(row.status||'').toLowerCase())&&true||row.source_kind==='group_session'));
+    const actualEvents=occupancy.filter(row=>row.session_date===iso&&row.source_kind!=='booking'&&!['rejected','cancelled','canceled','annulé','annulee'].includes(String(row.status||'').toLowerCase()));
+    // La durée affichée d'une demande provient directement de booking_requests.duration_minutes,
+    // pas d'une projection d'horaires : 120 minutes doivent rester exactement 120 minutes.
+    const bookingEvents=(state.bookingRequests||[]).filter(row=>row.coach_id===selected.id&&row.session_date===iso&&['pending','accepted','confirmed'].includes(String(row.status||'').toLowerCase())).map(row=>({...row,source_kind:'booking',start_time:row.start_time||'08:00',duration:Number(row.duration_minutes||60)}));
     const recurringEvents=GROUP_SEASON.weeklySchedule.filter(row=>row.weekday===date.getDay()&&isTeachingDate(iso,row.audience)&&!actualEvents.some(event=>String(event.start_time||'').slice(0,5)===row.start)).map(row=>({coach_id:selected.id,session_date:iso,start_time:row.start,end_time:row.end,court_number:null,source_kind:'group_session',status:'scheduled',title:row.audience==='enfants'?'Cours collectif enfants':'Cours collectif adultes'}));
     const stageEvents=buildHolidayStageOccurrences({startDate:iso,endDate:iso}).flatMap(stage=>stage.courts.map(court=>({coach_id:selected.id,session_date:iso,start_time:stage.start_time,end_time:String(Math.floor((toMinutes(stage.start_time)+420)/60)).padStart(2,'0')+':'+String((toMinutes(stage.start_time)+420)%60).padStart(2,'0'),court_number:court,source_kind:'group_session',status:'scheduled',title:stage.title})));
-    const events=[...actualEvents,...recurringEvents,...stageEvents].map(event=>({...event,duration:Math.max(30,toMinutes(event.end_time)-toMinutes(event.start_time))}));
+    const events=[...actualEvents.map(event=>({...event,duration:Math.max(30,toMinutes(event.end_time)-toMinutes(event.start_time))})),...bookingEvents,...recurringEvents,...stageEvents];
     const groupEvents=events.filter(event=>event.source_kind==='group_session'&&!['cancelled','canceled','annulé','annulee'].includes(String(event.status||'').toLowerCase())).map(event=>({...event,start:toMinutes(event.start_time),end:toMinutes(event.start_time)+event.duration})).sort((a,b)=>a.start-b.start);
     const groupBlocks=groupEvents.reduce((blocks,event)=>{
       const last=blocks[blocks.length-1];
@@ -328,7 +331,7 @@ function playerCoachPlanningPage() {
         const cancelled=['cancelled','canceled','annulé','annulee','rejected'].includes(status);
         const pending=event.source_kind==='booking'&&status==='pending';
         const eventLabel=cancelled?'Demande refusée':pending?'En attente':event.source_kind==='booking'?'Réservation':'Cours particulier';
-        const durationSlots=Math.max(1,Math.ceil(event.duration/30));
+        const durationSlots=Math.max(1,Number(event.duration)/30);
         return '<div class="calendar-event player-event '+(event.source_kind==='booking'?'booking-calendar-event booking-'+status:'')+(cancelled?' event-cancelled':'')+'" style="--event-slots:'+durationSlots+'"><div class="calendar-event-main"><b>'+clock(event.start_time)+'</b><strong>'+eventLabel+'</strong><small>'+(event.court_number?'Terrain '+escapeHtml(String(event.court_number)):'Créneau occupé')+' · '+Math.floor(event.duration/60)+' h'+(event.duration%60?' '+event.duration%60:'')+'</small></div></div>';
       }).join('');
       const slotDateStart=new Date(date);slotDateStart.setHours(hour,minute,0,0);
