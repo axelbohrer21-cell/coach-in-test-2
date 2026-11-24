@@ -587,7 +587,7 @@ $('#page-content').addEventListener('submit',async event=>{
   }
   const form=event.target.closest('#notification-preferences-form'); if(!form)return;
   event.preventDefault();
-  const preferences=Object.fromEntries(['booking_requests','booking_decisions','booking_changes','reminders_24h','messages','progress','session_changes'].map(key=>[key,form.elements[key].checked]));
+  const preferences=Object.fromEntries(['booking_requests','booking_decisions','booking_changes','reminders_24h','messages','progress','session_changes','club_news'].map(key=>[key,form.elements[key].checked]));
   try{state.notificationPreferences=await notificationService.savePreferences(state.user.id,preferences);toast('Préférences de notifications enregistrées.');await refreshAndRender();render('notifications');}
   catch(error){toast(error.message||'Impossible d’enregistrer les préférences.','error');}
 });
