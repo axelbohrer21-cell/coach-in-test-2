@@ -4516,3 +4516,11 @@ body.camera-fullscreen-open{overflow:hidden}
 .calendar-hour-content>.calendar-event[style*="--event-slots"]{
   box-sizing:border-box;
 }
+
+
+/* Grille horaire identique sur toutes les largeurs : 30 px par demi-heure.
+   Les blocs de réservation sont ainsi proportionnels à leur durée réelle. */
+.calendar-hours{grid-auto-rows:30px!important;gap:0!important}
+.calendar-hour-row,.calendar-hour-content{height:30px!important;min-height:30px!important;box-sizing:border-box}
+.calendar-hour-content>.calendar-event{height:calc(var(--event-slots,2)*30px - 4px)!important;min-height:26px}
+@media(max-width:760px){.calendar-hour-content>.calendar-event{height:calc(var(--event-slots,2)*30px - 4px)!important}}
