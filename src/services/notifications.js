@@ -28,5 +28,13 @@ export const notificationService = {
   async markCoachRead(id) {
     const { error } = await supabase.from('coach_notifications').update({ read_at: new Date().toISOString() }).eq('id', id);
     if (error) throw error;
+  },
+  async markAllCoachRead() {
+    const { error } = await supabase.from('coach_notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
+    if (error) throw error;
+  },
+  async markAllPlayerRead() {
+    const { error } = await supabase.from('player_notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
+    if (error) throw error;
   }
 };
