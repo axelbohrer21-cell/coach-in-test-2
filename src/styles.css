@@ -4902,3 +4902,79 @@ body.camera-fullscreen-open{overflow:hidden}
  .physical-library-accordion>summary{padding:12px}
  .physical-accordion-content{padding:0 11px 12px}
 }
+
+
+/* Player card — finition premium, identité visuelle Coach In conservée */
+.player-game-card.fut-inspired-card{
+ --card-ink:#f4f7fb;
+ position:relative;
+ isolation:isolate;
+ overflow:hidden;
+ display:grid;
+ gap:13px;
+ padding:17px;
+ border:1px solid color-mix(in srgb,var(--tier-light) 48%,#52677e);
+ border-radius:18px;
+ background:linear-gradient(135deg,#142438 0%,#101c2c 58%,#0b1522 100%)!important;
+ color:var(--card-ink);
+ box-shadow:0 16px 38px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.07);
+}
+.player-game-card.fut-inspired-card:before{
+ content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+ background:radial-gradient(ellipse at 0% 0%,color-mix(in srgb,var(--tier-main) 18%,transparent),transparent 48%),linear-gradient(115deg,transparent 35%,rgba(255,255,255,.035) 52%,transparent 68%);
+}
+.player-game-card.fut-inspired-card:after{
+ content:"";position:absolute;z-index:-1;right:-100px;top:-145px;width:300px;height:300px;
+ border:1px solid color-mix(in srgb,var(--tier-light) 14%,transparent);border-radius:50%;
+ box-shadow:0 0 0 24px color-mix(in srgb,var(--tier-light) 3%,transparent),0 0 0 50px color-mix(in srgb,var(--tier-light) 2%,transparent);
+}
+.fut-card-top{padding:0 2px 10px!important;border-bottom:1px solid rgba(255,255,255,.11);font-size:9px!important;letter-spacing:1.6px!important;color:#b5c4d5!important}
+.fut-card-top b{color:var(--tier-light)!important}
+.fut-card-layout{grid-template-columns:minmax(210px,.82fr) minmax(0,1.18fr)!important;gap:17px!important}
+.fut-card-portrait{min-height:340px!important;border:1px solid color-mix(in srgb,var(--tier-light) 55%,#71849a)!important;border-radius:13px!important;background:#14263a!important;box-shadow:0 8px 22px rgba(0,0,0,.24),inset 0 1px 0 #ffffff20!important}
+.fut-card-portrait>img{object-position:center 20%!important;filter:saturate(.92) contrast(1.03)}
+.fut-card-photo-shade{background:linear-gradient(180deg,rgba(4,12,22,.03) 35%,rgba(4,12,22,.88) 100%)!important}
+.fut-card-overall,.fut-card-crest{border:1px solid color-mix(in srgb,var(--tier-light) 58%,transparent)!important;border-radius:10px!important;background:rgba(7,17,29,.88)!important;box-shadow:0 5px 16px #0004;backdrop-filter:blur(10px)}
+.fut-card-overall{top:12px!important;left:12px!important;min-width:62px}
+.fut-card-overall strong{font-family:inherit!important;font-size:38px!important;font-weight:950;letter-spacing:-.06em}
+.fut-card-overall span{font-size:8px!important;letter-spacing:1.8px!important;color:#d7e3ef!important}
+.fut-card-crest{right:12px!important;top:12px!important;min-width:57px}
+.fut-card-crest span{font-family:inherit!important;font-size:21px!important}
+.fut-card-crest b{font-size:7px!important;letter-spacing:1.2px!important}
+.fut-card-player-name{left:15px!important;right:15px!important;bottom:15px!important}
+.fut-card-player-name h2{font-family:inherit!important;font-size:clamp(21px,2.4vw,29px)!important;font-weight:900!important;letter-spacing:-.025em;line-height:1.04!important}
+.fut-card-player-name span{font-size:9px!important;letter-spacing:.8px!important;color:#e0e9f2!important}
+.fut-card-details{justify-content:flex-start!important;gap:13px!important;padding:0!important}
+.fut-card-tierline{min-height:62px;padding:10px 12px!important;border:1px solid color-mix(in srgb,var(--tier-light) 32%,#34485d)!important;border-radius:12px!important;background:linear-gradient(100deg,color-mix(in srgb,var(--tier-main) 17%,#142438),rgba(7,17,29,.65))!important}
+.game-tier-emblem{width:37px!important;height:37px!important;border:1px solid var(--tier-light)!important;border-radius:10px!important;background:color-mix(in srgb,var(--tier-main) 24%,#122033)!important;color:var(--tier-light)!important;font-family:inherit!important;font-size:15px!important;box-shadow:none!important}
+.fut-card-tierline>div small{font-size:8px!important;letter-spacing:1.3px!important;color:#9fb2c7!important}
+.fut-card-tierline>div strong{font-size:15px!important;letter-spacing:1.5px!important;color:var(--tier-light)!important}
+.fut-tier-level{margin-left:auto;color:#a9bbce!important;font-size:8px!important;letter-spacing:1px!important}
+.fut-card-stat-grid{gap:9px!important;padding:0!important}
+.fut-stat{display:grid;grid-template-columns:1fr auto;align-items:center;gap:7px 10px;padding:11px 12px;border:1px solid rgba(176,199,222,.13);border-radius:11px;background:linear-gradient(145deg,rgba(28,47,68,.86),rgba(13,26,41,.9))}
+.fut-stat>span{color:#aebfd1!important;font-size:9px!important;font-weight:850;letter-spacing:1.15px!important}
+.fut-stat>strong{color:#f5f8fc!important;font-size:22px!important;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.fut-stat>i{grid-column:1/-1;height:4px!important;border:0!important;background:rgba(255,255,255,.1)!important}
+.fut-stat>i>b{background:linear-gradient(90deg,var(--tier-main),var(--tier-light))!important;box-shadow:none!important}
+.fut-inspired-card .game-card-progress{margin:0!important;padding:11px 1px 0!important;border-top:1px solid rgba(255,255,255,.12)!important}
+.fut-inspired-card .game-card-progress>div{font-size:8px!important;letter-spacing:1px!important;color:#aebfd1!important}
+.fut-inspired-card .game-card-progress>div b{color:var(--tier-light)!important}
+.fut-inspired-card .game-card-progress>i{height:6px!important;border:0!important;background:rgba(255,255,255,.1)!important}
+.fut-inspired-card .game-card-progress>i>b{background:linear-gradient(90deg,var(--tier-main),var(--tier-light))!important;box-shadow:none!important}
+.fut-card-foot{padding-top:11px!important;border-top:1px solid rgba(255,255,255,.12)!important;color:#aebfd1!important;font-size:8px!important;letter-spacing:.8px!important}
+.fut-card-foot b{color:var(--tier-light)!important;font-size:14px!important}
+.player-game-card.tier-bronze{--tier-main:#b96b35;--tier-light:#ffd0a0}
+.player-game-card.tier-silver{--tier-main:#9eafc2;--tier-light:#e4edf7}
+.player-game-card.tier-gold{--tier-main:#c49a36;--tier-light:#f5d989}
+.player-game-card.tier-platinum{--tier-main:#42b8ce;--tier-light:#a9edf2}
+@media(max-width:680px){
+ .player-game-card.fut-inspired-card{padding:12px!important;gap:10px!important}
+ .fut-card-top{font-size:8px!important;letter-spacing:1px!important;padding-bottom:8px!important}
+ .fut-card-layout{grid-template-columns:1fr!important;gap:12px!important}
+ .fut-card-portrait{min-height:0!important;height:clamp(250px,76vw,350px)!important;max-height:none!important}
+ .fut-card-details{gap:10px!important}
+ .fut-card-tierline{min-height:54px}
+ .fut-stat{padding:9px 10px}
+ .fut-stat>strong{font-size:20px!important}
+ .fut-card-foot{gap:6px!important;flex-wrap:wrap}
+}
