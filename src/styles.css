@@ -4483,3 +4483,36 @@ body.camera-fullscreen-open{overflow:hidden}
   border-left-color:#38bdf8!important;
   background:rgba(56,189,248,.13)!important;
 }
+
+
+/* Actions de réservation : boutons lisibles et couleurs explicites */
+.calendar-event.booking-calendar-event.booking-pending.is-selected .calendar-event-actions .btn,
+.calendar-event.booking-calendar-event.booking-pending .calendar-event-actions .btn{
+  min-height:38px;
+  padding:8px 14px!important;
+  border-radius:9px;
+  font-size:14px!important;
+  font-weight:900!important;
+  line-height:1.15;
+  letter-spacing:.15px;
+}
+.calendar-event.booking-calendar-event.booking-pending .calendar-event-actions .btn.primary{
+  border:1px solid #27c879!important;
+  background:#16834b!important;
+  color:#ffffff!important;
+}
+.calendar-event.booking-calendar-event.booking-pending .calendar-event-actions .btn.danger{
+  border:1px solid #ff5968!important;
+  background:#bd2939!important;
+  color:#ffffff!important;
+}
+.calendar-event.booking-calendar-event.booking-pending .calendar-event-actions .btn.primary:hover{
+  background:#1aa35c!important;
+}
+.calendar-event.booking-calendar-event.booking-pending .calendar-event-actions .btn.danger:hover{
+  background:#dc3548!important;
+}
+/* Hauteur d'un bloc = nombre exact de demi-heures réservées */
+.calendar-hour-content>.calendar-event[style*="--event-slots"]{
+  box-sizing:border-box;
+}
