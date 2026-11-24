@@ -127,10 +127,10 @@ function render(page) {
   const [kicker,title,description] = pageMeta[page];
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
   const isPlayer = !isCoach && !isAdmin;
-  const showPlayerLogout = page==='dashboard' && isPlayer;
+  const showTopbarLogout = page==='dashboard' && (isPlayer || isCoach);
   $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
-  $('#logout-mobile').hidden = !showPlayerLogout;
-  $('#logout').hidden = isPlayer && !showPlayerLogout;
+  $('#logout-mobile').hidden = !showTopbarLogout;
+  $('#logout').hidden = isPlayer && !showTopbarLogout;
   $('#page-content').innerHTML=renderPage(page);
   if(page==='videos') initializeCourtCalibrationCanvases();
   if(page==='planning') loadWeatherForecast();
