@@ -28,6 +28,11 @@ let signupMode = false;
 let weatherRequest = 0;
 let messageChannel = null;
 let scheduleChannel = null;
+let workspaceChannel = null;
+let workspaceRefreshTimer = null;
+let workspaceRefreshPromise = null;
+let workspaceRefreshQueued = false;
+let workspaceRetryCount = 0;
 let scheduleRefreshPromise = null;
 let notificationChannel = null;
 let notificationRefreshPromise = null;
@@ -94,13 +99,14 @@ async function loadWorkspace() {
   workspaceLoadPromise = (async () => {
     const user = await authService.getCurrentUser();
     if (!user) return showAuth();
+    if(state.user?.id && state.user.id!==user.id) stopRealtimeChannels();
     state.user = user;
     state.profile = await dataService.loadProfile(user.id);
     const isAdmin = state.profile.is_admin === true || state.profile.role === 'admin';
     if (state.profile.role === 'coach') await dataService.loadCoachWorkspace(user.id);
     else if (!isAdmin) await dataService.loadPlayerWorkspace();
     if (isAdmin) await dataService.loadAdminWorkspace();
-    if (state.profile.role !== 'coach' && !isAdmin) subscribeToPlayerSchedule();
+    if (!isAdmin) subscribeToWorkspaceData();
     showApp();
     showFirstConnectionPermissions();
     const roleLabel = state.profile.role === 'coach' && isAdmin ? 'Coach · Administrateur' : state.profile.role === 'admin' ? 'Administrateur' : state.profile.role === 'coach' ? 'Coach' : 'Joueur';
@@ -1668,11 +1674,82 @@ async function refreshMessagesOnly(){
 }
 
 function stopRealtimeChannels(){
-  if(messageChannel){const channel=messageChannel;messageChannel=null;supabase.removeChannel(channel);}
+  if(messageChannel){const channel=messageChannel;messageChannel=null;supabase.removeChannel(channel).catch(()=>{});}
   if(scheduleChannel){const channel=scheduleChannel;scheduleChannel=null;supabase.removeChannel(channel).catch(()=>{});}
+  if(workspaceChannel){const channel=workspaceChannel;workspaceChannel=null;supabase.removeChannel(channel).catch(()=>{});}
+  if(workspaceRefreshTimer){window.clearTimeout(workspaceRefreshTimer);workspaceRefreshTimer=null;}
+  workspaceRefreshPromise=null;workspaceRefreshQueued=false;workspaceRetryCount=0;
   scheduleRefreshPromise=null;
   if(notificationChannel){const channel=notificationChannel;notificationChannel=null;supabase.removeChannel(channel).catch(()=>{});}
   messageRetryCount=0;notificationRetryCount=0;
+}
+
+function scheduleWorkspaceRefresh(userId){
+  if(!userId||state.user?.id!==userId)return;
+  if(workspaceRefreshTimer)window.clearTimeout(workspaceRefreshTimer);
+  workspaceRefreshTimer=window.setTimeout(async()=>{
+    workspaceRefreshTimer=null;
+    if(state.user?.id!==userId||!state.profile)return;
+    if(workspaceRefreshPromise){workspaceRefreshQueued=true;return;}
+    workspaceRefreshPromise=(async()=>{
+      try{
+        const page=state.currentPage||'dashboard';
+        const role=state.profile.role;
+        if(role==='coach')await dataService.loadCoachWorkspace(userId);
+        else if(role==='player')await dataService.loadPlayerWorkspace();
+        if(state.user?.id===userId&&state.profile?.role===role)render(page);
+      }catch(error){
+        console.error('Coach In · synchronisation des espaces',error);
+        toast('Une mise à jour n’a pas pu être récupérée. Vérifie ta connexion puis actualise la page.','error');
+      }finally{
+        workspaceRefreshPromise=null;
+        if(workspaceRefreshQueued){
+          workspaceRefreshQueued=false;
+          scheduleWorkspaceRefresh(userId);
+        }
+      }
+    })();
+    await workspaceRefreshPromise;
+  },280);
+}
+
+function subscribeToWorkspaceData(){
+  if(workspaceChannel||!state.user||!state.profile)return;
+  const userId=state.user.id;
+  const isCoach=state.profile.role==='coach';
+  const channel=supabase.channel('coach-in-workspace-sync-'+userId);
+  const watch=(table,filter)=>channel.on('postgres_changes',{event:'*',schema:'public',table,...(filter?{filter}:{})},()=>scheduleWorkspaceRefresh(userId));
+  if(isCoach){
+    [
+      ['profiles'],['coach_players','coach_id=eq.'+userId],['training_sessions','created_by=eq.'+userId],
+      ['evaluations','created_by=eq.'+userId],['evaluation_criteria'],['player_challenges','coach_id=eq.'+userId],
+      ['player_achievements','coach_id=eq.'+userId],['player_profile_details'],['booking_requests','coach_id=eq.'+userId],
+      ['group_sessions','coach_id=eq.'+userId],['group_course_series','coach_id=eq.'+userId],
+      ['group_course_cancellations','coach_id=eq.'+userId],['shared_court_occupancy','coach_id=eq.'+userId],
+      ['coach_weekly_availability','coach_id=eq.'+userId],['coach_unavailability','coach_id=eq.'+userId],
+      ['coach_player_messages','coach_id=eq.'+userId]
+    ].forEach(([table,filter])=>watch(table,filter));
+  }else{
+    [
+      ['profiles'],['coach_players','player_id=eq.'+userId],['training_sessions','player_id=eq.'+userId],
+      ['evaluations','player_id=eq.'+userId],['evaluation_criteria'],['player_challenges','player_id=eq.'+userId],
+      ['player_achievements','player_id=eq.'+userId],['player_profile_details','player_id=eq.'+userId],
+      ['booking_requests','player_id=eq.'+userId],['shared_court_occupancy'],
+      ['coach_weekly_availability'],['coach_unavailability'],['coach_player_messages','player_id=eq.'+userId]
+    ].forEach(([table,filter])=>watch(table,filter));
+  }
+  workspaceChannel=channel;
+  channel.subscribe(status=>{
+    if(status==='SUBSCRIBED')workspaceRetryCount=0;
+    if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)&&workspaceChannel===channel){
+      workspaceChannel=null;
+      supabase.removeChannel(channel).catch(()=>{});
+      if(workspaceRetryCount<5&&state.user?.id===userId){
+        workspaceRetryCount++;
+        window.setTimeout(()=>{if(state.user?.id===userId&&!workspaceChannel)subscribeToWorkspaceData();},Math.min(15000,1000*2**workspaceRetryCount));
+      }
+    }
+  });
 }
 
 supabase.auth.onAuthStateChange((_event,session)=>{
