@@ -15,7 +15,8 @@ export function playerGameCardMarkup(profile={}, reports=state.evaluations||[], 
   const overall=row=>{
     const values=axes.map(([,key])=>row?.[key]===null||row?.[key]===undefined||row?.[key]===''?null:Number(row[key])).filter(value=>Number.isFinite(value)&&value>=0&&value<=20);
     if(values.length)return values.reduce((sum,value)=>sum+value,0)/values.length;
-    const fallback=Number(row?.score);
+    const rawFallback=row?.score;
+    const fallback=rawFallback===null||rawFallback===undefined||rawFallback===''?NaN:Number(rawFallback);
     return Number.isFinite(fallback)&&fallback>=0&&fallback<=20?fallback:null;
   };
   const best=(reports||[]).map(overall).filter(value=>value!==null).reduce((max,value)=>Math.max(max,value),-1);
