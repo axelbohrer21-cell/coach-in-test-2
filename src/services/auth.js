@@ -6,10 +6,10 @@ export const authService = {
     if (error) throw error;
     return data.user;
   },
-  async signUp({ email, password, firstName, lastName }) {
+  async signUp({ email, password, firstName, lastName, inviteToken = null }) {
     const { data, error } = await supabase.auth.signUp({
       email, password,
-      options: { emailRedirectTo: window.location.origin, data: { first_name: firstName, last_name: lastName } }
+      options: { emailRedirectTo: window.location.origin, data: { first_name: firstName, last_name: lastName, ...(inviteToken ? { coach_invite_token: inviteToken } : {}) } }
     });
     if (error) throw error;
     return data;
