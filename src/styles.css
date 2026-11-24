@@ -4449,3 +4449,37 @@ body.camera-fullscreen-open{overflow:hidden}
 .booking-calendar-continuation{margin:0 0 2px!important;padding:3px 7px!important;min-height:24px;border-left:2px solid #f59e0b;background:#302719;color:#f8d49b;font-size:9px}
 .booking-calendar-event .calendar-event-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
 .booking-calendar-event .calendar-event-actions .btn{font-size:9px;padding:4px 7px}
+
+
+/* Demandes de réservation : un seul bloc sur toute la durée */
+.calendar-event.booking-calendar-event.booking-pending,
+.calendar-event.player-event.booking-calendar-event.booking-pending{
+  z-index:6;
+  border:1px dashed rgba(245,158,11,.78)!important;
+  border-left:3px solid rgba(245,158,11,.9)!important;
+  background:rgba(245,158,11,.055)!important;
+  color:#f8d9a7!important;
+  box-shadow:none!important;
+}
+.calendar-event.booking-calendar-event.booking-pending .calendar-event-main>strong{
+  color:#f8d9a7!important;
+}
+.calendar-event.booking-calendar-event.booking-pending .calendar-event-main small{
+  color:#d7bd94!important;
+}
+.calendar-event.booking-calendar-event.booking-pending .calendar-event-actions{display:none}
+.calendar-event.booking-calendar-event.booking-pending.is-selected .calendar-event-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:7px;
+}
+.calendar-event.booking-calendar-event.booking-pending.is-selected{
+  z-index:8;
+  background:rgba(245,158,11,.13)!important;
+  border-style:solid!important;
+}
+.calendar-event.booking-calendar-event.booking-accepted{
+  border-left-color:#38bdf8!important;
+  background:rgba(56,189,248,.13)!important;
+}
