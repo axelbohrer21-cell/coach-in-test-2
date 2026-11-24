@@ -4524,3 +4524,16 @@ body.camera-fullscreen-open{overflow:hidden}
 .calendar-hour-row,.calendar-hour-content{height:30px!important;min-height:30px!important;box-sizing:border-box}
 .calendar-hour-content>.calendar-event{height:calc(var(--event-slots,2)*30px - 4px)!important;min-height:26px}
 @media(max-width:760px){.calendar-hour-content>.calendar-event{height:calc(var(--event-slots,2)*30px - 4px)!important}}
+
+.permissions-onboarding-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:#020914d9;backdrop-filter:blur(8px)}
+.permissions-onboarding{width:min(520px,100%);max-height:90vh;overflow:auto;padding:28px;border:1px solid #365778;border-radius:24px;background:linear-gradient(145deg,#142b49,#0b1a30);box-shadow:0 28px 90px #000b}
+.permissions-onboarding h2{margin:4px 0 10px;font-size:27px}
+.permissions-onboarding>p:not(.eyebrow){color:#b9cbe1;line-height:1.55}
+.permission-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid #29415e}
+.permission-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#183957;color:#67d6f5;font-size:19px}
+.permission-row div{display:grid;gap:3px;flex:1}.permission-row small{color:#9eb2cc;line-height:1.4}
+.permission-status{font-size:11px;color:#70dcb0;font-weight:800}
+.permissions-note{padding:11px 13px;border-radius:12px;background:#302b25;color:#f4c68c!important;font-size:12px}
+.permissions-feedback{min-height:18px;color:#7ce0b7;font-size:13px}
+.permissions-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+@media(max-width:480px){.permissions-onboarding{padding:21px}.permissions-actions{display:grid;grid-template-columns:1fr}.permissions-actions .btn{width:100%}}
