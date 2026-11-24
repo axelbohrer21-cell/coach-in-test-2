@@ -4566,3 +4566,36 @@ body.camera-fullscreen-open{overflow:hidden}
 .booking-calendar-event.booking-pending .calendar-event-main small{color:#d9c3a7!important}
 .booking-calendar-event.booking-pending .calendar-event-main>strong:before{content:"◷";display:inline-grid;place-items:center;width:18px;height:18px;margin-right:5px;border-radius:6px;background:rgba(255,190,105,.14);color:#ffca83;font-size:12px;vertical-align:middle}
 @media(max-width:760px){.notification-row{display:grid;grid-template-columns:12px minmax(0,1fr);align-items:start}.notification-row .notification-state-dot{grid-column:1;grid-row:1;margin-top:5px}.notification-row .list-main{grid-column:2;grid-row:1}.notification-row .btn,.notification-row .tag{grid-column:2;width:100%;text-align:center}.notification-inbox-heading h2{font-size:19px}.notification-counter{min-width:66px;height:66px;border-radius:18px}}
+
+/* Notifications : interface compacte et lisible */
+.nav-item{position:relative}
+.nav-count{min-width:23px;height:23px;padding:0 7px;margin-left:auto;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:#f06d78;color:#fff;font-size:11px;font-weight:900;box-shadow:0 2px 8px rgba(240,109,120,.2)}
+.notification-simple-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.notification-simple-head h2{margin:0;font-size:21px;letter-spacing:-.4px}
+.notification-total-pill{display:flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid rgba(255,143,126,.26);border-radius:12px;background:rgba(240,109,120,.10);color:#ffc0b5}
+.notification-total-pill strong{font-size:22px;line-height:1;font-variant-numeric:tabular-nums}
+.notification-total-pill span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.notification-simple-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 10px;padding-bottom:10px;border-bottom:1px solid rgba(126,157,190,.16);color:var(--muted);font-size:11px}
+.notification-clear,.notification-all-read{border:0;background:none;color:#7edcf0;font-size:11px;font-weight:850}
+.notification-inbox-list{display:grid;gap:6px}
+.notification-item{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px 10px;border:1px solid transparent;border-radius:12px;background:rgba(8,24,43,.48)}
+.notification-item.is-unread{border-color:rgba(104,202,236,.24);background:linear-gradient(100deg,rgba(28,87,115,.18),rgba(14,34,56,.62))}
+.notification-item-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:#193651;color:#7edcf0;font-size:16px;font-weight:900}
+.notification-item-content{min-width:0}
+.notification-item-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.notification-item-title strong{font-size:12px;color:#edf5ff}
+.notification-item-content p{margin:3px 0;color:#aebfd3;font-size:11px;line-height:1.4}
+.notification-item-content small{color:#718ba8;font-size:10px}
+.notification-new{padding:2px 6px;border-radius:5px;background:rgba(65,194,226,.14);color:#80def3;font-size:8px;font-weight:900;text-transform:uppercase}
+.notification-item-actions{display:flex;align-items:center;gap:5px}
+.notification-open,.notification-read-action{border:0;border-radius:8px;background:#193650;color:#9be6f6;font-size:10px;font-weight:800;padding:7px 9px;white-space:nowrap}
+.notification-read-action{width:28px;height:28px;padding:0;background:rgba(83,214,160,.12);color:#70e2b3;font-size:14px}
+.notification-settings-compact{margin-top:12px;padding:0 16px;border:1px solid var(--panel-border);border-radius:16px;background:rgba(13,29,52,.72)}
+.notification-settings-compact summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0;cursor:pointer;list-style:none;color:#dce9f8;font-size:12px;font-weight:850}
+.notification-settings-compact summary::-webkit-details-marker{display:none}
+.notification-settings-compact summary small{color:var(--muted);font-size:10px;font-weight:600}
+.notification-device-settings{padding:10px 0 12px;border-top:1px solid rgba(126,157,190,.16)}
+.notification-device-settings p{margin:0 0 10px;color:#aebfd3;font-size:11px;line-height:1.5}
+.notification-device-settings .tiny{margin-top:8px}
+.notification-settings-compact .notification-preferences-grid{padding:8px 0 14px;border-top:1px solid rgba(126,157,190,.16)}
+@media(max-width:560px){.notification-item{grid-template-columns:30px minmax(0,1fr) auto;gap:8px;padding:9px 7px}.notification-item-icon{width:29px;height:29px}.notification-open{font-size:9px;padding:6px}.notification-total-pill{padding:6px 9px}.notification-total-pill strong{font-size:19px}}
