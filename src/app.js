@@ -142,10 +142,7 @@ function render(page) {
   $('#page-content').innerHTML=renderPage(page);
   if(page==='videos') initializeCourtCalibrationCanvases();
   if(page==='planning') loadWeatherForecast();
-  if(page==='messages'){
-    subscribeToMessages();
-    refreshMessagesOnly().then(()=>markVisibleConversationRead()).catch(error=>toast(error.message||'Actualisation des messages impossible.','error'));
-  }
+  if(page==='messages'){subscribeToMessages();markVisibleConversationRead();}
   else if(messageChannel){supabase.removeChannel(messageChannel);messageChannel=null;}
 }
 
@@ -178,7 +175,14 @@ $('#auth-form').addEventListener('submit', async event => {
 async function logoutCurrentAccount(){try{stopRealtimeChannels();await authService.signOut();resetState();showAuth();}catch(e){toast(e.message,'error');}}
 $('#logout').addEventListener('click',logoutCurrentAccount);
 $('#logout-mobile')?.addEventListener('click',logoutCurrentAccount);
-$('#navigation').addEventListener('click',event=>{const button=event.target.closest('[data-page]');if(button)render(button.dataset.page);});
+$('#navigation').addEventListener('click',event=>{
+  const button=event.target.closest('[data-page]');if(!button)return;
+  if(button.dataset.page==='messages'){
+    refreshMessagesOnly().then(()=>{if(state.currentPage!=='messages')render('messages');}).catch(error=>toast(error.message||'Actualisation des messages impossible.','error'));
+    return;
+  }
+  render(button.dataset.page);
+});
 
 $('#page-actions').addEventListener('click', event => {
   const button = event.target.closest('[data-action="add-player"]');
