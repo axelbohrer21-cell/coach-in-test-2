@@ -321,7 +321,7 @@ $('#page-content').addEventListener('click', async event=>{
   if(openNotification){
     try{
       if(state.profile.role==='coach')await notificationService.markCoachRead(openNotification.dataset.openNotification);else await notificationService.markPlayerRead(openNotification.dataset.openNotification);
-      const path=['reports','messages','sessions','bookings','planning'].includes(openNotification.dataset.targetPath)?openNotification.dataset.targetPath:'dashboard';
+      const path=['reports','messages','sessions','bookings','planning','club'].includes(openNotification.dataset.targetPath)?openNotification.dataset.targetPath:'dashboard';
       if(path==='messages'&&openNotification.dataset.partnerId)state.messagePartnerId=openNotification.dataset.partnerId;
       await refreshAndRender();render(path);
     }catch(error){toast(error.message||'Impossible d’ouvrir cette notification.','error');}
