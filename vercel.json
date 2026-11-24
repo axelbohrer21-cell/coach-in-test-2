@@ -42,5 +42,11 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/invitation/:linkId",
+      "destination": "/index.html"
+    }
   ]
 }
