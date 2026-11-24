@@ -10,20 +10,18 @@ const localToday = () => {
 const formatStamp = value => value ? new Date(value).toLocaleString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Date à préciser';
 const initials = profile => [profile?.first_name?.[0],profile?.last_name?.[0]].filter(Boolean).join('').toUpperCase() || 'CI';
 
-export function playerUltimateCard() {
-  const profile=state.profile||{}, sessions=state.sessions||[], achievements=state.achievements||[];
-  const reports=[...(state.evaluations||[])].sort((a,b)=>String(b.evaluated_at||b.created_at||'').localeCompare(String(a.evaluated_at||a.created_at||'')));
+export function playerGameCardMarkup(profile={}, reports=state.evaluations||[], sessions=state.sessions||[], achievements=state.achievements||[]) {
   const axes=[['TEC','technical_score'],['TAC','tactical_score'],['PHY','physical_score'],['MEN','mental_score']];
   const overall=row=>{
-    const values=axes.map(([,key])=>row[key]===null||row[key]===undefined||row[key]===''?null:Number(row[key])).filter(value=>Number.isFinite(value)&&value>=0&&value<=20);
+    const values=axes.map(([,key])=>row?.[key]===null||row?.[key]===undefined||row?.[key]===''?null:Number(row[key])).filter(value=>Number.isFinite(value)&&value>=0&&value<=20);
     if(values.length)return values.reduce((sum,value)=>sum+value,0)/values.length;
-    const fallback=Number(row.score);
+    const fallback=Number(row?.score);
     return Number.isFinite(fallback)&&fallback>=0&&fallback<=20?fallback:null;
   };
-  const best=reports.map(overall).filter(value=>value!==null).reduce((max,value)=>Math.max(max,value),-1);
+  const best=(reports||[]).map(overall).filter(value=>value!==null).reduce((max,value)=>Math.max(max,value),-1);
   const ovr=best<0?null:Math.round(best*5);
   const tier=ovr===null||ovr<55?{id:'bronze',name:'Bronze',next:'Argent',min:0,max:55,mark:'I'}:ovr<70?{id:'silver',name:'Argent',next:'Or',min:55,max:70,mark:'II'}:ovr<85?{id:'gold',name:'Or',next:'Platine',min:70,max:85,mark:'III'}:{id:'platinum',name:'Platine',next:null,min:85,max:100,mark:'IV'};
-  const latest=reports[0]||null;
+  const latest=[...(reports||[])].sort((a,b)=>String(b.evaluated_at||b.created_at||'').localeCompare(String(a.evaluated_at||a.created_at||'')))[0]||null;
   const stats=axes.map(([label,key])=>{
     const raw=latest?.[key],value=raw===null||raw===undefined||raw===''?null:Number(raw),valid=Number.isFinite(value)&&value>=0&&value<=20;
     return '<div class="fut-stat"><span>'+label+'</span><strong>'+(valid?Math.round(value*5):'—')+'</strong><i><b style="width:'+(valid?value/20*100:0)+'%"></b></i></div>';
@@ -31,7 +29,11 @@ export function playerUltimateCard() {
   const photo=String(profile.avatar_url||'');
   const portrait=photo.startsWith('https://')?'<img src="'+safe(photo)+'" alt="Portrait du joueur">':'<div class="fut-card-photo-placeholder"><strong>'+safe(initials(profile))+'</strong><span>PHOTO JOUEUR</span><small>Portrait à ajouter</small></div>';
   const progress=tier.next?Math.max(0,Math.min(100,((ovr||0)-tier.min)/(tier.max-tier.min)*100)):100;
-  return '<section class="player-game-card fut-inspired-card tier-'+tier.id+'"><div class="fut-card-top"><span>COACH IN <b>PLAYER CARD</b></span><span>SAISON 2026 / 2027</span></div><div class="fut-card-layout"><div class="fut-card-portrait">'+portrait+'<div class="fut-card-photo-shade"></div><div class="fut-card-overall"><strong>'+(ovr===null?'—':ovr)+'</strong><span>OVR</span></div><div class="fut-card-crest"><span>'+tier.mark+'</span><b>'+tier.name.toUpperCase()+'</b></div><div class="fut-card-player-name"><h2>'+safe(profile.first_name)+' '+safe(profile.last_name)+'</h2><span>'+safe(profile.fft_ranking||'Classement à renseigner')+' · '+safe(profile.age_category||'TENNIS')+'</span></div></div><div class="fut-card-details"><div class="fut-card-tierline"><span class="game-tier-emblem">'+tier.mark+'</span><div><small>CARTE ÉVOLUTIVE</small><strong>'+tier.name.toUpperCase()+'</strong></div><span class="fut-tier-level">NIVEAU '+tier.mark+'</span></div><div class="fut-card-stat-grid">'+stats+'</div><div class="game-card-progress"><div><span>'+(tier.next?'PROGRESSION VERS '+tier.next.toUpperCase():'RANG MAXIMAL ATTEINT')+'</span><b>'+(tier.next?(ovr||0)-tier.min+' / '+(tier.max-tier.min)+' pts':'MAX')+'</b></div><i><b style="width:'+progress+'%"></b></i></div><div class="fut-card-foot"><span><b>'+sessions.length+'</b> SÉANCES</span><span><b>'+achievements.length+'</b> BADGES</span><span>'+safe(profile.player_type||'JOUEUR')+'</span></div></div></div></section>';
+  return '<section class="player-game-card fut-inspired-card tier-'+tier.id+'"><div class="fut-card-top"><span>COACH IN <b>PLAYER CARD</b></span><span>SAISON 2026 / 2027</span></div><div class="fut-card-layout"><div class="fut-card-portrait">'+portrait+'<div class="fut-card-photo-shade"></div><div class="fut-card-overall"><strong>'+(ovr===null?'—':ovr)+'</strong><span>OVR</span></div><div class="fut-card-crest"><span>'+tier.mark+'</span><b>'+tier.name.toUpperCase()+'</b></div><div class="fut-card-player-name"><h2>'+safe(profile.first_name)+' '+safe(profile.last_name)+'</h2><span>'+safe(profile.fft_ranking||'Classement à renseigner')+' · '+safe(profile.age_category||'TENNIS')+'</span></div></div><div class="fut-card-details"><div class="fut-card-tierline"><span class="game-tier-emblem">'+tier.mark+'</span><div><small>CARTE ÉVOLUTIVE</small><strong>'+tier.name.toUpperCase()+'</strong></div><span class="fut-tier-level">NIVEAU '+tier.mark+'</span></div><div class="fut-card-stat-grid">'+stats+'</div><div class="game-card-progress"><div><span>'+(tier.next?'PROGRESSION VERS '+tier.next.toUpperCase():'RANG MAXIMAL ATTEINT')+'</span><b>'+(tier.next?(ovr||0)-tier.min+' / '+(tier.max-tier.min)+' pts':'MAX')+'</b></div><i><b style="width:'+progress+'%"></b></i></div><div class="fut-card-foot"><span><b>'+(sessions||[]).length+'</b> SÉANCES</span><span><b>'+(achievements||[]).length+'</b> BADGES</span><span>'+safe(profile.player_type||'JOUEUR')+'</span></div></div></div></section>';
+}
+
+export function playerUltimateCard() {
+  return playerGameCardMarkup(state.profile||{},state.evaluations||[],state.sessions||[],state.achievements||[]);
 }
 
 export function playerTennisPage() {
