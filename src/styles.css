@@ -4537,3 +4537,32 @@ body.camera-fullscreen-open{overflow:hidden}
 .permissions-feedback{min-height:18px;color:#7ce0b7;font-size:13px}
 .permissions-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 @media(max-width:480px){.permissions-onboarding{padding:21px}.permissions-actions{display:grid;grid-template-columns:1fr}.permissions-actions .btn{width:100%}}
+
+
+/* Boîte de réception : compteurs et états de lecture */
+.nav-count{display:inline-grid;place-items:center;min-width:21px;height:21px;margin-left:auto;padding:0 6px;border-radius:999px;background:linear-gradient(135deg,#ff8b70,#ef536e);color:#fff;font-size:10px;font-weight:950;line-height:1;box-shadow:0 3px 10px rgba(239,83,110,.25);font-variant-numeric:tabular-nums}
+.notification-inbox{overflow:hidden}
+.notification-inbox-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:15px;border-bottom:1px solid rgba(126,157,190,.18)}
+.notification-inbox-heading h2{margin:3px 0 5px;font-size:22px;letter-spacing:-.025em}
+.notification-inbox-heading p:not(.eyebrow){margin:0}
+.notification-counter{display:grid;place-items:center;min-width:76px;height:76px;padding:9px;border:1px solid rgba(255,147,125,.34);border-radius:22px;background:linear-gradient(145deg,rgba(238,111,103,.18),rgba(137,54,73,.12));box-shadow:inset 0 1px rgba(255,255,255,.06)}
+.notification-counter strong{font-size:28px;line-height:1;color:#ffb4a5;font-variant-numeric:tabular-nums}
+.notification-counter span{font-size:9px;color:#f3c8c4;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.notification-inbox-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 0;color:#9eb2ca;font-size:11px}
+.notification-inbox-list{display:grid;gap:8px}
+.notification-row{position:relative;display:flex;align-items:center;gap:12px;margin:0!important;padding:14px 15px 14px 13px!important;border:1px solid rgba(119,151,185,.16)!important;border-radius:14px!important;background:linear-gradient(115deg,rgba(20,43,68,.8),rgba(9,24,42,.78))!important;transition:border-color .18s,background .18s,transform .18s}
+.notification-row.notification-unread{border-color:rgba(104,202,236,.42)!important;background:linear-gradient(110deg,rgba(28,87,115,.28),rgba(14,34,56,.94))!important;box-shadow:inset 3px 0 #68caec,0 6px 18px rgba(0,0,0,.09)}
+.notification-row.notification-read{opacity:.78}
+.notification-state-dot{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#53677e}
+.notification-unread .notification-state-dot{background:#75dcf3;box-shadow:0 0 0 4px rgba(117,220,243,.11),0 0 12px rgba(117,220,243,.45)}
+.notification-row .list-main{flex:1;min-width:0;gap:5px}
+.notification-row .list-main strong{font-size:13px;line-height:1.35;color:#f1f6ff}
+.notification-unread .list-main strong{font-weight:900;color:#fff}
+.notification-row .list-main>span{font-size:11px;line-height:1.5;color:#b6c9dc}
+.notification-row .list-main small{font-size:10px;color:#839bb5}
+.notification-row .btn{flex:none;min-height:35px}
+.booking-calendar-event.booking-pending{border:1px solid rgba(255,190,105,.46)!important;border-left:4px solid #ffbd69!important;border-radius:12px!important;background:linear-gradient(135deg,rgba(117,72,30,.43),rgba(39,35,35,.96))!important;box-shadow:inset 0 1px rgba(255,255,255,.05),0 5px 14px rgba(0,0,0,.14)}
+.booking-calendar-event.booking-pending .calendar-event-main>strong{color:#ffe2b8!important;font-size:11px;line-height:1.3}
+.booking-calendar-event.booking-pending .calendar-event-main small{color:#d9c3a7!important}
+.booking-calendar-event.booking-pending .calendar-event-main>strong:before{content:"◷";display:inline-grid;place-items:center;width:18px;height:18px;margin-right:5px;border-radius:6px;background:rgba(255,190,105,.14);color:#ffca83;font-size:12px;vertical-align:middle}
+@media(max-width:760px){.notification-row{display:grid;grid-template-columns:12px minmax(0,1fr);align-items:start}.notification-row .notification-state-dot{grid-column:1;grid-row:1;margin-top:5px}.notification-row .list-main{grid-column:2;grid-row:1}.notification-row .btn,.notification-row .tag{grid-column:2;width:100%;text-align:center}.notification-inbox-heading h2{font-size:19px}.notification-counter{min-width:66px;height:66px;border-radius:18px}}
