@@ -4416,3 +4416,29 @@ body.camera-fullscreen-open{overflow:hidden}
 .player-calendar-unavailable{display:block;padding:7px 10px;color:var(--muted,#8a94a5);font-size:11px}
 .player-calendar-blocked{color:#f3bd87;background:rgba(180,105,45,.12);border-left:2px solid #c9874b;border-radius:5px;padding-left:8px}
 @media(max-width:760px){.player-coach-planning-intro{grid-template-columns:1fr}.player-coach-switch{min-width:100%}}
+
+
+/* Réservation depuis le planning joueur : survol clair et choix de durée */
+.player-coach-planning-intro .calendar-hour-content>.calendar-hour-slot{
+  top:0;height:30px;min-height:30px;z-index:6;border-radius:7px;
+}
+.player-coach-planning-intro .calendar-hour-content:hover>.calendar-hour-slot,
+.player-coach-planning-intro .calendar-hour-slot:focus-visible{
+  opacity:1;background:rgba(113,223,208,.17);
+  border:1px solid rgba(113,223,208,.72);
+  box-shadow:inset 0 0 0 1px rgba(113,223,208,.12);
+}
+.booking-selected-slot{display:grid;gap:5px;margin:0 0 16px;padding:13px 15px;border:1px solid rgba(113,223,208,.28);border-radius:13px;background:linear-gradient(110deg,rgba(64,184,164,.13),rgba(64,184,164,.035))}
+.booking-selected-slot span{color:#8ee6d8;font-size:9px;font-weight:900;letter-spacing:.13em}
+.booking-selected-slot strong{color:#f1fffc;font-size:14px;text-transform:capitalize}
+.booking-selected-slot small{color:#a9bfd3;font-size:11px}
+.booking-duration-field{min-width:0;margin:0;padding:0;border:0}
+.booking-duration-field legend{margin-bottom:9px;color:#dce9f7;font-size:12px;font-weight:800}
+.booking-duration-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.booking-duration-option{position:relative;display:flex!important;align-items:center;min-width:0;gap:7px;padding:11px 9px;border:1px solid #34516d;border-radius:11px;background:#0a1a2e;cursor:pointer}
+.booking-duration-option input{width:16px;height:16px;flex:none;margin:0;accent-color:#71dfd0}
+.booking-duration-option span{display:grid;gap:3px;min-width:0}
+.booking-duration-option strong{color:#e8f5ff;font-size:12px}
+.booking-duration-option small{color:#8fa9c1;font-size:9px;line-height:1.3}
+.booking-duration-option:has(input:checked){border-color:#71dfd0;background:rgba(76,190,169,.13);box-shadow:inset 0 0 0 1px rgba(113,223,208,.24)}
+@media(max-width:480px){.booking-duration-options{grid-template-columns:1fr}.booking-duration-option{padding:10px 12px}.booking-duration-option small{font-size:10px}}
