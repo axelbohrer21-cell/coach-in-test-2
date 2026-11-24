@@ -82,9 +82,11 @@ function render(page) {
   $('#navigation').innerHTML = navItems.map(([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}</button>`).join('');
   const [kicker,title,description] = pageMeta[page];
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
-  const showPlayerLogout = page==='dashboard' && !isCoach && !isAdmin;
-  $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : showPlayerLogout ? '<button class="btn ghost" data-player-logout>↪ Déconnexion</button>' : '';
+  const isPlayer = !isCoach && !isAdmin;
+  const showPlayerLogout = page==='dashboard' && isPlayer;
+  $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
   $('#logout-mobile').hidden = !showPlayerLogout;
+  $('#logout').hidden = isPlayer;
   $('#page-content').innerHTML=renderPage(page);
   if(page==='videos') initializeCourtCalibrationCanvases();
   if(page==='planning') loadWeatherForecast();
@@ -122,7 +124,6 @@ async function logoutCurrentAccount(){try{stopRealtimeChannels();await authServi
 $('#logout').addEventListener('click',logoutCurrentAccount);
 $('#logout-mobile')?.addEventListener('click',logoutCurrentAccount);
 $('#navigation').addEventListener('click',event=>{const button=event.target.closest('[data-page]');if(button)render(button.dataset.page);});
-$('#page-actions').addEventListener('click', event => { if(event.target.closest('[data-player-logout]')) logoutCurrentAccount(); });
 
 $('#page-actions').addEventListener('click', event => {
   const button = event.target.closest('[data-action="add-player"]');
