@@ -193,8 +193,10 @@ $('#navigation').addEventListener('click',event=>{
 });
 
 $('#page-actions').addEventListener('click', event => {
-  const button = event.target.closest('[data-action="add-player"]');
-  if (button) addPlayerDialog();
+  const button = event.target.closest('[data-action]');
+  if (!button) return;
+  if (button.dataset.action === 'add-player') addPlayerDialog();
+  if (button.dataset.action === 'invite-coach') inviteCoachDialog();
 });
 
 $('#page-content').addEventListener('submit',event=>{
