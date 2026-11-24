@@ -32,23 +32,7 @@ Deno.serve(async (req: Request) => {
 
     const body = await req.json();
     const action = String(body.action || "");
-    if (action === "invite") {
-      const email = String(body.email || "").trim().toLowerCase();
-      const firstName = String(body.first_name || "").trim();
-      const lastName = String(body.last_name || "").trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Adresse e-mail invalide." }, 400);
-      if (email === "axel.bohrer21@gmail.com") return json({ error: "Cette adresse est réservée à l’administrateur principal." }, 400);
-      const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
-        data: { first_name: firstName, last_name: lastName },
-      });
-      if (error) return json({ error: error.message }, 400);
-      if (!data.user) return json({ error: "Invitation créée sans compte utilisateur retourné." }, 500);
-      const { error: profileError } = await admin.from("profiles").upsert({
-        id: data.user.id, email, first_name: firstName, last_name: lastName, role: "coach",
-      }, { onConflict: "id" });
-      if (profileError) return json({ error: "Compte invité, mais profil coach non finalisé : " + profileError.message }, 500);
-      return json({ ok: true, invited: email });
-    }
+    if (action === "invite") return json({ error: "Un compte coach doit obligatoirement être créé via un lien de parrainage personnel généré par un coach actif." }, 403);
 
     if (action === "archive" || action === "restore") {
       const coachId = String(body.coach_id || "");
