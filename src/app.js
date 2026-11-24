@@ -86,7 +86,7 @@ function render(page) {
   const showPlayerLogout = page==='dashboard' && isPlayer;
   $('#page-actions').innerHTML = page==='players' && isCoach ? '<button class="btn primary" data-action="add-player">＋ Ajouter un joueur</button>' : '';
   $('#logout-mobile').hidden = !showPlayerLogout;
-  $('#logout').hidden = isPlayer;
+  $('#logout').hidden = isPlayer && !showPlayerLogout;
   $('#page-content').innerHTML=renderPage(page);
   if(page==='videos') initializeCourtCalibrationCanvases();
   if(page==='planning') loadWeatherForecast();
