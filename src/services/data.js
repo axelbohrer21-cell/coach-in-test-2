@@ -148,7 +148,7 @@ export const dataService = {
     const historyOnlyIds = historicalCoachIds.filter(id => !linkedCoachIds.includes(id));
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
     const [playerCoaches, playerCoachHistory, messages, evaluationCriteria] = await Promise.all([
-      unwrap(supabase.from('player_coach_directory').select('id,first_name,last_name').order('last_name')),
+      unwrap(supabase.from('player_coach_directory').select('id,first_name,last_name').order('id')),
       historyOnlyIds.length ? unwrap(supabase.from('profiles').select('id,first_name,last_name,email,archived_at').in('id', historyOnlyIds).order('last_name')) : Promise.resolve([]),
       unwrap(supabase.from('coach_player_messages').select('*').eq('player_id',state.user.id).order('created_at')),
       evaluationIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : Promise.resolve([])
