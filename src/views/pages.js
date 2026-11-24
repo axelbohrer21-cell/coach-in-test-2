@@ -330,9 +330,12 @@ function playerCoachPlanningPage() {
         const status=String(event.status||'').toLowerCase();
         const cancelled=['cancelled','canceled','annulé','annulee','rejected'].includes(status);
         const pending=event.source_kind==='booking'&&status==='pending';
-        const eventLabel=cancelled?'Demande refusée':pending?'En attente':event.source_kind==='booking'?'Réservation':'Cours particulier';
+        const eventLabel=cancelled?'Demande refusée':pending?'En attente':event.source_kind==='booking'?'Réservé':'Cours particulier';
         const durationSlots=Math.max(1,Number(event.duration)/30);
-        return '<div class="calendar-event player-event '+(event.source_kind==='booking'?'booking-calendar-event booking-'+status:'')+(cancelled?' event-cancelled':'')+'" style="--event-slots:'+durationSlots+'"><div class="calendar-event-main"><b>'+clock(event.start_time)+'</b><strong>'+eventLabel+'</strong><small>'+(event.court_number?'Terrain '+escapeHtml(String(event.court_number)):'Créneau occupé')+' · '+Math.floor(event.duration/60)+' h'+(event.duration%60?' '+event.duration%60:'')+'</small></div></div>';
+        const eventEnd=toMinutes(event.start_time)+Number(event.duration||60);
+        const endLabel=clock(String(Math.floor(eventEnd/60)).padStart(2,'0')+':'+String(eventEnd%60).padStart(2,'0'));
+        const durationLabel=Math.floor(event.duration/60)+' h'+(event.duration%60?' '+event.duration%60+' min':'');
+        return '<div class="calendar-event player-event '+(event.source_kind==='booking'?'booking-calendar-event booking-'+status:'')+(cancelled?' event-cancelled':'')+'" style="--event-slots:'+durationSlots+'"><div class="calendar-event-main"><b>'+clock(event.start_time)+' – '+endLabel+'</b><strong>'+eventLabel+'</strong><small>'+durationLabel+'</small></div></div>';
       }).join('');
       const slotDateStart=new Date(date);slotDateStart.setHours(hour,minute,0,0);
       const slotDateEnd=new Date(date);slotDateEnd.setHours(Math.floor(slotEnd/60),slotEnd%60,0,0);
