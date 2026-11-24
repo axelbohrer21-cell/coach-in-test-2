@@ -308,6 +308,8 @@ $('#page-content').addEventListener('click', async event=>{
   const removeAvailability=event.target.closest('[data-delete-availability]'); if(removeAvailability) return deleteAvailability(removeAvailability.dataset.deleteAvailability);
   const coachState=event.target.closest('[data-coach-state]'); if(coachState) return setCoachState(coachState.dataset.coachState,coachState.dataset.coachId);
   const generateSeries=event.target.closest('[data-generate-series]'); if(generateSeries) return generateGroupSeries(generateSeries.dataset.generateSeries);
+  const testPush=event.target.closest('[data-test-push]');
+  if(testPush){testPush.disabled=true;try{const {data,error}=await supabase.functions.invoke('send-web-push',{body:{test:true}});if(error)throw error;if(data?.status==='no_subscriptions')throw new Error('Active d’abord les notifications sur cet appareil.');if(data?.delivered===0)throw new Error('Aucune notification push n’a pu être envoyée.');toast('Notification test envoyée sur cet appareil.');}catch(error){toast(error.message||'Échec de la notification test.','error');}finally{testPush.disabled=false;}return;}
   const enablePush=event.target.closest('[data-enable-push]');
   if(enablePush){
     enablePush.disabled=true;
