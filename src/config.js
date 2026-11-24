@@ -15,6 +15,7 @@ async function loadRuntimeConfig() {
         supabaseUrl: value.supabaseUrl,
         supabaseAnonKey: value.supabaseAnonKey,
         appName: 'Coach In',
+        vapidPublicKey: 'BJA2asPo8t947qg8DWE9qp1T8Q-ubcyG6XII3g8MFDJrlE_sYkQJIGdN4umCr6tiD5XRTWvsgvY0D6l3W8itRec',
         timezone: 'Europe/Paris',
         coachEmail: 'Axel.bohrer21@gmail.com'
       });
@@ -25,6 +26,7 @@ async function loadRuntimeConfig() {
   return Object.freeze({
     ...LOCAL_FALLBACK,
     appName: 'Coach In',
+    vapidPublicKey: 'BJA2asPo8t947qg8DWE9qp1T8Q-ubcyG6XII3g8MFDJrlE_sYkQJIGdN4umCr6tiD5XRTWvsgvY0D6l3W8itRec',
     timezone: 'Europe/Paris',
     coachEmail: 'Axel.bohrer21@gmail.com'
   });
