@@ -142,7 +142,10 @@ function render(page) {
   $('#page-content').innerHTML=renderPage(page);
   if(page==='videos') initializeCourtCalibrationCanvases();
   if(page==='planning') loadWeatherForecast();
-  if(page==='messages'){subscribeToMessages();markVisibleConversationRead();}
+  if(page==='messages'){
+    subscribeToMessages();
+    refreshMessagesOnly().then(()=>markVisibleConversationRead()).catch(error=>toast(error.message||'Actualisation des messages impossible.','error'));
+  }
   else if(messageChannel){supabase.removeChannel(messageChannel);messageChannel=null;}
 }
 
@@ -1737,8 +1740,7 @@ function subscribeToWorkspaceData(){
       ['player_achievements','coach_id=eq.'+userId],['player_profile_details'],['booking_requests','coach_id=eq.'+userId],
       ['group_sessions','coach_id=eq.'+userId],['group_course_series','coach_id=eq.'+userId],
       ['group_course_cancellations','coach_id=eq.'+userId],['shared_court_occupancy','coach_id=eq.'+userId],
-      ['coach_weekly_availability','coach_id=eq.'+userId],['coach_unavailability','coach_id=eq.'+userId],
-      ['coach_player_messages','coach_id=eq.'+userId]
+      ['coach_weekly_availability','coach_id=eq.'+userId],['coach_unavailability','coach_id=eq.'+userId]
     ].forEach(([table,filter])=>watch(table,filter));
   }else{
     [
@@ -1746,7 +1748,7 @@ function subscribeToWorkspaceData(){
       ['evaluations','player_id=eq.'+userId],['evaluation_criteria'],['player_challenges','player_id=eq.'+userId],
       ['player_achievements','player_id=eq.'+userId],['player_profile_details','player_id=eq.'+userId],
       ['booking_requests','player_id=eq.'+userId],['shared_court_occupancy'],
-      ['coach_weekly_availability'],['coach_unavailability'],['coach_player_messages','player_id=eq.'+userId]
+      ['coach_weekly_availability'],['coach_unavailability']
     ].forEach(([table,filter])=>watch(table,filter));
   }
   workspaceChannel=channel;
@@ -1814,6 +1816,9 @@ function subscribeToNotifications(){
  const channel=supabase.channel('coach-in-notifications-'+state.user.id+'-'+Date.now())
   .on('postgres_changes',{event:'INSERT',schema:'public',table,filter:field+'=eq.'+state.user.id},()=>{
    refreshNotificationsOnly().catch(error=>toast(error.message||'Actualisation des notifications impossible.','error'));
+  })
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table,filter:field+'=eq.'+state.user.id},()=>{
+   refreshNotificationsOnly().catch(error=>toast(error.message||'Actualisation des notifications impossible.','error'));
   });
  notificationChannel=channel;
  channel.subscribe(status=>{
@@ -1864,10 +1869,8 @@ function subscribeToMessages(){
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'coach_player_messages',filter:field+'=eq.'+state.user.id},()=>{
    if(state.currentPage==='messages')refreshMessagesOnly().catch(error=>toast(error.message||'Actualisation des messages impossible.','error'));
   })
-  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'coach_player_messages',filter:field+'=eq.'+state.user.id},payload=>{
-   if(state.currentPage==='messages'&&payload?.new?.sender_id===state.user.id){
-    refreshMessagesOnly().catch(error=>toast(error.message||'Actualisation des accusés de lecture impossible.','error'));
-   }
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'coach_player_messages',filter:field+'=eq.'+state.user.id},()=>{
+   if(state.currentPage==='messages')refreshMessagesOnly().catch(error=>toast(error.message||'Actualisation des accusés de lecture impossible.','error'));
   });
  messageChannel=channel;
  channel.subscribe(status=>{
