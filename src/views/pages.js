@@ -10,7 +10,7 @@ import { generateOriginalSession } from '../domain/session-generator.js';
 import { buildDaySeriesOverview, buildHolidayStageOccurrences, getWeekProgram, GROUP_SEASON, isPublicHoliday, isTeachingDate, isPrivateLessonDateAllowed, ZONE_B_HOLIDAYS_2026_2027 } from '../domain/group-calendar.js';
 import { buildSeriesCounters } from '../domain/group-series.js';
 import groupProgram from '../data/group-course-program.js';
-import { playerTennisPage, playerUltimateCard, playerMatchesPage, clubLifePage } from './player-experience.js';
+import { playerTennisPage, playerUltimateCard, playerGameCardMarkup, playerMatchesPage, clubLifePage } from './player-experience.js';
 import { PLAYER_COLORS } from '../domain/player-colors.js';
 import { PHYSICAL_CRITERIA, physicalTemplates, physicalExercise, buildPhysicalProgram, buildTemplateSession, recommendPhysicalCycles } from '../domain/physical-training.js';
 
@@ -233,28 +233,15 @@ function playersPage() {
   const competitionCount = players.filter(p => p.player_type === 'Compétition').length;
   const leisureCount = players.length - competitionCount;
   const initials = p => escapeHtml((p.first_name || '?').slice(0,1)) + escapeHtml((p.last_name || '').slice(0,1));
-  const colorForAxis = key => ({technical_score:'#54c8ec',tactical_score:'#aa91f4',physical_score:'#66d9a5',mental_score:'#f4ae70'}[key]||'#54c8ec');
   const cards = filtered.map(p => {
     const color = p.player_color || playerAccent(p.id);
     const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
     const sessions = (state.sessions || []).filter(row => row.player_id === p.id);
-    const latestSession = sessions.map(row => row.session_date).filter(Boolean).sort().pop();
-    const photoMarkup=String(p.avatar_url||'').startsWith('https://')?'<img src="'+escapeHtml(p.avatar_url)+'" alt="Portrait de '+escapeHtml(name)+'">':initials(p);
     const playerReports=(state.evaluations||[]).filter(row=>row.player_id===p.id).sort((a,b)=>String(b.evaluated_at||b.created_at||'').localeCompare(String(a.evaluated_at||a.created_at||'')));
-    const latestReport=playerReports[0]||null;
-    const cardAxes=[['TECH','technical_score','#54c8ec'],['TACT','tactical_score','#aa91f4'],['PHYS','physical_score','#66d9a5'],['MENT','mental_score','#f4ae70']];
-    const cardValues=cardAxes.map(([label,key,color])=>({label,color,value:latestReport?.[key]===null||latestReport?.[key]===undefined||latestReport?.[key]===''?null:Number(latestReport[key])})).filter(item=>item.value!==null&&Number.isFinite(item.value)&&item.value>=0&&item.value<=20);
-    const cardAverage=cardValues.length?cardValues.reduce((sum,item)=>sum+item.value,0)/cardValues.length:null;
-    const cardScore=cardAverage===null?null:cardAverage*5;
-    const cardOverall=cardScore===null?null:Math.round(cardScore);
-    // Seuils calculés sur la moyenne exacte : 60–<75 bronze, 75–<90 argent, 90–<95 or, 95–100 platine.
-    const cardTier=cardScore===null?'unrated':cardScore>=95?'platinum':cardScore>=90?'gold':cardScore>=75?'silver':cardScore>=60?'bronze':'unrated';
-    const cardTierLabel={platinum:'PLATINE',gold:'OR',silver:'ARGENT',bronze:'BRONZE',unrated:'À ÉVALUER'}[cardTier];
-    const statMarkup=cardAxes.map(([label,key])=>{const raw=latestReport?.[key],value=raw===null||raw===undefined||raw===''?null:Number(raw),valid=Number.isFinite(value)&&value>=0&&value<=20;return '<div class="roster-fut-stat"><span>'+label+'</span><b>'+(valid?Math.round(value*5):'—')+'</b><i><em style="width:'+(valid?value/20*100:0)+'%;background:'+colorForAxis(key)+'"></em></i></div>';}).join('');
-    return `<article class="player-card player-roster-card roster-fut-card tier-${cardTier}" data-player-search="${escapeHtml(`${p.first_name || ''} ${p.last_name || ''} ${p.email || ''}`.toLocaleLowerCase('fr'))}" data-player-type="${escapeHtml(p.player_type || 'Loisir')}" data-player-card-edit="${p.id}" role="button" tabindex="0" aria-label="Modifier la fiche de ${escapeHtml(name)}" style="--player-accent:${color}">
-      <div class="roster-fut-top"><div class="roster-fut-photo-wrap"><div class="player-avatar player-roster-photo">${photoMarkup}</div><div class="roster-fut-ovr"><strong>${cardOverall===null?'—':cardOverall}</strong><small>OVR / 100</small></div><span class="roster-fut-tier">${cardTierLabel}</span></div><div class="roster-fut-identity"><h3>${escapeHtml(name || 'Joueur')}</h3><p>${escapeHtml(p.fft_ranking || 'Classement à renseigner')} · ${escapeHtml(p.age_category || 'Catégorie à renseigner')}</p></div></div>
-      <div class="roster-fut-stats">${statMarkup}</div>
-      <div class="roster-fut-meta"><span>${escapeHtml(p.player_type || 'Loisir')}</span><span>${sessions.length} séances</span><span>Dernière : ${latestSession ? escapeHtml(formatDate(latestSession,{day:'2-digit',month:'short'})) : '—'}</span></div>
+    const achievements=(state.achievements||[]).filter(row=>row.player_id===p.id);
+    const sharedCard=playerGameCardMarkup(p,playerReports,sessions,achievements);
+    return `<article class="player-card player-roster-card" data-player-search="${escapeHtml(`${p.first_name || ''} ${p.last_name || ''} ${p.email || ''}`.toLocaleLowerCase('fr'))}" data-player-type="${escapeHtml(p.player_type || 'Loisir')}" data-player-card-edit="${p.id}" role="button" tabindex="0" aria-label="Modifier la fiche de ${escapeHtml(name)}" style="--player-accent:${color}">
+      ${sharedCard}
       <div class="player-roster-actions"><button class="btn primary" data-player-sheet="${p.id}">Ouvrir la fiche <span>↗</span></button><button class="btn icon-btn" data-edit-player="${p.id}" aria-label="Modifier le joueur">⋯</button><button class="btn subtle" data-share-player="${p.id}">Partager</button></div>
     </article>`;
   }).join('');
