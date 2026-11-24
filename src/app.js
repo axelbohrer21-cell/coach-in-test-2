@@ -123,7 +123,8 @@ function render(page) {
   if (!navItems.some(item => item[0] === page)) page = 'dashboard';
   state.currentPage = page;
   subscribeToNotifications();
-  $('#navigation').innerHTML = navItems.map(([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}</button>`).join('');
+  const unreadNotifications = (state.notifications || []).filter(item => !item.read_at).length;
+  $('#navigation').innerHTML = navItems.map(([key,label,icon]) => `<button class="nav-item ${key===page?'active':''}" data-page="${key}"><span>${icon}</span>${label}${key==='notifications'&&unreadNotifications?`<span class="nav-count" aria-label="${unreadNotifications} notifications non lues">${unreadNotifications>99?'99+':unreadNotifications}</span>`:''}</button>`).join('');
   const [kicker,title,description] = pageMeta[page];
   $('#page-kicker').textContent=kicker; $('#page-title').textContent=title; $('#page-description').textContent=description;
   const isPlayer = !isCoach && !isAdmin;
@@ -293,6 +294,15 @@ $('#page-content').addEventListener('click', async event=>{
   const removeAvailability=event.target.closest('[data-delete-availability]'); if(removeAvailability) return deleteAvailability(removeAvailability.dataset.deleteAvailability);
   const coachState=event.target.closest('[data-coach-state]'); if(coachState) return setCoachState(coachState.dataset.coachState,coachState.dataset.coachId);
   const generateSeries=event.target.closest('[data-generate-series]'); if(generateSeries) return generateGroupSeries(generateSeries.dataset.generateSeries);
+  const enablePush=event.target.closest('[data-enable-push]');
+  if(enablePush){
+    enablePush.disabled=true;
+    try{await pushService.enable(state.user.id);toast('Notifications activées sur cet appareil.');}
+    catch(error){toast(error.message||'Impossible d’activer les notifications.','error');}
+    finally{enablePush.disabled=false;}
+    return;
+  }
+  if(event.target.closest('[data-read-all-notifications]')){await markAllNotificationsRead();return;}
   const openNotification=event.target.closest('[data-open-notification]');
   if(openNotification){
     try{
@@ -1593,6 +1603,9 @@ async function cancelBooking(id){
 }
 async function markNotificationRead(id){
   try{if(state.profile.role==='coach')await notificationService.markCoachRead(id);else await notificationService.markPlayerRead(id);await refreshAndRender();render('notifications');}catch(e){toast(e.message,'error');}
+}
+async function markAllNotificationsRead(){
+  try{if(state.profile.role==='coach')await notificationService.markAllCoachRead();else await notificationService.markAllPlayerRead();await refreshAndRender();render('notifications');toast('Toutes les notifications sont marquées comme lues.');}catch(e){toast(e.message||'Impossible de mettre à jour les notifications.','error');}
 }
 async function markVisibleConversationRead(){
   if(state.currentPage!=='messages'||!state.messagePartnerId)return;
