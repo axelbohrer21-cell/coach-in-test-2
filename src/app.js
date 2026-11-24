@@ -33,6 +33,7 @@ let workspaceRefreshTimer = null;
 let workspaceRefreshPromise = null;
 let workspaceRefreshQueued = false;
 let workspaceRetryCount = 0;
+let lastWorkspaceRefreshAt = 0;
 let scheduleRefreshPromise = null;
 let notificationChannel = null;
 let notificationRefreshPromise = null;
@@ -1691,6 +1692,7 @@ function scheduleWorkspaceRefresh(userId){
     workspaceRefreshTimer=null;
     if(state.user?.id!==userId||!state.profile)return;
     if(workspaceRefreshPromise){workspaceRefreshQueued=true;return;}
+    lastWorkspaceRefreshAt=Date.now();
     workspaceRefreshPromise=(async()=>{
       try{
         const page=state.currentPage||'dashboard';
@@ -1712,6 +1714,15 @@ function scheduleWorkspaceRefresh(userId){
     await workspaceRefreshPromise;
   },280);
 }
+
+function refreshWorkspaceOnReturn(){
+  if(!state.user?.id||!state.profile||document.visibilityState==='hidden')return;
+  if(Date.now()-lastWorkspaceRefreshAt<12000)return;
+  lastWorkspaceRefreshAt=Date.now();
+  scheduleWorkspaceRefresh(state.user.id);
+}
+document.addEventListener('visibilitychange',refreshWorkspaceOnReturn);
+window.addEventListener('focus',refreshWorkspaceOnReturn);
 
 function subscribeToWorkspaceData(){
   if(workspaceChannel||!state.user||!state.profile)return;
