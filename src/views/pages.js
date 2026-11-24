@@ -258,7 +258,7 @@ function playersPage() {
 
 function playerCoachPlanningPage() {
   const coaches=(state.playerCoaches||[]).filter(coach=>coach?.id);
-  if(!coaches.length) return '<section class="panel"><div class="empty-state"><div class="empty-icon">▦</div><h3>Aucun coach associé</h3><p>Lorsque ton compte sera relié à un coach, son planning apparaîtra ici.</p></div></section>';
+  if(!coaches.length) return '<section class="panel"><div class="empty-state"><div class="empty-icon">▦</div><h3>Aucun coach disponible</h3><p>Les plannings des coachs apparaîtront ici dès qu’ils seront publiés.</p></div></section>';
   const selected=coaches.find(coach=>coach.id===state.selectedPlayerCoachId)||coaches[0];
   state.selectedPlayerCoachId=selected.id;
   const weekOffset=Number(state.planningWeekOffset||0);
@@ -285,10 +285,19 @@ function playerCoachPlanningPage() {
     const disabled=date.getDay()===0||(Boolean(schoolBreak)&&!hasHolidayStage)||publicHolidayBlocks;
     const reason=date.getDay()===0?'Dimanche':schoolBreak?('Vacances de '+schoolBreak.label):publicHoliday?(childCollectiveDay?'Jour férié · cours enfants maintenus':'Jour férié'):'';
     const rules=availability.filter(row=>Number(row.weekday)===weekday);
+    const activeStatuses=['pending','accepted','confirmed'];
     const actualEvents=occupancy.filter(row=>row.session_date===iso&&row.source_kind!=='booking'&&!['rejected','cancelled','canceled','annulé','annulee'].includes(String(row.status||'').toLowerCase()));
-    // La durée affichée d'une demande provient directement de booking_requests.duration_minutes,
-    // pas d'une projection d'horaires : 120 minutes doivent rester exactement 120 minutes.
-    const bookingEvents=(state.bookingRequests||[]).filter(row=>row.coach_id===selected.id&&row.session_date===iso&&['pending','accepted','confirmed'].includes(String(row.status||'').toLowerCase())).map(row=>({...row,source_kind:'booking',start_time:row.start_time||'08:00',duration:Number(row.duration_minutes||60)}));
+    // Les réservations des autres joueurs sont visibles comme créneaux occupés, sans identité ni donnée privée.
+    const dayBookingRows=occupancy.filter(row=>row.session_date===iso&&row.source_kind==='booking'&&activeStatuses.includes(String(row.status||'').toLowerCase()));
+    const bookingEvents=dayBookingRows.map(row=>{
+      const ownBooking=(state.bookingRequests||[]).find(item=>item.id===row.source_id);
+      return {...row,...(ownBooking||{}),source_kind:'booking',start_time:row.start_time||ownBooking?.start_time||'08:00',
+        duration:Number(ownBooking?.duration_minutes||Math.max(30,toMinutes(row.end_time)-toMinutes(row.start_time))),
+        isOwnBooking:Boolean(ownBooking)};
+    });
+    const knownBookingIds=new Set(dayBookingRows.map(row=>row.source_id));
+    (state.bookingRequests||[]).filter(row=>row.coach_id===selected.id&&row.session_date===iso&&activeStatuses.includes(String(row.status||'').toLowerCase())&&!knownBookingIds.has(row.id))
+      .forEach(row=>bookingEvents.push({...row,source_kind:'booking',start_time:row.start_time||'08:00',duration:Number(row.duration_minutes||60),isOwnBooking:true}));
     const recurringEvents=GROUP_SEASON.weeklySchedule.filter(row=>row.weekday===date.getDay()&&isTeachingDate(iso,row.audience)&&!actualEvents.some(event=>String(event.start_time||'').slice(0,5)===row.start)).map(row=>({coach_id:selected.id,session_date:iso,start_time:row.start,end_time:row.end,court_number:null,source_kind:'group_session',status:'scheduled',title:row.audience==='enfants'?'Cours collectif enfants':'Cours collectif adultes'}));
     const stageEvents=buildHolidayStageOccurrences({startDate:iso,endDate:iso}).flatMap(stage=>stage.courts.map(court=>({coach_id:selected.id,session_date:iso,start_time:stage.start_time,end_time:String(Math.floor((toMinutes(stage.start_time)+420)/60)).padStart(2,'0')+':'+String((toMinutes(stage.start_time)+420)%60).padStart(2,'0'),court_number:court,source_kind:'group_session',status:'scheduled',title:stage.title})));
     const events=[...actualEvents.map(event=>({...event,duration:Math.max(30,toMinutes(event.end_time)-toMinutes(event.start_time))})),...bookingEvents,...recurringEvents,...stageEvents];
@@ -317,7 +326,7 @@ function playerCoachPlanningPage() {
         const status=String(event.status||'').toLowerCase();
         const cancelled=['cancelled','canceled','annulé','annulee','rejected'].includes(status);
         const pending=event.source_kind==='booking'&&status==='pending';
-        const eventLabel=cancelled?'Demande refusée':pending?'En attente':event.source_kind==='booking'?'Réservé':'Cours particulier';
+        const eventLabel=cancelled?'Demande refusée':event.source_kind==='booking'&&!event.isOwnBooking?'Créneau occupé':pending?'En attente':event.source_kind==='booking'?'Réservé':'Cours particulier';
         const durationSlots=Math.max(1,Number(event.duration)/30);
         const eventEnd=toMinutes(event.start_time)+Number(event.duration||60);
         const endLabel=clock(String(Math.floor(eventEnd/60)).padStart(2,'0')+':'+String(eventEnd%60).padStart(2,'0'));
