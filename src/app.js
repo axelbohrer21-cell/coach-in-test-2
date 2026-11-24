@@ -105,7 +105,8 @@ async function loadWorkspace() {
     showFirstConnectionPermissions();
     const roleLabel = state.profile.role === 'coach' && isAdmin ? 'Coach · Administrateur' : state.profile.role === 'admin' ? 'Administrateur' : state.profile.role === 'coach' ? 'Coach' : 'Joueur';
     $('#account-label').textContent = `${state.profile.first_name || ''} ${state.profile.last_name || ''} · ${roleLabel}`;
-    render('dashboard');
+    const pushDestination = new URLSearchParams(window.location.search).get('open');
+    render(['bookings','notifications','messages','planning'].includes(pushDestination) ? pushDestination : 'dashboard');
   })();
   try {
     return await workspaceLoadPromise;
