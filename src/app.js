@@ -5,6 +5,7 @@ import { authService } from './services/auth.js';
 import { dataService } from './services/data.js';
 import { pageMeta, renderPage, libraryItemsForCoach, libraryCard } from './views/pages.js';
 import { bookingService } from './services/booking.js';
+import { planningAgentService } from './services/planning-agent.js';
 import { notificationService } from './services/notifications.js';
 import { pushService } from './services/push.js';
 import { calculateAgeCategory, toLocalISO } from './domain/tennis.js';
@@ -65,9 +66,9 @@ let messageRetryCount = 0;
 let videoCameraStream = null;
 let videoCameraRecorder = null;
 let videoCameraChunks = [];
-const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['physical','Prépa physique','↗'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
+const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['assistant-planning','Assistant IA','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['physical','Prépa physique','↗'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
-const playerNav = [ ['dashboard','Accueil','⌂'], ['planning','Planning des coachs','▦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
+const playerNav = [ ['dashboard','Accueil','⌂'], ['assistant-planning','Assistant IA','✦'], ['planning','Planning des coachs','▦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
 
 function showAuth(message='') {
   $('#auth-view').classList.remove('hidden'); $('#app-view').classList.add('hidden');
@@ -268,6 +269,7 @@ $('#page-content').addEventListener('click', async event=>{
 
   const go=event.target.closest('[data-go]'); if(go){render(go.dataset.go);return;}
   const planSlot=event.target.closest('[data-plan-slot]'); if(planSlot)return sessionDialog(planSlot.dataset.slotDate,planSlot.dataset.slotTime);
+  const agentBookingSlot=event.target.closest('[data-agent-booking-slot]'); if(agentBookingSlot && state.profile?.role==='player') return bookingDialog({coachId:agentBookingSlot.dataset.coach,date:agentBookingSlot.dataset.date,time:agentBookingSlot.dataset.time,court:agentBookingSlot.dataset.court,duration:agentBookingSlot.dataset.duration});
   const share=event.target.closest('[data-share-player]'); if(share) return sharePlayerDialog(share.dataset.sharePlayer);
   const invitation=event.target.closest('[data-coach-invitation]'); if(invitation) return respondCoachInvitation(invitation.dataset.coachInvitation, invitation.dataset.accept==='true');
   const revokeShare=event.target.closest('[data-revoke-coach-share]'); if(revokeShare) return revokeCoachShare(revokeShare.dataset.revokeCoachShare,revokeShare.dataset.playerId);
@@ -291,6 +293,7 @@ $('#page-content').addEventListener('click', async event=>{
     return;
   }
   const action=event.target.closest('[data-action]')?.dataset.action;
+  if(action==='planning-agent-search') return searchPlanningAgent();
   if(action==='generate-session') return sessionBuilderDialog();
   const reviewSession=event.target.closest('[data-review-session]'); if(reviewSession) return sessionReviewDialog(reviewSession.dataset.reviewSession);
   const deleteVideo=event.target.closest('[data-delete-video]'); if(deleteVideo)return showDialog('<div class="dialog-head"><div><p class="eyebrow">CONFIDENTIALITÉ</p><h2>Supprimer cette vidéo ?</h2><p class="tiny muted">La vidéo originale et son analyse seront définitivement supprimées.</p></div><button class="btn icon-btn" data-close>✕</button></div><div class="dialog-actions"><button class="btn subtle" data-close>Annuler</button><button class="btn danger" data-confirm-delete-video="'+deleteVideo.dataset.deleteVideo+'">Supprimer définitivement</button></div>');
@@ -1427,6 +1430,46 @@ function groupSessionDialog(sessionId=''){
   const session=state.groupSessions.find(x=>x.id===sessionId)||{}; const editing=Boolean(sessionId);
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">COURS COLLECTIF</p><h2>${editing?'Modifier ce cours':'Ajouter un cours collectif'}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="group-session-form" class="form-grid"><input type="hidden" name="id" value="${sessionId}"><label class="span-2">Intitulé<input name="title" required value="${escapeHtml(session.title||'')}" placeholder="Ex. Entraînement adultes"></label><label>Date<input name="session_date" type="date" required value="${session.session_date||toLocalISO(new Date())}"></label><label>Public<select name="audience"><option value="adultes" ${session.audience==='adultes'?'selected':''}>Adultes</option><option value="enfants" ${session.audience==='enfants'?'selected':''}>Enfants</option></select></label><label>Début<input name="start_time" type="time" required value="${session.start_time||'18:00'}"></label><label>Fin<input name="end_time" type="time" required value="${session.end_time||'19:30'}"></label><label>Court<select name="court_number"><option value="1" ${Number(session.court_number)===1?'selected':''}>Court 1</option><option value="2" ${Number(session.court_number)===2?'selected':''}>Court 2</option><option value="3" ${Number(session.court_number)===3?'selected':''}>Court 3</option><option value="4" ${Number(session.court_number)===4?'selected':''}>Court 4</option></select></label><label>Thème<input name="theme" value="${escapeHtml(session.theme||'')}"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">${editing?'Enregistrer les modifications':'Enregistrer'}</button></div></form>`);
 }
+
+async function searchPlanningAgent() {
+  const form = $('#planning-agent-form');
+  if (!form) return;
+  const values = Object.fromEntries(new FormData(form));
+  const isCoach = state.profile?.role === 'coach';
+  const coachId = isCoach ? state.user.id : values.coach_id;
+  const linkedCoachIds = (state.playerCoaches || []).map(coach => coach.id);
+  const button = form.querySelector('[data-action="planning-agent-search"]');
+  if (button) { button.disabled = true; button.textContent = 'Recherche en cours…'; }
+
+  try {
+    const results = await planningAgentService.suggestSlots({
+      date: values.date,
+      durationMinutes: Number(values.duration_minutes),
+      coachId,
+      role: state.profile?.role,
+      userId: state.user?.id,
+      linkedCoachIds,
+      today: toLocalISO(new Date())
+    });
+    state.planningAgentQuery = {
+      coachId,
+      date: values.date,
+      durationMinutes: Number(values.duration_minutes)
+    };
+    state.planningAgentResults = results;
+    render('assistant-planning');
+    toast(results.length
+      ? `${results.length} créneau(x) disponible(s) trouvé(s).`
+      : 'Aucun créneau disponible pour ces critères.');
+  } catch (error) {
+    toast(error?.message || 'Impossible de rechercher les disponibilités.', 'error');
+    if (button?.isConnected) {
+      button.disabled = false;
+      button.textContent = 'Rechercher les créneaux disponibles';
+    }
+  }
+}
+
 function bookingDialog(prefill={}){
   const selectedDuration=Number(prefill.duration||60);
   const durationChoices=[60,90,120].map(minutes=>`<label class="booking-duration-option ${selectedDuration===minutes?'active':''}"><input type="radio" name="duration" value="${minutes}" ${selectedDuration===minutes?'checked':''} required><span><strong>${minutes===60?'1 heure':minutes===90?'1 h 30':'2 heures'}</strong></span></label>`).join('');
