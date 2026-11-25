@@ -30,7 +30,7 @@ function playerAccent(playerId) {
 export const pageMeta = {
   dashboard: ['Vue d’ensemble', 'Tableau de bord', 'Le résumé de ton activité tennis.'],
   intelligence: ['Coach In Intelligence', 'Intelligence', 'Des observations fondées sur tes bilans, tes séances et les données de ton effectif.'],
-  'assistant-planning': ['Assistant Coach In', 'Assistant IA · Planning', 'Recherche les créneaux réellement disponibles auprès de tes coachs.'],
+  'assistant-planning': ['Agent Planning', 'Agent Planning · Phase 1', 'Recherche les créneaux réellement disponibles en croisant les plannings et les règles de Coach In.'],
   players: ['Effectif', 'Mes joueurs', 'Retrouve les profils et les informations de ton effectif.'],
   planning: ['Organisation', 'Planning des coachs', 'Consulte séparément les créneaux de chacun de tes coachs.'],
   'group-calendar': ['Saison 2026–2027', 'Cours collectifs', 'Calendrier annuel, objectifs de séances et programme pédagogique.'],
@@ -896,8 +896,8 @@ function planningAssistantPage() {
 
   return `<section class="panel">
     <div class="section-heading">
-      <div><p class="eyebrow">AGENT PLANNING · PHASE 1</p><h2>Assistant IA · Recherche de créneaux</h2>
-      <p class="tiny muted">Première brique de l’assistant : les propositions sont calculées à partir des règles et des données de Coach In. Aucune réservation n’est créée par la recherche.</p></div>
+      <div><p class="eyebrow">AGENT PLANNING · PHASE 1</p><h2>Agent Planning · Recherche de créneaux</h2>
+      <p class="tiny muted">Première brique de l’agent 1 : il croise les disponibilités, les cours collectifs, les réservations et les indisponibilités. La recherche reste en lecture seule.</p></div>
       <span class="tag tag-green">Lecture seule</span>
     </div>
     <form id="planning-agent-form" class="form-grid">
