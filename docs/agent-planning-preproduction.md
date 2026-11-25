@@ -1,51 +1,55 @@
 # Agent Planning Coach In — préproduction
 
-## Phase 1 : moteur de disponibilités en lecture seule
+## Phase 1 : moteur de recherche de créneaux en lecture seule
 
-Branche de travail : `feat/ai-planning-agent-preprod-2026-11-25`
+Branche : `feat/ai-planning-agent-preprod-2026-11-25`
 
-Base de test : projet Supabase `whyylgiscrpqoahdzdkv` (Coach In test).
+Projet Supabase de test : `whyylgiscrpqoahdzdkv` — « Coach In test ».
 
-Cette première livraison ajoute un outil de recherche de créneaux, pas encore un agent conversationnel OpenAI. Elle constitue le premier outil métier de l'Agent Planning : le futur agent IA pourra l'appeler après avoir compris une demande en langage naturel.
+Cette première livraison fournit l'outil métier que l'agent conversationnel utilisera ensuite. Elle ne comprend pas encore le langage naturel via OpenAI : l'interface propose une recherche structurée par coach, date et durée.
 
-### Périmètre
+### Fonctionnement
 
-- Lecture seule : aucune réservation n'est créée par la recherche.
-- Coach : recherche uniquement dans son propre planning.
-- Joueur : recherche uniquement auprès des coachs auxquels son compte est lié.
-- Durées admises : 60, 90 ou 120 minutes.
-- Pas de créneaux de 10 ou 15 minutes : pas de départs autres que les demi-heures.
-- Contrôles serveur : disponibilités hebdomadaires actives, occupations partagées, demandes en attente/acceptées, indisponibilités et blocs collectifs récurrents de Coach B.
-- La demande de cours reste dans le formulaire existant ; le coach conserve la validation finale.
+- Coach : recherche limitée à son propre planning.
+- Joueur : recherche limitée aux coachs auxquels son compte est lié.
+- Durées : 60, 90 ou 120 minutes.
+- Départs de créneau : uniquement toutes les 30 minutes.
+- Contrôles serveur : disponibilités hebdomadaires, occupations partagées, demandes/réservations, indisponibilités et blocs récurrents de Coach B.
+- Calendrier : dimanches, vacances Zone B et jours fériés exclus, avec l'exception du 8 mai déjà retenue dans Coach In.
+- Lecture seule : la recherche ne crée, ne modifie et n'annule aucune réservation.
+- Joueur : le bouton de demande ouvre le formulaire de réservation existant ; le coach garde la validation.
 
 ### Sécurité
 
-La RPC vérifie le rôle et le lien coach-joueur avec `auth.uid()`. Elle est en `SECURITY DEFINER`, utilise un `search_path` vide, ne renvoie aucun motif privé d'indisponibilité et son exécution est réservée au rôle `authenticated`.
+La RPC `public.get_private_booking_suggestions` est en `SECURITY INVOKER` avec `search_path` vide. Les lectures restent soumises aux politiques RLS. Elle vérifie le profil connecté et le lien coach-joueur. Pour un joueur, les indisponibilités sont récupérées via la RPC existante qui vérifie déjà ce lien. Aucun motif privé d'indisponibilité n'est retourné.
 
-### Tests et limites
+Privilèges vérifiés sur la base de test :
+- `authenticated` : exécution autorisée ;
+- `anon` : exécution refusée ;
+- `SECURITY DEFINER` : désactivé pour cette fonction.
 
-- Tests unitaires de validation de la recherche côté navigateur.
-- Vérification SQL de la fonction sur la base de préproduction.
-- Recette obligatoire avec Coach A, Coach B et un joueur lié aux deux.
-- Le calendrier reste l'autorité visuelle ; les suggestions sont calculées côté serveur et la demande finale repasse par le RPC de réservation existant.
-- L'analyse en langage naturel et l'appel OpenAI seront ajoutés dans une phase distincte après vérification de la configuration du secret `OPENAI_API_KEY` sur le projet de test.
+### Vérifications déjà effectuées sur Supabase test
 
-## État de la recette initiale — 25 novembre 2026
+- Coach A, jeudi 26 novembre 2026, 1 h : 64 propositions (16 départs de demi-heure × 4 terrains).
+- Joueur lié à Coach A, mêmes critères : 64 propositions.
+- Coach B, jeudi 26 novembre 2026, 1 h : 0 proposition, car le créneau collectif récurrent du jeudi est bloqué.
+- Coach B, vendredi 27 novembre 2026, 1 h : 108 propositions.
+- Indisponibilité temporaire de Coach A de 8 h à 9 h 30 : les propositions avant 9 h 30 sont retirées, pour le coach comme pour le joueur lié. La donnée de test a été annulée par rollback.
+- Durée de 45 minutes : rejetée.
+- Joueur non lié et coach essayant de consulter le planning d'un autre coach : accès refusé.
+- Les quatre dates de reprise Zone B ont été réalignées sur les bornes exactes de `src/domain/group-calendar.js`.
 
-- Migration SQL appliquée au projet Supabase de préproduction `whyylgiscrpqoahdzdkv`.
-- Fonction vérifiée dans PostgreSQL : `SECURITY DEFINER`, `search_path` vide, exécution limitée à `authenticated`.
-- Test joueur lié aux deux coachs : recherche Coach A autorisée et 64 combinaisons créneau/terrain retournées pour le jeudi 26 novembre 2026 sur 1 h.
-- Test Coach B : 0 proposition le jeudi 26 novembre, car sa plage récurrente du jeudi 18 h–19 h 30 est verrouillée par le cours collectif.
-- Test d'un joueur non lié à Coach A : accès refusé avec « Ce coach ne suit pas ce joueur. »
-- Test vacances de Noël : 0 proposition le 21 décembre 2026.
-- Déploiement Vercel de préproduction : état `READY`, commit `e803e7d`.
-- Vérification HTTP : page Coach In répond 200 ; `/api/config` renvoie bien l'URL du projet Supabase de préproduction `whyylgiscrpqoahdzdkv`.
+### Tests du code
 
-URL de recette : https://coach-in-test-2-5vv12vat6-coaching-axel1.vercel.app
+- Tests unitaires de validation de recherche : 7 réussis sur 7 avec Node 22.
+- La recette visuelle avec les comptes Coach A, Coach B et joueur reste à faire.
+- La vérification de la prévisualisation Vercel doit porter sur le dernier commit de la branche après le correctif de l'import dupliqué.
 
-### À faire avant de considérer l'agent 1 comme validé
+### Étape suivante
 
-- Connexion réelle et vérification visuelle avec Coach A, Coach B et le joueur lié aux deux.
-- Tester la demande depuis un créneau proposé, puis l'acceptation et le refus depuis le compte coach.
-- Vérifier les notifications et la concurrence en lançant deux demandes sur le même créneau.
-- La couche de compréhension en langage naturel n'est pas encore branchée : cette livraison est le moteur de recherche déterministe et son interface de recette. Elle ne prétend pas être un agent conversationnel complet.
+1. Vérifier le dernier déploiement Vercel Preview et l'interface après connexion.
+2. Tester les trois profils et le formulaire de demande existant.
+3. Vérifier acceptation, refus, notifications et demandes concurrentes.
+4. Ajouter ensuite la compréhension du langage naturel et les appels OpenAI, après confirmation de la présence du secret `OPENAI_API_KEY` sur le projet de test.
+
+Aucune fusion vers `main` ni modification de la base de production n'est prévue à cette étape.
