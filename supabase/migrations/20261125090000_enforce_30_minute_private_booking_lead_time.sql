@@ -1,0 +1,59 @@
+-- Enforce a 30-minute booking lead time in the database, using the club's local timezone.
+create or replace function private.request_private_booking(
+ p_coach_id uuid,p_session_date date,p_start_time time without time zone,
+ p_duration_minutes integer,p_court_number smallint
+) returns uuid language plpgsql security definer set search_path=''
+as $$
+declare v_player uuid:=auth.uid(); v_id uuid; v_start timestamp; v_end timestamp;
+begin
+ if v_player is null or not public.is_player() then raise exception 'Connexion joueur requise.'; end if;
+ if not exists(select 1 from public.profiles where id=p_coach_id and role='coach' and archived_at is null) then raise exception 'Coach invalide.'; end if;
+ if p_duration_minutes not in(60,90,120) then raise exception 'Durée non autorisée.'; end if;
+ if p_court_number not between 1 and 4 then raise exception 'Court invalide.'; end if;
+ v_start:=p_session_date+p_start_time; v_end:=v_start+make_interval(mins=>p_duration_minutes);
+ if v_start < (timezone('Europe/Paris', now()) + interval '30 minutes') then raise exception 'La réservation doit être effectuée au moins 30 minutes avant le début du cours.'; end if;
+ if not exists(select 1 from public.coach_weekly_availability a where a.coach_id=p_coach_id
+   and a.weekday=extract(isodow from p_session_date)::smallint and a.active=true
+   and a.start_time<=p_start_time and a.end_time>=(p_start_time+make_interval(mins=>p_duration_minutes))
+   and (a.court_number is null or a.court_number=p_court_number)) then
+   raise exception 'Ce créneau ne fait pas partie des disponibilités publiées par le coach.';
+ end if;
+ perform pg_advisory_xact_lock(hashtextextended(p_coach_id::text||p_session_date::text||p_court_number::text,0));
+ if exists(select 1 from public.booking_requests b where b.coach_id=p_coach_id and b.session_date=p_session_date
+   and b.court_number=p_court_number and b.status in('pending','accepted')
+   and (b.session_date+b.start_time)<v_end
+   and (b.session_date+b.start_time+make_interval(mins=>b.duration_minutes))>v_start) then
+   raise exception 'Ce créneau est déjà demandé ou réservé.';
+ end if;
+ if exists(select 1 from public.training_sessions s where s.created_by=p_coach_id and s.session_date=p_session_date
+   and coalesce(s.court_number,p_court_number)=p_court_number
+   and (s.session_date+coalesce(s.session_time,time '00:00'))<v_end
+   and (s.session_date+coalesce(s.session_time,time '00:00')+make_interval(mins=>coalesce(s.duration_minutes,60)))>v_start) then
+   raise exception 'Le coach a déjà une séance sur ce créneau.';
+ end if;
+ if exists(select 1 from public.group_sessions g where g.coach_id=p_coach_id and g.session_date=p_session_date
+   and g.status<>'cancelled' and (g.session_date+g.start_time)<v_end and (g.session_date+g.end_time)>v_start) then
+   raise exception 'Le coach est indisponible : un cours collectif est prévu sur ce créneau.';
+ end if;
+ insert into public.booking_requests(coach_id,player_id,session_date,start_time,duration_minutes,court_number,status)
+ values(p_coach_id,v_player,p_session_date,p_start_time,p_duration_minutes,p_court_number,'pending') returning id into v_id;
+ insert into public.coach_notifications(coach_id,player_id,notification_type,title,body,target_path)
+ values(p_coach_id,v_player,'booking_request','Nouvelle demande de cours','Une demande de cours particulier attend ta réponse.','bookings');
+ return v_id;
+end;
+$$;
+revoke all on function private.request_private_booking(uuid,date,time,integer,smallint) from public, anon;
+grant execute on function private.request_private_booking(uuid,date,time,integer,smallint) to authenticated;
+
+
+-- Keep the public RPC used by the client as a thin, permission-checked wrapper.
+create or replace function public.request_private_booking(
+ p_coach_id uuid,p_session_date date,p_start_time time without time zone,
+ p_duration_minutes integer,p_court_number smallint
+) returns uuid
+language sql security invoker set search_path=''
+as $$
+ select private.request_private_booking(p_coach_id,p_session_date,p_start_time,p_duration_minutes,p_court_number);
+$$;
+revoke all on function public.request_private_booking(uuid,date,time,integer,smallint) from public, anon;
+grant execute on function public.request_private_booking(uuid,date,time,integer,smallint) to authenticated;
