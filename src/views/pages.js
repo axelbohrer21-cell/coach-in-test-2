@@ -298,8 +298,7 @@ function playerCoachPlanningPage() {
     const knownBookingIds=new Set(dayBookingRows.map(row=>row.source_id));
     (state.bookingRequests||[]).filter(row=>row.coach_id===selected.id&&row.session_date===iso&&activeStatuses.includes(String(row.status||'').toLowerCase())&&!knownBookingIds.has(row.id))
       .forEach(row=>bookingEvents.push({...row,source_kind:'booking',start_time:row.start_time||'08:00',duration:Number(row.duration_minutes||60),isOwnBooking:true}));
-    const recurringEvents=GROUP_SEASON.weeklySchedule.filter(row=>row.weekday===date.getDay()&&isTeachingDate(iso,row.audience)&&!actualEvents.some(event=>String(event.start_time||'').slice(0,5)===row.start)).map(row=>({coach_id:selected.id,session_date:iso,start_time:row.start,end_time:row.end,court_number:null,source_kind:'group_session',status:'scheduled',title:row.audience==='enfants'?'Cours collectif enfants':'Cours collectif adultes'}));
-    const events=[...actualEvents.map(event=>({...event,duration:Math.max(30,toMinutes(event.end_time)-toMinutes(event.start_time))})),...bookingEvents,...recurringEvents,...stageEvents];
+    const events=[...actualEvents.map(event=>({...event,duration:Math.max(30,toMinutes(event.end_time)-toMinutes(event.start_time))})),...bookingEvents];
     const groupEvents=events.filter(event=>event.source_kind==='group_session'&&!['cancelled','canceled','annulé','annulee'].includes(String(event.status||'').toLowerCase())).map(event=>({...event,start:toMinutes(event.start_time),end:toMinutes(event.start_time)+event.duration})).sort((a,b)=>a.start-b.start);
     const groupBlocks=groupEvents.reduce((blocks,event)=>{
       const last=blocks[blocks.length-1];
