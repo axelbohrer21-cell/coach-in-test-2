@@ -100,22 +100,19 @@ Les deux bases possèdent un nombre proche de politiques, mais leurs définition
 
 ## 6. Historique de migrations et dépôt Git
 
-Le dépôt `main` contient 66 fichiers SQL sous `supabase/migrations`, tandis que l'historique de production contient 96 entrées et celui de préproduction 80. Les noms et versions des fichiers et des entrées d'historique ne correspondent pas systématiquement un à un.
+Le dépôt `main` contient 93 fichiers SQL sous `supabase/` : 66 dans `supabase/migrations/` et 27 directement dans `supabase/`. Les migrations historiques sont donc réparties entre deux emplacements. Les historiques distants contiennent 96 entrées en production et 80 en préproduction. Les noms et versions des fichiers et des entrées d'historique ne correspondent pas systématiquement un à un.
 
-Plusieurs changements de production à impact sécurité ou fonctionnel n'ont pas de fichier SQL de même nom dans `main`, notamment :
-- `security_hardening_client_table_privileges`
-- `security_hardening_future_postgres_defaults`
-- `security_video_analysis_processing_fields`
-- `move_privileged_rpcs_to_private_schema`
-- `share_coach_unavailability_safely_with_players`
-- `coach_physical_training_library`
-- `add_unique_player_color_palette`
-- `index_coach_session_favorites_session_id`
-- `allow_wednesday_adult_group_series`
-- `support_group_schedule_adult_wednesday_and_holiday_stages`
-- `tighten_vacation_stage_schedule_guard`
+Correction importante : les migrations de durcissement de sécurité suivantes **sont bien présentes dans le dépôt**, mais directement sous `supabase/` et non dans `supabase/migrations/` :
+- `20261123152535_security_hardening_client_table_privileges.sql`
+- `20261123152602_security_hardening_future_postgres_defaults.sql`
+- `20261123152708_security_video_analysis_processing_fields.sql`
+- `20261123153000_move_privileged_rpcs_to_private_schema.sql`
 
-Ces opérations peuvent être couvertes par des fichiers renommés, regroupés ou absents ; leur SQL exact ne doit pas être reconstitué par supposition. La source de vérité doit être récupérée via l'historique Git, les sauvegardes de migration, ou l'introspection du schéma et une revue explicite.
+D'autres migrations de production ont des noms différents de leurs fichiers ou ne disposent pas d'un fichier SQL de même nom. Deux objets importants n'ont pas de migration dédiée retrouvée dans l'arbre Git actuel :
+- `coach_physical_programs` / migration historique `coach_physical_training_library` ;
+- `profiles.player_color` / migration historique `add_unique_player_color_palette`.
+
+Il faut rechercher si ces changements sont inclus dans un fichier regroupé ou ont été appliqués manuellement avant de conclure à une absence de source. Les entrées d'historique dont le nom diffère peuvent également correspondre à des fichiers renommés ou regroupés. Leur SQL exact ne doit pas être reconstitué par supposition. La source de vérité doit être récupérée via l'historique Git, les sauvegardes de migration ou l'introspection du schéma, puis revue explicitement.
 
 La préproduction possède en plus les migrations propres à l'Agent Planning, dont `get_private_booking_suggestions`. Cette fonctionnalité est attendue dans la branche de préproduction et ne doit pas être supprimée au cours de l'alignement.
 
