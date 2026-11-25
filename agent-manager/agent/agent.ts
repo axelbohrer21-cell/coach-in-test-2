@@ -1,8 +1,10 @@
+import { groq } from "@ai-sdk/groq";
 import { defineAgent } from "eve";
 
 export default defineAgent({
-  model: "openai/gpt-6-luna-fast",
-  // Start with no optional built-in tools. Only explicitly authored tools
-  // under agent/tools are available to the Manager.
+  // Use Groq's free API tier directly; bypass Vercel AI Gateway billing.
+  // Provider-side free quotas apply and requests stop when those limits are reached.
+  model: groq("openai/gpt-oss-20b"),
+  modelContextWindowTokens: 131072,
   defaultTools: false,
 });
