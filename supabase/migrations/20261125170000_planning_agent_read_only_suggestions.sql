@@ -87,8 +87,7 @@ begin
   -- (sauf le 8 mai, règle déjà retenue dans Coach In).
   if v_weekday = 7
      or v_school_holiday
-     or (v_public_holiday and p_session_date <> date '2027-05-08')
-     or (p_session_date + time '08:00') < (timezone('Europe/Paris', now()) - interval '1 day') then
+     or (v_public_holiday and p_session_date <> date '2027-05-08') then
     return;
   end if;
 
