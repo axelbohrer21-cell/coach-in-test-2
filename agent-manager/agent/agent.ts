@@ -5,6 +5,7 @@ import { defineAgent } from "eve";
 
 const primaryModel = groq("openai/gpt-oss-20b");
 const fallbackModel = groq("qwen/qwen3.8-27b");
+const QWEN_OUTPUT_TOKEN_BUDGET = 500;
 
 function isRateLimitError(error: unknown): boolean {
   const seen = new Set<unknown>();
@@ -21,23 +22,18 @@ function isRateLimitError(error: unknown): boolean {
 
 const freeQuotaProtection: LanguageModelV3Middleware = {
   specificationVersion: "v3",
-  // Bound every completion and let Eve compact older conversation turns.
   transformParams: async ({ params }) => ({
     ...params,
-    maxOutputTokens: Math.min(params.maxOutputTokens ?? 2048, 2048),
+    maxOutputTokens: Math.min(params.maxOutputTokens ?? 1024, 1024),
   }),
-  // Both models are available on Groq's Free tier with separate model limits.
-  // Fail over only on 429; authentication/configuration errors remain visible.
   wrapGenerate: async ({ doGenerate, params }) => {
     try {
       return await doGenerate();
     } catch (error) {
       if (!isRateLimitError(error)) throw error;
-      // Qwen's Groq free-tier output-token-per-minute cap is 1,000.
-      // Keep a safety margin and clamp only the fallback request.
       return fallbackModel.doGenerate({
         ...params,
-        maxOutputTokens: Math.min(params.maxOutputTokens ?? 900, 900),
+        maxOutputTokens: Math.min(params.maxOutputTokens ?? QWEN_OUTPUT_TOKEN_BUDGET, QWEN_OUTPUT_TOKEN_BUDGET),
       });
     }
   },
@@ -46,10 +42,9 @@ const freeQuotaProtection: LanguageModelV3Middleware = {
       return await doStream();
     } catch (error) {
       if (!isRateLimitError(error)) throw error;
-      // Apply the same Qwen-specific cap to streaming fallback requests.
       return fallbackModel.doStream({
         ...params,
-        maxOutputTokens: Math.min(params.maxOutputTokens ?? 900, 900),
+        maxOutputTokens: Math.min(params.maxOutputTokens ?? QWEN_OUTPUT_TOKEN_BUDGET, QWEN_OUTPUT_TOKEN_BUDGET),
       });
     }
   },
@@ -60,7 +55,6 @@ const model = wrapLanguageModel({ model: primaryModel, middleware: freeQuotaProt
 export default defineAgent({
   model,
   modelContextWindowTokens: 131072,
-  // Compact at 5% of context to keep typical prompts under the free TPM ceiling.
   compaction: { threshold: 0.05, model, modelContextWindowTokens: 131072 },
   defaultTools: false,
 });
