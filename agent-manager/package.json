@@ -42,7 +42,8 @@
     "use-stick-to-bottom": "^1.1.4",
     "zod": "^4.6.7",
     "better-auth": "1.7.21",
-    "@ai-sdk/groq": "^4.0.87"
+    "@ai-sdk/groq": "^4.0.87",
+    "@ai-sdk/provider": "^4.0.39"
   },
   "devDependencies": {
     "@types/node": "^26.6.10",
