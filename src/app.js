@@ -67,9 +67,9 @@ let messageRetryCount = 0;
 let videoCameraStream = null;
 let videoCameraRecorder = null;
 let videoCameraChunks = [];
-const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['assistant-planning','Assistant IA','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['physical','Prépa physique','↗'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
+const coachNav = [ ['dashboard','Vue d’ensemble','⌂'], ['intelligence','Intelligence','✦'], ['assistant-planning','Agent Planning','✦'], ['players','Joueurs','♙'], ['planning','Planning','▦'], ['group-calendar','Cours collectifs','◷'], ['sessions','Séances','◎'], ['physical','Prépa physique','↗'], ['videos','Analyse vidéo','▣'], ['reports','Évaluations','✦'], ['library','Bibliothèque','▤'], ['bookings','Réservations','◷'], ['notifications','Notifications','♧'], ['messages','Messages','✉'], ['club','Vie du club','♧'] ];
 const adminNav = [ ['coaches','Gestion des coachs','♙'] ];
-const playerNav = [ ['dashboard','Accueil','⌂'], ['assistant-planning','Assistant IA','✦'], ['planning','Planning des coachs','▦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
+const playerNav = [ ['dashboard','Accueil','⌂'], ['assistant-planning','Agent Planning','✦'], ['planning','Planning des coachs','▦'], ['sessions','Séances','◎'], ['matches','Journal de match','▤'], ['videos','Vidéos','▣'], ['reports','Progression','↗'], ['club','Mon club','♧'], ['bookings','Réservations','◷'], ['notifications','Notifications','♢'], ['messages','Messages','✉'] ];
 
 function showAuth(message='') {
   $('#auth-view').classList.remove('hidden'); $('#app-view').classList.add('hidden');
