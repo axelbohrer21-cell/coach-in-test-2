@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 import { AgentMessage } from "./agent-message";
 import { WEB_CHAT_AGENT } from "@/app/eve-agent";
 
-const DEFAULT_AGENT_NAME = "eve-agent";
+const DEFAULT_AGENT_NAME = "Coach In Manager";
 const AGENT_NAME = WEB_CHAT_AGENT ?? DEFAULT_AGENT_NAME;
 
 export function AgentChat({
