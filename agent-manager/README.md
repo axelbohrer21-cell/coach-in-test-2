@@ -13,15 +13,18 @@ Service privé d'orchestration de l'équipe d'agents développeurs de Coach In. 
 
 - Projet Vercel dédié : `coach-in-manager`.
 - Identifiant du projet : `prj_VPh7VprGSU1rRE9VmG2KWIpMWehz`.
+- Dépôt GitHub lié : `axelbohrer21-cell/coach-in-test-2`.
+- Dossier racine du projet : `agent-manager`.
+- Branche de travail : `feat/coach-in-manager-eve-2026-11-25`.
 - Protection Vercel Auth / SSO activée sur **tous les déploiements** (`deploymentType: all`).
 - L'accès est réservé aux membres autorisés de l'équipe Vercel et ne réutilise pas les comptes Coach In.
 - Node.js configuré en `24.x`.
-- Aucun domaine personnalisé, déploiement ou secret de production n'est configuré.
+- Aucun domaine personnalisé ni secret de production n'est configuré.
 - Le projet Vercel principal `coach-in-test-2` n'a pas été modifié.
 
-### État de l'authentification navigateur
+### État du canal navigateur
 
-La protection Vercel Auth du déploiement est active. Elle ne remplace pas l'authentification des routes de session Eve. L'API Eve doit continuer à refuser les appels navigateur de production tant que le canal Web Chat et son authentification utilisateur Vercel ne sont pas provisionnés.
+La protection Vercel Auth du déploiement est active. Elle ne remplace pas l'authentification des routes de session Eve. L'API Eve doit continuer à refuser les appels navigateur tant que le canal Web Chat et son authentification utilisateur Vercel ne sont pas provisionnés et vérifiés.
 
 La procédure Eve officielle à terminer depuis le dossier `agent-manager` est :
 
@@ -32,14 +35,16 @@ npx eve add channel/web
 
 Choisir le projet Vercel `coach-in-manager`, sélectionner l'hébergement Vercel, puis effectuer le parcours **Sign in with Vercel** pour provisionner les identifiants navigateur de l'équipe. Ne pas rendre l'API publique et ne pas remplacer l'authentification par `none()`.
 
-**Blocage actuel :** aucun compte GitHub n'est connecté à l'intégration Git de ce compte Vercel. La liaison du dépôt et le provisionnement interactif du canal Web ne peuvent donc pas être terminés automatiquement pour le moment. Le projet reste sans déploiement et l'API reste fermée par défaut.
+Le dépôt GitHub est maintenant relié à Vercel. Le build Preview est en cours de correction avant de poursuivre la configuration du canal Web. Aucun déploiement de production de Coach In n'a été lancé.
 
 ## Contenu de la première version
 
-- Agent principal Coach In Manager.
+- Agent principal Coach In Manager avec modèle configuré via Vercel AI Gateway.
 - Instructions de gouvernance et de coordination.
 - Contexte projet en lecture seule, embarqué dans le workspace.
-- Outils limités : poser une question, suivre une todo, charger une compétence, lire les documents de contexte et déléguer à un agent de même rôle.
+- Outils explicitement autorisés : poser une question, lire les documents du workspace et déléguer à un agent.
+- Les compétences projet et planification sont conservées en fichiers Markdown et consultées par lecture.
+- Les checklists de tâches sont suivies dans les réponses ; aucun outil todo durable n'est actuellement activé.
 - Sous-agent indépendant `plan_auditor` pour relire les plans.
 - Aucun outil shell, écriture de fichiers, accès base de données, accès GitHub ou déploiement.
 
