@@ -5,15 +5,13 @@ import { defineAgent } from "eve";
 
 const primaryModel = groq("openai/gpt-oss-20b");
 
-// Keep the request within a conservative output budget.
-// Qwen fallback is intentionally disabled: its organization-wide OTPM quota
-// can be exceeded by several parallel specialist calls even when each call
-// has an individual maxOutputTokens limit.
+// Keep a bounded response size while leaving enough room for compaction summaries.
+// Qwen fallback remains disabled because its organization-wide OTPM quota was exceeded.
 const quotaProtection: LanguageModelV3Middleware = {
   specificationVersion: "v3",
   transformParams: async ({ params }) => ({
     ...params,
-    maxOutputTokens: Math.min(params.maxOutputTokens ?? 1024, 1024),
+    maxOutputTokens: Math.min(params.maxOutputTokens ?? 2048, 2048),
   }),
 };
 
@@ -22,6 +20,7 @@ const model = wrapLanguageModel({ model: primaryModel, middleware: quotaProtecti
 export default defineAgent({
   model,
   modelContextWindowTokens: 131072,
-  compaction: { threshold: 0.05, model, modelContextWindowTokens: 131072 },
+  // Compact at 75% of context rather than 5%, which caused premature summaries.
+  compaction: { threshold: 0.75, model, modelContextWindowTokens: 131072 },
   defaultTools: false,
 });
