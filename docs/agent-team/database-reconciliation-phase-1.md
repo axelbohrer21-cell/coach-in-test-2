@@ -46,6 +46,17 @@ La migration de répertoire existe dans le dépôt (`20261124164606_replace_coac
 
 **Action :** retrouver ou reconstituer les migrations manquantes depuis une source fiable avant de les appliquer en préproduction. Ne pas créer ces objets avec une définition devinée.
 
+### Détail des objets manquants relevés en préproduction
+
+L'introspection de production donne les caractéristiques suivantes :
+
+- `coach_session_favorites` : favoris de séances par coach, unicité `(coach_id, session_id)`, clés étrangères vers `profiles` et `training_sessions`, politiques qui limitent lecture/ajout/suppression au coach propriétaire et à ses propres séances. Un fichier de migration existe dans `supabase/migrations/20261122094000_coach_session_favorites.sql`, mais cette migration n'apparaît pas dans l'historique préproduction.
+- `player_coach_directory` : table minimale `id, first_name, last_name`, RLS activé, lecture limitée aux joueurs, synchronisation par trigger depuis `profiles`. Le fichier `supabase/migrations/20261124164606_replace_coach_directory_view_with_safe_table.sql` existe, mais n'est pas enregistré dans l'historique préproduction.
+- `coach_physical_programs` : table de programmes privés par coach, avec colonnes `id`, `coach_id`, `title`, `program_type`, `focus_criteria`, `group_size`, `age_group`, `level`, `equipment`, `duration_minutes`, `content`, `created_at`, `updated_at`. Les contraintes observées limitent `program_type` à `template/generated/cycle`, `group_size` à 4–10 et `duration_minutes` à 60. RLS est activé avec une politique propriétaire coach. Aucune migration de création correspondante n'a été retrouvée dans l'arbre Git actuel.
+- `profiles.player_color` : colonne texte nullable, index unique partiel pour les profils de rôle `player` avec couleur renseignée, et trigger qui attribue une couleur libre dans une palette de 50 couleurs. La fonction de trigger est actuellement non SECURITY DEFINER. Aucune migration `add_unique_player_color_palette` correspondante n'a été retrouvée dans l'arbre Git actuel.
+
+Ces deux derniers objets exigent une récupération de la migration historique ou une reconstruction SQL revue à partir des définitions cataloguées et du code applicatif.
+
 ## 4. Différences de colonnes dans des tables communes
 
 ### `evaluations`
