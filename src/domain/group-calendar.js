@@ -1,3 +1,12 @@
+export const COACH_B_GROUP_BLOCKS = Object.freeze([
+  { key:'lundi-soir', audience:'adultes', weekday:1, start:'18:00', end:'21:00' },
+  { key:'mardi-midi', audience:'adultes', weekday:2, start:'12:15', end:'13:45' },
+  { key:'mardi-soir', audience:'adultes', weekday:2, start:'17:30', end:'20:30' },
+  { key:'mercredi', audience:'enfants', weekday:3, start:'09:30', end:'19:30' },
+  { key:'jeudi-soir', audience:'adultes', weekday:4, start:'18:00', end:'19:30' },
+  { key:'samedi-matin', audience:'enfants', weekday:6, start:'09:30', end:'13:30' }
+]);
+
 export const GROUP_SEASON = Object.freeze({
   start: '2026-09-14',
   end: '2027-06-20',
