@@ -108,7 +108,7 @@ Les alertes de fonctions privilégiées ont été ramenées aux deux fonctions d
 
 Les alertes RLS sans policy concernent les trois tables de parrainage, volontairement inaccessibles en direct, et `push_delivery_log`. La protection contre les mots de passe compromis reste désactivée.
 
-Les alertes de clés étrangères non indexées ont été corrigées par la migration `20261125172327`. L'index push dupliqué a été supprimé et la policy push utilise désormais `(select auth.uid())`. Il reste des alertes informatives d'index inutilisés (base de test peu chargée) et des alertes de plusieurs policies permissives, conservées car elles couvrent des rôles distincts.
+Les alertes de clés étrangères non indexées ont été corrigées par la migration `20261125172327`. L'index push dupliqué a été supprimé et la policy push utilise désormais `(select auth.uid())`. Il ne reste pas d'alerte d'index FK non indexé, d'index dupliqué ou d'initplan RLS. Il reste des alertes informatives d'index inutilisés (base de test peu chargée) et des alertes de plusieurs policies permissives, conservées car elles couvrent des rôles distincts.
 
 ## Recette utilisateur encore requise
 
