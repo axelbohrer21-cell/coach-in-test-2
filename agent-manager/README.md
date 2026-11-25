@@ -5,9 +5,34 @@ Service privé d'orchestration de l'équipe d'agents développeurs de Coach In. 
 ## Stack
 
 - Eve 1.5.0 — runtime d'agents durables.
-- Node.js 24+.
+- Node.js 24.
 - Vercel AI Gateway pour le routage du modèle via l'identité du projet Vercel.
-- Aucun accès Supabase ni GitHub n'est ajouté dans cette première étape.
+- Aucun accès Supabase ni GitHub n'est ajouté au runtime du Manager dans cette première étape.
+
+## Hébergement et sécurité Vercel
+
+- Projet Vercel dédié : `coach-in-manager`.
+- Identifiant du projet : `prj_VPh7VprGSU1rRE9VmG2KWIpMWehz`.
+- Protection Vercel Auth / SSO activée sur **tous les déploiements** (`deploymentType: all`).
+- L'accès est réservé aux membres autorisés de l'équipe Vercel et ne réutilise pas les comptes Coach In.
+- Node.js configuré en `24.x`.
+- Aucun domaine personnalisé, déploiement ou secret de production n'est configuré.
+- Le projet Vercel principal `coach-in-test-2` n'a pas été modifié.
+
+### État de l'authentification navigateur
+
+La protection Vercel Auth du déploiement est active. Elle ne remplace pas l'authentification des routes de session Eve. L'API Eve doit continuer à refuser les appels navigateur de production tant que le canal Web Chat et son authentification utilisateur Vercel ne sont pas provisionnés.
+
+La procédure Eve officielle à terminer depuis le dossier `agent-manager` est :
+
+```bash
+npx eve link
+npx eve add channel/web
+```
+
+Choisir le projet Vercel `coach-in-manager`, sélectionner l'hébergement Vercel, puis effectuer le parcours **Sign in with Vercel** pour provisionner les identifiants navigateur de l'équipe. Ne pas rendre l'API publique et ne pas remplacer l'authentification par `none()`.
+
+**Blocage actuel :** aucun compte GitHub n'est connecté à l'intégration Git de ce compte Vercel. La liaison du dépôt et le provisionnement interactif du canal Web ne peuvent donc pas être terminés automatiquement pour le moment. Le projet reste sans déploiement et l'API reste fermée par défaut.
 
 ## Contenu de la première version
 
@@ -32,12 +57,6 @@ Compilation :
 ```bash
 npm run build
 ```
-
-## API et authentification
-
-Eve fournit une API durable sous `/eve/v1` pour créer des sessions, envoyer des messages et recevoir les événements de session.
-
-L'API ne doit jamais être exposée sans authentification. Le canal par défaut Eve refuse les appels de navigateur en production tant qu'une authentification utilisateur adaptée n'est pas configurée. L'accès navigateur du responsable du projet sera ajouté après choix et configuration du mode de connexion (idéalement une authentification dédiée, indépendante des comptes joueurs).
 
 ## Limites explicites de cette version
 
