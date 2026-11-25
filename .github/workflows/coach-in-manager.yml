@@ -1,0 +1,38 @@
+name: Coach In Manager validation
+
+on:
+  push:
+    branches:
+      - feat/coach-in-manager-eve-2026-11-25
+    paths:
+      - "agent-manager/**"
+      - ".github/workflows/coach-in-manager.yml"
+  pull_request:
+    paths:
+      - "agent-manager/**"
+      - ".github/workflows/coach-in-manager.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-manager:
+    name: Build private Manager agent
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent-manager
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: agent-manager/package-lock.json
+      - name: Install dependencies
+        run: npm install
+      - name: Compile Eve agent
+        run: npm run build
