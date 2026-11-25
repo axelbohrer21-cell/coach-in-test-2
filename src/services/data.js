@@ -152,12 +152,13 @@ export const dataService = {
     ].filter(Boolean))];
     const historyOnlyIds = historicalCoachIds.filter(id => !linkedCoachIds.includes(id));
     const evaluationIds = evaluations.map(row => row.id).filter(Boolean);
-    const [playerCoaches, playerCoachHistory, messages, evaluationCriteria] = await Promise.all([
+    const [coachDirectory, playerCoachHistory, messages, evaluationCriteria] = await Promise.all([
       unwrap(supabase.from('player_coach_directory').select('id,first_name,last_name').order('id')),
       historyOnlyIds.length ? unwrap(supabase.from('profiles').select('id,first_name,last_name,email,archived_at').in('id', historyOnlyIds).order('last_name')) : Promise.resolve([]),
       unwrap(supabase.from('coach_player_messages').select('*').eq('player_id',state.user.id).order('created_at')),
       evaluationIds.length ? unwrap(supabase.from('evaluation_criteria').select('*').in('evaluation_id', evaluationIds)) : Promise.resolve([])
     ]);
+    const playerCoaches = coachDirectory.filter(row => linkedCoachIds.includes(row.id));
     const activeCoachIds = playerCoaches.map(row => row.id);
     const sharedCourtOccupancy = activeCoachIds.length ? await unwrap(supabase.from('shared_court_occupancy').select('id,coach_id,session_date,start_time,end_time,court_number,source_kind,source_id,status').in('coach_id',activeCoachIds).order('session_date').order('start_time')) : [];
     const weeklyAvailability = activeCoachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',activeCoachIds).eq('active',true).order('weekday').order('start_time')) : [];
