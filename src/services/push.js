@@ -27,13 +27,11 @@ export const pushService = {
       });
     }
     const json = subscription.toJSON();
-    const { error } = await supabase.from('push_subscriptions').upsert({
-      user_id: userId,
-      endpoint: json.endpoint,
-      subscription: json,
-      user_agent: navigator.userAgent,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'endpoint' });
+    const { error } = await supabase.rpc('register_push_subscription', {
+      p_endpoint: json.endpoint,
+      p_subscription: json,
+      p_user_agent: navigator.userAgent
+    });
     if (error) throw error;
     return subscription;
   }
