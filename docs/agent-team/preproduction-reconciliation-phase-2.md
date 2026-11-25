@@ -20,8 +20,9 @@ Date : 25 novembre 2026
 | 20261125171946 | preprod_align_constraints_and_default_grants |
 | 20261125172005 | preprod_fix_restored_table_grants |
 | 20261125172047 | preprod_tighten_participant_rls |
+| 20261125172327 | preprod_finish_fk_indexes_and_push_rls |
 
-Les six fichiers SQL correspondants sont versionnés dans `supabase/migrations/` sur la branche de préproduction.
+Les sept fichiers SQL correspondants sont versionnés dans `supabase/migrations/` sur la branche de préproduction.
 
 ## Structures restaurées
 
@@ -87,6 +88,18 @@ Les règles de disponibilités et d'occupations visibles par les joueurs restent
 - Le contrôle Auth « leaked password protection » reste désactivé ; ce réglage nécessite une décision et une activation dans la configuration Auth.
 - Les tables de parrainage et `push_delivery_log` ont RLS activé sans policy directe. Les tables de parrainage sont volontairement réservées aux fonctions privilégiées ; `push_delivery_log` reste à auditer séparément.
 
+## Tests de l'Agent Planning après déplacement des RPC
+
+Tests SQL exécutés avec le rôle PostgreSQL `authenticated` et des claims de session de test :
+- Coach A, jeudi 26 novembre 2026, 1 h : 64 propositions.
+- Joueur lié à Coach A, mêmes critères : 64 propositions.
+- Coach B, jeudi 26 novembre : 0 proposition, le créneau collectif récurrent reste bloqué.
+- Coach B, vendredi 27 novembre : 108 propositions.
+- Joueur lié à Coach B, mêmes critères : 108 propositions.
+- Coach A essayant de lire le planning de Coach B : refusé par la fonction.
+
+Les tests ont été exécutés dans des transactions annulées (`ROLLBACK`) ; aucune réservation ou donnée métier n'a été créée.
+
 ## Résultat des Advisors
 
 Les alertes de fonctions privilégiées ont été ramenées aux deux fonctions de parrainage volontairement exposées :
@@ -94,6 +107,8 @@ Les alertes de fonctions privilégiées ont été ramenées aux deux fonctions d
 - `resolve_coach_referral_link(uuid)` : anon et authenticated, pour le flux d'invitation.
 
 Les alertes RLS sans policy concernent les trois tables de parrainage, volontairement inaccessibles en direct, et `push_delivery_log`. La protection contre les mots de passe compromis reste désactivée.
+
+Les alertes de clés étrangères non indexées ont été corrigées par la migration `20261125172327`. L'index push dupliqué a été supprimé et la policy push utilise désormais `(select auth.uid())`. Il reste des alertes informatives d'index inutilisés (base de test peu chargée) et des alertes de plusieurs policies permissives, conservées car elles couvrent des rôles distincts.
 
 ## Recette utilisateur encore requise
 
