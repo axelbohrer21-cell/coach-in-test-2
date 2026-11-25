@@ -29,3 +29,23 @@ La RPC vérifie le rôle et le lien coach-joueur avec `auth.uid()`. Elle est en 
 - Recette obligatoire avec Coach A, Coach B et un joueur lié aux deux.
 - Le calendrier reste l'autorité visuelle ; les suggestions sont calculées côté serveur et la demande finale repasse par le RPC de réservation existant.
 - L'analyse en langage naturel et l'appel OpenAI seront ajoutés dans une phase distincte après vérification de la configuration du secret `OPENAI_API_KEY` sur le projet de test.
+
+## État de la recette initiale — 25 novembre 2026
+
+- Migration SQL appliquée au projet Supabase de préproduction `whyylgiscrpqoahdzdkv`.
+- Fonction vérifiée dans PostgreSQL : `SECURITY DEFINER`, `search_path` vide, exécution limitée à `authenticated`.
+- Test joueur lié aux deux coachs : recherche Coach A autorisée et 64 combinaisons créneau/terrain retournées pour le jeudi 26 novembre 2026 sur 1 h.
+- Test Coach B : 0 proposition le jeudi 26 novembre, car sa plage récurrente du jeudi 18 h–19 h 30 est verrouillée par le cours collectif.
+- Test d'un joueur non lié à Coach A : accès refusé avec « Ce coach ne suit pas ce joueur. »
+- Test vacances de Noël : 0 proposition le 21 décembre 2026.
+- Déploiement Vercel de préproduction : état `READY`, commit `e803e7d`.
+- Vérification HTTP : page Coach In répond 200 ; `/api/config` renvoie bien l'URL du projet Supabase de préproduction `whyylgiscrpqoahdzdkv`.
+
+URL de recette : https://coach-in-test-2-5vv12vat6-coaching-axel1.vercel.app
+
+### À faire avant de considérer l'agent 1 comme validé
+
+- Connexion réelle et vérification visuelle avec Coach A, Coach B et le joueur lié aux deux.
+- Tester la demande depuis un créneau proposé, puis l'acceptation et le refus depuis le compte coach.
+- Vérifier les notifications et la concurrence en lançant deux demandes sur le même créneau.
+- La couche de compréhension en langage naturel n'est pas encore branchée : cette livraison est le moteur de recherche déterministe et son interface de recette. Elle ne prétend pas être un agent conversationnel complet.
