@@ -28,28 +28,39 @@ Privilèges vérifiés sur la base de test :
 - `anon` : exécution refusée ;
 - `SECURITY DEFINER` : désactivé pour cette fonction.
 
-### Vérifications déjà effectuées sur Supabase test
+### Vérifications Supabase effectuées
 
-- Coach A, jeudi 26 novembre 2026, 1 h : 64 propositions (16 départs de demi-heure × 4 terrains).
+- Coach A, jeudi 26 novembre 2026, 1 h : 64 propositions.
 - Joueur lié à Coach A, mêmes critères : 64 propositions.
 - Coach B, jeudi 26 novembre 2026, 1 h : 0 proposition, car le créneau collectif récurrent du jeudi est bloqué.
-- Coach B, vendredi 27 novembre 2026, 1 h : 108 propositions.
-- Indisponibilité temporaire de Coach A de 8 h à 9 h 30 : les propositions avant 9 h 30 sont retirées, pour le coach comme pour le joueur lié. La donnée de test a été annulée par rollback.
+- Coach B, vendredi 27 novembre 2026, 1 h : 108 propositions, également accessible au joueur lié.
+- Coach A, jeudi 26 novembre : 60 propositions pour 1 h 30 et 56 pour 2 h.
+- 8 mai 2027 : 20 propositions pour Coach A, ce qui confirme l'exception prévue dans Coach In.
+- Reprises Zone B du 4 janvier, 8 mars et 3 mai 2027 : propositions possibles ; les dates de reprise ne sont pas traitées comme des jours de vacances.
+- Indisponibilité temporaire de Coach A de 8 h à 9 h 30 : les propositions avant 9 h 30 sont retirées, pour le coach comme pour le joueur lié. La donnée temporaire a été annulée par rollback.
 - Durée de 45 minutes : rejetée.
 - Joueur non lié et coach essayant de consulter le planning d'un autre coach : accès refusé.
-- Les quatre dates de reprise Zone B ont été réalignées sur les bornes exactes de `src/domain/group-calendar.js`.
 
-### Tests du code
+### Tests automatisés et déploiement
 
-- Tests unitaires de validation de recherche : 7 réussis sur 7 avec Node 22.
-- La recette visuelle avec les comptes Coach A, Coach B et joueur reste à faire.
-- La vérification de la prévisualisation Vercel doit porter sur le dernier commit de la branche après le correctif de l'import dupliqué.
+- Workflow « Coach In automated tests » : succès, Node 22, tests métier et syntaxe JavaScript.
+- Workflow « Coach In QA campaign » : succès, Node 20 et Node 22, tests métier et syntaxe JavaScript.
+- Vercel Preview : état `READY`, cible `preview`, commit `270f50be`.
+- Variables Vercel Preview présentes : `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`, commentées comme configuration Supabase de préproduction.
+
+URL de préproduction : https://coach-in-test-2-ct0nt4cnv-coaching-axel1.vercel.app
+
+### Recette utilisateur encore nécessaire
+
+La compilation et les tests automatisés sont passés, mais il reste à vérifier visuellement l'interface après connexion réelle :
+1. Coach A recherche un créneau dans son planning.
+2. Coach B vérifie que ses cours collectifs ne sont jamais proposés.
+3. Le joueur lié aux deux coachs peut choisir Coach A ou Coach B sans mélange de planning.
+4. Le joueur sélectionne « Demander ce créneau » ; le formulaire habituel s'ouvre.
+5. Le coach accepte ou refuse la demande ; les notifications et la mise à jour du planning sont contrôlées.
 
 ### Étape suivante
 
-1. Vérifier le dernier déploiement Vercel Preview et l'interface après connexion.
-2. Tester les trois profils et le formulaire de demande existant.
-3. Vérifier acceptation, refus, notifications et demandes concurrentes.
-4. Ajouter ensuite la compréhension du langage naturel et les appels OpenAI, après confirmation de la présence du secret `OPENAI_API_KEY` sur le projet de test.
+Après cette recette, ajouter la compréhension du langage naturel et les appels OpenAI, après confirmation du secret `OPENAI_API_KEY` sur le projet de test.
 
 Aucune fusion vers `main` ni modification de la base de production n'est prévue à cette étape.
