@@ -123,7 +123,16 @@ D'autres migrations de production ont des noms différents de leurs fichiers ou 
 - `coach_physical_programs` / migration historique `coach_physical_training_library` ;
 - `profiles.player_color` / migration historique `add_unique_player_color_palette`.
 
-Il faut rechercher si ces changements sont inclus dans un fichier regroupé ou ont été appliqués manuellement avant de conclure à une absence de source. Les entrées d'historique dont le nom diffère peuvent également correspondre à des fichiers renommés ou regroupés. Leur SQL exact ne doit pas être reconstitué par supposition. La source de vérité doit être récupérée via l'historique Git, les sauvegardes de migration ou l'introspection du schéma, puis revue explicitement.
+Il faut rechercher si ces changements sont inclus dans un fichier regroupé ou ont été appliqués manuellement avant de conclure à une absence de source. Les entrées d'historique dont le nom diffère peuvent également correspondre à des fichiers renommés ou regroupés. Leur SQL exact ne doit pas être reconstitué par supposition.
+
+### Dépendance de migrations de parrainage
+
+Un ordre de dépendance précis est confirmé par le SQL :
+1. `20261124180000_coach_accounts_require_active_coach_referral.sql` crée notamment `coach_referral_invites` et `coach_referrals`.
+2. `20261124180100_fix_coach_referral_profile_insert_order.sql` corrige le trigger `handle_new_user` en utilisant ces tables.
+3. `20261124173902_coach_referral_stable_links_and_auto_rotation.sql` crée `coach_referral_links` avec une clé étrangère vers `coach_referral_invites`.
+
+Le troisième fichier porte un horodatage antérieur aux deux premiers, alors qu'il dépend d'eux. L'historique de production enregistre bien les versions dans l'ordre de dépendance `20261124165602`, `20261124165650`, puis `20261124173902`. La préproduction n'a pas ces migrations. **Ne jamais appliquer ces trois fichiers en se fiant au tri lexicographique actuel des noms de fichiers.** La chaîne de migration doit être corrigée et vérifiée avant toute application. La source de vérité doit être récupérée via l'historique Git, les sauvegardes de migration ou l'introspection du schéma, puis revue explicitement.
 
 La préproduction possède en plus les migrations propres à l'Agent Planning, dont `get_private_booking_suggestions`. Cette fonctionnalité est attendue dans la branche de préproduction et ne doit pas être supprimée au cours de l'alignement.
 
