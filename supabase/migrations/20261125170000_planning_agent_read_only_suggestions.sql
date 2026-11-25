@@ -69,10 +69,10 @@ begin
   -- Règles calendrier Zone B utilisées par Coach In.
   -- Les bornes sont inclusives, comme dans le calendrier de l'application.
   v_school_holiday := (
-    p_session_date between date '2026-10-17' and date '2026-11-02'
-    or p_session_date between date '2026-12-19' and date '2027-01-04'
-    or p_session_date between date '2027-02-20' and date '2027-03-08'
-    or p_session_date between date '2027-04-17' and date '2027-05-03'
+    p_session_date between date '2026-10-17' and date '2026-11-01'
+    or p_session_date between date '2026-12-19' and date '2027-01-03'
+    or p_session_date between date '2027-02-20' and date '2027-03-07'
+    or p_session_date between date '2027-04-17' and date '2027-05-02'
   );
   v_public_holiday := p_session_date in (
     date '2026-11-01', date '2026-11-11', date '2026-12-25', date '2027-01-01',
