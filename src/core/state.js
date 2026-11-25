@@ -38,6 +38,8 @@ export const state = {
   messagePartnerId: '',
   currentPage: 'dashboard',
   planningWeekOffset: 0,
+  planningAgentQuery: null,
+  planningAgentResults: [],
   filters: { playerType: 'all', search: '', libraryCategory: 'all', librarySearch: '' }
 };
 
@@ -45,7 +47,7 @@ export function resetState() {
   Object.assign(state, {
     user: null, profile: null, players: [], sessions: [], physicalPrograms: [], physicalTrainingPlan: null, evaluations: [], groupSessions: [], groupSeries: [], groupCourseCancellations: [],
     bookingRequests: [], sharedCourtOccupancy: [], library: [], customSessionExercises: [], sessionObjectives: [], notifications: [], notificationPreferences: null, criteria: [], evaluationCriteria: [],
-    challenges: [], achievements: [], playerCoaches: [], playerCoachHistory: [], coachInvitations: [], coachPlayerShares: [], adminCoaches: [], weeklyAvailability: [], weather: null, messages: [], videoAnalyses: [], videoCorrectionFollowups: [], playerProfileDetails: null, playerProfileDetailsById: {}, matchJournal: [], clubEvents: [], messagePartnerId: '', currentPage: 'dashboard', planningWeekOffset: 0,
+    challenges: [], achievements: [], playerCoaches: [], playerCoachHistory: [], coachInvitations: [], coachPlayerShares: [], adminCoaches: [], weeklyAvailability: [], weather: null, messages: [], videoAnalyses: [], videoCorrectionFollowups: [], playerProfileDetails: null, playerProfileDetailsById: {}, matchJournal: [], clubEvents: [], messagePartnerId: '', currentPage: 'dashboard', planningWeekOffset: 0, planningAgentQuery: null, planningAgentResults: [],
     filters: { playerType: 'all', search: '', libraryCategory: 'all', librarySearch: '' }
   });
 }
