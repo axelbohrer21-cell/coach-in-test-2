@@ -693,11 +693,13 @@ function bookingsPage(isCoach) {
   const coachCalendar = !isCoach ? (state.playerCoaches||[]).map(coach=>{
     const offset=Number(state.planningWeekOffset||0);
     const weekStart=new Date();weekStart.setHours(12,0,0,0);weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7)+offset*7);
+    const now=new Date();
+    const today=toLocalISO(now);
     const availability=(state.weeklyAvailability||[]).filter(row=>row.coach_id===coach.id&&row.active);
     const dayNames=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
     const days=Array.from({length:7},(_,index)=>{
       const date=new Date(weekStart);date.setDate(weekStart.getDate()+index);
-      const iso=date.toISOString().slice(0,10),weekday=(date.getDay()+6)%7;
+      const iso=toLocalISO(date),weekday=(date.getDay()+6)%7;
       const rules=availability.filter(row=>Number(row.weekday)===weekday);
       const slots=Array.from({length:28},(_,slotIndex)=>{
         const minute=480+slotIndex*30,endMinute=minute+30;
@@ -709,12 +711,13 @@ function bookingsPage(isCoach) {
         const shared=(state.sharedCourtOccupancy||[]).filter(row=>row.coach_id===coach.id&&row.session_date===iso&&!['cancelled','rejected'].includes(String(row.status||'').toLowerCase()));
         const busy=shared.length?shared.map(row=>({start:toMin(row.start_time),end:toMin(row.end_time),title:row.source_kind==='group_session'?'Cours collectif':'Cours particulier',kind:row.source_kind==='group_session'?'group':'busy'})):[...bookings.map(row=>({start:toMin(row.start_time||row.session_time),end:toMin(row.start_time||row.session_time)+Number(row.duration_minutes||60),title:row.status==='pending'?'Demande en attente':'Cours réservé',kind:'busy'})),...sessions.map(row=>({start:toMin(row.session_time),end:toMin(row.session_time)+Number(row.duration_minutes||60),title:'Cours particulier',kind:'busy'})),...groups.map(row=>({start:toMin(row.start_time),end:toMin(row.end_time),title:'Cours collectif',kind:'group'}))];
         const event=busy.find(row=>row.start<endMinute&&row.end>minute);
-        const past=iso<new Date().toISOString().slice(0,10)||(iso===new Date().toISOString().slice(0,10)&&minute<=new Date().getHours()*60+new Date().getMinutes());
+        const slotStart=new Date(`${iso}T${time}:00`);
+        const past=iso<today||slotStart.getTime()-now.getTime()<30*60*1000;
         const available=rules.some(rule=>minute>=toMin(rule.start_time)&&endMinute<=toMin(rule.end_time))&&!event&&!past;
         const content=event?'<div class="calendar-event '+(event.kind==='group'?'group-event':'player-event')+'"><div class="calendar-event-main"><b>'+time.replace(':','h')+'</b><strong>'+escapeHtml(event.title)+'</strong></div></div>':available?'<button class="calendar-hour-slot" data-book-slot data-coach="'+coach.id+'" data-date="'+iso+'" data-time="'+time+'" data-court="'+(rules.find(rule=>minute>=toMin(rule.start_time)&&endMinute<=toMin(rule.end_time))?.court_number||1)+'" aria-label="Réserver '+time+'"></button>':'';
         return '<div class="calendar-hour-row"><span class="calendar-hour-label">'+time.replace(':','h')+'</span><div class="calendar-hour-content">'+content+'</div></div>';
       }).join('');
-      return '<div class="calendar-day '+(iso===new Date().toISOString().slice(0,10)?'calendar-day-today':'')+'"><div class="calendar-day-head"><strong>'+dayNames[index]+'</strong><span>'+date.getDate()+'</span><small>'+date.toLocaleDateString('fr-FR',{month:'short'})+'</small></div><div class="calendar-hours">'+slots+'</div></div>';
+      return '<div class="calendar-day '+(iso===today?'calendar-day-today':'')+'"><div class="calendar-day-head"><strong>'+dayNames[index]+'</strong><span>'+date.getDate()+'</span><small>'+date.toLocaleDateString('fr-FR',{month:'short'})+'</small></div><div class="calendar-hours">'+slots+'</div></div>';
     }).join('');
     const label=formatDate(weekStart,{day:'2-digit',month:'short'})+' – '+formatDate(new Date(weekStart.getTime()+6*86400000),{day:'2-digit',month:'short',year:'numeric'});
     return '<section class="panel"><div class="section-heading"><div><p class="eyebrow">PLANNING HEBDOMADAIRE · 8 H–22 H</p><h2>'+escapeHtml(coach.first_name)+' '+escapeHtml(coach.last_name)+'</h2><p class="tiny muted">'+label+' · 7 jours · créneaux de 30 minutes</p></div><div class="toolbar planning-week-controls"><button class="btn subtle" data-week="-1">← Semaine</button><button class="btn subtle" data-week="0">Aujourd’hui</button><button class="btn subtle" data-week="1">Semaine →</button></div></div><div class="planning-legend"><span><i class="legend-private"></i>Créneau occupé</span><span><i class="legend-adults"></i>Collectif</span><span><i class="legend-completed"></i>Disponible · cliquer pour réserver</span></div><div class="calendar-week">'+days+'</div></section>';
