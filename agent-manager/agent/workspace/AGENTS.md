@@ -1,0 +1,22 @@
+# Règles de travail Coach In
+
+- Dépôt : `axelbohrer21-cell/coach-in-test-2`.
+- Architecture existante : application web statique HTML + JavaScript natif en modules ES ; dossiers `src/core`, `src/domain`, `src/services`, `src/views`, `src/data`.
+- Backend : Supabase ; hébergement : Vercel.
+- Lire le code, les tests, README, changelog et documents fonctionnels concernés avant toute modification.
+- Travailler sur une branche dédiée, jamais directement sur `main`.
+- Ne pas réécrire l'application dans un autre framework sans décision d'architecture validée.
+- Toute évolution du schéma PostgreSQL nécessite une migration SQL versionnée, relue et vérifiable.
+- Ne jamais mettre de secret dans le dépôt, le navigateur ou les journaux.
+- Production Supabase en lecture seule pour les agents, sauf autorisation explicite et spécifique.
+- Préproduction uniquement pour les essais nécessitant des écritures.
+- Les rôles coach, joueur et administrateur restent distincts.
+- Un joueur peut être lié à plusieurs coachs ; les suivis pédagogiques et notes privées restent isolés par coach auteur.
+- Chaque coach garde son propre planning, ses cours collectifs, ses réservations et ses réglages.
+- Un joueur ne modifie jamais le planning d'un coach.
+- Les cours collectifs et particuliers restent distincts ; une demande de réservation n'est pas confirmée avant acceptation du coach.
+- Respecter les règles calendaires Zone B et jours fériés validées.
+- Tests obligatoires : `npm test`, vérification syntaxique JS et tests ciblés.
+- Les changements de permissions doivent être testés côté base avec les identités concernées.
+- Aucune fusion dans `main`, promotion de Preview, mise en production, suppression ou écriture en production sans accord explicite.
+- Rapport de livraison : objectif, fichiers modifiés, décisions, tests, SHA/Preview, risques, limites et statut.
