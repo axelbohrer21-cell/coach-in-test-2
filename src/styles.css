@@ -150,6 +150,9 @@
 .calendar-hour-row{display:grid;grid-template-columns:36px minmax(0,1fr);gap:4px;min-height:32px}
 .calendar-hour-label{padding-top:6px;color:#8298b2;font-size:9px;font-variant-numeric:tabular-nums}
 .calendar-hour-content{min-width:0;min-height:28px;border-bottom:1px solid #1c3049}
+.calendar-hour-row-available .calendar-hour-content{background:rgba(72,190,151,.09);border-bottom-color:rgba(72,190,151,.28)}
+.calendar-hour-row-unavailable .calendar-hour-content{background:rgba(120,140,165,.025)}
+.calendar-hour-row-available .calendar-hour-label{color:#75d9b3}
 .calendar-hour-slot{width:100%;min-height:26px;padding:3px 5px;border:1px dashed #29435f;border-radius:6px;background:transparent;color:#8ba4c1;font-size:9px;text-align:left;cursor:pointer}
 .calendar-hour-slot:hover{border-color:var(--cyan);color:var(--cyan);background:#102a42}
 .calendar-hour-content .calendar-event{margin:2px 0;padding:5px;font-size:9px}
