@@ -6,7 +6,6 @@ import { dataService } from './services/data.js';
 import { pageMeta, renderPage, libraryItemsForCoach, libraryCard } from './views/pages.js';
 import { bookingService } from './services/booking.js';
 import { planningAgentService } from './services/planning-agent.js';
-import { planningAgentService } from './services/planning-agent.js';
 import { notificationService } from './services/notifications.js';
 import { pushService } from './services/push.js';
 import { calculateAgeCategory, toLocalISO } from './domain/tennis.js';
@@ -294,7 +293,6 @@ $('#page-content').addEventListener('click', async event=>{
     return;
   }
   const action=event.target.closest('[data-action]')?.dataset.action;
-  if(action==='planning-agent-search') return searchPlanningAgent();
   if(action==='planning-agent-search') return searchPlanningAgent();
   if(action==='generate-session') return sessionBuilderDialog();
   const reviewSession=event.target.closest('[data-review-session]'); if(reviewSession) return sessionReviewDialog(reviewSession.dataset.reviewSession);
