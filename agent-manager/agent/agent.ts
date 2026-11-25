@@ -33,7 +33,12 @@ const freeQuotaProtection: LanguageModelV3Middleware = {
       return await doGenerate();
     } catch (error) {
       if (!isRateLimitError(error)) throw error;
-      return fallbackModel.doGenerate(params);
+      // Qwen's Groq free-tier output-token-per-minute cap is 1,000.
+      // Keep a safety margin and clamp only the fallback request.
+      return fallbackModel.doGenerate({
+        ...params,
+        maxOutputTokens: Math.min(params.maxOutputTokens ?? 900, 900),
+      });
     }
   },
   wrapStream: async ({ doStream, params }) => {
@@ -41,7 +46,11 @@ const freeQuotaProtection: LanguageModelV3Middleware = {
       return await doStream();
     } catch (error) {
       if (!isRateLimitError(error)) throw error;
-      return fallbackModel.doStream(params);
+      // Apply the same Qwen-specific cap to streaming fallback requests.
+      return fallbackModel.doStream({
+        ...params,
+        maxOutputTokens: Math.min(params.maxOutputTokens ?? 900, 900),
+      });
     }
   },
 };
