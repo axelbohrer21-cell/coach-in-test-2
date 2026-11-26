@@ -26,6 +26,17 @@ Chaque délégation contient :
 - Le QA démarre après disponibilité du worktree exact contenant les changements.
 - Si deux agents ont besoin de modifier le même fichier, séquencer les tâches et confier le fichier à un seul responsable.
 
+## 3 bis. Contrats de transmission par spécialité
+
+- `product_owner` transmet au Manager et à l'Architecte les parcours concernés, règles métier confirmées, exclusions et critères d'acceptation.
+- `solution_architect` transmet aux développeurs les modules concernés, contrats, dépendances, périmètres de fichiers, stratégie de données, tests et risques.
+- `ui_designer` transmet au `frontend_developer` la structure des écrans, composants, interactions, états, règles responsive/accessibilité et critères UI. Le designer ne modifie pas les fichiers.
+- `supabase_expert` transmet au `backend_developer` l'analyse de schéma, les contraintes, RPC, migrations, index, ordre d'application et contrôles de rollback. Il n'exécute aucun SQL distant.
+- `data_security_reviewer` examine indépendamment les changements de permissions, RLS, Storage et données privées ; son avis ne remplace pas les tests d'accès.
+- `frontend_developer` et `backend_developer` livrent des diffs distincts, les fichiers exacts, les commandes et leurs codes de sortie, ainsi que les preuves pour chaque critère.
+- Le Manager consolide les diffs dans le worktree d'intégration avant de transmettre à `qa_engineer` ; QA vérifie l'ensemble en lecture seule.
+- `ux_reviewer`, `qa_reviewer` et `tennis_expert` fournissent des revues indépendantes ciblées ; ils ne certifient que les éléments réellement transmis.
+
 ## 4. Passation entre agents
 Le Manager transmet lui-même le livrable précédent au suivant : décisions, chemins exacts, extraits de diff, résultats de commandes, tests, limites et questions ouvertes. Les agents ne supposent pas qu'ils peuvent lire les conversations ou worktrees des autres.
 
