@@ -49,3 +49,5 @@ jobs:
         run: npm run test:security
       - name: Typecheck authored agents and workflows
         run: npm run typecheck
+      - name: Typecheck Manager web interface
+        run: npm run typecheck:web
