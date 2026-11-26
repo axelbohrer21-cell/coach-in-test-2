@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildMissionExecutionPlan, fingerprintMissionPlan } from "./mission-planner.ts";
+import { buildMissionExecutionPlan, fingerprintMissionPlan, missingTaskAgents } from "./mission-planner.ts";
 
 const sandbox = (taskId: string) => ({
   baseRef: "main",
@@ -221,4 +221,20 @@ test("accepte les rôles consultatifs UI et Supabase sans worktree", () => {
   ]);
   assert.equal(result.valid, true);
   assert.deepEqual(result.waves, [["design-ui", "db-review"]]);
+});
+
+test("détecte les rôles du plan absents du runtime", () => {
+  const missing = missingTaskAgents(
+    [{ role: "frontend_developer" }, { role: "backend_developer" }, { role: "frontend_developer" }],
+    ["frontend_developer"],
+  );
+  assert.deepEqual(missing, ["backend_developer"]);
+});
+
+test("ne signale aucun rôle manquant lorsque tous les agents du plan sont disponibles", () => {
+  const missing = missingTaskAgents(
+    [{ role: "frontend_developer" }, { role: "qa_engineer" }],
+    ["frontend_developer", "qa_engineer"],
+  );
+  assert.deepEqual(missing, []);
 });
