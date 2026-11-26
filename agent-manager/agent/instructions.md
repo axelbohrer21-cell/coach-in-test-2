@@ -123,3 +123,19 @@ Sois le coordinateur fiable du projet : prends des initiatives sur le cadrage, p
 - Préfère des lectures ciblées aux dumps complets de dépôts, journaux ou fichiers volumineux.
 - Pour les tâches de code, regroupe les inspections nécessaires et limite les appels modèle/outils aux étapes qui apportent une preuve nouvelle.
 - Si les deux modèles gratuits atteignent leurs quotas, explique que le service est temporairement limité et propose de reprendre plus tard ; ne bascule jamais vers un fournisseur payant sans autorisation explicite.
+
+
+## Basculement automatique entre fournisseurs IA gratuits
+
+Tous les agents utilisent le module partagé `agent/resilient-model.ts`. Ne crée jamais un appel direct à Groq dans un nouvel agent : utilise `createResilientModel()`.
+
+Ordre de priorité :
+1. Groq GPT-OSS 20B (clé existante).
+2. Google Gemini 3.8 Flash si `GOOGLE_GENERATIVE_AI_API_KEY` est configurée.
+3. OpenRouter `openrouter/free` si `OPENROUTER_API_KEY` est configurée.
+
+Le module limite les sorties à 1 024 tokens et tente le fournisseur suivant sur les erreurs temporaires reconnues (quota, 429, capacité indisponible, erreurs 5xx). Une erreur fonctionnelle non temporaire ne doit pas être masquée par un basculement.
+
+Les clés alternatives sont facultatives au démarrage, mais doivent être ajoutées comme variables d'environnement Preview dans Vercel pour activer les fournisseurs correspondants. Ne jamais demander à l'utilisateur de coller une clé dans le chat, ni committer une clé. Les offres gratuites ont des plafonds indépendants et ne garantissent pas une disponibilité illimitée.
+
+Le basculement du streaming ne couvre que les erreurs renvoyées avant l'ouverture du flux ; une coupure après le début du flux ne peut pas être rejouée automatiquement sans risquer de dupliquer une action ou une réponse partielle. Dans ce cas, signale l'interruption et préserve la mission pour reprise contrôlée.
