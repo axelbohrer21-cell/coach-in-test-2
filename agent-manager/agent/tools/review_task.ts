@@ -22,9 +22,42 @@ const reviewSchema = z.object({
   assumptions: z.array(z.string()),
 });
 
+function selectReviewers(task: string, context?: string) {
+  const text = `${task}\n${context ?? ""}`.toLowerCase();
+  const selected = new Set<string>(["qa_reviewer"]);
+  const reasons: string[] = ["QA est inclus par défaut pour vérifier les critères et les cas limites."];
+
+  const rules: Array<{ id: typeof reviewerIds[number]; pattern: RegExp; reason: string }> = [
+    {
+      id: "tennis_expert",
+      pattern: /tennis|joueur|coach|classement|séance|exercice|tournoi|cours collectif|cours particulier|réservation|planning|calendrier|zone b|bilan pédagogique|défi/,
+      reason: "Le périmètre touche aux règles métier ou aux parcours tennis.",
+    },
+    {
+      id: "ux_reviewer",
+      pattern: /interface|frontend|front-end|écran|visuel|design|ergonomie|mobile|iphone|navigation|accessibilité|responsive|formulaire|affichage/,
+      reason: "Le périmètre touche à l'interface, à l'accessibilité ou à l'expérience mobile.",
+    },
+    {
+      id: "data_security_reviewer",
+      pattern: /sécurité|auth|authentification|autorisation|rls|supabase|base de données|données|confidentialité|secret|permission|multi-coach|isolation|migration|stockage/,
+      reason: "Le périmètre touche aux données, aux permissions ou à la confidentialité.",
+    },
+  ];
+
+  for (const rule of rules) {
+    if (rule.pattern.test(text)) {
+      selected.add(rule.id);
+      reasons.push(rule.reason);
+    }
+  }
+
+  return { reviewers: [...selected], reasons };
+}
+
 export default defineWorkflowTool({
   description:
-    "Run a controlled independent review of a non-trivial Coach In task. Always invokes plan_auditor, then the selected QA, tennis, UX, and/or data-security specialists in parallel. Waits for every structured result and reports partial or blocked reviews honestly.",
+    "Run an independent review for a non-trivial Coach In task. Always invokes plan_auditor and QA; automatically adds tennis, UX, and data-security specialists based on task/context unless the caller explicitly selects reviewers. Waits for structured results and reports partial or blocked reviews honestly.",
   inputSchema: z.object({
     task: z.string().min(8).max(12000),
     context: z.string().max(12000).optional(),
@@ -33,7 +66,9 @@ export default defineWorkflowTool({
   async execute({ task, context, reviewers }, ctx) {
     "use workflow";
 
-    const selected = [...new Set(["plan_auditor", ...(reviewers ?? ["qa_reviewer"])])];
+    const automatic = reviewers === undefined ? selectReviewers(task, context) : null;
+    const specialistIds = reviewers ?? automatic!.reviewers;
+    const selected = [...new Set(["plan_auditor", ...specialistIds])];
     const available = new Set(Object.keys(ctx.agents));
     const missing = selected.filter((name) => !available.has(name));
 
@@ -117,6 +152,8 @@ export default defineWorkflowTool({
       task,
       status,
       reviewers: selected,
+      selectionMode: reviewers === undefined ? "automatic" : "explicit",
+      selectionReasons: automatic?.reasons ?? ["La liste des spécialistes a été explicitement fournie par le Manager."],
       evidenceMode: "context_only",
       completedCount: completed.length,
       failedCount,
