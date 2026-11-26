@@ -1,6 +1,8 @@
 export const taskRoles = [
   "product_owner",
   "solution_architect",
+  "ui_designer",
+  "supabase_expert",
   "frontend_developer",
   "backend_developer",
   "qa_engineer",
