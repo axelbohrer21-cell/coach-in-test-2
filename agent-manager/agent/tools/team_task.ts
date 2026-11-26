@@ -1,6 +1,7 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
 import { validateDependencyHandoff, validateTaskCompletion } from "../utils/coordination.js";
+import { buildMissionExecutionPlan } from "../utils/mission-planner.js";
 
 const roles = [
   "product_owner",
@@ -55,10 +56,18 @@ export default defineWorkflowTool({
   inputSchema: z.object({
     missionId: z.string().min(3).max(80),
     taskId: z.string().min(3).max(80),
-    dependsOn: z.array(z.string().min(3).max(80)).max(12).optional(),
+    missionPlan: z.object({
+      missionId: z.string().min(3).max(80),
+      title: z.string().min(3).max(240),
+      tasks: z.array(z.object({
+        taskId: z.string().min(3).max(80),
+        role: z.enum(roles),
+        dependsOn: z.array(z.string().min(3).max(80)).max(12),
+        writeScope: z.array(z.string().min(1).max(240)).max(40),
+        acceptanceCriteria: z.array(z.string().min(3).max(500)).min(1).max(12),
+      })).min(1).max(20),
+    }),
     dependencyResults: z.array(dependencyResultSchema).max(12).optional(),
-    acceptanceCriteria: z.array(z.string().min(3).max(500)).min(1).max(12)
-      .refine((criteria) => new Set(criteria.map((item) => item.trim())).size === criteria.length, "Les critères d’acceptation doivent être uniques."),
     role: z.enum(roles),
     task: z.string().min(8).max(12000),
     context: z.string().max(16000).optional(),
@@ -68,10 +77,31 @@ export default defineWorkflowTool({
       .refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith("."), "Invalid branch name").optional(),
     worktreePath: z.string().regex(/^\/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}$/).optional(),
   }),
-  async execute({ missionId, taskId, dependsOn, dependencyResults, acceptanceCriteria, role, task, context, baseRef, workBranch, worktreePath }, ctx) {
+  async execute({ missionId, taskId, missionPlan, dependencyResults, role, task, context, baseRef, workBranch, worktreePath }, ctx) {
     "use workflow";
 
-    const requiredDependencies = dependsOn ?? [];
+    if (missionPlan.missionId !== missionId) {
+      return { missionId, taskId, role, status: "blocked", message: "Le missionId ne correspond pas au plan validé." };
+    }
+
+    const executionPlan = buildMissionExecutionPlan(missionPlan.tasks.map(({ taskId: id, role: taskRole, dependsOn, writeScope }) => ({
+      taskId: id,
+      role: taskRole,
+      dependsOn,
+      writeScope,
+    })));
+    if (!executionPlan.valid) {
+      return { missionId, taskId, role, status: "blocked", planErrors: executionPlan.errors };
+    }
+
+    const plannedTask = executionPlan.tasks.find((item) => item.taskId === taskId);
+    const sourceTask = missionPlan.tasks.find((item) => item.taskId === taskId);
+    if (!plannedTask || !sourceTask || plannedTask.role !== role) {
+      return { missionId, taskId, role, status: "blocked", message: "La tâche ou son rôle ne correspond pas au plan de mission." };
+    }
+
+    const acceptanceCriteria = sourceTask.acceptanceCriteria;
+    const requiredDependencies = plannedTask.executionDependsOn;
     const handoff = validateDependencyHandoff(requiredDependencies, dependencyResults ?? []);
 
     if (!handoff.valid) {
