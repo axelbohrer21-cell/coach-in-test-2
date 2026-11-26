@@ -68,7 +68,7 @@ export default defineWorkflowTool({
 
     const automatic = reviewers === undefined ? selectReviewers(task, context) : null;
     const specialistIds = reviewers ?? automatic!.reviewers;
-    const selected = [...new Set(["plan_auditor", ...specialistIds])];
+    const selected = [...new Set(["plan_auditor", "qa_reviewer", ...specialistIds])];
     const available = new Set(Object.keys(ctx.agents));
     const missing = selected.filter((name) => !available.has(name));
 
