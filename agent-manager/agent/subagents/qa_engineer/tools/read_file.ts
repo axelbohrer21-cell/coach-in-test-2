@@ -3,7 +3,7 @@ import { readFile } from "eve/tools/read_file";
 
 const allowedPath = (path: string) =>
   path.startsWith("/workspace/coach-in-worktrees/") &&
-  !path.replace(/\\\\/g, "/").split("/").includes("..");
+  !path.replace(/\\/g, "/").split("/").includes("..");
 
 export default defineTool({
   ...readFile,
