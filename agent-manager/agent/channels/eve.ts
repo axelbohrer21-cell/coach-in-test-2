@@ -22,7 +22,8 @@ const betterAuthSession: AuthFn<Request> = async (request) => {
   };
 };
 
-const vercelAuth = process.env.VERCEL ? [vercelOidc()] : [];
+// Vercel injects VERCEL_PROJECT_ID in hosted deployments. Local/CI discovery has no trusted deployment identity.
+const vercelAuth = process.env.VERCEL_PROJECT_ID ? [vercelOidc()] : [];
 
 export default eveChannel({
   auth: [betterAuthSession, ...vercelAuth, localDev()],
