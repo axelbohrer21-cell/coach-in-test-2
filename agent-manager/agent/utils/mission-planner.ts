@@ -10,6 +10,11 @@ export const taskRoles = [
   "documentation_specialist",
 ] as const;
 
+export function missingTaskAgents(tasks: Array<Pick<MissionTask, "role">>, availableAgentIds: string[]): string[] {
+  const available = new Set(availableAgentIds);
+  return [...new Set(tasks.map((task) => task.role))].filter((role) => !available.has(role)).sort();
+}
+
 export type MissionTask = {
   taskId: string;
   role: typeof taskRoles[number];
