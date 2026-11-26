@@ -34,5 +34,7 @@ jobs:
         run: npm install
       # Eve's Vercel sandbox templates require Vercel OIDC. GitHub Actions does
       # not receive that token; the protected Vercel Preview performs eve build.
+      - name: Test automatic reviewer routing
+        run: npm run test:routing
       - name: Typecheck authored agents and workflows
         run: npm run typecheck
