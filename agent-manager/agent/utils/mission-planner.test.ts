@@ -13,18 +13,20 @@ test("planifie en parallèle les tâches indépendantes aux périmètres disjoin
   const result = buildMissionExecutionPlan([
     developer("front-a", ["src/views/calendar.js"]),
     { taskId: "product", role: "product_owner" as const, dependsOn: [], writeScope: [] },
+    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a"], writeScope: [] },
   ]);
   assert.equal(result.valid, true);
-  assert.deepEqual(result.waves, [["front-a", "product"]]);
+  assert.deepEqual(result.waves, [["front-a", "product"], ["qa"]]);
 });
 
 test("sérialise les tâches indépendantes dont les périmètres se chevauchent", () => {
   const result = buildMissionExecutionPlan([
     developer("front-a", ["src/views"]),
     developer("front-b", ["src/views/calendar.js"]),
+    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a", "front-b"], writeScope: [] },
   ]);
   assert.equal(result.valid, true);
-  assert.deepEqual(result.waves, [["front-a"], ["front-b"]]);
+  assert.deepEqual(result.waves, [["front-a"], ["front-b"], ["qa"]]);
   assert.deepEqual(result.tasks[1].executionDependsOn, ["front-a"]);
 });
 
@@ -38,6 +40,7 @@ test("bloque un cycle de dépendances", () => {
   const result = buildMissionExecutionPlan([
     developer("front-a", ["src/a.js"], ["front-b"]),
     developer("front-b", ["src/b.js"], ["front-a"]),
+    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a", "front-b"], writeScope: [] },
   ]);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes("Cycle")));
@@ -76,4 +79,21 @@ test("bloque les chemins absolus, traversants ou avec jokers", () => {
     assert.equal(result.valid, false);
     assert.ok(result.errors.some((error) => error.includes("chemin de modification invalide")));
   }
+});
+
+
+test("exige une tâche QA pour toute mission avec développement", () => {
+  const result = buildMissionExecutionPlan([developer("front-a", ["src/a.js"])]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("inclure une tâche QA")));
+});
+
+test("exige que QA dépende de tous les développeurs", () => {
+  const result = buildMissionExecutionPlan([
+    developer("front-a", ["src/a.js"]),
+    developer("back-a", ["supabase/functions"]),
+    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a"], writeScope: [] },
+  ]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("toutes les tâches développeur")));
 });
