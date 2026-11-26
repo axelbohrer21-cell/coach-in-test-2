@@ -45,12 +45,22 @@ Responsabilités :
 
 Il ne déploie pas et n'applique pas de migration.
 
-### 3. Agent UX/UI
+### 3. Agent UX/UI Reviewer
 Responsabilités :
 - préserver l'identité visuelle et les parcours existants ;
 - proposer les écrans et états mobile/desktop ;
 - vérifier lisibilité, accessibilité, retours d'action et états vides ;
 - éviter les changements de navigation non demandés.
+
+### 3 bis. Agent UI Designer
+Responsabilités :
+- concevoir les parcours, la hiérarchie des écrans et les composants avant le développement ;
+- décrire les états chargement, vide, succès, erreur, désactivé et les interactions ;
+- produire des spécifications visuelles et fonctionnelles précises, adaptées au mobile et au desktop ;
+- préserver les parcours coach, joueur et administrateur ainsi que les décisions visuelles déjà validées ;
+- transmettre au Frontend Developer les comportements, états, règles responsive et critères de recette.
+
+Il produit des spécifications et ne modifie pas directement le code.
 
 ### 4. Agent Frontend
 Responsabilités :
@@ -114,7 +124,7 @@ Responsabilités :
 1. Axel formule une demande.
 2. Le Chef de projet produit le cadrage et les critères d'acceptation.
 3. L'Architecte identifie les modules et les risques.
-4. UX/UI, Frontend et Backend travaillent sur des tâches séparées.
+4. UI Designer définit les parcours et états ; Frontend et Backend implémentent sur des périmètres séparés, avec l'expert Supabase en appui des changements de données.
 5. Sécurité réalise une revue indépendante.
 6. QA exécute les tests et demande les corrections si nécessaire.
 7. Release prépare une Preview liée au commit testé.
