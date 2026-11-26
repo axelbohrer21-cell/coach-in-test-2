@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { auth, isManagerAllowedEmail } from "@/lib/auth";
 import { AgentChat } from "./agent-chat";
-import { AccountControl, SignIn } from "./web-chat-auth";
+import { AccountControl, AccessDenied, SignIn } from "./web-chat-auth";
 
 export async function AuthenticatedAgentChat({
   sessionId,
@@ -12,6 +12,7 @@ export async function AuthenticatedAgentChat({
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return <SignIn />;
+  if (!isManagerAllowedEmail(session.user.email)) return <AccessDenied />;
 
   return (
     <>
