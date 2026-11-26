@@ -39,6 +39,8 @@ jobs:
         run: npm run test:routing
       - name: Test dependency handoffs and review aggregation
         run: npm run test:coordination
+      - name: Test mission dependency planner
+        run: npm run test:planning
       - name: Test mission memory privacy guard
         run: npm run test:memory-privacy
       - name: Test Manager access control
