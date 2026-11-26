@@ -15,8 +15,11 @@ export function validateDependencyHandoff(requiredIds: string[], supplied: Depen
     const matches = supplied.filter((item) => item.taskId === id);
     return matches.length !== 1 ||
       matches[0].status !== "completed" ||
+      matches[0].summary.trim().length === 0 ||
       matches[0].deliverables.length === 0 ||
-      matches[0].evidence.length === 0;
+      matches[0].deliverables.some((item) => item.trim().length === 0) ||
+      matches[0].evidence.length === 0 ||
+      matches[0].evidence.some((item) => item.trim().length === 0);
   });
 
   return {
