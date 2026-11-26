@@ -154,3 +154,13 @@ test("bloque un test réussi sans preuve", () => {
   assert.equal(result.valid, false);
   assert.ok(result.reasons.some((reason) => reason.includes("aucune preuve")));
 });
+
+
+test("refuse un résultat de dépendance qui n'a pas été déclaré", () => {
+  const result = validateDependencyHandoff(["task-1"], [
+    completed("task-1"),
+    completed("task-unrelated"),
+  ]);
+  assert.equal(result.valid, false);
+  assert.deepEqual(result.unexpectedDependencyIds, ["task-unrelated"]);
+});
