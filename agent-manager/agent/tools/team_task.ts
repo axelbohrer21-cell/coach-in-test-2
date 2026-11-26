@@ -25,8 +25,8 @@ const dependencyResultSchema = z.object({
 
 const workSchema = z.object({
   status: z.enum(["completed", "blocked", "failed", "needs_input", "not_started"]),
-  summary: z.string(),
-  deliverables: z.array(z.string()),
+  summary: z.string().min(1),
+  deliverables: z.array(z.string().min(1)).min(1),
   filesChanged: z.array(z.string()),
   commandsRun: z.array(z.object({
     command: z.string(),
