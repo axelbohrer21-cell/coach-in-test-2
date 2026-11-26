@@ -20,6 +20,7 @@
     "test:coordination": "node --experimental-strip-types --test agent/utils/coordination.test.ts",
     "test:planning": "node --experimental-strip-types --test agent/utils/mission-planner.test.ts",
     "test:agents": "node --experimental-strip-types --test agent/utils/agent-registry.test.ts",
+    "check:discovery": "eve info",
     "test:memory-privacy": "node --experimental-strip-types --test agent/utils/mission-memory-privacy.test.ts",
     "test:security": "node --experimental-strip-types --test apps/web/lib/access-control.test.ts"
   },
