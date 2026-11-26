@@ -1,5 +1,5 @@
 import { defineWorkflowTool } from "eve/tools";
-import { missionMemoryInputSchema } from "./mission-memory-schema.js";
+import { missionMemoryInputSchema } from "../utils/mission-memory-schema.js";
 import { executeMissionMemoryStep } from "./mission-memory-store.js";
 
 export default defineWorkflowTool({
