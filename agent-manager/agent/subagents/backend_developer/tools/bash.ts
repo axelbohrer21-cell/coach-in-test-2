@@ -1,18 +1,13 @@
 import { defineTool } from "eve/tools";
 import { bash } from "eve/tools/bash";
-
-const worktreePrefix = "/workspace/coach-in-worktrees/";
-const shellControl = /[;&|<>\x60$\n\r]/;
-const forbidden = /(?:^|\s)(?:git\s+(?:commit|push|merge|rebase|reset|clean|cherry-pick|tag)|gh\s+pr\s+(?:merge|create)|vercel(?:\s|$)|supabase(?:\s|$)|curl(?:\s|$)|wget(?:\s|$)|ssh(?:\s|$)|scp(?:\s|$)|sudo(?:\s|$)|rm(?:\s|$)|chmod(?:\s|$)|chown(?:\s|$)|python(?:\s|$)|perl(?:\s|$)|ruby(?:\s|$)|node\s+-e)/i;
-const allowed = /^(?:git -C \/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60} (?:status(?: --short)?|diff(?: --check| --stat| --name-only)?|log --oneline|rev-parse --abbrev-ref HEAD|ls-files)$|npm --prefix \/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}\/agent-manager (?:run (?:typecheck|build|test:routing|test:coordination|test:planning|test:agents|test:memory-privacy|test:security)|test)$|node --experimental-strip-types --test \/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}\/[^\s]+\.test\.ts$)/;
+import { isDeveloperShellCommandAllowed } from "../../../utils/subagent-tool-guards.js";
 
 export default defineTool({
   ...bash,
-  description: "Run non-destructive project inspection and test commands only against the assigned Coach In worktree. Git history rewriting, commits, pushes, deployments, network tools and shell-based file editing are blocked.",
+  description: "Run approved Git inspection and local project test/build scripts only against the assigned Coach In worktree. Commits, pushes, deployments, network tools and arbitrary shell commands are blocked.",
   async execute(input, ctx) {
-    const command = input.command.trim();
-    if (shellControl.test(command) || forbidden.test(command) || !allowed.test(command) || !command.includes(worktreePrefix)) {
-      throw new Error("Commande refusée : utilise uniquement git status/diff/log/lecture, les tests autorisés ou le typecheck/build dans le worktree attribué. Les modifications passent par write_file/edit_file dans ce worktree.");
+    if (!isDeveloperShellCommandAllowed(input.command)) {
+      throw new Error("Commande refusée : seuls git status/diff/log/lecture et les scripts locaux autorisés sont disponibles dans le worktree attribué.");
     }
     return bash.execute(input, ctx);
   },
