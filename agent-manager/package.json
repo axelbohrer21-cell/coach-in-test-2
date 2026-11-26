@@ -16,6 +16,7 @@
     "dev:all": "vercel dev --local",
     "typecheck": "tsc --noEmit --project tsconfig.agents.json",
     "test:routing": "node --experimental-strip-types --test agent/utils/reviewer-routing.test.ts",
+    "test:coordination": "node --experimental-strip-types --test agent/utils/coordination.test.ts",
     "test:security": "node --experimental-strip-types --test apps/web/lib/access-control.test.ts"
   },
   "dependencies": {
@@ -29,7 +30,7 @@
     "@streamdown/mermaid": "^1.0.2",
     "@tailwindcss/postcss": "^4.3.0",
     "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
+    "clsx": "^2.1.0",
     "eve": "1.5.0",
     "lucide-react": "^1.16.0",
     "nanoid": "^5.1.11",
