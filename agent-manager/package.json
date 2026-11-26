@@ -55,5 +55,10 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "@vercel/oidc": "4.0.7",
+    "@vercel/cli-config": "0.3.7",
+    "zod": "4.6.7"
   }
 }
