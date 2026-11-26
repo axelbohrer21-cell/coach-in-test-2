@@ -83,6 +83,7 @@ test("le shell QA autorise seulement les contrôles et tests en lecture seule", 
   assert.equal(isQaShellCommandAllowed("git -C " + root + " diff --check"), true);
   assert.equal(isQaShellCommandAllowed("npm --prefix " + root + "/agent-manager run test:planning"), true);
   assert.equal(isQaShellCommandAllowed("npm --prefix " + root + " test"), true);
+  assert.equal(isQaShellCommandAllowed("node --check " + root + "/src/app.js"), true);
   assert.equal(isQaShellCommandAllowed("npm --prefix " + root + "/agent-manager run build"), false);
   assert.equal(isQaShellCommandAllowed("git -C " + root + " push"), false);
   assert.equal(isQaShellCommandAllowed("git -C " + root + " status --short && touch hack.ts"), false);
