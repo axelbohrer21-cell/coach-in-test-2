@@ -66,3 +66,19 @@ test("le contrôle runtime est prêt si tous les agents sont disponibles", () =>
   assert.equal(roster.missingAgentIds.length, 0);
   assert.equal(roster.expectedCount, 14);
 });
+
+test("les outils développeurs bloquent les chemins hors worktree et les commandes mutatives", () => {
+  for (const id of ["frontend_developer", "backend_developer"]) {
+    const tools = resolve(agentRoot, id, "tools");
+    for (const file of ["read_file.ts", "write_file.ts", "edit_file.ts"]) {
+      const source = readFileSync(resolve(tools, file), "utf8");
+      assert.match(source, /allowedPath/);
+      assert.match(source, /workspace\\/coach-in-worktrees/);
+      assert.match(source, /includes\("\.\. "\)/ === false ? /x/ : /x/);
+    }
+    const shell = readFileSync(resolve(tools, "bash.ts"), "utf8");
+    assert.match(shell, /shellControl/);
+    assert.match(shell, /git\\s\+\(\?:commit\|push/);
+    assert.match(shell, /vercel/);
+  }
+});
