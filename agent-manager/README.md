@@ -39,7 +39,7 @@ Service privé d'orchestration de l'équipe d'agents développeurs de Coach In. 
 - Outils explicitement autorisés : poser une question, lire les documents du workspace et déléguer à un agent.
 - Les compétences projet, planification et routage sont conservées en fichiers Markdown et consultées par lecture.
 - Un référentiel partagé versionné recense les invariants métier et de sécurité Coach In ; il est transmis aux agents selon la pertinence de la mission. Ce n'est pas une mémoire automatique des conversations.
-- Les checklists de tâches sont suivies dans les réponses ; aucun outil todo durable n'est actuellement activé.
+- Les journaux de mission sont stockés dans un Blob Vercel privé, isolé du projet Coach In principal et connecté uniquement à la branche Preview Manager. L'outil `mission_memory` permet de lister, relire et enregistrer des comptes rendus structurés. Les données ne doivent contenir ni secrets ni données personnelles de joueurs.
 - Aucun tableau de bord de performance ni stockage de métriques par agent n'est encore implémenté. Les résultats et preuves sont rapportés mission par mission.
 - Équipe déclarée : `product_owner`, `solution_architect`, `frontend_developer`, `backend_developer`, `qa_engineer`, `qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`, `release_manager`, `documentation_specialist` et `plan_auditor`.
 - Workflow `team_task` : route une mission bornée vers un spécialiste et attend son livrable structuré. Les développeurs disposent des outils de code dans un sandbox isolé et partagent le sandbox du Manager via des worktrees distincts.
