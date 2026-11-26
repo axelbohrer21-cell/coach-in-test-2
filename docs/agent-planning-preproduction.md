@@ -2,7 +2,7 @@
 
 ## Phase 1 : moteur de recherche de créneaux en lecture seule
 
-Branche : `feat/ai-planning-agent-preprod-2026-11-25`
+Branche de base : `feat/ai-planning-agent-preprod-2026-11-25`
 
 Projet Supabase de test : `whyylgiscrpqoahdzdkv` — « Coach In test ».
 
@@ -14,7 +14,7 @@ Cette première livraison fournit l'outil métier que l'agent conversationnel ut
 - Joueur : recherche limitée aux coachs auxquels son compte est lié.
 - Durées : 60, 90 ou 120 minutes.
 - Départs de créneau : uniquement toutes les 30 minutes.
-- Contrôles serveur : disponibilités hebdomadaires, occupations partagées, demandes/réservations, indisponibilités et blocs récurrents de Coach B.
+- Contrôles serveur : disponibilités hebdomadaires, occupations partagées, demandes/réservations et indisponibilités.
 - Calendrier : dimanches, vacances Zone B et jours fériés exclus, avec l'exception du 8 mai déjà retenue dans Coach In.
 - Lecture seule : la recherche ne crée, ne modifie et n'annule aucune réservation.
 - Joueur : le bouton de demande ouvre le formulaire de réservation existant ; le coach garde la validation.
@@ -28,34 +28,34 @@ Privilèges vérifiés sur la base de test :
 - `anon` : exécution refusée ;
 - `SECURITY DEFINER` : désactivé pour cette fonction.
 
-### Vérifications Supabase effectuées
+### Correction en cours : source unique du planning
 
-- Coach A, jeudi 26 novembre 2026, 1 h : 64 propositions.
-- Joueur lié à Coach A, mêmes critères : 64 propositions.
-- Coach B, jeudi 26 novembre 2026, 1 h : 0 proposition, car le créneau collectif récurrent du jeudi est bloqué.
-- Coach B, vendredi 27 novembre 2026, 1 h : 108 propositions, également accessible au joueur lié.
-- Coach A, jeudi 26 novembre : 60 propositions pour 1 h 30 et 56 pour 2 h.
-- 8 mai 2027 : 20 propositions pour Coach A, ce qui confirme l'exception prévue dans Coach In.
-- Reprises Zone B du 4 janvier, 8 mars et 3 mai 2027 : propositions possibles ; les dates de reprise ne sont pas traitées comme des jours de vacances.
-- Indisponibilité temporaire de Coach A de 8 h à 9 h 30 : les propositions avant 9 h 30 sont retirées, pour le coach comme pour le joueur lié. La donnée temporaire a été annulée par rollback.
-- Durée de 45 minutes : rejetée.
-- Joueur non lié et coach essayant de consulter le planning d'un autre coach : accès refusé.
+Branche isolée : `fix/planning-agent-db-backed-occupancy-2026-11-26`
 
-### Tests automatisés et déploiement
+La migration `20261126113000_planning_agent_use_shared_occupancy_only.sql` supprime la règle spéciale fondée sur l'identifiant de Coach B. Les suggestions sont calculées uniquement à partir des disponibilités et de `public.shared_court_occupancy`, comme le calendrier commun de Coach In.
 
-- Workflow « Coach In automated tests » : succès, Node 22, tests métier et syntaxe JavaScript.
-- Workflow « Coach In QA campaign » : succès, Node 20 et Node 22, tests métier et syntaxe JavaScript.
-- Vercel Preview : état `READY`, cible `preview`, commit `270f50be`.
-- Variables Vercel Preview présentes : `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`, commentées comme configuration Supabase de préproduction.
+Une régression SQL vérifie que :
+- la fonction reste en `SECURITY INVOKER` ;
+- la fonction consulte `public.shared_court_occupancy` ;
+- aucun UUID ni fallback propre à Coach B ne subsiste.
 
-URL de préproduction : https://coach-in-test-2-ct0nt4cnv-coaching-axel1.vercel.app
+État observé dans la base de test avant application de cette correction :
+- Coach B : 215 cours collectifs actifs sur la saison et 215 occupations partagées correspondantes ;
+- aucun cours collectif actif sans occupation partagée correspondante ;
+- le code SQL de la RPC contenait encore un ancien UUID Coach B, bien que les occupations réelles suffisent désormais.
+
+### Vérifications antérieures
+
+Les vérifications précédentes de la phase 1 avaient notamment confirmé les durées 60/90/120 minutes, les contrôles de rôle et de lien coach-joueur, les règles de calendrier Zone B et le retrait des créneaux pendant une indisponibilité temporaire.
+
+Attention : la base de test contient actuellement deux coachs, chacun avec un joueur lié, mais aucun joueur lié simultanément aux deux coachs. Le scénario « un joueur lié à Coach A et Coach B » ne peut donc pas être présenté comme déjà testé. Il sera testé avec une liaison temporaire annulée par rollback, ou après création d'un compte de test adapté.
 
 ### Recette utilisateur encore nécessaire
 
-La compilation et les tests automatisés sont passés, mais il reste à vérifier visuellement l'interface après connexion réelle :
+Après validation technique :
 1. Coach A recherche un créneau dans son planning.
 2. Coach B vérifie que ses cours collectifs ne sont jamais proposés.
-3. Le joueur lié aux deux coachs peut choisir Coach A ou Coach B sans mélange de planning.
+3. Un joueur lié aux deux coachs peut choisir Coach A ou Coach B sans mélange de planning.
 4. Le joueur sélectionne « Demander ce créneau » ; le formulaire habituel s'ouvre.
 5. Le coach accepte ou refuse la demande ; les notifications et la mise à jour du planning sont contrôlées.
 
