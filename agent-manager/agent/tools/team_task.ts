@@ -1,17 +1,7 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
 import { validateDependencyHandoff, validateTaskCompletion } from "../utils/coordination.js";
-import { buildMissionExecutionPlan } from "../utils/mission-planner.js";
-
-const roles = [
-  "product_owner",
-  "solution_architect",
-  "frontend_developer",
-  "backend_developer",
-  "qa_engineer",
-  "release_manager",
-  "documentation_specialist",
-] as const;
+import { buildMissionExecutionPlan, taskRoles } from "../utils/mission-planner.js";
 
 const codeRoles = new Set(["frontend_developer", "backend_developer"]);
 const sandboxRoles = new Set(["frontend_developer", "backend_developer", "qa_engineer"]);
@@ -62,7 +52,7 @@ export default defineWorkflowTool({
       tasks: z.array(z.object({
         taskId: z.string().min(3).max(80),
         objective: z.string().min(8).max(12000),
-        role: z.enum(roles),
+        role: z.enum(taskRoles),
         dependsOn: z.array(z.string().min(3).max(80)).max(12),
         writeScope: z.array(z.string().min(1).max(240)).max(40),
         acceptanceCriteria: z.array(z.string().min(3).max(500)).min(1).max(12),
