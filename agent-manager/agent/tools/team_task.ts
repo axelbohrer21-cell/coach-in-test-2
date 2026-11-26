@@ -1,7 +1,7 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
 import { validateDependencyHandoff, validateTaskCompletion } from "../utils/coordination.js";
-import { buildMissionExecutionPlan, taskRoles } from "../utils/mission-planner.js";
+import { buildMissionExecutionPlan, fingerprintMissionPlan, taskRoles } from "../utils/mission-planner.js";
 
 const codeRoles = new Set(["frontend_developer", "backend_developer"]);
 const sandboxRoles = new Set(["frontend_developer", "backend_developer", "qa_engineer"]);
@@ -49,6 +49,7 @@ export default defineWorkflowTool({
     missionPlan: z.object({
       missionId: z.string().min(3).max(80),
       title: z.string().min(3).max(240),
+      planChecksum: z.string().regex(/^fnv1a-[0-9a-f]{8}$/),
       tasks: z.array(z.object({
         taskId: z.string().min(3).max(80),
         objective: z.string().min(8).max(12000),
@@ -69,6 +70,11 @@ export default defineWorkflowTool({
 
     if (missionPlan.missionId !== missionId) {
       return { missionId, taskId, status: "blocked", message: "Le missionId ne correspond pas au plan validé." };
+    }
+
+    const actualPlanChecksum = fingerprintMissionPlan(missionPlan.missionId, missionPlan.title, missionPlan.tasks);
+    if (actualPlanChecksum !== missionPlan.planChecksum) {
+      return { missionId, taskId, status: "blocked", message: "Le plan transmis a changé depuis sa validation ; relance mission_plan avant toute délégation.", expectedPlanChecksum: missionPlan.planChecksum, actualPlanChecksum };
     }
 
     const executionPlan = buildMissionExecutionPlan(missionPlan.tasks.map(({ taskId: id, role: taskRole, dependsOn, writeScope, baseRef, workBranch, worktreePath }) => ({
