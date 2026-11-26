@@ -68,7 +68,7 @@ export function buildMissionExecutionPlan(tasks: MissionTask[]) {
     errors.push("Une tâche QA doit dépendre de toutes les tâches développeur pour tester l'intégration complète.");
   }
 
-  if (errors.length) return { valid: false as const, errors, waves: [], tasks: [];
+  if (errors.length) return { valid: false as const, errors, waves: [], tasks: [] };
 
   const completed = new Set<string>();
   const serializationDependencies = new Map<string, Set<string>>();
