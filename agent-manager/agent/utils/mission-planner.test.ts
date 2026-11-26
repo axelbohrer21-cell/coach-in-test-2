@@ -2,18 +2,33 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { buildMissionExecutionPlan } from "./mission-planner.ts";
 
+const sandbox = (taskId: string) => ({
+  baseRef: "main",
+  workBranch: `work/${taskId}`,
+  worktreePath: `/workspace/coach-in-worktrees/${taskId}`,
+});
+
 const developer = (taskId: string, writeScope: string[], dependsOn: string[] = []) => ({
   taskId,
   role: "frontend_developer" as const,
   dependsOn,
   writeScope,
+  ...sandbox(taskId),
+});
+
+const qa = (taskId: string, dependsOn: string[]) => ({
+  taskId,
+  role: "qa_engineer" as const,
+  dependsOn,
+  writeScope: [],
+  ...sandbox(taskId),
 });
 
 test("planifie en parallèle les tâches indépendantes aux périmètres disjoints", () => {
   const result = buildMissionExecutionPlan([
     developer("front-a", ["src/views/calendar.js"]),
     { taskId: "product", role: "product_owner" as const, dependsOn: [], writeScope: [] },
-    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a"], writeScope: [] },
+    qa("qa", ["front-a"]),
   ]);
   assert.equal(result.valid, true);
   assert.deepEqual(result.waves, [["front-a", "product"], ["qa"]]);
@@ -24,7 +39,7 @@ test("sérialise les tâches indépendantes dont les périmètres se chevauchent
     { taskId: "architect", role: "solution_architect" as const, dependsOn: [], writeScope: [] },
     developer("front-a", ["src/views"], ["architect"]),
     developer("front-b", ["src/views/calendar.js"], ["architect"]),
-    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a", "front-b"], writeScope: [] },
+    qa("qa", ["front-a", "front-b"]),
   ]);
   assert.equal(result.valid, true);
   assert.deepEqual(result.waves, [["architect"], ["front-a"], ["front-b"], ["qa"]]);
@@ -95,7 +110,7 @@ test("exige que QA dépende de tous les développeurs", () => {
     { taskId: "architect", role: "solution_architect" as const, dependsOn: [], writeScope: [] },
     developer("front-a", ["src/a.js"], ["architect"]),
     developer("back-a", ["supabase/functions"], ["architect"]),
-    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a"], writeScope: [] },
+    qa("qa", ["front-a"]),
   ]);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes("toutes les tâches développeur")));
@@ -106,7 +121,7 @@ test("exige un Architecte avant plusieurs développeurs", () => {
   const result = buildMissionExecutionPlan([
     developer("front-a", ["src/a.js"]),
     developer("back-a", ["supabase/functions"]),
-    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a", "back-a"], writeScope: [] },
+    qa("qa", ["front-a", "back-a"]),
   ]);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes("Architecte")));
@@ -121,4 +136,32 @@ test("chaque développeur doit dépendre de l'Architecte", () => {
   ]);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes("dépendre de l'Architecte")));
+});
+
+
+test("exige un worktree et une branche distincts pour chaque tâche sandbox", () => {
+  const result = buildMissionExecutionPlan([
+    developer("front-a", ["src/a.js"]),
+    { ...qa("qa", ["front-a"]), worktreePath: "/workspace/coach-in-worktrees/front-a" },
+  ]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("chemin de worktree unique")));
+});
+
+test("bloque les chemins de worktree hors du sandbox autorisé", () => {
+  const result = buildMissionExecutionPlan([
+    { ...developer("front-a", ["src/a.js"]), worktreePath: "/tmp/other" },
+    qa("qa", ["front-a"]),
+  ]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("chemin de worktree dédié")));
+});
+
+test("bloque les branches de travail dupliquées", () => {
+  const result = buildMissionExecutionPlan([
+    developer("front-a", ["src/a.js"]),
+    { ...qa("qa", ["front-a"]), workBranch: "work/front-a" },
+  ]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("branche Git unique")));
 });
