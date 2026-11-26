@@ -16,6 +16,6 @@
     "apps/**",
     ".next/**",
     "node_modules/**",
-    "agent/tools/**/*.test.ts"
+    "agent/**/*.test.ts"
   ]
 }
