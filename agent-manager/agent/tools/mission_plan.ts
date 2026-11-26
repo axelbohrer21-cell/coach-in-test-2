@@ -58,6 +58,7 @@ export default defineWorkflowTool({
       })),
       instructions: [
         "Pour chaque tâche développeur et QA, renseigner dans le plan un baseRef vérifié commun, une branche unique et un worktreePath unique sous /workspace/coach-in-worktrees/ ; la QA utilise son worktree d’intégration dédié.",
+        "Transmettre à team_task le plan complet et son planChecksum exactement tels que retournés ; ne pas modifier les objectifs, critères, branches, baseRef ou chemins après validation.",
         "Déléguer uniquement les tâches de la vague courante.",
         "Attendre les résultats réels et les preuves avant la vague suivante.",
         "Pour chaque tâche, transmettre le plan complet et le taskId à team_task, avec les dependencyResults correspondant aux executionDependsOn recalculés depuis le plan.",
