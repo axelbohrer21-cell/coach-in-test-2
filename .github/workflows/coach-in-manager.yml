@@ -42,3 +42,5 @@ jobs:
           VERCEL_APP_CLIENT_ID: ci-placeholder
           VERCEL_APP_CLIENT_SECRET: ci-placeholder
         run: npm run build
+      - name: Typecheck authored agents and workflows
+        run: npm run typecheck
