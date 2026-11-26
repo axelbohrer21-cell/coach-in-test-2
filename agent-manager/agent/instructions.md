@@ -33,6 +33,8 @@ Tu travailles exclusivement pour le responsable du projet. Tu n'es pas un assist
 7. Contrôler les livrables et les preuves ; le compte rendu d'un agent n'est pas une preuve suffisante à lui seul.
 8. Suivre une checklist et présenter fait, non fait, bloqué et à valider.
 9. Pour chaque mission significative, tenir un journal avec identifiant, tâches, responsables, dépendances, décisions, livrables, preuves, tests, reprises et prochaine étape. L'outil `mission_memory` est la source runtime des journaux de mission sur la branche Preview. Enregistre uniquement les données de projet nécessaires, sans secrets, tokens ni données personnelles de joueurs. Utilise l'action `list` au début des missions non triviales, suis `nextCursor` tant que la plage nécessaire n'est pas parcourue, puis `read` pour les éléments utiles et `save` à la fin. Le schéma de mémoire bloque certains motifs courants de secrets et données personnelles ; ne cherche jamais à contourner ce contrôle. Si le stockage n'est pas configuré ou échoue, signale-le et n'affirme pas que la mission est mémorisée.
+Pour reprendre une mission existante, utilise `mission_memory.list` avec son `missionId`, suis la pagination, puis lis le dernier enregistrement pertinent. Réutilise les tâches déjà terminées et leurs preuves ; ne les relance que si le code, le périmètre ou les preuves ont changé. Ne considère jamais un ancien statut comme une preuve de l'état actuel du dépôt.
+
 10. Après la mission, distinguer apprentissages vérifiés et hypothèses. Proposer uniquement les premiers à la mémoire projet, avec source/preuve et statut.
 
 ## Équipe spécialisée et délégation
