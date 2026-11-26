@@ -39,6 +39,10 @@ export default defineWorkflowTool({
   description:
     "Delegate one bounded Coach In task to the product owner, solution architect, frontend developer, backend developer, QA engineer, release manager, or documentation specialist. Code agents work only in the isolated shared sandbox and exact worktree supplied; QA is configured for test-only execution and its worktree status must be checked by the Manager. None can push, commit, deploy, or access production.",
   inputSchema: z.object({
+    missionId: z.string().min(3).max(80).optional(),
+    taskId: z.string().min(3).max(80).optional(),
+    dependsOn: z.array(z.string().min(3).max(80)).max(12).optional(),
+    acceptanceCriteria: z.array(z.string().min(3).max(500)).max(12).optional(),
     role: z.enum(roles),
     task: z.string().min(8).max(12000),
     context: z.string().max(16000).optional(),
@@ -48,11 +52,14 @@ export default defineWorkflowTool({
       .refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith("."), "Invalid branch name").optional(),
     worktreePath: z.string().regex(/^\/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}$/).optional(),
   }),
-  async execute({ role, task, context, baseRef, workBranch, worktreePath }, ctx) {
+  async execute({ missionId, taskId, dependsOn, acceptanceCriteria, role, task, context, baseRef, workBranch, worktreePath }, ctx) {
     "use workflow";
 
     if (sandboxRoles.has(role) && (!baseRef || !workBranch || !worktreePath)) {
       return {
+        missionId,
+        taskId,
+        dependsOn: dependsOn ?? [],
         role,
         status: "blocked",
         message: "Une mission dans le sandbox exige un baseRef vérifié, un nom de branche et un chemin de worktree dédié.",
@@ -98,6 +105,10 @@ export default defineWorkflowTool({
 
     const prompt = [
       "Tu reçois une mission déléguée par Coach In Manager.",
+      `MISSION_ID=${missionId ?? "non renseigné"}`,
+      `TASK_ID=${taskId ?? "non renseigné"}`,
+      `DÉPENDANCES=${(dependsOn ?? []).join(", ") || "aucune déclarée"}`,
+      "Si des dépendances sont déclarées, vérifie que leurs livrables et preuves figurent dans le contexte. Si un livrable requis manque, renvoie status=blocked.",
       `RÔLE=${role}`,
       "MISSION :",
       task,
@@ -107,6 +118,9 @@ export default defineWorkflowTool({
       "",
       "CONSIGNES D'ENVIRONNEMENT :",
       sandboxInstructions,
+      "",
+      "CRITÈRES D’ACCEPTATION :",
+      ...(acceptanceCriteria?.length ? acceptanceCriteria.map((criterion, index) => `${index + 1}. ${criterion}`) : ["À préciser par le Manager dans le contexte si nécessaire."]),
       "",
       "RÈGLES COMMUNES :",
       "- Réponds en français.",
@@ -143,6 +157,9 @@ export default defineWorkflowTool({
       }
 
       return {
+        missionId,
+        taskId,
+        dependsOn: dependsOn ?? [],
         role,
         ...result.data,
         verification: codeRoles.has(role)
@@ -153,6 +170,9 @@ export default defineWorkflowTool({
       };
     } catch (error) {
       return {
+        missionId,
+        taskId,
+        dependsOn: dependsOn ?? [],
         role,
         status: "failed",
         error: error instanceof Error ? error.message : "Erreur inconnue pendant la délégation.",
