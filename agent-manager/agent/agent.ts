@@ -5,13 +5,13 @@ import { defineAgent } from "eve";
 
 const primaryModel = groq("openai/gpt-oss-20b");
 
-// Keep a bounded response size while leaving enough room for compaction summaries.
+// Stay below Groq's 8k TPM request budget for this small on-demand tier.
 // Qwen fallback remains disabled because its organization-wide OTPM quota was exceeded.
 const quotaProtection: LanguageModelV4Middleware = {
   specificationVersion: "v4",
   transformParams: async ({ params }) => ({
     ...params,
-    maxOutputTokens: Math.min(params.maxOutputTokens ?? 2048, 2048),
+    maxOutputTokens: Math.min(params.maxOutputTokens ?? 1024, 1024),
   }),
 };
 
