@@ -36,8 +36,8 @@ Périmètre : application Manager et sa branche Preview uniquement.
 ### Dépendances
 - Les dépendances transitives Vercel vulnérables ont été remplacées par des versions corrigées via overrides.
 - Zod est forcé sur la version directe corrigée du projet.
-- Résultat du dernier `npm audit` : 0 critique, 0 élevée, 0 modérée, 7 faibles.
-- Les 7 alertes faibles concernent KaTeX (< 0.18.2), utilisé par les plugins Streamdown math/mermaid. Aucun correctif n'est annoncé par npm au moment de cet audit. Ne pas activer d'option KaTeX `trust` permissive ; conserver le rendu non fiable par défaut et réévaluer à la prochaine mise à jour amont.
+- Résultat du dernier `npm audit` après les overrides : **0 vulnérabilité** (0 critique, 0 élevée, 0 modérée, 0 faible).
+- KaTeX est forcé en version 0.18.2 corrigée. Conserver le rendu KaTeX non fiable par défaut ; ne pas activer d'option `trust` permissive.
 
 ## Tableau de bord
 
