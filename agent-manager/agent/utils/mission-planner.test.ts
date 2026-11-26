@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildMissionExecutionPlan } from "./mission-planner.ts";
+import { buildMissionExecutionPlan, fingerprintMissionPlan } from "./mission-planner.ts";
 
 const sandbox = (taskId: string) => ({
   baseRef: "main",
@@ -196,4 +196,19 @@ test("refuse une branche de base ou protégée comme branche de travail", () => 
   ]);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes("branche de base ou une branche protégée")));
+});
+
+
+test("le checksum du plan est déterministe", () => {
+  const tasks = [{ ...developer("front-a", ["src/a.js"]), objective: "Modifier le calendrier", acceptanceCriteria: ["Le calendrier est affiché"] }];
+  assert.equal(fingerprintMissionPlan("mission-1", "Calendrier", tasks), fingerprintMissionPlan("mission-1", "Calendrier", tasks));
+});
+
+test("le checksum change si une tâche ou un critère est modifié après planification", () => {
+  const tasks = [{ ...developer("front-a", ["src/a.js"]), objective: "Modifier le calendrier", acceptanceCriteria: ["Le calendrier est affiché"] }];
+  const original = fingerprintMissionPlan("mission-1", "Calendrier", tasks);
+  const changed = fingerprintMissionPlan("mission-1", "Calendrier", [{ ...tasks[0], objective: "Modifier le planning" }]);
+  const changedCriteria = fingerprintMissionPlan("mission-1", "Calendrier", [{ ...tasks[0], acceptanceCriteria: ["Le calendrier est accessible"] }]);
+  assert.notEqual(original, changed);
+  assert.notEqual(original, changedCriteria);
 });
