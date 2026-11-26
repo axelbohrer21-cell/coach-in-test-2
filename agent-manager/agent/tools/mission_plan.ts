@@ -1,6 +1,6 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
-import { buildMissionExecutionPlan, taskRoles } from "../utils/mission-planner.js";
+import { buildMissionExecutionPlan, fingerprintMissionPlan, taskRoles } from "../utils/mission-planner.js";
 
 export default defineWorkflowTool({
   description:
@@ -49,6 +49,7 @@ export default defineWorkflowTool({
       missionId,
       title,
       status: "planned",
+      planChecksum: fingerprintMissionPlan(missionId, title, tasks),
       waves: plan.waves,
       tasks: plan.tasks.map((task) => ({
         ...task,
