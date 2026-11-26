@@ -33,4 +33,12 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Compile Eve agent
+        env:
+          # Isolated, non-routable placeholders used only while compiling in GitHub Actions.
+          VERCEL_URL: coach-in-manager-ci.invalid
+          VERCEL_BRANCH_URL: coach-in-manager-ci.invalid
+          VERCEL_PROJECT_PRODUCTION_URL: coach-in-manager-ci.invalid
+          BETTER_AUTH_SECRET: ci-only-build-placeholder-not-for-deployment
+          VERCEL_APP_CLIENT_ID: ci-placeholder
+          VERCEL_APP_CLIENT_SECRET: ci-placeholder
         run: npm run build
