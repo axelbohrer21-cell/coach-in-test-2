@@ -187,3 +187,13 @@ test("chaque tâche QA attend tous les développeurs", () => {
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes("toutes les tâches développeur")));
 });
+
+
+test("refuse une branche de base ou protégée comme branche de travail", () => {
+  const result = buildMissionExecutionPlan([
+    { ...developer("front-a", ["src/a.js"]), workBranch: "main" },
+    qa("qa", ["front-a"]),
+  ]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("branche de base ou une branche protégée")));
+});
