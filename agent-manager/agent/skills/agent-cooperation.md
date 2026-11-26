@@ -46,14 +46,14 @@ Pas de secrets, données privées de joueurs, accès production, écriture de ba
 ## Barrière de dépendances vérifiable
 - Toute tâche qui déclare `dependsOn` doit recevoir un `dependencyResults` structuré pour chaque identifiant attendu.
 - Chaque résultat doit avoir `status=completed` et au moins une preuve non vide ; sinon `team_task` bloque la délégation avant l'appel à l'agent.
-- Les identifiants de dépendance dupliqués sont rejetés. Le Manager transmet les résumés, livrables et preuves des tâches précédentes, pas seulement leurs noms.
+- Les identifiants de dépendance dupliqués ou non déclarés sont rejetés. Le Manager transmet les résumés, livrables et preuves des tâches précédentes, pas seulement leurs noms.
 - Une preuve déclarée par un agent reste à vérifier par le Manager : cette barrière garantit le chaînage explicite, pas la véracité automatique de la preuve.
 
 ## 8. Barrière de clôture des tâches
 
 Une réponse structurée de l'agent n'est pas automatiquement une tâche terminée.
 
-- Chaque délégation porte un `missionId`, un `taskId` et au moins un critère d'acceptation.
+- Chaque délégation porte un `missionId`, un `taskId` et au moins un critère d'acceptation. L'agent retourne un résultat distinct pour chaque critère, avec le texte exact, un statut et une preuve ; les critères manquants, dupliqués ou non démontrés bloquent la clôture.
 - Le statut `completed` est rejeté si le résumé ou les livrables sont vides.
 - Une commande avec code de sortie non nul ou un test échoué bloque la clôture.
 - Un développeur doit fournir au moins un fichier modifié ; le Manager doit ensuite contrôler le diff réel.
