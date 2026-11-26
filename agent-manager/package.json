@@ -14,7 +14,7 @@
     "build:web": "next build apps/web",
     "dev:eve": "eve dev",
     "dev:all": "vercel dev --local",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit --project tsconfig.agents.json"
   },
   "dependencies": {
     "@shadcn/react": "^0.3.1",
