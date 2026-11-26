@@ -44,7 +44,7 @@ Les actions de production, les migrations risquées, les fusions et les déploie
 
 ## Étape 5 — ordonnancement exécutable
 
-Pour une mission multi-tâches, appelle `mission_plan` avec les dépendances, les critères d'acceptation et les périmètres de fichiers. Corrige tout graphe bloqué avant délégation. Suis les vagues retournées et transmets les dépendances sérialisées à `team_task` avec leurs preuves réelles.
+Pour une mission multi-tâches, appelle `mission_plan` avec l'objectif, les dépendances, les critères d'acceptation et les périmètres de fichiers. Une mission avec plusieurs développeurs doit placer l'Architecte en amont de chacun ; toute mission de code doit inclure QA dépendant de tous les développeurs. Corrige tout graphe bloqué avant délégation. Suis les vagues retournées et transmets le plan complet à `team_task` avec les preuves réelles des dépendances.
 
 ## Étape 6 — relecture indépendante
 
