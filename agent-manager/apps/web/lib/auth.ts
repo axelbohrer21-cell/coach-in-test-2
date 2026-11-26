@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-export { isManagerAllowedEmail } from "./access-control.js";
+export { isManagerAllowedEmail } from "./access-control";
 
 const SESSION_MAX_AGE_SECONDS = 8 * 60 * 60;
 
