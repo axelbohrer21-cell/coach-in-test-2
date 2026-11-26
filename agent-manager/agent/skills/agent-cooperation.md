@@ -76,7 +76,7 @@ Pour une revue non triviale, `review_task` exécute d'abord `plan_auditor`. Son 
 ## 11. Planification exécutable du graphe de tâches
 
 - Avant toute mission à plusieurs tâches, le Manager appelle `mission_plan`.
-- Le plan refuse les identifiants dupliqués, dépendances inconnues ou cycliques, chemins invalides, développeurs sans périmètre explicite, missions de code sans QA et QA qui ne dépend pas de tous les développeurs.
+- Le plan refuse les identifiants dupliqués, dépendances inconnues ou cycliques, chemins invalides, développeurs sans périmètre explicite, missions de code sans QA, QA qui ne dépend pas de tous les développeurs et missions multi-développeurs sans Architecte en amont de chaque développeur.
 - Les tâches indépendantes aux périmètres disjoints sont regroupées en vagues parallèles.
 - Les tâches dont les chemins se chevauchent sont sérialisées automatiquement ; le plan ajoute une dépendance `executionDependsOn` que le Manager doit transmettre avec le livrable du prédécesseur.
 - Le Manager ne lance jamais une vague suivante avant d'avoir vérifié les résultats et preuves de la vague précédente. Il intègre les diffs des worktrees développeurs dans un worktree d'intégration distinct ; QA teste ce worktree consolidé en lecture seule, jamais un seul worktree développeur choisi arbitrairement.
