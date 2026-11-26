@@ -13,13 +13,15 @@ export function validateDependencyHandoff(requiredIds: string[], supplied: Depen
     .filter((id, index, all) => all.indexOf(id) !== index);
   const missingOrUnverifiedDependencies = [...new Set(requiredIds)].filter((id) => {
     const matches = supplied.filter((item) => item.taskId === id);
+    const match = matches[0];
     return matches.length !== 1 ||
-      matches[0].status !== "completed" ||
-      matches[0].summary.trim().length === 0 ||
-      matches[0].deliverables.length === 0 ||
-      matches[0].deliverables.some((item) => item.trim().length === 0) ||
-      matches[0].evidence.length === 0 ||
-      matches[0].evidence.some((item) => item.trim().length === 0);
+      !match ||
+      match.status !== "completed" ||
+      match.summary.trim().length === 0 ||
+      match.deliverables.length === 0 ||
+      match.deliverables.some((item) => item.trim().length === 0) ||
+      match.evidence.length === 0 ||
+      match.evidence.some((item) => item.trim().length === 0);
   });
 
   return {
