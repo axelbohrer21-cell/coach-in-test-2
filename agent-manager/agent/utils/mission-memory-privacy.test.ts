@@ -57,7 +57,7 @@ test("le schéma accepte une sauvegarde de mission sans donnée sensible détect
 });
 
 test("la liste mémoire accepte un curseur de pagination", () => {
-  const result = missionMemoryInputSchema.safeParse({ action: "list", limit: 10, cursor: "cursor-token" });
+  const result = missionMemoryInputSchema.safeParse({ action: "list", limit: 10, cursor: "cursor-token", missionId: "mission-123" });
   assert.equal(result.success, true);
 });
 
