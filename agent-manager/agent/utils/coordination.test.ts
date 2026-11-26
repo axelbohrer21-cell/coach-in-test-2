@@ -88,13 +88,18 @@ const completedTask = {
   filesChanged: ["src/module.ts"],
   commandsRun: [{ command: "npm test", exitCode: 0, result: "OK" }],
   tests: [{ name: "unit", status: "passed" as const, evidence: "1/1 passed" }],
+  criteriaResults: [{
+    criterion: "Le changement est implémenté",
+    status: "met" as const,
+    evidence: "src/module.ts modifié et diff relu",
+  }],
 };
 
 test("ne valide pas un développeur si une commande ou un test échoue", () => {
   const result = validateTaskCompletion("frontend_developer", {
     ...completedTask,
     tests: [{ name: "unit", status: "failed", evidence: "Assertion failed" }],
-  });
+  }, ["Le changement est implémenté"]);
   assert.equal(result.valid, false);
   assert.ok(result.reasons.some((reason) => reason.includes("test(s)")));
 });
@@ -103,12 +108,12 @@ test("exige un diff réel pour un développeur", () => {
   const result = validateTaskCompletion("backend_developer", {
     ...completedTask,
     filesChanged: [],
-  });
+  }, ["Le changement est implémenté"]);
   assert.equal(result.valid, false);
 });
 
 test("refuse une validation QA si un fichier a été modifié", () => {
-  const result = validateTaskCompletion("qa_engineer", completedTask);
+  const result = validateTaskCompletion("qa_engineer", completedTask, ["Le changement est implémenté"]);
   assert.equal(result.valid, false);
   assert.ok(result.reasons.some((reason) => reason.includes("lecture seule")));
 });
@@ -117,6 +122,16 @@ test("accepte un rapport QA en lecture seule avec preuves et tests réussis", ()
   const result = validateTaskCompletion("qa_engineer", {
     ...completedTask,
     filesChanged: [],
-  });
+  }, ["Le changement est implémenté"]);
   assert.equal(result.valid, true);
+});
+
+
+test("bloque une tâche dont le critère d'acceptation n'est pas démontré", () => {
+  const result = validateTaskCompletion("product_owner", {
+    ...completedTask,
+    criteriaResults: [],
+  }, ["Le changement est implémenté"]);
+  assert.equal(result.valid, false);
+  assert.ok(result.reasons.some((reason) => reason.includes("Critère non démontré")));
 });
