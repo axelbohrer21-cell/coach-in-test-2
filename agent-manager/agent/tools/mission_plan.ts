@@ -10,6 +10,7 @@ export default defineWorkflowTool({
     title: z.string().min(3).max(240),
     tasks: z.array(z.object({
       taskId: z.string().min(3).max(80),
+      objective: z.string().min(8).max(12000),
       role: z.enum(taskRoles),
       dependsOn: z.array(z.string().min(3).max(80)).max(12).default([]),
       writeScope: z.array(z.string().min(1).max(240)).max(40).default([]),
@@ -37,7 +38,7 @@ export default defineWorkflowTool({
       };
     }
 
-    const criteriaByTask = new Map(tasks.map((task) => [task.taskId, task.acceptanceCriteria]));
+    const taskDetailsById = new Map(tasks.map((task) => [task.taskId, task]));
     return {
       missionId,
       title,
@@ -45,7 +46,8 @@ export default defineWorkflowTool({
       waves: plan.waves,
       tasks: plan.tasks.map((task) => ({
         ...task,
-        acceptanceCriteria: criteriaByTask.get(task.taskId) ?? [],
+        objective: taskDetailsById.get(task.taskId)!.objective,
+        acceptanceCriteria: taskDetailsById.get(task.taskId)!.acceptanceCriteria,
       })),
       instructions: [
         "Déléguer uniquement les tâches de la vague courante.",
