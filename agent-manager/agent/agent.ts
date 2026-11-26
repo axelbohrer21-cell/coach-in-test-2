@@ -7,7 +7,7 @@ const primaryModel = groq("openai/gpt-oss-20b");
 
 // Keep a bounded response size while leaving enough room for compaction summaries.
 // Qwen fallback remains disabled because its organization-wide OTPM quota was exceeded.
-const quotaProtection: LanguageModelV3Middleware = {
+const quotaProtection: LanguageModelV4Middleware = {
   specificationVersion: "v4",
   transformParams: async ({ params }) => ({
     ...params,
