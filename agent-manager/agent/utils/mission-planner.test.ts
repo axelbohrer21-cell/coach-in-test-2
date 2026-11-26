@@ -57,7 +57,7 @@ test("bloque un cycle de dépendances", () => {
     { taskId: "architect", role: "solution_architect" as const, dependsOn: [], writeScope: [] },
     developer("front-a", ["src/a.js"], ["architect", "front-b"]),
     developer("front-b", ["src/b.js"], ["architect", "front-a"]),
-    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a", "front-b"], writeScope: [] },
+    qa("qa", ["front-a", "front-b"]),
   ]);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes("Cycle")));
