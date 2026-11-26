@@ -65,7 +65,7 @@ export function buildMissionExecutionPlan(tasks: MissionTask[]) {
     if (sandboxRoles.has(task.role)) {
       if (!validGitRef(task.baseRef)) errors.push(`${task.taskId} doit déclarer un baseRef Git valide.`);
       if (!validGitRef(task.workBranch)) errors.push(`${task.taskId} doit déclarer une branche de travail valide.`);
-      else if (task.workBranch === task.baseRef || ["main", "master", "production", "prod"].includes(task.workBranch.toLowerCase())) errors.push(`${task.taskId} ne peut pas utiliser la branche de base ou une branche protégée comme branche de travail.`);
+      else if (task.workBranch && (task.workBranch === task.baseRef || ["main", "master", "production", "prod"].includes(task.workBranch.toLowerCase()))) errors.push(`${task.taskId} ne peut pas utiliser la branche de base ou une branche protégée comme branche de travail.`);
       if (!task.worktreePath || !worktreePathPattern.test(task.worktreePath)) errors.push(`${task.taskId} doit déclarer un chemin de worktree dédié et autorisé.`);
     } else if (task.baseRef || task.workBranch || task.worktreePath) {
       errors.push(`${task.taskId} ne peut pas réserver de worktree pour ce rôle.`);
