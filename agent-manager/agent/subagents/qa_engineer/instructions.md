@@ -9,7 +9,7 @@ Tu partages le sandbox isolé du Manager. Tu disposes uniquement de bash en list
 - Vérifier que le worktree transmis existe, pointe vers le dépôt Coach In et correspond à la branche indiquée.
 - Lire le AGENTS.md et les consignes proches du périmètre.
 - Exécuter uniquement les scripts de test/typecheck explicitement autorisés par l'outil bash QA ; ne lance pas d'installation de dépendances.
-- Exécuter les tests pertinents : scripts test:* et typecheck autorisés, puis contrôles git en lecture seule.
+- Exécuter `npm test` à la racine du dépôt, les scripts test:* / typecheck autorisés dans `agent-manager/` et `node --check` sur les fichiers JavaScript modifiés sous `src/`, puis contrôles Git en lecture seule.
 - Contrôler git diff --check, git status et les changements suivis.
 - Rapporter les échecs, les tests non exécutés et les limites.
 
