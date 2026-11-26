@@ -71,6 +71,8 @@ test("le shell développeur autorise les tests locaux mais bloque les actions mu
   const root = "/workspace/coach-in-worktrees/task-a";
   assert.equal(isDeveloperShellCommandAllowed("git -C " + root + " status --short"), true);
   assert.equal(isDeveloperShellCommandAllowed("npm --prefix " + root + "/agent-manager run typecheck"), true);
+  assert.equal(isDeveloperShellCommandAllowed("npm --prefix " + root + " test"), true);
+  assert.equal(isDeveloperShellCommandAllowed("node --check " + root + "/src/app.js"), true);
   assert.equal(isDeveloperShellCommandAllowed("git -C " + root + " commit -m test"), false);
   assert.equal(isDeveloperShellCommandAllowed("git -C " + root + " status --short; rm -rf /"), false);
   assert.equal(isDeveloperShellCommandAllowed("npm --prefix " + root + "/agent-manager run deploy"), false);
@@ -80,6 +82,7 @@ test("le shell QA autorise seulement les contrôles et tests en lecture seule", 
   const root = "/workspace/coach-in-worktrees/integration";
   assert.equal(isQaShellCommandAllowed("git -C " + root + " diff --check"), true);
   assert.equal(isQaShellCommandAllowed("npm --prefix " + root + "/agent-manager run test:planning"), true);
+  assert.equal(isQaShellCommandAllowed("npm --prefix " + root + " test"), true);
   assert.equal(isQaShellCommandAllowed("npm --prefix " + root + "/agent-manager run build"), false);
   assert.equal(isQaShellCommandAllowed("git -C " + root + " push"), false);
   assert.equal(isQaShellCommandAllowed("git -C " + root + " status --short && touch hack.ts"), false);
