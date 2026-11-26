@@ -107,13 +107,16 @@ export function validateTaskCompletion(
   if (result.deliverables.length === 0 || result.deliverables.some((item) => !item.trim())) {
     reasons.push("Aucun livrable identifiable n'a été fourni.");
   }
-  const failedCommands = result.commandsRun.filter((item) => item.exitCode !== null && item.exitCode !== 0);
+  const failedCommands = result.commandsRun.filter((item) => item.exitCode !== 0);
   if (failedCommands.length > 0) {
-    reasons.push(`${failedCommands.length} commande(s) ont retourné un code de sortie non nul.`);
+    reasons.push(`${failedCommands.length} commande(s) ont échoué ou ne disposent pas d’un code de sortie vérifiable.`);
   }
   const failedTests = result.tests.filter((item) => item.status === "failed");
   if (failedTests.length > 0) {
     reasons.push(`${failedTests.length} test(s) ont échoué.`);
+  }
+  if (result.tests.some((item) => item.status === "passed" && !item.evidence.trim())) {
+    reasons.push("Un test annoncé réussi ne comporte aucune preuve.");
   }
   if (role === "qa_engineer") {
     if (result.tests.length === 0) reasons.push("Le QA n'a exécuté ou documenté aucun test.");
@@ -123,7 +126,7 @@ export function validateTaskCompletion(
     if (result.filesChanged.length > 0) reasons.push("Le worktree QA n'est pas resté en lecture seule.");
   }
   if (role === "frontend_developer" || role === "backend_developer") {
-    if (result.filesChanged.length === 0) reasons.push("Le développeur n'a fourni aucun fichier modifié à contrôler.");
+    if (result.filesChanged.length === 0 || result.filesChanged.some((item) => !item.trim())) reasons.push("Le développeur n'a fourni aucun chemin de fichier modifié valide à contrôler.");
   }
   return { valid: reasons.length === 0, reasons };
 }
