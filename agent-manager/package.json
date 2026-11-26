@@ -13,7 +13,8 @@
     "dev:web": "next dev apps/web",
     "build:web": "next build apps/web",
     "dev:eve": "eve dev",
-    "dev:all": "vercel dev --local"
+    "dev:all": "vercel dev --local",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@shadcn/react": "^0.3.1",
