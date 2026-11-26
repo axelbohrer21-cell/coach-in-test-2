@@ -60,7 +60,15 @@ export function buildMissionExecutionPlan(tasks: MissionTask[]) {
     }
   }
 
-  if (errors.length) return { valid: false as const, errors, waves: [], tasks: [] };
+  const developers = tasks.filter((task) => task.role === "frontend_developer" || task.role === "backend_developer");
+  const qaTasks = tasks.filter((task) => task.role === "qa_engineer");
+  if (developers.length > 0 && qaTasks.length === 0) {
+    errors.push("Une mission avec du développement doit inclure une tâche QA.");
+  } else if (developers.length > 0 && !qaTasks.some((qa) => developers.every((developer) => qa.dependsOn.includes(developer.taskId)))) {
+    errors.push("Une tâche QA doit dépendre de toutes les tâches développeur pour tester l'intégration complète.");
+  }
+
+  if (errors.length) return { valid: false as const, errors, waves: [], tasks: [];
 
   const completed = new Set<string>();
   const serializationDependencies = new Map<string, Set<string>>();
