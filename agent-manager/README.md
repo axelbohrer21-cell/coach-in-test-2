@@ -78,3 +78,12 @@ npm run build
 - Ne jamais connecter les secrets de production au Manager.
 - Ajouter les connexions externes une par une, avec permissions minimales.
 - Les outils d'écriture GitHub, les migrations, les déploiements et les fusions devront être protégés par une validation humaine explicite.
+
+
+## Interface Manager
+
+- `/` redirige vers le tableau de bord `/dashboard`.
+- `/s` démarre une nouvelle conversation avec Coach In Manager.
+- Les pages privées et le canal Eve appliquent la liste blanche `MANAGER_ALLOWED_EMAILS` en dehors du développement.
+- Le tableau de bord affiche la configuration de l'équipe et les garde-fous ; il ne prétend pas fournir de télémétrie temps réel.
+- Voir `SECURITY-AUDIT.md` pour les contrôles et limites connus.
