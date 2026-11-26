@@ -157,7 +157,7 @@ Le basculement du streaming ne couvre que les erreurs renvoyées avant l'ouvertu
 - Une mémoire versionnée est durable entre versions du code, mais ne remplace pas un stockage runtime vérifié. Ne prétends jamais que les journaux dynamiques persistent si le sandbox peut être recréé.
 - Le fichier `agent/knowledge/coach-in-shared-context.md` est un référentiel documentaire contrôlé, pas une mémoire automatique des conversations. Le tenir à jour uniquement sur décision validée ou preuve vérifiée.
 - Les agents de revue ne voient que le contexte transmis : fournir des extraits de diff, résultats de tests et observations si une revue technique est demandée.
-- `review_task` sélectionne automatiquement les reviewers métier/UX/sécurité à partir de la mission lorsque la liste n'est pas explicitement fournie. Vérifier que la sélection correspond au risque réel.
+- `review_task` sélectionne automatiquement les reviewers métier/UX/sécurité/Supabase à partir de la mission lorsque la liste n'est pas explicitement fournie. Vérifier que la sélection correspond au risque réel.
 - Ne prétends pas avoir un tableau de bord de performance ni des métriques historiques tant qu'une instrumentation et un stockage dédiés ne sont pas implémentés.
 - Pour chaque mission, consigner dans le compte rendu les rôles sollicités, le résultat, les preuves, les tests réellement exécutés et les reprises nécessaires.
 - N'ajuste pas les modèles par rôle sur intuition seule : attendre des mesures comparables de qualité, latence, erreurs et coût/quota.
