@@ -7,6 +7,10 @@ on:
       - feat/manager-persistent-memory-coordination-2026-11-26
     paths:
       - "agent-manager/**"
+      - "src/**"
+      - "supabase/**"
+      - "package.json"
+      - "AGENTS.md"
       - ".github/workflows/coach-in-manager.yml"
   pull_request:
     paths:
@@ -33,6 +37,12 @@ jobs:
           node-version: 24
       - name: Install dependencies
         run: npm install
+      - name: Test Coach In application domain
+        working-directory: .
+        run: npm test
+      - name: Check Coach In JavaScript syntax
+        working-directory: .
+        run: find src -type f -name '*.js' -print0 | xargs -0 -n1 node --check
       # Eve's Vercel sandbox templates require Vercel OIDC. GitHub Actions does
       # not receive that token; the protected Vercel Preview performs eve build.
       - name: Test automatic reviewer routing
