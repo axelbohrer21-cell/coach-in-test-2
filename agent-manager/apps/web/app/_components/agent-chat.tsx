@@ -47,8 +47,12 @@ export function AgentChat({
   const [cancellationError, setCancellationError] = useState<string>();
   const [hasInputText, setHasInputText] = useState(false);
   const hasSubmittedMessage = useRef(false);
+  const lastReplacedSessionId = useRef(sessionId);
   const replaceSessionRoute = (nextSessionId: string) => {
-    if (sessionId !== undefined) return;
+    if (sessionId !== undefined || lastReplacedSessionId.current === nextSessionId) return;
+    // Eve may notify session changes more than once while the stream is updating.
+    // Replace the route only once for each distinct session to avoid a history loop.
+    lastReplacedSessionId.current = nextSessionId;
     // Framework routers (Next.js, TanStack Router) patch window.history; navigating
     // through them would remount this route and detach the active stream.
     History.prototype.replaceState.call(
