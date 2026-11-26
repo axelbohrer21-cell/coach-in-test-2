@@ -57,7 +57,8 @@ export default defineWorkflowTool({
     taskId: z.string().min(3).max(80),
     dependsOn: z.array(z.string().min(3).max(80)).max(12).optional(),
     dependencyResults: z.array(dependencyResultSchema).max(12).optional(),
-    acceptanceCriteria: z.array(z.string().min(3).max(500)).min(1).max(12),
+    acceptanceCriteria: z.array(z.string().min(3).max(500)).min(1).max(12)
+      .refine((criteria) => new Set(criteria.map((item) => item.trim())).size === criteria.length, "Les critères d’acceptation doivent être uniques."),
     role: z.enum(roles),
     task: z.string().min(8).max(12000),
     context: z.string().max(16000).optional(),
