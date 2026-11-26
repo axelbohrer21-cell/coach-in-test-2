@@ -8,9 +8,10 @@ export interface DependencyHandoff {
 
 export function validateDependencyHandoff(requiredIds: string[], supplied: DependencyHandoff[]) {
   const duplicateRequiredIds = requiredIds.filter((id, index, all) => all.indexOf(id) !== index);
-  const duplicateDependencyIds = supplied
-    .map((item) => item.taskId)
+  const suppliedIds = supplied.map((item) => item.taskId);
+  const duplicateDependencyIds = suppliedIds
     .filter((id, index, all) => all.indexOf(id) !== index);
+  const unexpectedDependencyIds = [...new Set(suppliedIds.filter((id) => !requiredIds.includes(id)))];
   const missingOrUnverifiedDependencies = [...new Set(requiredIds)].filter((id) => {
     const matches = supplied.filter((item) => item.taskId === id);
     const match = matches[0];
@@ -27,9 +28,11 @@ export function validateDependencyHandoff(requiredIds: string[], supplied: Depen
   return {
     valid: duplicateRequiredIds.length === 0 &&
       duplicateDependencyIds.length === 0 &&
+      unexpectedDependencyIds.length === 0 &&
       missingOrUnverifiedDependencies.length === 0,
     duplicateRequiredIds: [...new Set(duplicateRequiredIds)],
     duplicateDependencyIds: [...new Set(duplicateDependencyIds)],
+    unexpectedDependencyIds,
     missingOrUnverifiedDependencies,
   };
 }
