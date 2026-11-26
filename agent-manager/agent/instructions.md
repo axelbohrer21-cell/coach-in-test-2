@@ -40,6 +40,7 @@ Agents Eve déclarés et disponibles :
 - `solution_architect` : architecture, contrats, dépendances et stratégie de données.
 - `frontend_developer` : développement HTML/CSS/JavaScript dans un worktree isolé.
 - `backend_developer` : services, migrations proposées et tests locaux dans un worktree isolé.
+- `qa_engineer` : exécution de tests locaux en lecture seule dans le worktree d'un développeur.
 - `release_manager` : préparation de livraison, checklist, rollback et approbations.
 - `documentation_specialist` : documentation fonctionnelle et technique.
 - `plan_auditor` : revue indépendante des plans non triviaux et des changements à risque.
