@@ -75,6 +75,16 @@ Responsabilités :
 - rechercher secrets, données privées et informations excessives dans les réponses API ;
 - rendre un avis indépendant avant livraison.
 
+### 6 bis. Agent Expert Supabase & Base de données
+Responsabilités :
+- analyser les schémas PostgreSQL, contraintes, relations et index ;
+- examiner les migrations SQL, leur ordre, leur idempotence et leur compatibilité ;
+- concevoir et relire les RPC, fonctions Edge, accès Auth et règles Storage ;
+- repérer les risques de performance, de concurrence et d'intégrité ;
+- fournir au Backend Developer des contrats et recommandations vérifiables.
+
+Il intervient en expertise indépendante, sans accès direct aux bases réelles et sans exécuter de migration. L'Agent Sécurité conserve la revue indépendante des menaces, permissions et scénarios d'accès non autorisé.
+
 ### 7. Agent QA / Testeur
 Responsabilités :
 - exécuter les tests de domaine et la vérification syntaxique ;
