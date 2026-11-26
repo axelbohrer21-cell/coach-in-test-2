@@ -56,6 +56,7 @@ export default defineWorkflowTool({
         acceptanceCriteria: taskDetailsById.get(task.taskId)!.acceptanceCriteria,
       })),
       instructions: [
+        "Pour chaque tâche développeur et QA, renseigner dans le plan un baseRef vérifié commun, une branche unique et un worktreePath unique sous /workspace/coach-in-worktrees/ ; la QA utilise son worktree d’intégration dédié.",
         "Déléguer uniquement les tâches de la vague courante.",
         "Attendre les résultats réels et les preuves avant la vague suivante.",
         "Pour chaque tâche, transmettre le plan complet et le taskId à team_task, avec les dependencyResults correspondant aux executionDependsOn recalculés depuis le plan.",
