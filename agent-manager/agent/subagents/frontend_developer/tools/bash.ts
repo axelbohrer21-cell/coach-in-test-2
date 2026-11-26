@@ -2,9 +2,9 @@ import { defineTool } from "eve/tools";
 import { bash } from "eve/tools/bash";
 
 const worktreePrefix = "/workspace/coach-in-worktrees/";
-const shellControl = /[;&|<>\x60$\\n\\r]/;
-const forbidden = /(?:^|\\s)(?:git\\s+(?:commit|push|merge|rebase|reset|clean|cherry-pick|tag)|gh\\s+pr\\s+(?:merge|create)|vercel(?:\\s|$)|supabase(?:\\s|$)|curl(?:\\s|$)|wget(?:\\s|$)|ssh(?:\\s|$)|scp(?:\\s|$)|sudo(?:\\s|$)|rm(?:\\s|$)|chmod(?:\\s|$)|chown(?:\\s|$)|python(?:\\s|$)|perl(?:\\s|$)|ruby(?:\\s|$)|node\\s+-e)/i;
-const allowed = /^(?:git -C \/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60} (?:status|diff|log|rev-parse|ls-files)(?:\\s|$)|npm --prefix \/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}\/agent-manager (?:run (?:typecheck|build|test:[a-z0-9:_-]+)|test)(?:\\s|$)|node --experimental-strip-types --test \/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}\/[^\\s]+\\.test\\.ts$)/;
+const shellControl = /[;&|<>\x60$\n\r]/;
+const forbidden = /(?:^|\s)(?:git\s+(?:commit|push|merge|rebase|reset|clean|cherry-pick|tag)|gh\s+pr\s+(?:merge|create)|vercel(?:\s|$)|supabase(?:\s|$)|curl(?:\s|$)|wget(?:\s|$)|ssh(?:\s|$)|scp(?:\s|$)|sudo(?:\s|$)|rm(?:\s|$)|chmod(?:\s|$)|chown(?:\s|$)|python(?:\s|$)|perl(?:\s|$)|ruby(?:\s|$)|node\s+-e)/i;
+const allowed = /^(?:git -C \/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60} (?:status|diff|log|rev-parse|ls-files)(?:\s|$)|npm --prefix \/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}\/agent-manager (?:run (?:typecheck|build|test:[a-z0-9:_-]+)|test)(?:\s|$)|node --experimental-strip-types --test \/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}\/[^\s]+\.test\.ts$)/;
 
 export default defineTool({
   ...bash,
