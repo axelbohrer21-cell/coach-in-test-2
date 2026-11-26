@@ -36,7 +36,7 @@ Service privé d'orchestration de l'équipe d'agents développeurs de Coach In. 
 - Agent principal Coach In Manager avec modèle configuré via Vercel AI Gateway.
 - Instructions de gouvernance et de coordination.
 - Contexte projet en lecture seule, embarqué dans le workspace.
-- Outils explicitement autorisés : poser une question, lire les documents du workspace et déléguer à un agent.
+- Outils explicitement autorisés : poser une question, lire les documents du workspace, planifier un graphe multi-tâches (`mission_plan`), déléguer une tâche (`team_task`), lancer une revue indépendante (`review_task`) et consulter/enregistrer les journaux de mission (`mission_memory`).
 - Les compétences projet, planification et routage sont conservées en fichiers Markdown et consultées par lecture.
 - Un référentiel partagé versionné recense les invariants métier et de sécurité Coach In ; il est transmis aux agents selon la pertinence de la mission. Ce n'est pas une mémoire automatique des conversations.
 - Les journaux de mission sont stockés dans un Blob Vercel privé, isolé du projet Coach In principal et connecté uniquement à la branche Preview Manager. L'outil `mission_memory` permet de lister, relire et enregistrer des comptes rendus structurés. Les données ne doivent contenir ni secrets ni données personnelles de joueurs.
