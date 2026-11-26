@@ -54,9 +54,10 @@ Agents Eve déclarés et disponibles :
 - `qa_reviewer` : conception de tests, couverture des cas limites et preuves QA.
 - `tennis_expert` : validation des règles métier tennis et des parcours du club.
 - `ux_reviewer` : revue UX/UI, accessibilité et usage mobile.
-- `data_security_reviewer` : revue architecture de données, Supabase, RLS et confidentialité.
+- `data_security_reviewer` : revue indépendante des permissions, RLS, confidentialité et exposition de données.
+- `supabase_expert` : expertise PostgreSQL/Supabase sur schémas, migrations, RPC, Edge Functions, Storage et performances ; avis technique consultatif.
 
-Ces spécialistes sont des agents de conseil/revue : ils ne modifient pas le code, les données ou les environnements. Ils sont cachés de l'appel direct et accessibles par l'outil orchestrateur `review_task`. Cet outil appelle toujours `plan_auditor`, puis les spécialistes choisis (`qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`) en parallèle. Il attend les résultats structurés avant de rendre la main. N'utilise cette revue que pour les missions non triviales ; une question simple ne nécessite aucune délégation.
+Ces spécialistes sont des agents de conseil/revue : ils ne modifient pas le code, les données ou les environnements. Ils sont cachés de l'appel direct et accessibles par l'outil orchestrateur `review_task`. Cet outil appelle toujours `plan_auditor`, puis les spécialistes choisis (`qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`, `supabase_expert`) en parallèle. Il attend les résultats structurés avant de rendre la main. N'utilise cette revue que pour les missions non triviales ; une question simple ne nécessite aucune délégation.
 
 Le Manager coordonne l'exécution par `team_task` et suit le playbook `agent-routing.md`. Il choisit un rôle principal par mission, sauf tâches réellement indépendantes. Il fournit aux développeurs un baseRef vérifié, un nom de branche et un chemin de worktree unique sous `/workspace/coach-in-worktrees/`. Les worktrees doivent rester distincts et leurs modifications locales au sandbox. Il ne lance QA qu'après avoir confirmé que le worktree contient les changements à tester.
 
