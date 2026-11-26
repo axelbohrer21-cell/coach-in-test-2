@@ -6,11 +6,13 @@ const roles = [
   "solution_architect",
   "frontend_developer",
   "backend_developer",
+  "qa_engineer",
   "release_manager",
   "documentation_specialist",
 ] as const;
 
-const developmentRoles = new Set(["frontend_developer", "backend_developer"]);
+const codeRoles = new Set(["frontend_developer", "backend_developer"]);
+const sandboxRoles = new Set(["frontend_developer", "backend_developer", "qa_engineer"]);
 
 const workSchema = z.object({
   status: z.enum(["completed", "blocked", "needs_input", "not_started"]),
@@ -35,7 +37,7 @@ const workSchema = z.object({
 
 export default defineWorkflowTool({
   description:
-    "Delegate one bounded Coach In task to the product owner, solution architect, frontend developer, backend developer, release manager, or documentation specialist. Developer agents work only in the isolated shared sandbox and the exact worktree supplied; they cannot push, commit, deploy, or access production.",
+    "Delegate one bounded Coach In task to the product owner, solution architect, frontend developer, backend developer, QA engineer, release manager, or documentation specialist. Code agents work only in the isolated shared sandbox and exact worktree supplied; QA is read-only. None can push, commit, deploy, or access production.",
   inputSchema: z.object({
     role: z.enum(roles),
     task: z.string().min(8).max(12000),
@@ -47,7 +49,7 @@ export default defineWorkflowTool({
   async execute({ role, task, context, baseRef, workBranch, worktreePath }, ctx) {
     "use workflow";
 
-    if (developmentRoles.has(role) && (!baseRef || !workBranch || !worktreePath)) {
+    if (sandboxRoles.has(role) && (!baseRef || !workBranch || !worktreePath)) {
       return {
         role,
         status: "blocked",
@@ -128,9 +130,11 @@ export default defineWorkflowTool({
       return {
         role,
         ...result.data,
-        verification: developmentRoles.has(role)
-          ? "Compte rendu de l'agent, à vérifier indépendamment par le Manager."
-          : "Avis spécialisé fondé uniquement sur le contexte transmis.",
+        verification: codeRoles.has(role)
+          ? "Compte rendu de développement dans le sandbox, à vérifier indépendamment par le Manager."
+          : role === "qa_engineer"
+            ? "Tests exécutés dans le sandbox ; le Manager doit confirmer les preuves et le diff."
+            : "Avis spécialisé fondé uniquement sur le contexte transmis.",
       };
     } catch (error) {
       return {
