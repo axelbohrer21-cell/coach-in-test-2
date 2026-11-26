@@ -1,9 +1,10 @@
 import { defineWorkflowTool } from "eve/tools";
+import { z } from "zod";
 import { inspectAgentRoster } from "../utils/agent-roster.js";
 
 export default defineWorkflowTool({
   description: "Check which Coach In specialist agents are actually registered and callable in this Eve runtime. Run before planning or delegating a non-trivial mission. This verifies discoverability only, not model quota or successful task execution.",
-  inputSchema: {},
+  inputSchema: z.object({}),
   async execute(_input, ctx) {
     "use workflow";
 
