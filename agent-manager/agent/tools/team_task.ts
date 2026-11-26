@@ -1,5 +1,6 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
+import { validateDependencyHandoff } from "../utils/coordination.js";
 
 const roles = [
   "product_owner",
@@ -65,24 +66,19 @@ export default defineWorkflowTool({
     "use workflow";
 
     const requiredDependencies = dependsOn ?? [];
-    const suppliedDependencies = dependencyResults ?? [];
-    const duplicateDependencyIds = suppliedDependencies
-      .map((item) => item.taskId)
-      .filter((id, index, all) => all.indexOf(id) !== index);
-    const missingDependencies = requiredDependencies.filter((id) =>
-      !suppliedDependencies.some((item) => item.taskId === id && item.status === "completed" && item.evidence.length > 0)
-    );
+    const handoff = validateDependencyHandoff(requiredDependencies, dependencyResults ?? []);
 
-    if (duplicateDependencyIds.length > 0 || missingDependencies.length > 0) {
+    if (!handoff.valid) {
       return {
         missionId,
         taskId,
         dependsOn: requiredDependencies,
         role,
         status: "blocked",
-        message: "Les dépendances doivent être transmises une seule fois, terminées et accompagnées de preuves avant le démarrage de cette tâche.",
-        missingOrUnverifiedDependencies: missingDependencies,
-        duplicateDependencyIds: [...new Set(duplicateDependencyIds)],
+        message: "Les dépendances doivent être transmises une seule fois, terminées, avec un livrable identifiable et une preuve avant le démarrage de cette tâche.",
+        missingOrUnverifiedDependencies: handoff.missingOrUnverifiedDependencies,
+        duplicateDependencyIds: handoff.duplicateDependencyIds,
+        duplicateRequiredIds: handoff.duplicateRequiredIds,
       };
     }
 
@@ -90,7 +86,7 @@ export default defineWorkflowTool({
       return {
         missionId,
         taskId,
-        dependsOn: dependsOn ?? [],
+        dependsOn: requiredDependencies,
         role,
         status: "blocked",
         message: "Une mission dans le sandbox exige un baseRef vérifié, un nom de branche et un chemin de worktree dédié.",
@@ -141,8 +137,14 @@ export default defineWorkflowTool({
       "Tu reçois une mission déléguée par Coach In Manager.",
       `MISSION_ID=${missionId ?? "non renseigné"}`,
       `TASK_ID=${taskId ?? "non renseigné"}`,
-      `DÉPENDANCES=${(dependsOn ?? []).join(", ") || "aucune déclarée"}`,
-      "Si des dépendances sont déclarées, vérifie que leurs livrables et preuves figurent dans le contexte. Si un livrable requis manque, renvoie status=blocked.",
+      `DÉPENDANCES=${requiredDependencies.join(", ") || "aucune déclarée"}`,
+      "LIVRABLES ET PREUVES DES DÉPENDANCES :",
+      ...(dependencyResults?.length ? dependencyResults.flatMap((item) => [
+        `- ${item.taskId} [${item.status}] : ${item.summary}`,
+        ...item.deliverables.map((value) => `  Livrable : ${value}`),
+        ...item.evidence.map((value) => `  Preuve : ${value}`),
+      ]) : ["Aucune dépendance."]),
+      "Si un livrable requis manque ou si une preuve est insuffisante, renvoie status=blocked.",
       `RÔLE=${role}`,
       "MISSION :",
       task,
@@ -193,7 +195,7 @@ export default defineWorkflowTool({
       return {
         missionId,
         taskId,
-        dependsOn: dependsOn ?? [],
+        dependsOn: requiredDependencies,
         role,
         ...result.data,
         verification: codeRoles.has(role)
@@ -206,7 +208,7 @@ export default defineWorkflowTool({
       return {
         missionId,
         taskId,
-        dependsOn: dependsOn ?? [],
+        dependsOn: requiredDependencies,
         role,
         status: "failed",
         error: error instanceof Error ? error.message : "Erreur inconnue pendant la délégation.",
