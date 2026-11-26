@@ -28,7 +28,7 @@ Privilèges vérifiés sur la base de test :
 - `anon` : exécution refusée ;
 - `SECURITY DEFINER` : désactivé pour cette fonction.
 
-### Correction en cours : source unique du planning
+### Correction appliquée en préproduction : source unique du planning
 
 Branche isolée : `fix/planning-agent-db-backed-occupancy-2026-11-26`
 
@@ -39,23 +39,33 @@ Une régression SQL vérifie que :
 - la fonction consulte `public.shared_court_occupancy` ;
 - aucun UUID ni fallback propre à Coach B ne subsiste.
 
-État observé dans la base de test avant application de cette correction :
-- Coach B : 215 cours collectifs actifs sur la saison et 215 occupations partagées correspondantes ;
-- aucun cours collectif actif sans occupation partagée correspondante ;
-- le code SQL de la RPC contenait encore un ancien UUID Coach B, bien que les occupations réelles suffisent désormais.
+La migration a été appliquée au projet Supabase de préproduction uniquement.
 
-### Vérifications antérieures
+### Vérifications effectuées après correction
 
-Les vérifications précédentes de la phase 1 avaient notamment confirmé les durées 60/90/120 minutes, les contrôles de rôle et de lien coach-joueur, les règles de calendrier Zone B et le retrait des créneaux pendant une indisponibilité temporaire.
+Date testée : vendredi 27 novembre 2026, durée 60 minutes.
+- Coach A : 64 propositions.
+- Coach B : 108 propositions.
+- Joueur déjà lié à Coach A : 64 propositions.
+- Ce même joueur, également lié à Coach B : 108 propositions.
+- La base de test comporte bien un joueur lié simultanément aux deux coachs ; les deux accès ont été testés séparément avec son identité.
+- Coach B, samedi 28 novembre 2026, pendant son cours collectif 09 h 30–13 h 30 : 0 proposition en chevauchement.
+- Les 215 cours collectifs actifs de Coach B ont chacun une occupation partagée correspondante ; aucun cours collectif actif sans occupation n'a été détecté.
+- Test statique SQL : PASS.
+- Privilèges : `anon` ne peut pas exécuter la fonction ; `authenticated` le peut.
+- La fonction reste en `SECURITY INVOKER` et ne contient plus l'identifiant de Coach B.
 
-Attention : la base de test contient actuellement deux coachs, chacun avec un joueur lié, mais aucun joueur lié simultanément aux deux coachs. Le scénario « un joueur lié à Coach A et Coach B » ne peut donc pas être présenté comme déjà testé. Il sera testé avec une liaison temporaire annulée par rollback, ou après création d'un compte de test adapté.
+Les appels fonctionnels ont été exécutés sous le rôle `authenticated`, dans des transactions terminées par `ROLLBACK`. Aucun cours, réservation ou lien joueur-coach n'a été ajouté ou modifié pendant les tests.
+
+### Alertes Supabase non liées à cette correction
+
+Les advisors de sécurité signalent des avertissements existants sur des fonctions de parrainage exécutables en `SECURITY DEFINER`, des tables RLS sans politique et la protection des mots de passe compromis. Ces sujets sont hors périmètre de la correction de l'Agent Planning et restent à traiter séparément.
 
 ### Recette utilisateur encore nécessaire
 
-Après validation technique :
 1. Coach A recherche un créneau dans son planning.
 2. Coach B vérifie que ses cours collectifs ne sont jamais proposés.
-3. Un joueur lié aux deux coachs peut choisir Coach A ou Coach B sans mélange de planning.
+3. Le joueur lié aux deux coachs choisit Coach A ou Coach B sans mélange de planning.
 4. Le joueur sélectionne « Demander ce créneau » ; le formulaire habituel s'ouvre.
 5. Le coach accepte ou refuse la demande ; les notifications et la mise à jour du planning sont contrôlées.
 
@@ -63,4 +73,4 @@ Après validation technique :
 
 Après cette recette, ajouter la compréhension du langage naturel et les appels OpenAI, après confirmation du secret `OPENAI_API_KEY` sur le projet de test.
 
-Aucune fusion vers `main` ni modification de la base de production n'est prévue à cette étape.
+La PR de correction est ouverte en brouillon vers la branche de préproduction Agent Planning. Aucune fusion vers `main` ni modification de la base de production n'est prévue à cette étape.
