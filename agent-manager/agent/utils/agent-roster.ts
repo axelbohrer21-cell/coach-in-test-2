@@ -1,5 +1,5 @@
-import { taskRoles } from "./mission-planner.js";
-import { reviewerIds } from "./reviewer-routing.js";
+import { taskRoles } from "./mission-planner.ts";
+import { reviewerIds } from "./reviewer-routing.ts";
 
 export const expectedAgentIds = [...new Set([...taskRoles, ...reviewerIds, "plan_auditor"])].sort();
 
