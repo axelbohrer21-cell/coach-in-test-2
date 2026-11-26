@@ -20,7 +20,7 @@ const reviewSchema = z.object({
 
 export default defineWorkflowTool({
   description:
-    "Run an independent review for a non-trivial Coach In task. Calls plan_auditor first, then QA and the automatically selected domain/security/UX reviewers in parallel. Passes the plan audit to downstream reviewers and reports partial or blocked reviews honestly.",
+    "Run an independent review for a non-trivial Coach In task. Calls plan_auditor first, then QA and the automatically selected domain/security/UX/Supabase reviewers in parallel. Passes the plan audit to downstream reviewers and reports partial or blocked reviews honestly.",
   inputSchema: z.object({
     task: z.string().min(8).max(12000),
     context: z.string().max(12000).optional(),
