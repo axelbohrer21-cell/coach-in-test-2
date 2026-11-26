@@ -24,7 +24,7 @@ export default defineWorkflowTool({
   inputSchema: z.object({
     task: z.string().min(8).max(12000),
     context: z.string().max(12000).optional(),
-    reviewers: z.array(z.enum(reviewerIds)).max(4).optional(),
+    reviewers: z.array(z.enum(reviewerIds)).max(5).optional(),
   }),
   async execute({ task, context, reviewers }, ctx) {
     "use workflow";
