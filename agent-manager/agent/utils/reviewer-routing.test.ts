@@ -28,3 +28,16 @@ test("analyse aussi le contexte fourni", () => {
   const result = selectReviewers("Refactoriser un service", "Le service écrit dans Supabase avec RLS");
   assert.ok(result.reviewers.includes("data_security_reviewer"));
 });
+
+
+test("ajoute l'expert Supabase pour une migration SQL", () => {
+  const result = selectReviewers("Créer une migration SQL pour une RPC Supabase");
+  assert.ok(result.reviewers.includes("supabase_expert"));
+  assert.ok(!result.reviewers.includes("data_security_reviewer"));
+});
+
+test("ajoute Supabase et sécurité pour une modification RLS", () => {
+  const result = selectReviewers("Modifier les policies RLS sur Supabase pour isoler les notes privées");
+  assert.ok(result.reviewers.includes("supabase_expert"));
+  assert.ok(result.reviewers.includes("data_security_reviewer"));
+});
