@@ -16,6 +16,7 @@
     "dev:all": "vercel dev --local",
     "typecheck": "tsc --noEmit --project tsconfig.agents.json",
     "typecheck:web": "tsc --noEmit --project apps/web/tsconfig.json",
+    "check:discovery": "eve info",
     "test:routing": "node --experimental-strip-types --test agent/utils/reviewer-routing.test.ts",
     "test:coordination": "node --experimental-strip-types --test agent/utils/coordination.test.ts",
     "test:planning": "node --experimental-strip-types --test agent/utils/mission-planner.test.ts",
