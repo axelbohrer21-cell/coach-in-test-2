@@ -24,18 +24,12 @@ Service privé d'orchestration de l'équipe d'agents développeurs de Coach In. 
 
 ### État du canal navigateur
 
-La protection Vercel Auth du déploiement est active. Elle ne remplace pas l'authentification des routes de session Eve. L'API Eve doit continuer à refuser les appels navigateur tant que le canal Web Chat et son authentification utilisateur Vercel ne sont pas provisionnés et vérifiés.
-
-La procédure Eve officielle à terminer depuis le dossier `agent-manager` est :
-
-```bash
-npx eve link
-npx eve add channel/web
-```
-
-Choisir le projet Vercel `coach-in-manager`, sélectionner l'hébergement Vercel, puis effectuer le parcours **Sign in with Vercel** pour provisionner les identifiants navigateur de l'équipe. Ne pas rendre l'API publique et ne pas remplacer l'authentification par `none()`.
-
-Le dépôt GitHub est relié à Vercel et la Preview du socle Manager précédent est READY. Le canal Web reste à provisionner et à authentifier avant de pouvoir tester une conversation réelle. Aucun déploiement de production de Coach In n'a été lancé.
+- Le canal Eve est déjà déclaré dans `agent/channels/eve.ts` avec `eveChannel`, une authentification Better Auth basée sur la session Vercel, `vercelOidc()` et `localDev()`.
+- L'interface `apps/web` contient le chat authentifié, l'écran de connexion et le contrôle du compte ; la route Better Auth est présente.
+- Les variables d'environnement attendues (`BETTER_AUTH_SECRET`, `VERCEL_APP_CLIENT_ID`, `VERCEL_APP_CLIENT_SECRET`) sont déclarées pour Preview et Production. Leurs valeurs secrètes ne sont jamais affichées dans le dépôt.
+- La protection Vercel Auth des déploiements reste active. Elle s'ajoute à l'authentification Better Auth ; elle ne la remplace pas.
+- La Preview compile et est READY, mais le parcours réel de connexion Vercel, l'ouverture d'une session et les délégations d'agents doivent encore être testés dans le navigateur avec un compte autorisé.
+- Ne pas rendre l'API publique et ne pas remplacer l'authentification par `none()`.
 
 ## Contenu de la première version
 
