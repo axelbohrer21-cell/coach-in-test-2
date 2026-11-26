@@ -14,6 +14,9 @@ export default defineWorkflowTool({
       role: z.enum(taskRoles),
       dependsOn: z.array(z.string().min(3).max(80)).max(12).default([]),
       writeScope: z.array(z.string().min(1).max(240)).max(40).default([]),
+      baseRef: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/).refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith(".")).optional(),
+      workBranch: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/).refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith(".")).optional(),
+      worktreePath: z.string().regex(/^\/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}$/).optional(),
       acceptanceCriteria: z.array(z.string().min(3).max(500)).min(1).max(12)
         .refine((criteria) => new Set(criteria.map((item) => item.trim())).size === criteria.length, "Les critères d’acceptation doivent être uniques."),
     })).min(1).max(20),
@@ -26,6 +29,9 @@ export default defineWorkflowTool({
       role,
       dependsOn,
       writeScope,
+      baseRef,
+      workBranch,
+      worktreePath,
     })));
 
     if (!plan.valid) {
