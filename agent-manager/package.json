@@ -60,6 +60,7 @@
   "overrides": {
     "zod": "$zod",
     "@vercel/oidc": "4.0.7",
-    "@vercel/cli-config": "0.3.7"
+    "@vercel/cli-config": "0.3.7",
+    "katex": "0.18.2"
   }
 }
