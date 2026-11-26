@@ -96,13 +96,13 @@ const quotaProtection: LanguageModelV4Middleware = {
   }),
   wrapGenerate: async ({ doGenerate, params }) =>
     runWithFallback((model, isPrimary) =>
-      isPrimary ? doGenerate() : model.doGenerate(params),
+      isPrimary ? Promise.resolve(doGenerate()) : Promise.resolve(model.doGenerate(params)),
     ),
   // Provider errors raised before the stream opens can be failed over safely.
   // Errors after the stream starts are not replayed to avoid duplicate output/actions.
   wrapStream: async ({ doStream, params }) =>
     runWithFallback((model, isPrimary) =>
-      isPrimary ? doStream() : model.doStream(params),
+      isPrimary ? Promise.resolve(doStream()) : Promise.resolve(model.doStream(params)),
     ),
 };
 
