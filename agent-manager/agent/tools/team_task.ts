@@ -70,7 +70,7 @@ export default defineWorkflowTool({
     "use workflow";
 
     if (missionPlan.missionId !== missionId) {
-      return { missionId, taskId, role, status: "blocked", message: "Le missionId ne correspond pas au plan validé." };
+      return { missionId, taskId, status: "blocked", message: "Le missionId ne correspond pas au plan validé." };
     }
 
     const executionPlan = buildMissionExecutionPlan(missionPlan.tasks.map(({ taskId: id, role: taskRole, dependsOn, writeScope }) => ({
@@ -80,7 +80,7 @@ export default defineWorkflowTool({
       writeScope,
     })));
     if (!executionPlan.valid) {
-      return { missionId, taskId, role, status: "blocked", planErrors: executionPlan.errors };
+      return { missionId, taskId, status: "blocked", planErrors: executionPlan.errors };
     }
 
     const plannedTask = executionPlan.tasks.find((item) => item.taskId === taskId);
