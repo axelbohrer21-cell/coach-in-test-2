@@ -1,7 +1,7 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
 
-import { reviewerIds, selectReviewers } from "./reviewer-routing";
+import { reviewerIds, selectReviewers } from "../utils/reviewer-routing.js";
 
 const reviewSchema = z.object({
   verdict: z.enum(["ready", "changes_requested", "blocked", "insufficient_evidence"]),
