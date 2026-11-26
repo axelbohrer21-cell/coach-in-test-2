@@ -42,10 +42,14 @@ Prévois les tests pertinents :
 
 Les actions de production, les migrations risquées, les fusions et les déploiements nécessitent une autorisation explicite.
 
-## Étape 5 — relecture indépendante
+## Étape 5 — ordonnancement exécutable
+
+Pour une mission multi-tâches, appelle `mission_plan` avec les dépendances, les critères d'acceptation et les périmètres de fichiers. Corrige tout graphe bloqué avant délégation. Suis les vagues retournées et transmets les dépendances sérialisées à `team_task` avec leurs preuves réelles.
+
+## Étape 6 — relecture indépendante
 
 Transmets le plan complet à `plan_auditor`. Corrige les lacunes signalées. Si le verdict est bloqué, explique le blocage plutôt que de présenter un plan comme prêt.
 
-## Étape 6 — compte rendu
+## Étape 7 — compte rendu
 
 Présente les tâches dans l'ordre, leur statut, les validations nécessaires et la prochaine action. Les agents non construits doivent être identifiés comme non disponibles.
