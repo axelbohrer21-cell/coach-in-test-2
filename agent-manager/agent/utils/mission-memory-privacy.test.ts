@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { findSensitiveProjectData } from "./mission-memory-privacy.ts";
+import { missionMemoryInputSchema } from "./mission-memory-schema.ts";
 
 test("repère une adresse e-mail dans un livrable", () => {
   assert.deepEqual(
@@ -23,8 +24,6 @@ test("accepte les notes de projet ordinaires", () => {
   );
 });
 
-
-import { missionMemoryInputSchema } from "./mission-memory-schema.ts";
 
 const validMission = {
   missionId: "mission-123",
@@ -60,4 +59,10 @@ test("le schéma accepte une sauvegarde de mission sans donnée sensible détect
 test("la liste mémoire accepte un curseur de pagination", () => {
   const result = missionMemoryInputSchema.safeParse({ action: "list", limit: 10, cursor: "cursor-token" });
   assert.equal(result.success, true);
+});
+
+
+test("repère également un numéro de téléphone français et un token Bearer", () => {
+  assert.equal(findSensitiveProjectData({ note: "06 12 34 56 78" })?.kind, "telephone");
+  assert.equal(findSensitiveProjectData({ note: "Authorization: Bearer abcdefghijklmnop123456" })?.kind, "bearer_token");
 });
