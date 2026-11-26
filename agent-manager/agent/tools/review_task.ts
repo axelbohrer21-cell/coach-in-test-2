@@ -85,8 +85,9 @@ export default defineWorkflowTool({
       item.review.findings.some((finding) => finding.severity === "critical" || finding.severity === "high")
     );
     const requestsChanges = completed.some((item) => item.review.verdict === "changes_requested");
+    const insufficientEvidence = completed.some((item) => item.review.verdict === "insufficient_evidence");
 
-    const status = failedCount > 0
+    const status = failedCount > 0 || insufficientEvidence
       ? "partial"
       : hasBlocker
         ? "blocked"
@@ -104,7 +105,9 @@ export default defineWorkflowTool({
       results,
       nextAction: status === "reviewed"
         ? "Le Manager peut consolider les retours et préparer la suite."
-        : "Le Manager doit traiter les blocages ou les revues incomplètes avant de présenter le plan comme prêt.",
+        : status === "partial"
+          ? "Compléter les éléments de preuve ou relancer les agents en échec avant de présenter le plan comme prêt."
+          : "Le Manager doit traiter les blocages ou les demandes de correction avant de présenter le plan comme prêt.",
     };
   },
 });
