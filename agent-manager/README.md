@@ -45,7 +45,8 @@ Le dépôt GitHub est maintenant relié à Vercel. Le build Preview est en cours
 - Outils explicitement autorisés : poser une question, lire les documents du workspace et déléguer à un agent.
 - Les compétences projet et planification sont conservées en fichiers Markdown et consultées par lecture.
 - Les checklists de tâches sont suivies dans les réponses ; aucun outil todo durable n'est actuellement activé.
-- Sous-agent indépendant `plan_auditor` pour relire les plans.
+- Sous-agents indépendants : `plan_auditor`, `qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`.
+- Outil workflow `review_task` : appelle automatiquement l'auditeur de plan puis les spécialistes sélectionnés en parallèle, attend les réponses structurées et retourne un état global (`reviewed`, `changes_requested`, `blocked` ou `partial`). Les spécialistes sont cachés de l'appel direct et passent par cet orchestrateur.
 - Aucun outil shell, écriture de fichiers, accès base de données, accès GitHub ou déploiement.
 
 ## Démarrage local
@@ -65,9 +66,9 @@ npm run build
 
 ## Limites explicites de cette version
 
-- Le Manager peut cadrer, organiser, questionner et relire les plans.
+- Le Manager peut cadrer, organiser, questionner et orchestrer les revues spécialisées.
 - Il ne peut pas encore créer des branches, lire le dépôt en direct, modifier le code, lancer les tests, lire Supabase ou déclencher Vercel.
-- Les spécialistes Frontend, Backend, Sécurité, QA, Release et Documentation restent à construire.
+- Les agents développeurs Frontend/Backend et Release restent à construire ; les spécialistes actuels sont des relecteurs consultatifs.
 - Aucune action de production n'est autorisée par défaut.
 
 ## Garde-fous
