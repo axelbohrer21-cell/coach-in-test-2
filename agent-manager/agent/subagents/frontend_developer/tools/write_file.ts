@@ -3,7 +3,7 @@ import { writeFile } from "eve/tools/write_file";
 
 const allowedPath = (path: string) =>
   path.startsWith("/workspace/coach-in-worktrees/") &&
-  !path.replace(/\\\\/g, "/").split("/").includes("..");
+  !path.replace(/\\/g, "/").split("/").includes("..");
 
 export default defineTool({
   ...writeFile,
