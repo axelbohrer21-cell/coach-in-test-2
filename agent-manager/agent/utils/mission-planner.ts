@@ -84,6 +84,8 @@ export function buildMissionExecutionPlan(tasks: MissionTask[]) {
   const workBranches = sandboxTasks.map((task) => task.workBranch).filter((value): value is string => Boolean(value));
   if (new Set(worktreePaths).size !== worktreePaths.length) errors.push("Chaque tâche développeur et QA doit avoir un chemin de worktree unique.");
   if (new Set(workBranches).size !== workBranches.length) errors.push("Chaque tâche développeur et QA doit avoir une branche Git unique.");
+  const baseRefs = [...new Set(sandboxTasks.map((task) => task.baseRef).filter((value): value is string => Boolean(value)))];
+  if (baseRefs.length > 1) errors.push("Toutes les tâches sandbox doivent partir du même baseRef vérifié.");
 
   const developers = tasks.filter((task) => task.role === "frontend_developer" || task.role === "backend_developer");
   const architects = tasks.filter((task) => task.role === "solution_architect");
@@ -96,7 +98,7 @@ export function buildMissionExecutionPlan(tasks: MissionTask[]) {
   const qaTasks = tasks.filter((task) => task.role === "qa_engineer");
   if (developers.length > 0 && qaTasks.length === 0) {
     errors.push("Une mission avec du développement doit inclure une tâche QA.");
-  } else if (developers.length > 0 && !qaTasks.some((qa) => developers.every((developer) => qa.dependsOn.includes(developer.taskId)))) {
+  } else if (developers.length > 0 && !qaTasks.every((qa) => developers.every((developer) => qa.dependsOn.includes(developer.taskId)))) {
     errors.push("Une tâche QA doit dépendre de toutes les tâches développeur pour tester l'intégration complète.");
   }
 
