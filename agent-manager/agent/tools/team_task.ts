@@ -1,6 +1,6 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
-import { validateDependencyHandoff } from "../utils/coordination.js";
+import { validateDependencyHandoff, validateTaskCompletion } from "../utils/coordination.js";
 
 const roles = [
   "product_owner",
@@ -18,13 +18,13 @@ const sandboxRoles = new Set(["frontend_developer", "backend_developer", "qa_eng
 const dependencyResultSchema = z.object({
   taskId: z.string().min(3).max(80),
   status: z.enum(["completed", "blocked", "failed", "needs_input"]),
-  summary: z.string(),
-  deliverables: z.array(z.string()),
+  summary: z.string().min(1),
+  deliverables: z.array(z.string().min(1)).min(1),
   evidence: z.array(z.string()),
 });
 
 const workSchema = z.object({
-  status: z.enum(["completed", "blocked", "needs_input", "not_started"]),
+  status: z.enum(["completed", "blocked", "failed", "needs_input", "not_started"]),
   summary: z.string(),
   deliverables: z.array(z.string()),
   filesChanged: z.array(z.string()),
@@ -48,11 +48,11 @@ export default defineWorkflowTool({
   description:
     "Delegate one bounded Coach In task to the product owner, solution architect, frontend developer, backend developer, QA engineer, release manager, or documentation specialist. Code agents work only in the isolated shared sandbox and exact worktree supplied; QA is configured for test-only execution and its worktree status must be checked by the Manager. None can push, commit, deploy, or access production.",
   inputSchema: z.object({
-    missionId: z.string().min(3).max(80).optional(),
-    taskId: z.string().min(3).max(80).optional(),
+    missionId: z.string().min(3).max(80),
+    taskId: z.string().min(3).max(80),
     dependsOn: z.array(z.string().min(3).max(80)).max(12).optional(),
     dependencyResults: z.array(dependencyResultSchema).max(12).optional(),
-    acceptanceCriteria: z.array(z.string().min(3).max(500)).max(12).optional(),
+    acceptanceCriteria: z.array(z.string().min(3).max(500)).min(1).max(12),
     role: z.enum(roles),
     task: z.string().min(8).max(12000),
     context: z.string().max(16000).optional(),
@@ -192,12 +192,15 @@ export default defineWorkflowTool({
         };
       }
 
+      const completion = validateTaskCompletion(role, result.data);
       return {
         missionId,
         taskId,
         dependsOn: requiredDependencies,
         role,
         ...result.data,
+        status: completion.valid ? result.data.status : "blocked",
+        completionGate: completion,
         verification: codeRoles.has(role)
           ? "Compte rendu de développement dans le sandbox, à vérifier indépendamment par le Manager."
           : role === "qa_engineer"
