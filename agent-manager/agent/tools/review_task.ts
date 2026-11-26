@@ -20,7 +20,7 @@ const reviewSchema = z.object({
 
 export default defineWorkflowTool({
   description:
-    "Run an independent review for a non-trivial Coach In task. Always invokes plan_auditor and QA; automatically adds tennis, UX, and data-security specialists based on task/context unless the caller explicitly selects reviewers. Waits for structured results and reports partial or blocked reviews honestly.",
+    "Run an independent review for a non-trivial Coach In task. Calls plan_auditor first, then QA and the automatically selected domain/security/UX reviewers in parallel. Passes the plan audit to downstream reviewers and reports partial or blocked reviews honestly.",
   inputSchema: z.object({
     task: z.string().min(8).max(12000),
     context: z.string().max(12000).optional(),
@@ -44,7 +44,7 @@ export default defineWorkflowTool({
       };
     }
 
-    const results = await Promise.all(selected.map(async (reviewer) => {
+    const runReviewer = async (reviewer: string, additionalContext?: string) => {
       const prompt = [
         "Mission de revue indépendante pour Coach In.",
         "Tu es un agent de conseil : ne modifie aucun code, aucune donnée et aucun environnement.",
@@ -55,8 +55,11 @@ export default defineWorkflowTool({
         "MISSION :",
         task,
         "",
-        "CONTEXTE :",
+        "CONTEXTE INITIAL :",
         context?.trim() || "Aucun contexte supplémentaire fourni.",
+        "",
+        "TRANSMISSION DE L'AUDITEUR DU PLAN :",
+        additionalContext ?? "Aucun résultat d'audit disponible ; indique les limites liées à cette absence.",
         "",
         "Fournis un verdict, des constats fondés, des recommandations concrètes, des critères d'acceptation et les tests nécessaires.",
       ].join("\n");
@@ -92,14 +95,27 @@ export default defineWorkflowTool({
           error: error instanceof Error ? error.message : "Erreur inconnue pendant la revue.",
         };
       }
-    }));
+    };
 
+    // The plan auditor establishes scope, dependencies and safety gates before
+    // downstream reviewers receive the task. Specialist reviews then run in parallel.
+    const planAudit = await runReviewer("plan_auditor");
+    const auditContext = planAudit.status === "completed"
+      ? JSON.stringify(planAudit.review)
+      : `L'audit du plan n'a pas abouti : ${planAudit.error}. Les spécialistes doivent signaler les limites de leur revue.`;
+
+    const specialistResults = await Promise.all(
+      selected.filter((name) => name !== "plan_auditor")
+        .map((reviewer) => runReviewer(reviewer, auditContext)),
+    );
+    const results = [planAudit, ...specialistResults];
     const aggregate = aggregateReviewOutcomes(results, selected.length);
 
     return {
       task,
       status: aggregate.status,
       reviewers: selected,
+      sequence: ["plan_auditor", "QA et spécialistes en parallèle"],
       selectionMode: reviewers === undefined ? "automatic" : "explicit",
       selectionReasons: automatic?.reasons ?? ["La liste des spécialistes a été explicitement fournie par le Manager."],
       evidenceMode: "context_only",
