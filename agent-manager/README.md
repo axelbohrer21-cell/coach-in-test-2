@@ -47,6 +47,7 @@ Le dépôt GitHub est maintenant relié à Vercel. Le build Preview est en cours
 - Les checklists de tâches sont suivies dans les réponses ; aucun outil todo durable n'est actuellement activé.
 - Sous-agents indépendants : `plan_auditor`, `qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`.
 - Outil workflow `review_task` : appelle automatiquement l'auditeur de plan puis les spécialistes sélectionnés en parallèle, attend les réponses structurées et retourne un état global (`reviewed`, `changes_requested`, `blocked` ou `partial`). Les spécialistes sont cachés de l'appel direct et passent par cet orchestrateur.
+- Les revues sont limitées au contexte transmis : les spécialistes n'ont pas d'accès direct au dépôt, à Supabase ni à une Preview. Ils ne peuvent donc jamais prétendre avoir inspecté ou testé ces ressources.
 - Aucun outil shell, écriture de fichiers, accès base de données, accès GitHub ou déploiement.
 
 ## Démarrage local
