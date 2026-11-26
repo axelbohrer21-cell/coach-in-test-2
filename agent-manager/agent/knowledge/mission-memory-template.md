@@ -17,6 +17,10 @@ Copier ce modèle dans l'espace de mémoire runtime du Manager pour chaque missi
 - Hypothèses à confirmer :
 - Décisions remplacées :
 
+## Critères d'acceptation
+| Tâche | Critère exact | Statut | Preuve | Vérifié par le Manager |
+|---|---|---|---|---|
+
 ## Résultats et preuves
 - Fichiers / artefacts :
 - Tests exécutés et résultats :
