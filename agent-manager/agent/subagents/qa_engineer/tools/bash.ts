@@ -1,9 +1,9 @@
 import { defineTool } from "eve/tools";
 import { bash } from "eve/tools/bash";
 
-const path = "\/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}";
+const path = "/workspace/coach-in-worktrees/[a-z0-9][a-z0-9._-]{1,60}";
 const allowed = new RegExp(
-  `^(?:git -C ${path} (?:status --short|diff --check|diff --stat|diff --name-only|rev-parse --abbrev-ref HEAD)|npm --prefix ${path}\\/agent-manager run (?:test:routing|test:coordination|test:planning|test:agents|test:memory-privacy|test:security|typecheck|typecheck:web))$`,
+  \`^(?:git -C \${path} (?:status --short|diff --check|diff --stat|diff --name-only|rev-parse --abbrev-ref HEAD)|npm --prefix \${path}/agent-manager run (?:test:routing|test:coordination|test:planning|test:agents|test:memory-privacy|test:security|typecheck|typecheck:web))$\`,
 );
 
 export default defineTool({
