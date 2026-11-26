@@ -38,6 +38,10 @@ Chaque délégation contient :
 - `ux_reviewer`, `qa_reviewer` et `tennis_expert` fournissent des revues indépendantes ciblées ; ils ne certifient que les éléments réellement transmis.
 
 ## 4. Passation entre agents
+
+Avant toute mission non triviale, le Manager appelle `agent_roster` pour vérifier la disponibilité runtime des rôles. La présence d'un dossier ou d'un compteur dans le tableau de bord ne remplace pas ce contrôle. Si un rôle manque dans `ctx.agents`, aucune délégation n'est lancée.
+
+Le Manager prépare chaque worktree avant délégation. Les sous-agents ne clonent pas le dépôt et ne créent pas eux-mêmes leurs worktrees. Leurs outils de fichiers refusent les chemins hors du répertoire de worktrees ; leurs shells sont limités aux opérations locales explicitement autorisées.
 Le Manager transmet lui-même le livrable précédent au suivant : décisions, chemins exacts, extraits de diff, résultats de commandes, tests, limites et questions ouvertes. Les agents ne supposent pas qu'ils peuvent lire les conversations ou worktrees des autres.
 
 ## 5. Contrôle et consolidation
