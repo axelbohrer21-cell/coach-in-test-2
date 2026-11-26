@@ -132,7 +132,7 @@ Responsabilités :
 | OpenAI / moteur d'agents | raisonnement, délégation et appels d'outils | côté serveur uniquement ; aucune clé dans le frontend |
 | Tests Node / GitHub Actions | qualité et non-régression | obligatoires avant recette |
 
-Le dépôt actuel ne contient pas encore de runtime d'orchestration pour une équipe d'agents développeurs. `AGENTS.md` et ce dossier constituent le référentiel de gouvernance, pas le lancement d'agents autonomes en arrière-plan. La mise en place du moteur d'orchestration devra être une étape séparée, avec des secrets côté serveur, des droits minimaux et un journal de chaque action.
+Le dépôt contient désormais un premier runtime d'orchestration dans `agent-manager/` : agents Eve, délégation bornée via `team_task`, planification via `mission_plan`, revues via `review_task` et mémoire de mission via `mission_memory`. Les agents développeurs disposent de worktrees isolés dans le sandbox ; QA est configuré en lecture seule. Cette présence dans le code ne vaut pas encore validation opérationnelle de bout en bout : les appels réels des agents, leurs outils et le cycle complet de consolidation/QA doivent être vérifiés sur une Preview correspondant au SHA testé. Aucun agent ne travaille en arrière-plan hors d'une session active.
 
 ## Priorités de mise en place
 
