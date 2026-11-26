@@ -26,6 +26,7 @@
 - Agent UX/UI.
 - Agent Frontend.
 - Agent Backend / Données.
+- Agent Expert Supabase & Base de données.
 - Agent Sécurité.
 - Agent QA / Testeur.
 - Agent Release / Déploiement.
