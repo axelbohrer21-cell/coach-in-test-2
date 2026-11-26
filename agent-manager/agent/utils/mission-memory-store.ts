@@ -20,15 +20,15 @@ export async function executeMissionMemoryStep(input: MissionMemoryInput) {
         ...input.record,
       }), {
         access: "private",
-        addRandomSuffix: false,
-        allowOverwrite: true,
+        addRandomSuffix: true,
+        allowOverwrite: false,
         contentType: "application/json",
       });
       return { status: "saved", missionId: input.record.missionId, pathname: blob.pathname, savedAt };
     }
 
     if (input.action === "list") {
-      const result = await list({ prefix: PREFIX, limit: input.limit ?? 20 });
+      const result = await list({ prefix: PREFIX, limit: input.limit ?? 20, cursor: input.cursor });
       const blobs = [...result.blobs]
         .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime())
         .map((blob) => ({
@@ -36,7 +36,7 @@ export async function executeMissionMemoryStep(input: MissionMemoryInput) {
           uploadedAt: blob.uploadedAt.toISOString(),
           size: blob.size,
         }));
-      return { status: "listed", count: blobs.length, hasMore: Boolean(result.cursor), records: blobs };
+      return { status: "listed", count: blobs.length, hasMore: Boolean(result.cursor), nextCursor: result.cursor ?? null, records: blobs };
     }
 
     if (!input.pathname.startsWith(PREFIX) || input.pathname.includes("..") || !input.pathname.endsWith(".json")) {
