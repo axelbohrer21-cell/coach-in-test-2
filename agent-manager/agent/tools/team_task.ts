@@ -14,6 +14,14 @@ const roles = [
 const codeRoles = new Set(["frontend_developer", "backend_developer"]);
 const sandboxRoles = new Set(["frontend_developer", "backend_developer", "qa_engineer"]);
 
+const dependencyResultSchema = z.object({
+  taskId: z.string().min(3).max(80),
+  status: z.enum(["completed", "blocked", "failed", "needs_input"]),
+  summary: z.string(),
+  deliverables: z.array(z.string()),
+  evidence: z.array(z.string()),
+});
+
 const workSchema = z.object({
   status: z.enum(["completed", "blocked", "needs_input", "not_started"]),
   summary: z.string(),
@@ -42,6 +50,7 @@ export default defineWorkflowTool({
     missionId: z.string().min(3).max(80).optional(),
     taskId: z.string().min(3).max(80).optional(),
     dependsOn: z.array(z.string().min(3).max(80)).max(12).optional(),
+    dependencyResults: z.array(dependencyResultSchema).max(12).optional(),
     acceptanceCriteria: z.array(z.string().min(3).max(500)).max(12).optional(),
     role: z.enum(roles),
     task: z.string().min(8).max(12000),
@@ -52,8 +61,30 @@ export default defineWorkflowTool({
       .refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith("."), "Invalid branch name").optional(),
     worktreePath: z.string().regex(/^\/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}$/).optional(),
   }),
-  async execute({ missionId, taskId, dependsOn, acceptanceCriteria, role, task, context, baseRef, workBranch, worktreePath }, ctx) {
+  async execute({ missionId, taskId, dependsOn, dependencyResults, acceptanceCriteria, role, task, context, baseRef, workBranch, worktreePath }, ctx) {
     "use workflow";
+
+    const requiredDependencies = dependsOn ?? [];
+    const suppliedDependencies = dependencyResults ?? [];
+    const duplicateDependencyIds = suppliedDependencies
+      .map((item) => item.taskId)
+      .filter((id, index, all) => all.indexOf(id) !== index);
+    const missingDependencies = requiredDependencies.filter((id) =>
+      !suppliedDependencies.some((item) => item.taskId === id && item.status === "completed" && item.evidence.length > 0)
+    );
+
+    if (duplicateDependencyIds.length > 0 || missingDependencies.length > 0) {
+      return {
+        missionId,
+        taskId,
+        dependsOn: requiredDependencies,
+        role,
+        status: "blocked",
+        message: "Les dépendances doivent être transmises une seule fois, terminées et accompagnées de preuves avant le démarrage de cette tâche.",
+        missingOrUnverifiedDependencies: missingDependencies,
+        duplicateDependencyIds: [...new Set(duplicateDependencyIds)],
+      };
+    }
 
     if (sandboxRoles.has(role) && (!baseRef || !workBranch || !worktreePath)) {
       return {
@@ -69,6 +100,9 @@ export default defineWorkflowTool({
 
     if (!Object.keys(ctx.agents).includes(role)) {
       return {
+        missionId,
+        taskId,
+        dependsOn: requiredDependencies,
         role,
         status: "blocked",
         message: "L'agent demandé n'est pas disponible dans cette version du Manager.",
