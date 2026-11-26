@@ -22,6 +22,8 @@ const betterAuthSession: AuthFn<Request> = async (request) => {
   };
 };
 
+const vercelAuth = process.env.VERCEL ? [vercelOidc()] : [];
+
 export default eveChannel({
-  auth: [betterAuthSession, vercelOidc(), localDev()],
+  auth: [betterAuthSession, ...vercelAuth, localDev()],
 });
