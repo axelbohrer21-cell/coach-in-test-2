@@ -59,3 +59,21 @@ test("bloque un développeur sans périmètre de fichiers explicite", () => {
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes("périmètre")));
 });
+
+
+test("bloque les identifiants de tâche dupliqués", () => {
+  const result = buildMissionExecutionPlan([
+    developer("front-a", ["src/a.js"]),
+    developer("front-a", ["src/b.js"]),
+  ]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("dupliqués")));
+});
+
+test("bloque les chemins absolus, traversants ou avec jokers", () => {
+  for (const scope of ["/etc/passwd", "../src/app.js", "src/**/*.js"]) {
+    const result = buildMissionExecutionPlan([developer("front-a", [scope])]);
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some((error) => error.includes("chemin de modification invalide")));
+  }
+});
