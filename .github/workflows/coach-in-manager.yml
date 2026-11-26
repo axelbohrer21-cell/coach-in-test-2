@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/coach-in-manager-eve-2026-11-25
+      - feat/manager-persistent-memory-coordination-2026-11-26
     paths:
       - "agent-manager/**"
       - ".github/workflows/coach-in-manager.yml"
