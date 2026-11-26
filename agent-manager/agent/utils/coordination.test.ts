@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aggregateReviewOutcomes, validateDependencyHandoff } from "./coordination.ts";
+import { aggregateReviewOutcomes, validateDependencyHandoff, validateTaskCompletion } from "./coordination.ts";
 
 const completed = (taskId: string) => ({
   taskId,
@@ -78,4 +78,45 @@ test("les demandes de correction sont conservées après revue complète", () =>
     } },
   ], 1);
   assert.equal(result.status, "changes_requested");
+});
+
+
+const completedTask = {
+  status: "completed" as const,
+  summary: "Modification terminée",
+  deliverables: ["src/module.ts"],
+  filesChanged: ["src/module.ts"],
+  commandsRun: [{ command: "npm test", exitCode: 0, result: "OK" }],
+  tests: [{ name: "unit", status: "passed" as const, evidence: "1/1 passed" }],
+};
+
+test("ne valide pas un développeur si une commande ou un test échoue", () => {
+  const result = validateTaskCompletion("frontend_developer", {
+    ...completedTask,
+    tests: [{ name: "unit", status: "failed", evidence: "Assertion failed" }],
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.reasons.some((reason) => reason.includes("test(s)")));
+});
+
+test("exige un diff réel pour un développeur", () => {
+  const result = validateTaskCompletion("backend_developer", {
+    ...completedTask,
+    filesChanged: [],
+  });
+  assert.equal(result.valid, false);
+});
+
+test("refuse une validation QA si un fichier a été modifié", () => {
+  const result = validateTaskCompletion("qa_engineer", completedTask);
+  assert.equal(result.valid, false);
+  assert.ok(result.reasons.some((reason) => reason.includes("lecture seule")));
+});
+
+test("accepte un rapport QA en lecture seule avec preuves et tests réussis", () => {
+  const result = validateTaskCompletion("qa_engineer", {
+    ...completedTask,
+    filesChanged: [],
+  });
+  assert.equal(result.valid, true);
 });
