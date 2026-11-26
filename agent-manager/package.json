@@ -14,7 +14,8 @@
     "build:web": "next build apps/web",
     "dev:eve": "eve dev",
     "dev:all": "vercel dev --local",
-    "typecheck": "tsc --noEmit --project tsconfig.agents.json"
+    "typecheck": "tsc --noEmit --project tsconfig.agents.json",
+    "test:routing": "node --experimental-strip-types --test agent/tools/reviewer-routing.test.ts"
   },
   "dependencies": {
     "@shadcn/react": "^0.3.1",
