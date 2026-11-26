@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { findSensitiveProjectData } from "./mission-memory-privacy.js";
+import { findSensitiveProjectData } from "./mission-memory-privacy.ts";
 
 const missionSchema = z.object({
   missionId: z.string().regex(/^[a-zA-Z0-9_-]{3,80}$/),
