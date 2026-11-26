@@ -135,3 +135,22 @@ test("bloque une tâche dont le critère d'acceptation n'est pas démontré", ()
   assert.equal(result.valid, false);
   assert.ok(result.reasons.some((reason) => reason.includes("Critère non démontré")));
 });
+
+
+test("bloque une commande sans code de sortie vérifiable", () => {
+  const result = validateTaskCompletion("product_owner", {
+    ...completedTask,
+    commandsRun: [{ command: "npm test", exitCode: null, result: "Commande lancée" }],
+  }, ["Le changement est implémenté"]);
+  assert.equal(result.valid, false);
+  assert.ok(result.reasons.some((reason) => reason.includes("code de sortie vérifiable")));
+});
+
+test("bloque un test réussi sans preuve", () => {
+  const result = validateTaskCompletion("product_owner", {
+    ...completedTask,
+    tests: [{ name: "unit", status: "passed", evidence: " " }],
+  }, ["Le changement est implémenté"]);
+  assert.equal(result.valid, false);
+  assert.ok(result.reasons.some((reason) => reason.includes("aucune preuve")));
+});
