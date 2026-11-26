@@ -13,7 +13,18 @@ export type MissionTask = {
   role: typeof taskRoles[number];
   dependsOn: string[];
   writeScope: string[];
+  baseRef?: string;
+  workBranch?: string;
+  worktreePath?: string;
 };
+
+const sandboxRoles = new Set(["frontend_developer", "backend_developer", "qa_engineer"]);
+const worktreePathPattern = /^\/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}$/;
+const gitRefPattern = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/;
+
+function validGitRef(value: string | undefined): boolean {
+  return Boolean(value && gitRefPattern.test(value) && !value.includes("..") && !value.endsWith("/") && !value.endsWith("."));
+}
 
 function normalizeScope(scope: string): string | null {
   const value = scope.trim().replace(/\\/g, "/").replace(/\/+/g, "/").replace(/\/$/, "");
@@ -51,6 +62,14 @@ export function buildMissionExecutionPlan(tasks: MissionTask[]) {
       errors.push(`${task.taskId} (${task.role}) ne peut pas déclarer un périmètre d'écriture dans ce plan.`);
     }
 
+    if (sandboxRoles.has(task.role)) {
+      if (!validGitRef(task.baseRef)) errors.push(`${task.taskId} doit déclarer un baseRef Git valide.`);
+      if (!validGitRef(task.workBranch)) errors.push(`${task.taskId} doit déclarer une branche de travail valide.`);
+      if (!task.worktreePath || !worktreePathPattern.test(task.worktreePath)) errors.push(`${task.taskId} doit déclarer un chemin de worktree dédié et autorisé.`);
+    } else if (task.baseRef || task.workBranch || task.worktreePath) {
+      errors.push(`${task.taskId} ne peut pas réserver de worktree pour ce rôle.`);
+    }
+
     if (task.role === "qa_engineer") {
       const hasDeveloperDependency = task.dependsOn.some((id) => {
         const dependency = byId.get(id);
@@ -59,6 +78,12 @@ export function buildMissionExecutionPlan(tasks: MissionTask[]) {
       if (!hasDeveloperDependency) errors.push(`${task.taskId} (QA) doit dépendre d'au moins une tâche développeur.`);
     }
   }
+
+  const sandboxTasks = tasks.filter((task) => sandboxRoles.has(task.role));
+  const worktreePaths = sandboxTasks.map((task) => task.worktreePath).filter((value): value is string => Boolean(value));
+  const workBranches = sandboxTasks.map((task) => task.workBranch).filter((value): value is string => Boolean(value));
+  if (new Set(worktreePaths).size !== worktreePaths.length) errors.push("Chaque tâche développeur et QA doit avoir un chemin de worktree unique.");
+  if (new Set(workBranches).size !== workBranches.length) errors.push("Chaque tâche développeur et QA doit avoir une branche Git unique.");
 
   const developers = tasks.filter((task) => task.role === "frontend_developer" || task.role === "backend_developer");
   const architects = tasks.filter((task) => task.role === "solution_architect");
