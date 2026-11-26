@@ -71,3 +71,13 @@ Pour une revue non triviale, `review_task` exécute d'abord `plan_auditor`. Son 
 - La liste des enregistrements est paginée ; le Manager suit le curseur retourné jusqu'à avoir parcouru la plage nécessaire.
 - Le schéma refuse les motifs courants de données sensibles (adresses e-mail, téléphones français, secrets assignés, tokens Bearer/JWT et tokens connus). Ce contrôle réduit les erreurs évidentes, mais ne remplace pas le jugement du Manager : aucun contenu personnel ou secret ne doit être envoyé à la mémoire.
 - Si le stockage Blob est indisponible, la mission doit être signalée comme non mémorisée.
+
+
+## 11. Planification exécutable du graphe de tâches
+
+- Avant toute mission à plusieurs tâches, le Manager appelle `mission_plan`.
+- Le plan refuse les identifiants dupliqués, dépendances inconnues ou cycliques, chemins invalides, développeurs sans périmètre explicite et tâches QA sans dépendance développeur.
+- Les tâches indépendantes aux périmètres disjoints sont regroupées en vagues parallèles.
+- Les tâches dont les chemins se chevauchent sont sérialisées automatiquement ; le plan ajoute une dépendance `executionDependsOn` que le Manager doit transmettre avec le livrable du prédécesseur.
+- Le Manager ne lance jamais une vague suivante avant d'avoir vérifié les résultats et preuves de la vague précédente.
+- `mission_plan` ne lance aucun agent et ne modifie aucun fichier : il sécurise l'ordonnancement. Les délégations effectives restent réalisées par `team_task`.
