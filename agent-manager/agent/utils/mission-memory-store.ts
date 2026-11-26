@@ -28,7 +28,8 @@ export async function executeMissionMemoryStep(input: MissionMemoryInput) {
     }
 
     if (input.action === "list") {
-      const result = await list({ prefix: PREFIX, limit: input.limit ?? 20, cursor: input.cursor });
+      const prefix = input.missionId ? `${PREFIX}${input.missionId}/` : PREFIX;
+      const result = await list({ prefix, limit: input.limit ?? 20, cursor: input.cursor });
       const blobs = [...result.blobs]
         .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime())
         .map((blob) => ({
