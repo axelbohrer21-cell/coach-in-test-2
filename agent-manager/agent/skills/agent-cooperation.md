@@ -48,3 +48,26 @@ Pas de secrets, données privées de joueurs, accès production, écriture de ba
 - Chaque résultat doit avoir `status=completed` et au moins une preuve non vide ; sinon `team_task` bloque la délégation avant l'appel à l'agent.
 - Les identifiants de dépendance dupliqués sont rejetés. Le Manager transmet les résumés, livrables et preuves des tâches précédentes, pas seulement leurs noms.
 - Une preuve déclarée par un agent reste à vérifier par le Manager : cette barrière garantit le chaînage explicite, pas la véracité automatique de la preuve.
+
+## 8. Barrière de clôture des tâches
+
+Une réponse structurée de l'agent n'est pas automatiquement une tâche terminée.
+
+- Chaque délégation porte un `missionId`, un `taskId` et au moins un critère d'acceptation.
+- Le statut `completed` est rejeté si le résumé ou les livrables sont vides.
+- Une commande avec code de sortie non nul ou un test échoué bloque la clôture.
+- Un développeur doit fournir au moins un fichier modifié ; le Manager doit ensuite contrôler le diff réel.
+- QA Engineer doit fournir au moins un test réussi avec preuve, aucun test échoué/non exécuté, et aucun fichier modifié.
+- Une tâche bloquée, échouée ou en attente d'information ne peut pas alimenter une dépendance comme si elle était terminée.
+- Le Manager vérifie les preuves indépendamment avant de les transmettre à l'étape suivante.
+
+## 9. Ordre de revue
+
+Pour une revue non triviale, `review_task` exécute d'abord `plan_auditor`. Son résultat structuré est transmis ensuite à QA et aux spécialistes sélectionnés, qui peuvent travailler en parallèle. Si l'audit échoue, les spécialistes en sont informés et la revue finale reste partielle ou bloquée selon les résultats ; le Manager ne masque pas cet échec.
+
+## 10. Mémoire de mission
+
+- Les enregistrements de mission sont append-only : une nouvelle sauvegarde ne remplace pas silencieusement une entrée antérieure.
+- La liste des enregistrements est paginée ; le Manager suit le curseur retourné jusqu'à avoir parcouru la plage nécessaire.
+- Le schéma refuse les motifs courants de données sensibles (adresses e-mail, téléphones français, secrets assignés, tokens Bearer/JWT et tokens connus). Ce contrôle réduit les erreurs évidentes, mais ne remplace pas le jugement du Manager : aucun contenu personnel ou secret ne doit être envoyé à la mémoire.
+- Si le stockage Blob est indisponible, la mission doit être signalée comme non mémorisée.
