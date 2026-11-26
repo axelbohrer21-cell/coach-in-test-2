@@ -37,7 +37,7 @@ const workSchema = z.object({
 
 export default defineWorkflowTool({
   description:
-    "Delegate one bounded Coach In task to the product owner, solution architect, frontend developer, backend developer, QA engineer, release manager, or documentation specialist. Code agents work only in the isolated shared sandbox and exact worktree supplied; QA is read-only. None can push, commit, deploy, or access production.",
+    "Delegate one bounded Coach In task to the product owner, solution architect, frontend developer, backend developer, QA engineer, release manager, or documentation specialist. Code agents work only in the isolated shared sandbox and exact worktree supplied; QA is configured for test-only execution and its worktree status must be checked by the Manager. None can push, commit, deploy, or access production.",
   inputSchema: z.object({
     role: z.enum(roles),
     task: z.string().min(8).max(12000),
