@@ -37,11 +37,15 @@ Service privé d'orchestration de l'équipe d'agents développeurs de Coach In. 
 - Instructions de gouvernance et de coordination.
 - Contexte projet en lecture seule, embarqué dans le workspace.
 - Outils explicitement autorisés : poser une question, lire les documents du workspace et déléguer à un agent.
-- Les compétences projet et planification sont conservées en fichiers Markdown et consultées par lecture.
+- Les compétences projet, planification et routage sont conservées en fichiers Markdown et consultées par lecture.
+- Un référentiel partagé versionné recense les invariants métier et de sécurité Coach In ; il est transmis aux agents selon la pertinence de la mission. Ce n'est pas une mémoire automatique des conversations.
 - Les checklists de tâches sont suivies dans les réponses ; aucun outil todo durable n'est actuellement activé.
+- Aucun tableau de bord de performance ni stockage de métriques par agent n'est encore implémenté. Les résultats et preuves sont rapportés mission par mission.
 - Équipe déclarée : `product_owner`, `solution_architect`, `frontend_developer`, `backend_developer`, `qa_engineer`, `qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`, `release_manager`, `documentation_specialist` et `plan_auditor`.
 - Workflow `team_task` : route une mission bornée vers un spécialiste et attend son livrable structuré. Les développeurs disposent des outils de code dans un sandbox isolé et partagent le sandbox du Manager via des worktrees distincts.
-- Outil workflow `review_task` : appelle automatiquement l'auditeur de plan puis les spécialistes sélectionnés en parallèle, attend les réponses structurées et retourne un état global (`reviewed`, `changes_requested`, `blocked` ou `partial`). Les spécialistes sont cachés de l'appel direct et passent par cet orchestrateur.
+- Outil workflow `review_task` : appelle automatiquement l'auditeur de plan puis QA et sélectionne les spécialistes tennis, UX et sécurité selon le domaine/risque de la mission, sauf liste explicite fournie par le Manager. Attend les réponses structurées et retourne un état global (`reviewed`, `changes_requested`, `blocked` ou `partial`). Les spécialistes sont cachés de l'appel direct et passent par cet orchestrateur.
+- Playbook `agent/skills/agent-routing.md` : matrice de délégation, limites de parallélisme, règles d'économie de quotas et de transmission du contexte.
+- Référentiel `agent/knowledge/coach-in-shared-context.md` : invariants Coach In versionnés, transmis de manière sélective. Les agents de revue restent limités aux preuves explicitement fournies.
 - Les agents de conseil/revue sont limités au contexte transmis et n'ont pas d'accès direct au dépôt, à Supabase ni à une Preview.
 - Les développeurs peuvent modifier des fichiers dans un worktree local au sandbox isolé, lire le dépôt public et lancer des tests locaux. Le QA Engineer est configuré pour exécuter les tests sans modifier les sources ; le Manager vérifie systématiquement le git status après ses contrôles. Aucun ne peut commit, push, ouvrir de PR, accéder à Supabase, ni déployer.
 - Le sandbox autorise uniquement les domaines publics GitHub et les registres de paquets nécessaires ; aucun secret applicatif ou accès de production n'y est monté.
