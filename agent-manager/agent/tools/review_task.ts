@@ -24,7 +24,7 @@ const reviewSchema = z.object({
 
 export default defineWorkflowTool({
   description:
-    "Run a controlled, parallel review of a non-trivial Coach In task. Always invokes plan_auditor, then the selected QA, tennis, UX, and/or data-security specialists. Returns structured findings only after the selected reviewers finish. Reviewers are advisory and cannot modify code, data, or environments.",
+    "Run a controlled independent review of a non-trivial Coach In task. Always invokes plan_auditor, then the selected QA, tennis, UX, and/or data-security specialists in parallel. Waits for every structured result and reports partial or blocked reviews honestly.",
   inputSchema: z.object({
     task: z.string().min(8).max(12000),
     context: z.string().max(12000).optional(),
@@ -64,11 +64,29 @@ export default defineWorkflowTool({
       ].join("\n");
 
       try {
-        const review = await ctx.agent(reviewer, {
-          message: prompt,
+        const response = await ctx.agent(reviewer).send(prompt, {
           outputSchema: reviewSchema,
+          signal: ctx.abortSignal,
         });
-        return { reviewer, status: "completed" as const, review };
+        const result = await response.result();
+
+        if (result.status !== "completed") {
+          return {
+            reviewer,
+            status: "failed" as const,
+            error: result.status === "failed"
+              ? result.error.message
+              : "La revue a été annulée avant de produire un résultat.",
+          };
+        }
+        if (!result.data) {
+          return {
+            reviewer,
+            status: "failed" as const,
+            error: "L'agent n'a pas retourné le résultat structuré attendu.",
+          };
+        }
+        return { reviewer, status: "completed" as const, review: result.data };
       } catch (error) {
         return {
           reviewer,
@@ -87,7 +105,7 @@ export default defineWorkflowTool({
     const requestsChanges = completed.some((item) => item.review.verdict === "changes_requested");
     const insufficientEvidence = completed.some((item) => item.review.verdict === "insufficient_evidence");
 
-    const status = failedCount > 0 || insufficientEvidence
+    const status = failedCount > 0 || insufficientEvidence || completed.length !== selected.length
       ? "partial"
       : hasBlocker
         ? "blocked"
