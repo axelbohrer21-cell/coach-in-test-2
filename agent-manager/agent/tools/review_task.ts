@@ -2,6 +2,7 @@ import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
 
 import { reviewerIds, selectReviewers } from "../utils/reviewer-routing.js";
+import { aggregateReviewOutcomes } from "../utils/coordination.js";
 
 const reviewSchema = z.object({
   verdict: z.enum(["ready", "changes_requested", "blocked", "insufficient_evidence"]),
@@ -16,7 +17,6 @@ const reviewSchema = z.object({
   tests: z.array(z.string()),
   assumptions: z.array(z.string()),
 });
-
 
 export default defineWorkflowTool({
   description:
@@ -94,36 +94,21 @@ export default defineWorkflowTool({
       }
     }));
 
-    const failedCount = results.filter((item) => item.status === "failed").length;
-    const completed = results.filter((item) => item.status === "completed");
-    const hasBlocker = completed.some((item) =>
-      item.review.verdict === "blocked" ||
-      item.review.findings.some((finding) => finding.severity === "critical" || finding.severity === "high")
-    );
-    const requestsChanges = completed.some((item) => item.review.verdict === "changes_requested");
-    const insufficientEvidence = completed.some((item) => item.review.verdict === "insufficient_evidence");
-
-    const status = failedCount > 0 || insufficientEvidence || completed.length !== selected.length
-      ? "partial"
-      : hasBlocker
-        ? "blocked"
-        : requestsChanges
-          ? "changes_requested"
-          : "reviewed";
+    const aggregate = aggregateReviewOutcomes(results, selected.length);
 
     return {
       task,
-      status,
+      status: aggregate.status,
       reviewers: selected,
       selectionMode: reviewers === undefined ? "automatic" : "explicit",
       selectionReasons: automatic?.reasons ?? ["La liste des spécialistes a été explicitement fournie par le Manager."],
       evidenceMode: "context_only",
-      completedCount: completed.length,
-      failedCount,
+      completedCount: aggregate.completedCount,
+      failedCount: aggregate.failedCount,
       results,
-      nextAction: status === "reviewed"
+      nextAction: aggregate.status === "reviewed"
         ? "Le Manager peut consolider les retours et préparer la suite."
-        : status === "partial"
+        : aggregate.status === "partial"
           ? "Compléter les éléments de preuve ou relancer les agents en échec avant de présenter le plan comme prêt."
           : "Le Manager doit traiter les blocages ou les demandes de correction avant de présenter le plan comme prêt.",
     };
