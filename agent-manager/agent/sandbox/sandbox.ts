@@ -1,24 +1,23 @@
-import { defineSandbox } from "eve/sandbox";
-import { VercelSandbox } from "eve/sandbox/vercel";
+import { DefaultSandbox, defineSandbox } from "eve/sandbox";
 
-// Use Eve's supported default Vercel Sandbox image. The optional eve-git image
-// is not provisioned for this project, so Git tooling is kept to the default
-// runtime instead of depending on an unavailable custom image.
-// Network access is limited to public source/package hosts; no production
-// database, app secrets, or deployment credentials are mounted here.
-export const environment = VercelSandbox.environment();
+// Eve selects Vercel Sandbox for deployed sessions, Docker when available locally,
+// and just-bash for eve dev. CI can compile without requiring Vercel OIDC.
+export const environment = DefaultSandbox.environment();
 
-export default defineSandbox(() =>
-  environment.open({
-    networkPolicy: {
-      allow: {
-        "github.com": [],
-        "api.github.com": [],
-        "objects.githubusercontent.com": [],
-        "codeload.github.com": [],
-        "registry.npmjs.org": [],
-        "registry.yarnpkg.com": [],
+export default defineSandbox(() => {
+  if (process.env.VERCEL) {
+    return environment.open({
+      networkPolicy: {
+        allow: {
+          "github.com": [],
+          "api.github.com": [],
+          "objects.githubusercontent.com": [],
+          "codeload.github.com": [],
+          "registry.npmjs.org": [],
+          "registry.yarnpkg.com": [],
+        },
       },
-    },
-  }),
-);
+    });
+  }
+  return environment.open();
+});
