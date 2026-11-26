@@ -53,8 +53,8 @@ export default defineWorkflowTool({
         "Déléguer uniquement les tâches de la vague courante.",
         "Attendre les résultats réels et les preuves avant la vague suivante.",
         "Pour chaque tâche, transmettre le plan complet et le taskId à team_task, avec les dependencyResults correspondant aux executionDependsOn recalculés depuis le plan.",
-        "Les tâches sérialisées à cause d'un chevauchement de fichiers reçoivent la sortie du prédécesseur avant de commencer.",
-        "Après les développeurs, lancer QA dans le worktree exact du développeur ; puis lancer review_task avec le diff et les preuves collectées.",
+        "Les tâches sérialisées à cause d'un chevauchement de fichiers reçoivent la sortie du prédécesseur avant de commencer ; le Manager intègre et vérifie le diff dans le nouveau worktree avant la délégation suivante.",
+        "Après tous les développeurs, le Manager consolide les diffs vérifiés dans un worktree d’intégration dédié ; QA teste ce worktree en lecture seule, puis review_task reçoit le diff consolidé et les preuves collectées.",
       ],
     };
   },
