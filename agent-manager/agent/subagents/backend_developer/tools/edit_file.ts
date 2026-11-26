@@ -3,7 +3,7 @@ import { editFile } from "eve/tools/edit_file";
 
 const allowedPath = (path: string) =>
   path.startsWith("/workspace/coach-in-worktrees/") &&
-  !path.replace(/\\\\/g, "/").split("/").includes("..");
+  !path.replace(/\\/g, "/").split("/").includes("..");
 
 export default defineTool({
   ...editFile,
