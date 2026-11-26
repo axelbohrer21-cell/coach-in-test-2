@@ -37,6 +37,15 @@ test("bloque les identifiants de dépendance dupliqués", () => {
   assert.deepEqual(result.duplicateDependencyIds, ["task-1"]);
 });
 
+test("rejette les preuves ou livrables constitués de chaînes vides", () => {
+  const result = validateDependencyHandoff(["task-1"], [{
+    ...completed("task-1"),
+    evidence: ["   "],
+  }]);
+  assert.equal(result.valid, false);
+  assert.deepEqual(result.missingOrUnverifiedDependencies, ["task-1"]);
+});
+
 test("bloque une dépendance non terminée", () => {
   const result = validateDependencyHandoff(["task-1"], [{
     ...completed("task-1"),
