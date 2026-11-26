@@ -31,7 +31,7 @@
 - Agent Release / Déploiement.
 - Agent Documentation.
 
-Au démarrage, seul Coach In Manager et son sous-agent de relecture de plan sont implémentés. Les autres rôles ne sont pas opérationnels tant que leurs agents n'ont pas été construits et testés.
+L'équipe déclarée comprend désormais le Manager, Product Owner, Architecte, Développeurs Frontend/Backend, QA, expert tennis, UX, sécurité/données, Release, Documentation et Auditeur de plan. Les agents de conseil sont consultatifs. Les développeurs peuvent travailler dans des worktrees isolés du sandbox, sans accès GitHub authentifié ni accès Supabase.
 
 ## Risques techniques documentés
 
