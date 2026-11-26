@@ -40,9 +40,9 @@ export default defineWorkflowTool({
     role: z.enum(roles),
     task: z.string().min(8).max(12000),
     context: z.string().max(16000).optional(),
-    baseRef: z.string().regex(/^[A-Za-z0-9._/-]{1,120}$/).optional(),
+    baseRef: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/).refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith("."), "Invalid git ref").optional(),
     workBranch: z.string().regex(/^[A-Za-z0-9._/-]{1,120}$/).optional(),
-    worktreePath: z.string().regex(/^\/workspace\/coach-in-worktrees\/[a-z0-9._-]+$/).optional(),
+    worktreePath: z.string().regex(/^\/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}$/).optional(),
   }),
   async execute({ role, task, context, baseRef, workBranch, worktreePath }, ctx) {
     "use workflow";
