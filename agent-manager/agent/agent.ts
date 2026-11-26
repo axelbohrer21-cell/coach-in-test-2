@@ -18,6 +18,7 @@ const quotaProtection: LanguageModelV3Middleware = {
 const model = wrapLanguageModel({ model: primaryModel, middleware: quotaProtection });
 
 export default defineAgent({
+  description: "Coordinate the full Coach In product and engineering team, route work to specialists, inspect evidence, and prepare changes for human approval.",
   model,
   modelContextWindowTokens: 131072,
   // Compact at 75% of context rather than 5%, which caused premature summaries.
