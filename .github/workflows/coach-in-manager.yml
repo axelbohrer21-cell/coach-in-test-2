@@ -36,5 +36,7 @@ jobs:
       # not receive that token; the protected Vercel Preview performs eve build.
       - name: Test automatic reviewer routing
         run: npm run test:routing
+      - name: Test Manager access control
+        run: npm run test:security
       - name: Typecheck authored agents and workflows
         run: npm run typecheck
