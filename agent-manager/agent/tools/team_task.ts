@@ -42,8 +42,10 @@ export default defineWorkflowTool({
     role: z.enum(roles),
     task: z.string().min(8).max(12000),
     context: z.string().max(16000).optional(),
-    baseRef: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/).refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith("."), "Invalid git ref").optional(),
-    workBranch: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/).refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith("."), "Invalid branch name").optional(),
+    baseRef: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/)
+      .refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith("."), "Invalid git ref").optional(),
+    workBranch: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/)
+      .refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith("."), "Invalid branch name").optional(),
     worktreePath: z.string().regex(/^\/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}$/).optional(),
   }),
   async execute({ role, task, context, baseRef, workBranch, worktreePath }, ctx) {
@@ -53,7 +55,7 @@ export default defineWorkflowTool({
       return {
         role,
         status: "blocked",
-        message: "Une mission de développement exige un baseRef vérifié, un nom de branche et un chemin de worktree dédié.",
+        message: "Une mission dans le sandbox exige un baseRef vérifié, un nom de branche et un chemin de worktree dédié.",
         required: ["baseRef", "workBranch", "worktreePath"],
       };
     }
@@ -66,20 +68,33 @@ export default defineWorkflowTool({
       };
     }
 
-    const developerContext = developmentRoles.has(role)
-      ? [
-          "REPOSITORY_URL=https://github.com/axelbohrer21-cell/coach-in-test-2.git",
-          "REPOSITORY_PATH=/workspace/coach-in",
-          `BASE_REF=${baseRef}`,
-          `WORK_BRANCH=${workBranch}`,
-          `WORKTREE_PATH=${worktreePath}`,
-          "Crée le worktree dédié depuis BASE_REF dans WORKTREE_PATH. Ne modifie jamais le checkout principal ni un autre worktree.",
-          "Si le dépôt n'existe pas, clone-le depuis REPOSITORY_URL. Vérifie qu'il s'agit bien du dépôt attendu.",
-          "Avant toute écriture, vérifie git status dans le worktree. Si le worktree existe déjà ou contient des changements inattendus, arrête et signale-le.",
-          "À la fin, fournis les chemins exacts, git diff --stat, git diff --check et les commandes/tests exécutés avec leurs codes de sortie.",
-          "Ne commit jamais, ne push jamais, n'ouvre jamais de PR. Le Manager relira le diff.",
-        ].join("\n")
-      : "Aucun accès au dépôt ou aux environnements n'est fourni pour cette mission de conseil.";
+    let sandboxInstructions = "Aucun accès au dépôt ou aux environnements n'est fourni pour cette mission de conseil.";
+
+    if (codeRoles.has(role)) {
+      sandboxInstructions = [
+        "REPOSITORY_URL=https://github.com/axelbohrer21-cell/coach-in-test-2.git",
+        "REPOSITORY_PATH=/workspace/coach-in",
+        `BASE_REF=${baseRef}`,
+        `WORK_BRANCH=${workBranch}`,
+        `WORKTREE_PATH=${worktreePath}`,
+        "Si le dépôt n'existe pas, clone-le depuis REPOSITORY_URL.",
+        "Crée le worktree dédié depuis BASE_REF dans WORKTREE_PATH. Ne modifie jamais le checkout principal ni un autre worktree.",
+        "Avant toute écriture, vérifie le dépôt, la branche et git status. Si le worktree existe déjà ou contient des changements inattendus, arrête et signale-le.",
+        "À la fin, fournis les chemins exacts, git diff --stat, git diff --check et les commandes/tests exécutés avec leurs codes de sortie.",
+        "Ne commit jamais, ne push jamais, n'ouvre jamais de PR. Le Manager relira le diff.",
+      ].join("\n");
+    } else if (role === "qa_engineer") {
+      sandboxInstructions = [
+        "REPOSITORY_PATH=/workspace/coach-in",
+        `BASE_REF=${baseRef}`,
+        `WORK_BRANCH=${workBranch}`,
+        `WORKTREE_PATH=${worktreePath}`,
+        "Le worktree doit déjà exister et contenir les changements à tester. Ne crée pas un nouveau worktree et ne change pas de branche.",
+        "Vérifie le dépôt, le chemin et la branche. Si le worktree n'existe pas ou ne correspond pas, renvoie status=blocked.",
+        "Exécute les tests et contrôles locaux demandés. Tu es strictement en lecture seule : aucun fichier source ou de test ne doit être modifié.",
+        "Après les tests, vérifie git status et confirme que filesChanged est vide.",
+      ].join("\n");
+    }
 
     const prompt = [
       "Tu reçois une mission déléguée par Coach In Manager.",
@@ -91,7 +106,7 @@ export default defineWorkflowTool({
       context?.trim() || "Aucun contexte complémentaire.",
       "",
       "CONSIGNES D'ENVIRONNEMENT :",
-      developerContext,
+      sandboxInstructions,
       "",
       "RÈGLES COMMUNES :",
       "- Réponds en français.",
