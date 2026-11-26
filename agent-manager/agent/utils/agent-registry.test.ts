@@ -6,6 +6,7 @@ import test from "node:test";
 import { taskRoles } from "./mission-planner.ts";
 import { reviewerIds } from "./reviewer-routing.ts";
 import { expectedAgentIds, inspectAgentRoster } from "./agent-roster.ts";
+import { isDeveloperShellCommandAllowed, isQaShellCommandAllowed, isWorktreePathAllowed } from "./subagent-tool-guards.ts";
 
 const agentRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../subagents");
 const allAgentIds = [...new Set([...taskRoles, ...reviewerIds, "plan_auditor"])];
@@ -44,9 +45,9 @@ test("QA ne possède pas d'outil de modification et son shell est en liste blanc
   assert.ok(!existsSync(resolve(qaTools, "write_file.ts")));
   assert.ok(!existsSync(resolve(qaTools, "edit_file.ts")));
   const bashSource = readFileSync(resolve(qaTools, "bash.ts"), "utf8");
-  assert.match(bashSource, /const allowed =/);
-  assert.match(bashSource, /test:planning/);
-  assert.match(bashSource, /Commande QA refusée/);
+  assert.match(bashSource, /isQaShellCommandAllowed/);
+  const readSource = readFileSync(resolve(qaTools, "read_file.ts"), "utf8");
+  assert.match(readSource, /isWorktreePathAllowed/);
 });
 
 test("le roster runtime couvre exactement les agents déléguables et reviewers", () => {
@@ -72,13 +73,34 @@ test("les outils développeurs bloquent les chemins hors worktree et les command
     const tools = resolve(agentRoot, id, "tools");
     for (const file of ["read_file.ts", "write_file.ts", "edit_file.ts"]) {
       const source = readFileSync(resolve(tools, file), "utf8");
-      assert.match(source, /allowedPath/);
-      assert.ok(source.includes("workspace/coach-in-worktrees"));
-      assert.ok(source.includes('split("/").includes("..")'));
+      assert.match(source, /isWorktreePathAllowed/);
     }
     const shell = readFileSync(resolve(tools, "bash.ts"), "utf8");
-    assert.match(shell, /shellControl/);
-    assert.ok(shell.includes("git\\s+(?:commit|push"));
-    assert.match(shell, /vercel/);
+    assert.match(shell, /isDeveloperShellCommandAllowed/);
   }
+});
+
+test("les chemins de fichiers sont strictement bornés au dossier des worktrees", () => {
+  assert.equal(isWorktreePathAllowed("/workspace/coach-in-worktrees/task-a/src/app.js"), true);
+  assert.equal(isWorktreePathAllowed("/workspace/coach-in/src/app.js"), false);
+  assert.equal(isWorktreePathAllowed("/workspace/coach-in-worktrees/task-a/../../coach-in/src/app.js"), false);
+  assert.equal(isWorktreePathAllowed("/workspace/coach-in-worktrees/task-a/./src/app.js"), false);
+});
+
+test("le shell développeur autorise les tests locaux mais bloque les actions mutatives", () => {
+  const root = "/workspace/coach-in-worktrees/task-a";
+  assert.equal(isDeveloperShellCommandAllowed("git -C " + root + " status --short"), true);
+  assert.equal(isDeveloperShellCommandAllowed("npm --prefix " + root + "/agent-manager run typecheck"), true);
+  assert.equal(isDeveloperShellCommandAllowed("git -C " + root + " commit -m test"), false);
+  assert.equal(isDeveloperShellCommandAllowed("git -C " + root + " status --short; rm -rf /"), false);
+  assert.equal(isDeveloperShellCommandAllowed("npm --prefix " + root + "/agent-manager run deploy"), false);
+});
+
+test("le shell QA autorise seulement les contrôles et tests en lecture seule", () => {
+  const root = "/workspace/coach-in-worktrees/integration";
+  assert.equal(isQaShellCommandAllowed("git -C " + root + " diff --check"), true);
+  assert.equal(isQaShellCommandAllowed("npm --prefix " + root + "/agent-manager run test:planning"), true);
+  assert.equal(isQaShellCommandAllowed("npm --prefix " + root + "/agent-manager run build"), false);
+  assert.equal(isQaShellCommandAllowed("git -C " + root + " push"), false);
+  assert.equal(isQaShellCommandAllowed("git -C " + root + " status --short && touch hack.ts"), false);
 });
