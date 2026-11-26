@@ -81,17 +81,29 @@ export interface TaskCompletionCandidate {
   filesChanged: string[];
   commandsRun: Array<{ command: string; exitCode: number | null; result: string }>;
   tests: Array<{ name: string; status: "passed" | "failed" | "not_run"; evidence: string }>;
+  criteriaResults: Array<{ criterion: string; status: "met" | "not_met" | "not_verified"; evidence: string }>;
 }
 
 export function validateTaskCompletion(
   role: string,
   result: TaskCompletionCandidate,
+  expectedCriteria: string[],
 ) {
   const reasons: string[] = [];
   if (result.status !== "completed") {
     return { valid: false, reasons: [`L'agent a retourné le statut ${result.status}.`] };
   }
   if (!result.summary.trim()) reasons.push("Le résumé du livrable est vide.");
+  const criteria = result.criteriaResults ?? [];
+  for (const expected of expectedCriteria) {
+    const matches = criteria.filter((item) => item.criterion.trim() === expected.trim());
+    if (matches.length !== 1 || matches[0].status !== "met" || !matches[0].evidence.trim()) {
+      reasons.push(`Critère non démontré ou ambigu : ${expected}`);
+    }
+  }
+  if (criteria.some((item) => item.status !== "met" || !item.evidence.trim())) {
+    reasons.push("Au moins un critère est non atteint ou sans preuve.");
+  }
   if (result.deliverables.length === 0 || result.deliverables.some((item) => !item.trim())) {
     reasons.push("Aucun livrable identifiable n'a été fourni.");
   }
