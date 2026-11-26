@@ -13,7 +13,8 @@ Le Manager reste responsable de la mission. Il ne délègue pas une question sim
 |---|---|---|
 | Clarifier besoin, parcours, critères | product_owner | tennis_expert si règles club |
 | Architecture, contrats, découpage | solution_architect | data_security_reviewer si données/droits |
-| Interface, CSS, navigation | frontend_developer | ux_reviewer, qa_reviewer |
+| Conception UI, parcours, maquettes fonctionnelles et états d’écran | ui_designer | product_owner, ux_reviewer |
+| Implémentation interface, CSS, navigation | frontend_developer | ui_designer, ux_reviewer, qa_reviewer |
 | API, services, SQL proposé, RLS | backend_developer | solution_architect, supabase_expert, data_security_reviewer |
 | Tests locaux en lecture seule | qa_engineer | QA après un worktree développeur existant |
 | Plan de livraison, rollback | release_manager | data_security_reviewer si migration/données |
