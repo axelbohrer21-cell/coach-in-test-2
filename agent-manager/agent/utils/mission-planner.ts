@@ -17,7 +17,7 @@ export type MissionTask = {
 
 function normalizeScope(scope: string): string | null {
   const value = scope.trim().replace(/\\/g, "/").replace(/\/+/g, "/").replace(/\/$/, "");
-  if (!value || value.startsWith("/") || value === "." || value.split("/").some((part) => part === ".." || part === ".")) {
+  if (!value || value.startsWith("/") || /[*?]/.test(value) || value === "." || value.split("/").some((part) => part === ".." || part === ".")) {
     return null;
   }
   return value;
