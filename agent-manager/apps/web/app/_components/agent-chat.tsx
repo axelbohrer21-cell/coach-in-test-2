@@ -29,6 +29,7 @@ import {
   usePromptInputAttachments,
 } from "@/components/ai-elements/prompt-input";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Trace, TraceIcon, TraceLine, TraceTitle } from "@/components/ui/trace";
 import { cn } from "@/lib/utils";
 import { AgentMessage } from "./agent-message";
@@ -290,7 +291,10 @@ function ChatHeader({ canStartNewChat }: { readonly canStartNewChat: boolean }) 
   return (
     <header className="pointer-events-none fixed top-0 right-0 left-0 z-20 h-14">
       <div className="relative mx-auto flex h-full w-full max-w-3xl items-center justify-center bg-background px-24">
-        <span className="truncate text-muted-foreground text-sm">{AGENT_NAME}</span>
+        <div className="flex items-center gap-3">
+          <Link className="text-muted-foreground text-xs hover:text-foreground" href="/dashboard">Dashboard</Link>
+          <span className="truncate text-muted-foreground text-sm">{AGENT_NAME}</span>
+        </div>
         {canStartNewChat ? (
           <Button
             aria-label="Start a new chat"
