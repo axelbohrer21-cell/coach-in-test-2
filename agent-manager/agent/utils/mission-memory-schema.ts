@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { findSensitiveProjectData } from "./mission-memory-privacy.js";
 
 const missionSchema = z.object({
   missionId: z.string().regex(/^[a-zA-Z0-9_-]{3,80}$/),
@@ -26,11 +27,20 @@ const missionSchema = z.object({
     validated: z.boolean(),
   })).max(30),
   nextStep: z.string().max(1000),
-}).strict();
+}).strict().superRefine((record, ctx) => {
+  const sensitive = findSensitiveProjectData(record);
+  if (sensitive) {
+    ctx.addIssue({
+      code: "custom",
+      path: sensitive.path.replace(/^record\\.?/, "").split(".").filter(Boolean),
+      message: `Donnée sensible détectée (${sensitive.kind}) : elle ne doit pas être enregistrée dans la mémoire projet.`,
+    });
+  }
+});
 
 export const missionMemoryInputSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save"), record: missionSchema }),
-  z.object({ action: z.literal("list"), limit: z.number().int().min(1).max(50).optional() }),
+  z.object({ action: z.literal("list"), limit: z.number().int().min(1).max(50).optional(), cursor: z.string().min(1).max(2000).optional() }),
   z.object({
     action: z.literal("read"),
     pathname: z.string().min(1).max(500),
