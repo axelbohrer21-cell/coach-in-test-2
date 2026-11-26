@@ -212,3 +212,13 @@ test("le checksum change si une tâche ou un critère est modifié après planif
   assert.notEqual(original, changed);
   assert.notEqual(original, changedCriteria);
 });
+
+
+test("accepte les rôles consultatifs UI et Supabase sans worktree", () => {
+  const result = buildMissionExecutionPlan([
+    { taskId: "design-ui", role: "ui_designer", dependsOn: [], writeScope: [] },
+    { taskId: "db-review", role: "supabase_expert", dependsOn: [], writeScope: [] },
+  ]);
+  assert.equal(result.valid, true);
+  assert.deepEqual(result.waves, [["design-ui", "db-review"]]);
+});
