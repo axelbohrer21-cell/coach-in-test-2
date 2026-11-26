@@ -38,6 +38,11 @@ const workSchema = z.object({
     status: z.enum(["passed", "failed", "not_run"]),
     evidence: z.string(),
   })),
+  criteriaResults: z.array(z.object({
+    criterion: z.string(),
+    status: z.enum(["met", "not_met", "not_verified"]),
+    evidence: z.string(),
+  })),
   assumptions: z.array(z.string()),
   risks: z.array(z.string()),
   approvalsRequired: z.array(z.string()),
@@ -164,6 +169,7 @@ export default defineWorkflowTool({
       "- Distingue faits observés, hypothèses et recommandations.",
       "- Aucun accès ni écriture en production, aucune migration distante, aucun déploiement, merge, commit ou push.",
       "- Si un prérequis manque, renvoie status=blocked ou needs_input et explique précisément lequel.",
+      "- Pour chaque critère d’acceptation, retourne exactement une entrée dans criteriaResults avec le texte exact, le statut met/not_met/not_verified et une preuve observée. Ne déclare pas completed si un critère n’est pas démontré.",
       "- Retourne le résultat structuré demandé par le schéma, avec des tableaux vides si rien ne s'applique.",
     ].join("\n");
 
@@ -192,7 +198,7 @@ export default defineWorkflowTool({
         };
       }
 
-      const completion = validateTaskCompletion(role, result.data);
+      const completion = validateTaskCompletion(role, result.data, acceptanceCriteria);
       return {
         missionId,
         taskId,
