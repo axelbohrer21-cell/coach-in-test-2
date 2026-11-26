@@ -29,7 +29,7 @@ function configuredModels(): LanguageModelV4[] {
   // Optional free-tier providers. Missing keys simply remove that provider
   // from the rotation; they never prevent the Manager from starting.
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    models.push(google("gemini-2.5-flash"));
+    models.push(google("gemini-3.8-flash"));
   }
 
   if (process.env.OPENROUTER_API_KEY) {
