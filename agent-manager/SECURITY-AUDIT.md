@@ -42,7 +42,7 @@ Périmètre : application Manager et sa branche Preview uniquement.
 ## Tableau de bord
 
 La route `/dashboard` est un centre de pilotage de configuration :
-- annuaire des 12 spécialistes ;
+- annuaire des 14 spécialistes ;
 - description du flux de travail ;
 - garde-fous d'accès, de stockage et de production ;
 - raccourci vers une nouvelle mission.
@@ -63,3 +63,11 @@ Il ne prétend pas afficher des métriques temps réel : l'historique des missio
 - Aucune variable d'environnement Production modifiée.
 - Aucune écriture Supabase Production.
 - Aucune suppression de compte, donnée ou ressource.
+
+
+## Addendum — extension de l'équipe technique
+
+- Le registre comprend désormais 14 spécialistes en plus du Manager, dont `ui_designer` et `supabase_expert`.
+- `ui_designer` et `supabase_expert` sont déléguables via `team_task` ; l'expert Supabase est également sélectionné par `review_task` pour les missions PostgreSQL/Supabase.
+- Le tableau de bord présente les deux nouveaux rôles et distingue les groupes Conception et Données.
+- Les contrôles CI incluent maintenant le routage des reviewers, le planificateur, le registre des agents et leurs frontières d'outils. Les résultats sur le dernier commit doivent être confirmés par la CI en cours.
