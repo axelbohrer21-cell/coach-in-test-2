@@ -83,6 +83,7 @@ export default defineWorkflowTool({
         message: "Les dépendances doivent être transmises une seule fois, terminées, avec un livrable identifiable et une preuve avant le démarrage de cette tâche.",
         missingOrUnverifiedDependencies: handoff.missingOrUnverifiedDependencies,
         duplicateDependencyIds: handoff.duplicateDependencyIds,
+        unexpectedDependencyIds: handoff.unexpectedDependencyIds,
         duplicateRequiredIds: handoff.duplicateRequiredIds,
       };
     }
