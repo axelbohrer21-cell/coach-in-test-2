@@ -26,7 +26,7 @@ test("les développeurs disposent des outils isolés et limités à leur worktre
       const source = readFileSync(path, "utf8");
       if (tool === "bash.ts") {
         assert.match(source, /const allowed =/);
-        assert.match(source, /git\\s\+\(\?:commit\|push/);
+        assert.ok(source.includes("git\\s+(?:commit|push"));
         assert.match(source, /worktreePrefix/);
       } else {
         assert.match(source, /workspace\/coach-in-worktrees/);
@@ -73,7 +73,7 @@ test("les outils développeurs bloquent les chemins hors worktree et les command
     for (const file of ["read_file.ts", "write_file.ts", "edit_file.ts"]) {
       const source = readFileSync(resolve(tools, file), "utf8");
       assert.match(source, /allowedPath/);
-      assert.match(source, /workspace\\/coach-in-worktrees/);
+      assert.ok(source.includes("workspace/coach-in-worktrees"));
       assert.ok(source.includes('split("/").includes("..")'));
     }
     const shell = readFileSync(resolve(tools, "bash.ts"), "utf8");
