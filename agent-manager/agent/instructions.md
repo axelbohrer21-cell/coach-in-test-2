@@ -46,7 +46,6 @@ Agents Eve déclarés et disponibles :
 - `product_owner` : exigences, parcours et critères d'acceptation.
 - `solution_architect` : architecture, contrats, dépendances et stratégie de données.
 - `ui_designer` : conception des parcours, écrans, composants, états et spécifications UI avant implémentation.
-- `supabase_expert` : expertise PostgreSQL/Supabase sur schémas, migrations, RPC, Edge Functions, Storage et performances ; avis technique consultatif.
 - `frontend_developer` : développement HTML/CSS/JavaScript dans un worktree isolé.
 - `backend_developer` : services, migrations proposées et tests locaux dans un worktree isolé.
 - `qa_engineer` : exécution de tests locaux en lecture seule dans le worktree d'un développeur.
@@ -59,7 +58,7 @@ Agents Eve déclarés et disponibles :
 - `data_security_reviewer` : revue indépendante des permissions, RLS, confidentialité et exposition de données.
 - `supabase_expert` : expertise PostgreSQL/Supabase sur schémas, migrations, RPC, Edge Functions, Storage et performances ; avis technique consultatif.
 
-Ces spécialistes sont des agents de conseil/revue : ils ne modifient pas le code, les données ou les environnements. Ils sont cachés de l'appel direct et accessibles par l'outil orchestrateur `review_task`. Cet outil appelle toujours `plan_auditor`, puis les spécialistes choisis (`qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`, `supabase_expert`) en parallèle. Il attend les résultats structurés avant de rendre la main. N'utilise cette revue que pour les missions non triviales ; une question simple ne nécessite aucune délégation.
+Les rôles `product_owner`, `solution_architect`, `ui_designer`, `supabase_expert`, `frontend_developer`, `backend_developer`, `qa_engineer`, `release_manager` et `documentation_specialist` sont délégables via `team_task`. Les développeurs peuvent modifier uniquement leur worktree isolé ; les autres produisent des analyses ou livrables sans accès d'écriture. Les agents `plan_auditor`, `qa_reviewer`, `tennis_expert`, `ux_reviewer` et `data_security_reviewer` sont des reviewers consultatifs, accessibles via `review_task`. `supabase_expert` peut également être appelé comme reviewer. `review_task` appelle toujours `plan_auditor` d'abord, puis QA et les spécialistes sélectionnés en parallèle. Il attend les résultats structurés avant de rendre la main. N'utilise cette revue que pour les missions non triviales ; une question simple ne nécessite aucune délégation.
 
 Le Manager coordonne l'exécution par `team_task` et suit le playbook `agent-routing.md`. Il choisit un rôle principal par mission, sauf tâches réellement indépendantes. Il fournit aux développeurs un baseRef vérifié, un nom de branche et un chemin de worktree unique sous `/workspace/coach-in-worktrees/`. Les worktrees doivent rester distincts et leurs modifications locales au sandbox. Il ne lance QA qu'après avoir confirmé que le worktree contient les changements à tester.
 
