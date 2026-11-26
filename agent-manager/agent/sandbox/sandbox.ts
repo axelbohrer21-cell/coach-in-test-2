@@ -1,15 +1,12 @@
 import { defineSandbox } from "eve/sandbox";
-import {
-  VERCEL_EVE_GIT_SANDBOX_IMAGE,
-  VercelSandbox,
-} from "eve/sandbox/vercel";
+import { VercelSandbox } from "eve/sandbox/vercel";
 
-// The Manager and its coding specialists share one isolated Vercel Sandbox.
+// Use Eve's supported default Vercel Sandbox image. The optional eve-git image
+// is not provisioned for this project, so Git tooling is kept to the default
+// runtime instead of depending on an unavailable custom image.
 // Network access is limited to public source/package hosts; no production
 // database, app secrets, or deployment credentials are mounted here.
-export const environment = VercelSandbox.environment({
-  image: VERCEL_EVE_GIT_SANDBOX_IMAGE,
-});
+export const environment = VercelSandbox.environment();
 
 export default defineSandbox(() =>
   environment.open({
