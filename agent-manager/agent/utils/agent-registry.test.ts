@@ -25,14 +25,8 @@ test("les développeurs disposent des outils isolés et limités à leur worktre
       const path = resolve(agentRoot, id, "tools", tool);
       assert.ok(existsSync(path), `${tool} absent pour ${id}`);
       const source = readFileSync(path, "utf8");
-      if (tool === "bash.ts") {
-        assert.match(source, /const allowed =/);
-        assert.ok(source.includes("git\\s+(?:commit|push"));
-        assert.match(source, /worktreePrefix/);
-      } else {
-        assert.match(source, /workspace\/coach-in-worktrees/);
-        assert.match(source, /allowedPath/);
-      }
+      if (tool === "bash.ts") assert.match(source, /isDeveloperShellCommandAllowed/);
+      else assert.match(source, /isWorktreePathAllowed/);
     }
   }
 });
@@ -44,10 +38,8 @@ test("QA ne possède pas d'outil de modification et son shell est en liste blanc
   assert.ok(existsSync(resolve(qaTools, "read_file.ts")));
   assert.ok(!existsSync(resolve(qaTools, "write_file.ts")));
   assert.ok(!existsSync(resolve(qaTools, "edit_file.ts")));
-  const bashSource = readFileSync(resolve(qaTools, "bash.ts"), "utf8");
-  assert.match(bashSource, /isQaShellCommandAllowed/);
-  const readSource = readFileSync(resolve(qaTools, "read_file.ts"), "utf8");
-  assert.match(readSource, /isWorktreePathAllowed/);
+  assert.match(readFileSync(resolve(qaTools, "bash.ts"), "utf8"), /isQaShellCommandAllowed/);
+  assert.match(readFileSync(resolve(qaTools, "read_file.ts"), "utf8"), /isWorktreePathAllowed/);
 });
 
 test("le roster runtime couvre exactement les agents déléguables et reviewers", () => {
@@ -66,18 +58,6 @@ test("le contrôle runtime est prêt si tous les agents sont disponibles", () =>
   assert.equal(roster.status, "ready");
   assert.equal(roster.missingAgentIds.length, 0);
   assert.equal(roster.expectedCount, 14);
-});
-
-test("les outils développeurs bloquent les chemins hors worktree et les commandes mutatives", () => {
-  for (const id of ["frontend_developer", "backend_developer"]) {
-    const tools = resolve(agentRoot, id, "tools");
-    for (const file of ["read_file.ts", "write_file.ts", "edit_file.ts"]) {
-      const source = readFileSync(resolve(tools, file), "utf8");
-      assert.match(source, /isWorktreePathAllowed/);
-    }
-    const shell = readFileSync(resolve(tools, "bash.ts"), "utf8");
-    assert.match(shell, /isDeveloperShellCommandAllowed/);
-  }
 });
 
 test("les chemins de fichiers sont strictement bornés au dossier des worktrees", () => {
