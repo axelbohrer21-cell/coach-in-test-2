@@ -43,6 +43,10 @@ jobs:
         run: npm run test:planning
       - name: Test production agent registry and tool boundaries
         run: npm run test:agents
+      - name: Verify Eve agent and tool discovery
+        run: npm run check:discovery
+        env:
+          VERCEL_PROJECT_ID: ""
       - name: Test mission memory privacy guard
         run: npm run test:memory-privacy
       - name: Test Manager access control
