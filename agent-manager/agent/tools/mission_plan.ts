@@ -1,6 +1,6 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
-import { buildMissionExecutionPlan, fingerprintMissionPlan, taskRoles } from "../utils/mission-planner.js";
+import { buildMissionExecutionPlan, fingerprintMissionPlan, missingTaskAgents, taskRoles } from "../utils/mission-planner.js";
 
 export default defineWorkflowTool({
   description:
@@ -21,8 +21,19 @@ export default defineWorkflowTool({
         .refine((criteria) => new Set(criteria.map((item) => item.trim())).size === criteria.length, "Les critères d’acceptation doivent être uniques."),
     })).min(1).max(20),
   }),
-  async execute({ missionId, title, tasks }) {
+  async execute({ missionId, title, tasks }, ctx) {
     "use workflow";
+
+    const missingAgents = missingTaskAgents(tasks, Object.keys(ctx.agents));
+    if (missingAgents.length > 0) {
+      return {
+        missionId,
+        title,
+        status: "blocked",
+        missingAgents,
+        message: "Le plan contient des rôles qui ne sont pas enregistrés dans le runtime Eve. Aucun agent ne doit être appelé avant correction.",
+      };
+    }
 
     const plan = buildMissionExecutionPlan(tasks.map(({ taskId, role, dependsOn, writeScope, baseRef, workBranch, worktreePath }) => ({
       taskId,
