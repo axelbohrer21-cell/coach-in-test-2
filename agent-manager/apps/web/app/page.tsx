@@ -1,5 +1,5 @@
-import { AuthenticatedAgentChat } from "./_components/authenticated-agent-chat";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <AuthenticatedAgentChat />;
+  redirect("/dashboard");
 }
