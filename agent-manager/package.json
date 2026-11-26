@@ -15,7 +15,8 @@
     "dev:eve": "eve dev",
     "dev:all": "vercel dev --local",
     "typecheck": "tsc --noEmit --project tsconfig.agents.json",
-    "test:routing": "node --experimental-strip-types --test agent/utils/reviewer-routing.test.ts"
+    "test:routing": "node --experimental-strip-types --test agent/utils/reviewer-routing.test.ts",
+    "test:security": "node --experimental-strip-types --test apps/web/lib/access-control.test.ts"
   },
   "dependencies": {
     "@shadcn/react": "^0.3.1",
