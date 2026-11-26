@@ -22,3 +22,42 @@ test("accepte les notes de projet ordinaires", () => {
     null,
   );
 });
+
+
+import { missionMemoryInputSchema } from "./mission-memory-schema.ts";
+
+const validMission = {
+  missionId: "mission-123",
+  title: "Amélioration du Manager",
+  status: "completed" as const,
+  tasks: [{
+    taskId: "task-123",
+    role: "solution_architect",
+    status: "completed" as const,
+    summary: "Contrat de coordination défini",
+    deliverables: ["agent-cooperation.md"],
+    evidence: ["Revue du protocole"],
+  }],
+  decisions: ["Conserver la séparation des rôles"],
+  tests: [{ name: "coordination", status: "passed" as const, evidence: "8/8" }],
+  learnings: [{ statement: "Les dépendances doivent être explicites", source: "Tests de coordination", validated: true }],
+  nextStep: "Contrôler la Preview",
+};
+
+test("le schéma de sauvegarde refuse une adresse e-mail personnelle", () => {
+  const result = missionMemoryInputSchema.safeParse({
+    action: "save",
+    record: { ...validMission, decisions: ["Contact joueur: joueur@example.fr"] },
+  });
+  assert.equal(result.success, false);
+});
+
+test("le schéma accepte une sauvegarde de mission sans donnée sensible détectée", () => {
+  const result = missionMemoryInputSchema.safeParse({ action: "save", record: validMission });
+  assert.equal(result.success, true);
+});
+
+test("la liste mémoire accepte un curseur de pagination", () => {
+  const result = missionMemoryInputSchema.safeParse({ action: "list", limit: 10, cursor: "cursor-token" });
+  assert.equal(result.success, true);
+});
