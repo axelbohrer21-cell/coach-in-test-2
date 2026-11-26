@@ -11,7 +11,10 @@ Périmètre : application Manager et sa branche Preview uniquement.
 - Le stockage des missions utilise un Vercel Blob privé ; son jeton reste limité à cette Preview.
 - L'audit npm initial signalait 4 vulnérabilités élevées et 7 faibles. Les overrides testés ont ramené les vulnérabilités élevées à zéro.
 - Sept alertes faibles restent liées à KaTeX et à ses intégrations mathématiques/diagrammes. L'audit npm ne propose pas de correctif disponible pour la version concernée.
-- Les tests de routage et le typecheck passent après les changements de dépendances.
+- Les 5 tests de routage et les 4 tests de contrôle d'accès passent après les changements de dépendances.
+- Le typecheck passe.
+- Le build de production Next.js passe avec les variables d'environnement de test et génère les routes `/dashboard`, `/s` et `/s/[sessionId]`.
+- Le build Eve complet n'a pas pu être vérifié dans le sandbox : résolution DNS de `ai-gateway.vercel.sh` indisponible. Il doit être vérifié par la Preview Vercel.
 
 ## Contrôles réalisés
 
