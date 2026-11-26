@@ -5,7 +5,8 @@ const forbidden = /(?:^|\s)(?:git\s+(?:commit|push|merge|rebase|reset|clean|cher
 
 const developerGit = new RegExp("^git -C " + worktreePattern + " (?:status(?: --short)?|diff(?: --check| --stat| --name-only)?|log --oneline|rev-parse --abbrev-ref HEAD|ls-files)$");
 const developerNpm = new RegExp("^(?:npm --prefix " + worktreePattern + " test|npm --prefix " + worktreePattern + "/agent-manager (?:run (?:typecheck|build|test:routing|test:coordination|test:planning|test:agents|test:memory-privacy|test:security)|test))$");
-const developerNodeCheck = new RegExp("^node --check " + worktreePattern + "/src/[a-zA-Z0-9_./-]+\\\\.js$");
+const developerNodeCheck = new RegExp("^node --check " + worktreePattern + "/src/[a-zA-Z0-9_./-]+\\.js$");
+const qaNodeCheck = new RegExp("^node --check " + worktreePattern + "/src/[a-zA-Z0-9_./-]+\\.js$");
 
 const qaGit = new RegExp("^git -C " + worktreePattern + " (?:status --short|diff --check|diff --stat|diff --name-only|rev-parse --abbrev-ref HEAD)$");
 const qaNpm = new RegExp("^(?:npm --prefix " + worktreePattern + " test|npm --prefix " + worktreePattern + "/agent-manager run (?:test:routing|test:coordination|test:planning|test:agents|test:memory-privacy|test:security|typecheck|typecheck:web))$");
@@ -25,5 +26,5 @@ export function isDeveloperShellCommandAllowed(command: string): boolean {
 export function isQaShellCommandAllowed(command: string): boolean {
   const value = command.trim();
   return value.length > 0 && !shellControl.test(value) && !forbidden.test(value) &&
-    (qaGit.test(value) || qaNpm.test(value));
+    (qaGit.test(value) || qaNpm.test(value) || qaNodeCheck.test(value));
 }
