@@ -35,7 +35,7 @@ npx eve add channel/web
 
 Choisir le projet Vercel `coach-in-manager`, sélectionner l'hébergement Vercel, puis effectuer le parcours **Sign in with Vercel** pour provisionner les identifiants navigateur de l'équipe. Ne pas rendre l'API publique et ne pas remplacer l'authentification par `none()`.
 
-Le dépôt GitHub est maintenant relié à Vercel. Le build Preview est en cours de correction avant de poursuivre la configuration du canal Web. Aucun déploiement de production de Coach In n'a été lancé.
+Le dépôt GitHub est relié à Vercel et la Preview du socle Manager précédent est READY. Le canal Web reste à provisionner et à authentifier avant de pouvoir tester une conversation réelle. Aucun déploiement de production de Coach In n'a été lancé.
 
 ## Contenu de la première version
 
