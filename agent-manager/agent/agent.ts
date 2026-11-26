@@ -1,5 +1,5 @@
 import { wrapLanguageModel } from "ai";
-import type { LanguageModelV3Middleware } from "@ai-sdk/provider";
+import type { LanguageModelV4Middleware } from "@ai-sdk/provider";
 import { groq } from "@ai-sdk/groq";
 import { defineAgent } from "eve";
 
@@ -8,7 +8,7 @@ const primaryModel = groq("openai/gpt-oss-20b");
 // Keep a bounded response size while leaving enough room for compaction summaries.
 // Qwen fallback remains disabled because its organization-wide OTPM quota was exceeded.
 const quotaProtection: LanguageModelV3Middleware = {
-  specificationVersion: "v3",
+  specificationVersion: "v4",
   transformParams: async ({ params }) => ({
     ...params,
     maxOutputTokens: Math.min(params.maxOutputTokens ?? 2048, 2048),
