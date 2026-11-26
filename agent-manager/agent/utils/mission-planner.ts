@@ -38,6 +38,36 @@ function scopesOverlap(left: string, right: string): boolean {
   return left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`);
 }
 
+export type MissionPlanTaskInput = MissionTask & {
+  objective: string;
+  acceptanceCriteria: string[];
+};
+
+// A lightweight consistency checksum, not a cryptographic security boundary.
+export function fingerprintMissionPlan(missionId: string, title: string, tasks: MissionPlanTaskInput[]): string {
+  const canonical = JSON.stringify({
+    missionId,
+    title,
+    tasks: tasks.map((task) => ({
+      taskId: task.taskId,
+      objective: task.objective,
+      role: task.role,
+      dependsOn: task.dependsOn,
+      writeScope: task.writeScope,
+      baseRef: task.baseRef ?? null,
+      workBranch: task.workBranch ?? null,
+      worktreePath: task.worktreePath ?? null,
+      acceptanceCriteria: task.acceptanceCriteria,
+    })),
+  });
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < canonical.length; index += 1) {
+    hash ^= canonical.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `fnv1a-${(hash >>> 0).toString(16).padStart(8, "0")}`;
+}
+
 export function buildMissionExecutionPlan(tasks: MissionTask[]) {
   const errors: string[] = [];
   const ids = tasks.map((task) => task.taskId);
