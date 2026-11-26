@@ -72,3 +72,46 @@ export function aggregateReviewOutcomes(results: ReviewOutcome[], expectedCount:
     insufficientEvidence,
   } as const;
 }
+
+
+export interface TaskCompletionCandidate {
+  status: "completed" | "blocked" | "failed" | "needs_input" | "not_started";
+  summary: string;
+  deliverables: string[];
+  filesChanged: string[];
+  commandsRun: Array<{ command: string; exitCode: number | null; result: string }>;
+  tests: Array<{ name: string; status: "passed" | "failed" | "not_run"; evidence: string }>;
+}
+
+export function validateTaskCompletion(
+  role: string,
+  result: TaskCompletionCandidate,
+) {
+  const reasons: string[] = [];
+  if (result.status !== "completed") {
+    return { valid: false, reasons: [`L'agent a retourné le statut ${result.status}.`] };
+  }
+  if (!result.summary.trim()) reasons.push("Le résumé du livrable est vide.");
+  if (result.deliverables.length === 0 || result.deliverables.some((item) => !item.trim())) {
+    reasons.push("Aucun livrable identifiable n'a été fourni.");
+  }
+  const failedCommands = result.commandsRun.filter((item) => item.exitCode !== null && item.exitCode !== 0);
+  if (failedCommands.length > 0) {
+    reasons.push(`${failedCommands.length} commande(s) ont retourné un code de sortie non nul.`);
+  }
+  const failedTests = result.tests.filter((item) => item.status === "failed");
+  if (failedTests.length > 0) {
+    reasons.push(`${failedTests.length} test(s) ont échoué.`);
+  }
+  if (role === "qa_engineer") {
+    if (result.tests.length === 0) reasons.push("Le QA n'a exécuté ou documenté aucun test.");
+    if (result.tests.some((item) => item.status !== "passed" || !item.evidence.trim())) {
+      reasons.push("Le QA ne peut terminer avec un test échoué, non exécuté ou sans preuve.");
+    }
+    if (result.filesChanged.length > 0) reasons.push("Le worktree QA n'est pas resté en lecture seule.");
+  }
+  if (role === "frontend_developer" || role === "backend_developer") {
+    if (result.filesChanged.length === 0) reasons.push("Le développeur n'a fourni aucun fichier modifié à contrôler.");
+  }
+  return { valid: reasons.length === 0, reasons };
+}
