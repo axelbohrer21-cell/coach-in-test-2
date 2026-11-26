@@ -21,13 +21,14 @@ test("planifie en parallèle les tâches indépendantes aux périmètres disjoin
 
 test("sérialise les tâches indépendantes dont les périmètres se chevauchent", () => {
   const result = buildMissionExecutionPlan([
-    developer("front-a", ["src/views"]),
-    developer("front-b", ["src/views/calendar.js"]),
+    { taskId: "architect", role: "solution_architect" as const, dependsOn: [], writeScope: [] },
+    developer("front-a", ["src/views"], ["architect"]),
+    developer("front-b", ["src/views/calendar.js"], ["architect"]),
     { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a", "front-b"], writeScope: [] },
   ]);
   assert.equal(result.valid, true);
-  assert.deepEqual(result.waves, [["front-a"], ["front-b"], ["qa"]]);
-  assert.deepEqual(result.tasks[1].executionDependsOn, ["front-a"]);
+  assert.deepEqual(result.waves, [["architect"], ["front-a"], ["front-b"], ["qa"]]);
+  assert.deepEqual(result.tasks[2].executionDependsOn, ["architect", "front-a"]);
 });
 
 test("bloque une dépendance inconnue", () => {
@@ -38,8 +39,9 @@ test("bloque une dépendance inconnue", () => {
 
 test("bloque un cycle de dépendances", () => {
   const result = buildMissionExecutionPlan([
-    developer("front-a", ["src/a.js"], ["front-b"]),
-    developer("front-b", ["src/b.js"], ["front-a"]),
+    { taskId: "architect", role: "solution_architect" as const, dependsOn: [], writeScope: [] },
+    developer("front-a", ["src/a.js"], ["architect", "front-b"]),
+    developer("front-b", ["src/b.js"], ["architect", "front-a"]),
     { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a", "front-b"], writeScope: [] },
   ]);
   assert.equal(result.valid, false);
@@ -90,10 +92,33 @@ test("exige une tâche QA pour toute mission avec développement", () => {
 
 test("exige que QA dépende de tous les développeurs", () => {
   const result = buildMissionExecutionPlan([
-    developer("front-a", ["src/a.js"]),
-    developer("back-a", ["supabase/functions"]),
+    { taskId: "architect", role: "solution_architect" as const, dependsOn: [], writeScope: [] },
+    developer("front-a", ["src/a.js"], ["architect"]),
+    developer("back-a", ["supabase/functions"], ["architect"]),
     { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a"], writeScope: [] },
   ]);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes("toutes les tâches développeur")));
+});
+
+
+test("exige un Architecte avant plusieurs développeurs", () => {
+  const result = buildMissionExecutionPlan([
+    developer("front-a", ["src/a.js"]),
+    developer("back-a", ["supabase/functions"]),
+    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a", "back-a"], writeScope: [] },
+  ]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("Architecte")));
+});
+
+test("chaque développeur doit dépendre de l'Architecte", () => {
+  const result = buildMissionExecutionPlan([
+    { taskId: "architect", role: "solution_architect" as const, dependsOn: [], writeScope: [] },
+    developer("front-a", ["src/a.js"], ["architect"]),
+    developer("back-a", ["supabase/functions"]),
+    { taskId: "qa", role: "qa_engineer" as const, dependsOn: ["front-a", "back-a"], writeScope: [] },
+  ]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("dépendre de l'Architecte")));
 });
