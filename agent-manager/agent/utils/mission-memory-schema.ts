@@ -40,7 +40,7 @@ const missionSchema = z.object({
 
 export const missionMemoryInputSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("save"), record: missionSchema }),
-  z.object({ action: z.literal("list"), limit: z.number().int().min(1).max(50).optional(), cursor: z.string().min(1).max(2000).optional() }),
+  z.object({ action: z.literal("list"), limit: z.number().int().min(1).max(50).optional(), cursor: z.string().min(1).max(2000).optional(), missionId: z.string().regex(/^[a-zA-Z0-9_-]{3,80}$/).optional() }),
   z.object({
     action: z.literal("read"),
     pathname: z.string().min(1).max(500),
