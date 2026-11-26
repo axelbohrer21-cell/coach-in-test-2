@@ -32,7 +32,7 @@ const missionSchema = z.object({
   if (sensitive) {
     ctx.addIssue({
       code: "custom",
-      path: sensitive.path.replace(/^record\\.?/, "").split(".").filter(Boolean),
+      path: [],
       message: `Donnée sensible détectée (${sensitive.kind}) : elle ne doit pas être enregistrée dans la mémoire projet.`,
     });
   }
