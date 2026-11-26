@@ -20,6 +20,8 @@ import { AccountControl, AccessDenied, SignIn } from "@/app/_components/web-chat
 const specialists = [
   { name: "Product owner", role: "product_owner", description: "Besoin, parcours et critères d'acceptation", group: "Pilotage" },
   { name: "Architecte solution", role: "solution_architect", description: "Architecture, contrats et dépendances", group: "Pilotage" },
+  { name: "UI Designer", role: "ui_designer", description: "Parcours, écrans et spécifications d'interaction", group: "Conception" },
+  { name: "Expert Supabase", role: "supabase_expert", description: "PostgreSQL, migrations, RPC et performance", group: "Données" },
   { name: "Développeur frontend", role: "frontend_developer", description: "Interface et expérience utilisateur", group: "Développement" },
   { name: "Développeur backend", role: "backend_developer", description: "Services, données et logique métier", group: "Développement" },
   { name: "Ingénieur QA", role: "qa_engineer", description: "Tests locaux et non-régression", group: "Qualité" },
@@ -32,7 +34,7 @@ const specialists = [
   { name: "Expert sécurité", role: "data_security_reviewer", description: "Accès, confidentialité et isolation", group: "Revue" },
 ];
 
-const groups = ["Pilotage", "Développement", "Qualité", "Revue"];
+const groups = ["Pilotage", "Conception", "Développement", "Données", "Qualité", "Revue"];
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -59,7 +61,7 @@ export default async function DashboardPage() {
         </header>
 
         <section aria-label="État du système" className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatusCard icon={<Users className="size-5" />} label="Équipe spécialisée" value="12 agents" detail="Rôles et responsabilités déclarés" />
+          <StatusCard icon={<Users className="size-5" />} label="Équipe spécialisée" value="14 spécialistes" detail="Rôles et responsabilités déclarés" />
           <StatusCard icon={<Brain className="size-5" />} label="Mémoire de projet" value="Blob privé" detail="Preview uniquement · test runtime restant" />
           <StatusCard icon={<ShieldCheck className="size-5" />} label="Accès" value="Liste blanche" detail="Compte autorisé uniquement sur cette Preview" />
           <StatusCard icon={<Activity className="size-5" />} label="Déploiement Manager" value="En attente" detail="Limite quotidienne Vercel à réinitialiser" />
@@ -102,7 +104,7 @@ export default async function DashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Annuaire des agents</p>
               <h2 className="mt-1 text-xl font-semibold">Une équipe, des responsabilités distinctes</h2>
             </div>
-            <span className="text-xs text-muted-foreground">12 spécialistes configurés · disponibilité runtime à confirmer</span>
+            <span className="text-xs text-muted-foreground">14 spécialistes configurés · disponibilité runtime à confirmer</span>
           </div>
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {groups.map((group) => (
