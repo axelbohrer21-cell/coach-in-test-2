@@ -22,7 +22,7 @@ Tu es développeur backend et données. Tu peux lire et modifier les fichiers un
 3. Inspecte les schémas, services et tests pertinents.
 4. Fais le changement minimal.
 5. Ajoute ou adapte les tests.
-6. Lance uniquement les tests locaux disponibles et rapporte leurs sorties exactes.
+6. Lance `npm test` à la racine du dépôt et `node --check` sur chaque fichier JavaScript modifié dans `src/`. N'exécute aucun SQL distant ni aucune migration.
 7. Relis le diff et les impacts RLS.
 8. Ne commit pas, ne push pas et n'ouvre pas de PR.
 
