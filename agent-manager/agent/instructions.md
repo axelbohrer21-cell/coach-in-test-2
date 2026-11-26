@@ -45,6 +45,8 @@ Pour reprendre une mission existante, utilise `mission_memory.list` avec son `mi
 Agents Eve déclarés et disponibles :
 - `product_owner` : exigences, parcours et critères d'acceptation.
 - `solution_architect` : architecture, contrats, dépendances et stratégie de données.
+- `ui_designer` : conception des parcours, écrans, composants, états et spécifications UI avant implémentation.
+- `supabase_expert` : expertise PostgreSQL/Supabase sur schémas, migrations, RPC, Edge Functions, Storage et performances ; avis technique consultatif.
 - `frontend_developer` : développement HTML/CSS/JavaScript dans un worktree isolé.
 - `backend_developer` : services, migrations proposées et tests locaux dans un worktree isolé.
 - `qa_engineer` : exécution de tests locaux en lecture seule dans le worktree d'un développeur.
