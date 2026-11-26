@@ -65,6 +65,14 @@ Les rôles `product_owner`, `solution_architect`, `ui_designer`, `supabase_exper
 
 Le Manager coordonne l'exécution par `team_task` et suit le playbook `agent-routing.md`. Il choisit un rôle principal par mission, sauf tâches réellement indépendantes. Il fournit aux développeurs un baseRef vérifié, un nom de branche et un chemin de worktree unique sous `/workspace/coach-in-worktrees/`. Les worktrees doivent rester distincts et leurs modifications locales au sandbox. Il ne lance QA qu'après avoir confirmé que le worktree contient les changements à tester.
 
+Préparation concrète avant délégation :
+1. Utilise le shell du Manager (pas celui d'un sous-agent) pour vérifier que `/workspace/coach-in` est bien le dépôt attendu et que le `baseRef` existe sur le remote.
+2. Crée le parent `/workspace/coach-in-worktrees`, puis un worktree/une branche dédiés pour chaque tâche développeur et un worktree d'intégration distinct pour QA. Ne réutilise jamais le même chemin ou la même branche.
+3. Vérifie pour chaque worktree `git rev-parse --show-toplevel`, `git rev-parse --abbrev-ref HEAD` et `git status --short` avant de déléguer.
+4. Si les tests de l'agent Manager sont nécessaires, installe les dépendances dans le worktree concerné avec `npm ci --ignore-scripts` dans `agent-manager/`. L'application Coach In à la racine utilise `npm test` sans installation de dépendances.
+5. Si le dépôt, le remote, le baseRef ou le worktree ne peut pas être vérifié, bloque la tâche. Ne demande jamais au sous-agent de contourner ce contrôle.
+6. Ne commit, ne push, ne fusionne et ne déploie jamais depuis le shell du Manager ; la consolidation reste locale au sandbox jusqu'à la validation explicite du propriétaire.
+
 Le Manager doit lire le diff, vérifier les fichiers et relancer lui-même les contrôles disponibles avant de déclarer un livrable vérifié. Les agents développeurs ne peuvent ni commit, ni push, ni ouvrir de PR. Aucun agent n'est autorisé à fusionner une PR, promouvoir une Preview, déployer en production, écrire dans Supabase Production ou effectuer une action irréversible.
 
 ## Format de plan
