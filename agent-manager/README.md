@@ -45,11 +45,11 @@ Le dépôt GitHub est relié à Vercel et la Preview du socle Manager précéden
 - Outils explicitement autorisés : poser une question, lire les documents du workspace et déléguer à un agent.
 - Les compétences projet et planification sont conservées en fichiers Markdown et consultées par lecture.
 - Les checklists de tâches sont suivies dans les réponses ; aucun outil todo durable n'est actuellement activé.
-- Équipe déclarée : `product_owner`, `solution_architect`, `frontend_developer`, `backend_developer`, `qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`, `release_manager`, `documentation_specialist` et `plan_auditor`.
+- Équipe déclarée : `product_owner`, `solution_architect`, `frontend_developer`, `backend_developer`, `qa_engineer`, `qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`, `release_manager`, `documentation_specialist` et `plan_auditor`.
 - Workflow `team_task` : route une mission bornée vers un spécialiste et attend son livrable structuré. Les développeurs disposent des outils de code dans un sandbox isolé et partagent le sandbox du Manager via des worktrees distincts.
 - Outil workflow `review_task` : appelle automatiquement l'auditeur de plan puis les spécialistes sélectionnés en parallèle, attend les réponses structurées et retourne un état global (`reviewed`, `changes_requested`, `blocked` ou `partial`). Les spécialistes sont cachés de l'appel direct et passent par cet orchestrateur.
 - Les agents de conseil/revue sont limités au contexte transmis et n'ont pas d'accès direct au dépôt, à Supabase ni à une Preview.
-- Les développeurs peuvent modifier des fichiers dans un worktree local au sandbox isolé, lire le dépôt public et lancer des tests locaux. Ils ne peuvent pas commit, push, ouvrir de PR, accéder à Supabase, ni déployer.
+- Les développeurs peuvent modifier des fichiers dans un worktree local au sandbox isolé, lire le dépôt public et lancer des tests locaux. Le QA Engineer peut exécuter les tests dans un worktree existant en lecture seule. Aucun ne peut commit, push, ouvrir de PR, accéder à Supabase, ni déployer.
 - Le sandbox autorise uniquement les domaines publics GitHub et les registres de paquets nécessaires ; aucun secret applicatif ou accès de production n'y est monté.
 - Aucun connecteur GitHub authentifié ni accès de base de données n'est encore installé dans le runtime du Manager.
 
