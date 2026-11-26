@@ -42,7 +42,7 @@ const workSchema = z.object({
 
 export default defineWorkflowTool({
   description:
-    "Delegate one bounded Coach In task from a validated mission plan to the product owner, solution architect, frontend developer, backend developer, QA engineer, release manager, or documentation specialist. Code agents work only in the isolated shared sandbox and exact worktree supplied; QA is configured for test-only execution and its worktree status must be checked by the Manager. None can push, commit, deploy, or access production.",
+    "Delegate one bounded Coach In task from a validated mission plan. Sandbox roles must use the unique baseRef, branch and worktree path bound into that plan; these values cannot be overridden at delegation time. QA is test-only and none of the agents can push, commit, deploy, or access production.",
   inputSchema: z.object({
     missionId: z.string().min(3).max(80),
     taskId: z.string().min(3).max(80),
@@ -55,18 +55,16 @@ export default defineWorkflowTool({
         role: z.enum(taskRoles),
         dependsOn: z.array(z.string().min(3).max(80)).max(12),
         writeScope: z.array(z.string().min(1).max(240)).max(40),
+        baseRef: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/).refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith(".")).optional(),
+        workBranch: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/).refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith(".")).optional(),
+        worktreePath: z.string().regex(/^\/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}$/).optional(),
         acceptanceCriteria: z.array(z.string().min(3).max(500)).min(1).max(12),
       })).min(1).max(20),
     }),
     dependencyResults: z.array(dependencyResultSchema).max(12).optional(),
     context: z.string().max(16000).optional(),
-    baseRef: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/)
-      .refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith("."), "Invalid git ref").optional(),
-    workBranch: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,119}$/)
-      .refine((value) => !value.includes("..") && !value.endsWith("/") && !value.endsWith("."), "Invalid branch name").optional(),
-    worktreePath: z.string().regex(/^\/workspace\/coach-in-worktrees\/[a-z0-9][a-z0-9._-]{1,60}$/).optional(),
   }),
-  async execute({ missionId, taskId, missionPlan, dependencyResults, context, baseRef, workBranch, worktreePath }, ctx) {
+  async execute({ missionId, taskId, missionPlan, dependencyResults, context }, ctx) {
     "use workflow";
 
     if (missionPlan.missionId !== missionId) {
@@ -78,6 +76,9 @@ export default defineWorkflowTool({
       role: taskRole,
       dependsOn,
       writeScope,
+      baseRef,
+      workBranch,
+      worktreePath,
     })));
     if (!executionPlan.valid) {
       return { missionId, taskId, status: "blocked", planErrors: executionPlan.errors };
@@ -92,6 +93,7 @@ export default defineWorkflowTool({
     const role = sourceTask.role;
     const task = sourceTask.objective;
     const acceptanceCriteria = sourceTask.acceptanceCriteria;
+    const { baseRef, workBranch, worktreePath } = sourceTask;
     const requiredDependencies = plannedTask.executionDependsOn;
     const handoff = validateDependencyHandoff(requiredDependencies, dependencyResults ?? []);
 
