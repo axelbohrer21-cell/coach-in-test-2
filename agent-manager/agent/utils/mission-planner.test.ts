@@ -165,3 +165,25 @@ test("bloque les branches de travail dupliquées", () => {
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => error.includes("branche Git unique")));
 });
+
+
+test("impose le même baseRef pour le développement et la QA intégrée", () => {
+  const result = buildMissionExecutionPlan([
+    developer("front-a", ["src/a.js"]),
+    { ...qa("qa", ["front-a"]), baseRef: "release" },
+  ]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("même baseRef")));
+});
+
+test("chaque tâche QA attend tous les développeurs", () => {
+  const result = buildMissionExecutionPlan([
+    { taskId: "architect", role: "solution_architect" as const, dependsOn: [], writeScope: [] },
+    developer("front-a", ["src/a.js"], ["architect"]),
+    developer("back-a", ["api"], ["architect"]),
+    qa("qa-a", ["front-a", "back-a"]),
+    qa("qa-b", ["front-a"]),
+  ]);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.includes("toutes les tâches développeur")));
+});
