@@ -71,7 +71,7 @@ export default defineWorkflowTool({
       return { missionId, taskId, status: "blocked", message: "Le missionId ne correspond pas au plan validé." };
     }
 
-    const executionPlan = buildMissionExecutionPlan(missionPlan.tasks.map(({ taskId: id, role: taskRole, dependsOn, writeScope }) => ({
+    const executionPlan = buildMissionExecutionPlan(missionPlan.tasks.map(({ taskId: id, role: taskRole, dependsOn, writeScope, baseRef, workBranch, worktreePath }) => ({
       taskId: id,
       role: taskRole,
       dependsOn,
