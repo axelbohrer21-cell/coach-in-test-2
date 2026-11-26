@@ -74,11 +74,11 @@ test("les outils développeurs bloquent les chemins hors worktree et les command
       const source = readFileSync(resolve(tools, file), "utf8");
       assert.match(source, /allowedPath/);
       assert.match(source, /workspace\\/coach-in-worktrees/);
-      assert.match(source, /includes\("\.\. "\)/ === false ? /x/ : /x/);
+      assert.ok(source.includes('split("/").includes("..")'));
     }
     const shell = readFileSync(resolve(tools, "bash.ts"), "utf8");
     assert.match(shell, /shellControl/);
-    assert.match(shell, /git\\s\+\(\?:commit\|push/);
+    assert.ok(shell.includes("git\\s+(?:commit|push"));
     assert.match(shell, /vercel/);
   }
 });
