@@ -24,7 +24,7 @@ export default defineWorkflowTool({
   async execute({ missionId, title, tasks }) {
     "use workflow";
 
-    const plan = buildMissionExecutionPlan(tasks.map(({ taskId, role, dependsOn, writeScope }) => ({
+    const plan = buildMissionExecutionPlan(tasks.map(({ taskId, role, dependsOn, writeScope, baseRef, workBranch, worktreePath }) => ({
       taskId,
       role,
       dependsOn,
