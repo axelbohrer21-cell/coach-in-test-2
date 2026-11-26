@@ -41,3 +41,10 @@ Enregistrer les rôles, temps/latence disponibles, statut, nombre de reprises, t
 
 ## 7. Sécurité
 Pas de secrets, données privées de joueurs, accès production, écriture de base distante, merge, promotion ou déploiement sans le processus d'autorisation défini par le projet.
+
+
+## Barrière de dépendances vérifiable
+- Toute tâche qui déclare `dependsOn` doit recevoir un `dependencyResults` structuré pour chaque identifiant attendu.
+- Chaque résultat doit avoir `status=completed` et au moins une preuve non vide ; sinon `team_task` bloque la délégation avant l'appel à l'agent.
+- Les identifiants de dépendance dupliqués sont rejetés. Le Manager transmet les résumés, livrables et preuves des tâches précédentes, pas seulement leurs noms.
+- Une preuve déclarée par un agent reste à vérifier par le Manager : cette barrière garantit le chaînage explicite, pas la véracité automatique de la preuve.
