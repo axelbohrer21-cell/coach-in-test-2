@@ -20,3 +20,12 @@
 - Les changements de permissions doivent être testés côté base avec les identités concernées.
 - Aucune fusion dans `main`, promotion de Preview, mise en production, suppression ou écriture en production sans accord explicite.
 - Rapport de livraison : objectif, fichiers modifiés, décisions, tests, SHA/Preview, risques, limites et statut.
+
+
+## Équipe d'agents Coach In
+- Le Manager délègue les spécifications à product_owner, les choix techniques à solution_architect, les changements UI à frontend_developer et les changements backend à backend_developer.
+- Les développeurs utilisent un worktree dédié sous `/workspace/coach-in-worktrees/`; ne jamais modifier le checkout principal ou un autre worktree.
+- Les développeurs ne commitent pas, ne pushent pas et n'ouvrent pas de PR. Le Manager inspecte le diff et les tests.
+- Les agents release_manager et documentation_specialist préparent uniquement des livrables ; aucune publication ni mise en production.
+- QA, sécurité, UX, tennis et plan_auditor restent des revues indépendantes.
+- Le sandbox est isolé, sans secret applicatif ni identifiant Supabase. Aucun accès production.

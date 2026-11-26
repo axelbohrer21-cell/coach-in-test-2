@@ -24,18 +24,12 @@ Service privé d'orchestration de l'équipe d'agents développeurs de Coach In. 
 
 ### État du canal navigateur
 
-La protection Vercel Auth du déploiement est active. Elle ne remplace pas l'authentification des routes de session Eve. L'API Eve doit continuer à refuser les appels navigateur tant que le canal Web Chat et son authentification utilisateur Vercel ne sont pas provisionnés et vérifiés.
-
-La procédure Eve officielle à terminer depuis le dossier `agent-manager` est :
-
-```bash
-npx eve link
-npx eve add channel/web
-```
-
-Choisir le projet Vercel `coach-in-manager`, sélectionner l'hébergement Vercel, puis effectuer le parcours **Sign in with Vercel** pour provisionner les identifiants navigateur de l'équipe. Ne pas rendre l'API publique et ne pas remplacer l'authentification par `none()`.
-
-Le dépôt GitHub est maintenant relié à Vercel. Le build Preview est en cours de correction avant de poursuivre la configuration du canal Web. Aucun déploiement de production de Coach In n'a été lancé.
+- Le canal Eve est déjà déclaré dans `agent/channels/eve.ts` avec `eveChannel`, une authentification Better Auth basée sur la session Vercel, `vercelOidc()` et `localDev()`.
+- L'interface `apps/web` contient le chat authentifié, l'écran de connexion et le contrôle du compte ; la route Better Auth est présente.
+- Les variables d'environnement attendues (`BETTER_AUTH_SECRET`, `VERCEL_APP_CLIENT_ID`, `VERCEL_APP_CLIENT_SECRET`) sont déclarées pour Preview et Production. Leurs valeurs secrètes ne sont jamais affichées dans le dépôt.
+- La protection Vercel Auth des déploiements reste active. Elle s'ajoute à l'authentification Better Auth ; elle ne la remplace pas.
+- La Preview compile et est READY, mais le parcours réel de connexion Vercel, l'ouverture d'une session et les délégations d'agents doivent encore être testés dans le navigateur avec un compte autorisé.
+- Ne pas rendre l'API publique et ne pas remplacer l'authentification par `none()`.
 
 ## Contenu de la première version
 
@@ -45,10 +39,13 @@ Le dépôt GitHub est maintenant relié à Vercel. Le build Preview est en cours
 - Outils explicitement autorisés : poser une question, lire les documents du workspace et déléguer à un agent.
 - Les compétences projet et planification sont conservées en fichiers Markdown et consultées par lecture.
 - Les checklists de tâches sont suivies dans les réponses ; aucun outil todo durable n'est actuellement activé.
-- Sous-agents indépendants : `plan_auditor`, `qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`.
+- Équipe déclarée : `product_owner`, `solution_architect`, `frontend_developer`, `backend_developer`, `qa_engineer`, `qa_reviewer`, `tennis_expert`, `ux_reviewer`, `data_security_reviewer`, `release_manager`, `documentation_specialist` et `plan_auditor`.
+- Workflow `team_task` : route une mission bornée vers un spécialiste et attend son livrable structuré. Les développeurs disposent des outils de code dans un sandbox isolé et partagent le sandbox du Manager via des worktrees distincts.
 - Outil workflow `review_task` : appelle automatiquement l'auditeur de plan puis les spécialistes sélectionnés en parallèle, attend les réponses structurées et retourne un état global (`reviewed`, `changes_requested`, `blocked` ou `partial`). Les spécialistes sont cachés de l'appel direct et passent par cet orchestrateur.
-- Les revues sont limitées au contexte transmis : les spécialistes n'ont pas d'accès direct au dépôt, à Supabase ni à une Preview. Ils ne peuvent donc jamais prétendre avoir inspecté ou testé ces ressources.
-- Aucun outil shell, écriture de fichiers, accès base de données, accès GitHub ou déploiement.
+- Les agents de conseil/revue sont limités au contexte transmis et n'ont pas d'accès direct au dépôt, à Supabase ni à une Preview.
+- Les développeurs peuvent modifier des fichiers dans un worktree local au sandbox isolé, lire le dépôt public et lancer des tests locaux. Le QA Engineer est configuré pour exécuter les tests sans modifier les sources ; le Manager vérifie systématiquement le git status après ses contrôles. Aucun ne peut commit, push, ouvrir de PR, accéder à Supabase, ni déployer.
+- Le sandbox autorise uniquement les domaines publics GitHub et les registres de paquets nécessaires ; aucun secret applicatif ou accès de production n'y est monté.
+- Aucun connecteur GitHub authentifié ni accès de base de données n'est encore installé dans le runtime du Manager.
 
 ## Démarrage local
 
@@ -67,9 +64,9 @@ npm run build
 
 ## Limites explicites de cette version
 
-- Le Manager peut cadrer, organiser, questionner et orchestrer les revues spécialisées.
-- Il ne peut pas encore créer des branches, lire le dépôt en direct, modifier le code, lancer les tests, lire Supabase ou déclencher Vercel.
-- Les agents développeurs Frontend/Backend et Release restent à construire ; les spécialistes actuels sont des relecteurs consultatifs.
+- Le Manager peut cadrer, organiser, déléguer aux rôles spécialisés, et exécuter des contrôles locaux dans son sandbox.
+- Les développeurs peuvent préparer des changements dans des worktrees locaux ; le Manager doit vérifier les diffs et les tests avant tout transfert.
+- La publication GitHub (commit/push/PR), les lectures/écritures Supabase et les déploiements restent hors du runtime et nécessitent une intégration contrôlée ultérieure.
 - Aucune action de production n'est autorisée par défaut.
 
 ## Garde-fous
