@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { selectReviewers } from "./reviewer-routing.ts";
+import { selectReviewers } from "./reviewer-routing";
 
 test("ajoute l'expert tennis pour une règle de réservation", () => {
   const result = selectReviewers("Modifier le planning et les réservations joueurs");
