@@ -1,15 +1,9 @@
 import { betterAuth } from "better-auth";
+import { isManagerAllowedEmail } from "./access-control.js";
+export { isManagerAllowedEmail } from "./access-control.js";
 
 const SESSION_MAX_AGE_SECONDS = 8 * 60 * 60;
 
-export function isManagerAllowedEmail(email: string): boolean {
-  if (process.env.NODE_ENV === "development") return true;
-  const allowed = (process.env.MANAGER_ALLOWED_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-  return allowed.includes(email.trim().toLowerCase());
-}
 const DEVELOPMENT_ALLOWED_HOSTS = ["localhost:*", "127.0.0.1:*"];
 
 function getAllowedHosts(): string[] {
