@@ -61,6 +61,13 @@ export function buildMissionExecutionPlan(tasks: MissionTask[]) {
   }
 
   const developers = tasks.filter((task) => task.role === "frontend_developer" || task.role === "backend_developer");
+  const architects = tasks.filter((task) => task.role === "solution_architect");
+  if (developers.length > 1 && architects.length === 0) {
+    errors.push("Une mission avec plusieurs développeurs doit inclure une tâche Architecte.");
+  } else if (developers.length > 1 && !developers.every((developer) => architects.some((architect) => developer.dependsOn.includes(architect.taskId)))) {
+    errors.push("Chaque développeur d'une mission multi-développeurs doit dépendre de l'Architecte.");
+  }
+
   const qaTasks = tasks.filter((task) => task.role === "qa_engineer");
   if (developers.length > 0 && qaTasks.length === 0) {
     errors.push("Une mission avec du développement doit inclure une tâche QA.");
