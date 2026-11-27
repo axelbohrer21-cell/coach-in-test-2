@@ -92,7 +92,7 @@ export const dataService = {
       unwrap(supabase.from('coach_weekly_availability').select('*').eq('coach_id',userId).order('weekday').order('start_time')),
       unwrap(supabase.from('coach_player_messages').select('*').eq('coach_id',userId).order('created_at')),
       unwrap(supabase.from('coach_video_analyses').select('*').eq('coach_id',userId).order('created_at',{ascending:false})),
-      activeCoachIds.length ? loadClubCourtCapacity() : Promise.resolve([])
+      loadClubCourtCapacity()
     ]);
     const pendingBookingPlayerIds=[...new Set(bookingRequests.filter(row=>row.status==='pending').map(row=>row.player_id).filter(id=>id&&!playerIds.includes(id)))];
     const pendingBookingPlayers=pendingBookingPlayerIds.length
