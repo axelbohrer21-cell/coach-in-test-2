@@ -153,6 +153,8 @@ export function buildDaySeriesOverview({ groupSessions = [], manualCancellations
   ];
   const discovered = new Map();
   for (const session of sourceSessions) {
+    // Les stages de vacances occupent le planning mais ne constituent pas une série hebdomadaire.
+    if (String(session.title || '').toLowerCase().includes('stage')) continue;
     if (!['adultes','enfants'].includes(session.audience) || !session.session_date) continue;
     const weekday = parseISO(session.session_date).getUTCDay();
     if (!GROUP_SEASON.weekdays[session.audience]?.includes(weekday)) continue;
@@ -177,14 +179,23 @@ export function buildDaySeriesOverview({ groupSessions = [], manualCancellations
     : legacyDefinitions;
   return definitions.map(def => {
     const matchingSessions = sourceSessions.filter(session =>
+      !String(session.title || '').toLowerCase().includes('stage') &&
       session.audience === def.audience &&
       parseISO(session.session_date).getUTCDay() === def.weekday &&
       (!def.start_time || String(session.start_time || '00:00').slice(0,5) === def.start_time) &&
       (!def.end_time || String(session.end_time || '23:59').slice(0,5) === def.end_time)
     );
     const eligibleDates = generateTeachingDates({ audience:def.audience, weekday:def.weekday });
+    const statusesByDate = new Map();
+    for (const session of matchingSessions) {
+      if (!statusesByDate.has(session.session_date)) statusesByDate.set(session.session_date, []);
+      statusesByDate.get(session.session_date).push(String(session.status || '').toLowerCase());
+    }
+    const fullyCancelledDates = [...statusesByDate.entries()]
+      .filter(([, statuses]) => statuses.length > 0 && statuses.every(status => status === 'cancelled'))
+      .map(([date]) => date);
     const cancelledDates = new Set([
-      ...matchingSessions.filter(session => session.status === 'cancelled').map(session => session.session_date),
+      ...fullyCancelledDates,
       ...manualCancellations.filter(row => row.audience === def.audience && Number(row.weekday) === def.weekday).map(row => row.session_date)
     ]);
     // Les dates passées comptent par défaut ; une date n'est comptée qu'une fois,
