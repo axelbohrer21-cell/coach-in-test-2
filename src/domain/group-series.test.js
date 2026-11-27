@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSeriesCounters, buildSeriesOccurrences } from './group-series.js';
+import { COACH_B_GROUP_BLOCKS } from './group-calendar.js';
 
 const series = { id:'s1', coach_id:'c1', title:'Adultes lundi', audience:'adultes', weekday:1, start_time:'18:00', end_time:'19:30', court_number:null, court_count:2, target_sessions:28 };
 test('un compteur est indépendant par créneau et exclut les annulations', () => {
@@ -63,4 +64,22 @@ test('compteur enfants samedi : les samedis ajoutés aux vacances sont comptés 
  assert.equal(row.eligibleDates.includes('2026-10-17'),true);
  assert.equal(row.completed,4);
  assert.equal(row.cancelled,1);
+});
+
+
+test('une série Coach B peut générer ses dates avec ses horaires spécifiques',()=>{
+ const weeklySchedule=COACH_B_GROUP_BLOCKS;
+ const bSeries={...series,id:'coach-b-tuesday-noon',coach_id:'coach-b',weekday:2,start_time:'12:15',end_time:'13:45',court_count:null};
+ assert.throws(()=>buildSeriesOccurrences(bSeries,{weeklySchedule}),/nombre de terrains mobilisés/);
+ const known={...bSeries,court_count:1,shared_activity_id:'a8f4c2b1-7d90-4a2e-9e11-6c8a9d2f3b40'};
+ const rows=buildSeriesOccurrences(known,{weeklySchedule});
+ assert.equal(rows.length,32);
+ assert.ok(rows.every(row=>row.shared_activity_id===known.shared_activity_id));
+ assert.throws(()=>buildSeriesOccurrences(known),/horaires du planning collectif/);
+});
+
+test('la série Coach B du mercredi soir respecte son propre planning',()=>{
+ const bSeries={...series,id:'coach-b-wednesday-evening',coach_id:'coach-b',weekday:3,start_time:'18:00',end_time:'19:30',court_count:3};
+ const rows=buildSeriesOccurrences(bSeries,{weeklySchedule:COACH_B_GROUP_BLOCKS});
+ assert.equal(rows.length,31);
 });
