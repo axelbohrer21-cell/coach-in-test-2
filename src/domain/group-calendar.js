@@ -9,6 +9,8 @@ export const COACH_B_GROUP_BLOCKS = Object.freeze([
   { key:'samedi-matin', audience:'enfants', weekday:6, start:'09:30', end:'13:30', courtCount:null }
 ]);
 
+export const COACH_B_EMAIL = 'coachb@gmail.com';
+
 export const GROUP_SEASON = Object.freeze({
   start: '2026-09-14',
   end: '2027-06-20',
@@ -73,13 +75,28 @@ export function isPrivateLessonDateAllowed(dateISO, options = {}) {
   const { holidays = ZONE_B_HOLIDAYS_2026_2027, publicHolidays = PUBLIC_HOLIDAYS_2026_2027 } = options;
   return parseISO(dateISO).getUTCDay() !== 0 && !isSchoolHoliday(dateISO, holidays) && (!isPublicHoliday(dateISO, publicHolidays) || dateISO === '2027-05-08');
 }
-export function isWithinTeachingWindow(dateISO, startTime, endTime, audience = 'enfants') {
+export function getCoachGroupSchedule(profile = {}) {
+  const email = String(profile?.email || '').trim().toLowerCase();
+  if (email === COACH_B_EMAIL) {
+    return COACH_B_GROUP_BLOCKS.map(row => ({
+      key: row.key, audience: row.audience, weekday: row.weekday,
+      start: row.start, end: row.end, courtCount: row.courtCount
+    }));
+  }
+  return GROUP_SEASON.weeklySchedule;
+}
+
+export function isWithinCoachSchedule(audience, weekday, startTime, endTime, weeklySchedule = GROUP_SEASON.weeklySchedule) {
+  if (!['adultes','enfants'].includes(audience) || !startTime || !endTime || endTime <= startTime) return false;
+  return weeklySchedule.some(row => row.audience === audience
+    && Number(row.weekday) === Number(weekday)
+    && startTime >= String(row.start || row.start_time || '').slice(0,5)
+    && endTime <= String(row.end || row.end_time || '').slice(0,5));
+}
+
+export function isWithinTeachingWindow(dateISO, startTime, endTime, audience = 'enfants', weeklySchedule = GROUP_SEASON.weeklySchedule) {
   const day = parseISO(dateISO).getUTCDay();
-  const windows = audience === 'adultes'
-    ? GROUP_SEASON.weeklySchedule.filter(row => row.audience === 'adultes' && row.weekday === day).map(row => [row.start, row.end])
-    : GROUP_SEASON.availabilityWindows[day];
-  if (!windows?.length) return false;
-  return windows.some(([start, end]) => startTime >= start && endTime <= end && endTime > startTime);
+  return isWithinCoachSchedule(audience, day, startTime, endTime, weeklySchedule);
 }
 
 export function isTeachingDate(dateISO, audience, options = {}) {
