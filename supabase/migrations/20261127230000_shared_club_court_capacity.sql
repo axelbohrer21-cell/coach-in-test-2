@@ -1,6 +1,6 @@
 -- Shared club capacity: count occupied courts, never assign a fixed court number.
 alter table public.group_sessions
-  add column if not exists court_count smallint default 1;
+  add column if not exists court_count smallint;
 alter table public.group_sessions alter column court_count drop not null, alter column court_count drop default;
 alter table public.group_course_series
   add column if not exists court_count smallint not null default 1,
@@ -26,18 +26,16 @@ alter table public.booking_requests add constraint booking_requests_court_count_
 alter table public.training_sessions drop constraint if exists training_sessions_court_count_check;
 alter table public.training_sessions add constraint training_sessions_court_count_check check (court_count = 1);
 
--- Temporarily remove the capacity guard while normalizing legacy blocks; it is recreated below.
+-- Temporarily remove the capacity guard while normalizing existing records.
 drop trigger if exists guard_group_shared_court_capacity on public.group_sessions;
 
--- Coach B: one collective block per actual lesson, with only confirmed capacity.
+-- Coach A's legacy rows are one row per court; each row now contributes one court, without a fixed court number.
 update public.group_sessions g
-set court_count = case
-  when extract(isodow from g.session_date)::int=2 and g.start_time=time '19:00' and g.end_time=time '20:30' then 3
-  else null
-end
-from public.profiles p where p.id=g.coach_id and lower(p.email)='coachb@gmail.com';
+set court_count=1,court_number=null
+from public.profiles p
+where p.id=g.coach_id and lower(p.email)='coacha@gmail.com';
 
--- Split Coach B Tuesday evening into the two real lessons.
+-- Coach B: split Tuesday evening into its two actual lessons.
 insert into public.group_sessions
   (coach_id,title,theme,session_date,start_time,end_time,audience,status,source_week,series_id,court_number,court_count)
 select g.coach_id,g.title,g.theme,g.session_date,time '19:00',time '20:30',g.audience,g.status,
@@ -45,9 +43,9 @@ select g.coach_id,g.title,g.theme,g.session_date,time '19:00',time '20:30',g.aud
 from public.group_sessions g
 join public.profiles p on p.id=g.coach_id
 where lower(p.email)='coachb@gmail.com'
-  and extract(isodow from g.session_date)::int = 2
-  and g.start_time = time '17:30'
-  and g.end_time = time '20:30'
+  and extract(isodow from g.session_date)::int=2
+  and g.start_time=time '17:30'
+  and g.end_time=time '20:30'
   and not exists (
     select 1 from public.group_sessions existing
     where existing.coach_id=g.coach_id and existing.session_date=g.session_date
@@ -55,12 +53,33 @@ where lower(p.email)='coachb@gmail.com'
       and existing.audience=g.audience and existing.title=g.title and existing.status=g.status
   );
 
+-- Fill every confirmed Coach B capacity and clear legacy court-number assignments.
 update public.group_sessions g
-set end_time = time '19:00', court_count = null, court_number = null
-from public.profiles p where p.id=g.coach_id and lower(p.email)='coachb@gmail.com'
-  and extract(isodow from g.session_date)::int = 2
-  and g.start_time = time '17:30'
-  and g.end_time = time '20:30';
+set end_time=case
+      when extract(isodow from g.session_date)::int=2 and g.start_time=time '17:30' and g.end_time=time '20:30' then time '19:00'
+      else g.end_time
+    end,
+    court_count=case
+      when extract(isodow from g.session_date)::int=1 and g.start_time=time '18:00' and g.end_time=time '21:00' then 3
+      when extract(isodow from g.session_date)::int=2 and g.start_time=time '12:15' and g.end_time=time '13:45' then 2
+      when extract(isodow from g.session_date)::int=2 and g.start_time=time '17:30' and g.end_time=time '20:30' then 2
+      when extract(isodow from g.session_date)::int=2 and g.start_time=time '17:30' and g.end_time=time '19:00' then 2
+      when extract(isodow from g.session_date)::int=2 and g.start_time=time '19:00' and g.end_time=time '20:30' then 3
+      when extract(isodow from g.session_date)::int=3 and g.start_time=time '09:30' and g.end_time=time '18:00' and g.audience='enfants' then 3
+      when extract(isodow from g.session_date)::int=3 and g.start_time=time '18:00' and g.end_time=time '19:30' and g.audience='adultes' then 3
+      when extract(isodow from g.session_date)::int=4 and g.start_time=time '18:00' and g.end_time=time '19:30' then 1
+      when extract(isodow from g.session_date)::int=6 and g.start_time=time '09:30' and g.end_time=time '13:30' then 3
+      else null
+    end,
+    court_number=null
+from public.profiles p
+where p.id=g.coach_id and lower(p.email)='coachb@gmail.com';
+
+-- Other resources also stop using fixed court numbers; they consume one court each.
+update public.group_course_series set court_number=null;
+update public.coach_weekly_availability set court_number=null;
+update public.training_sessions set court_number=null,court_count=1;
+update public.booking_requests set court_number=null,court_count=1;
 
 -- The shared occupancy ledger carries only capacity and audience metadata.
 create or replace function public.sync_group_shared_court_occupancy()
