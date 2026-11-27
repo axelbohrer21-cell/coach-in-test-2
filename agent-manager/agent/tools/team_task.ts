@@ -2,6 +2,7 @@ import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
 import { validateDependencyHandoff, validateTaskCompletion } from "../utils/coordination.js";
 import { buildMissionExecutionPlan, fingerprintMissionPlan, taskRoles } from "../utils/mission-planner.js";
+import { capPrompt, compactPromptText, estimatePromptTokens } from "../utils/context-budget.js";
 
 const codeRoles = new Set(["frontend_developer", "backend_developer"]);
 const sandboxRoles = new Set(["frontend_developer", "backend_developer", "qa_engineer"]);
@@ -52,7 +53,7 @@ export default defineWorkflowTool({
       planChecksum: z.string().regex(/^fnv1a-[0-9a-f]{8}$/),
       tasks: z.array(z.object({
         taskId: z.string().min(3).max(80),
-        objective: z.string().min(8).max(12000),
+        objective: z.string().min(8).max(6000),
         role: z.enum(taskRoles),
         dependsOn: z.array(z.string().min(3).max(80)).max(12),
         writeScope: z.array(z.string().min(1).max(240)).max(40),
@@ -63,7 +64,7 @@ export default defineWorkflowTool({
       })).min(1).max(20),
     }),
     dependencyResults: z.array(dependencyResultSchema).max(12).optional(),
-    context: z.string().max(16000).optional(),
+    context: z.string().max(8000).optional(),
   }),
   async execute({ missionId, taskId, missionPlan, dependencyResults, context }, ctx) {
     "use workflow";
@@ -97,7 +98,7 @@ export default defineWorkflowTool({
     }
 
     const role = sourceTask.role;
-    const task = sourceTask.objective;
+    const task = compactPromptText(sourceTask.objective, 4200, "mission");
     const acceptanceCriteria = sourceTask.acceptanceCriteria;
     const { baseRef, workBranch, worktreePath } = sourceTask;
     const requiredDependencies = plannedTask.executionDependsOn;
@@ -155,7 +156,7 @@ export default defineWorkflowTool({
         "Les outils de lecture/écriture refusent tout chemin hors de WORKTREE_PATH. Le shell est limité à git status/diff/log/lecture et aux scripts de test/build du projet.",
         "À la fin, fournis les chemins exacts, git diff --stat, git diff --check et les commandes/tests exécutés avec leurs codes de sortie.",
         "Ne commit jamais, ne push jamais, n'ouvre jamais de PR. Le Manager relira le diff.",
-      ].join("\n");
+      ].join("\n"), 14500);
     } else if (role === "qa_engineer") {
       sandboxInstructions = [
         "REPOSITORY_PATH=/workspace/coach-in",
@@ -169,24 +170,26 @@ export default defineWorkflowTool({
       ].join("\n");
     }
 
-    const prompt = [
+    const dependencyBriefs = (dependencyResults ?? []).map((item) => [
+      `- ${item.taskId} [${item.status}] : ${compactPromptText(item.summary, 260, "résumé")}`,
+      ...item.deliverables.slice(0, 2).map((value) => `  Livrable : ${compactPromptText(value, 140, "livrable")}`),
+      ...item.evidence.slice(0, 2).map((value) => `  Preuve : ${compactPromptText(value, 160, "preuve")}`),
+    ].join("\n"));
+
+    const prompt = capPrompt([
       "Tu reçois une mission déléguée par Coach In Manager.",
       `MISSION_ID=${missionId ?? "non renseigné"}`,
       `TASK_ID=${taskId ?? "non renseigné"}`,
       `DÉPENDANCES=${requiredDependencies.join(", ") || "aucune déclarée"}`,
       "LIVRABLES ET PREUVES DES DÉPENDANCES :",
-      ...(dependencyResults?.length ? dependencyResults.flatMap((item) => [
-        `- ${item.taskId} [${item.status}] : ${item.summary}`,
-        ...item.deliverables.map((value) => `  Livrable : ${value}`),
-        ...item.evidence.map((value) => `  Preuve : ${value}`),
-      ]) : ["Aucune dépendance."]),
+      ...(dependencyBriefs.length ? dependencyBriefs : ["Aucune dépendance."]),
       "Si un livrable requis manque ou si une preuve est insuffisante, renvoie status=blocked.",
       `RÔLE=${role}`,
       "MISSION :",
       task,
       "",
       "CONTEXTE TRANSMIS :",
-      context?.trim() || "Aucun contexte complémentaire.",
+      compactPromptText(context, 3600, "contexte projet") || "Aucun contexte complémentaire.",
       "",
       "CONSIGNES D'ENVIRONNEMENT :",
       sandboxInstructions,
@@ -238,6 +241,7 @@ export default defineWorkflowTool({
         ...result.data,
         status: completion.valid ? result.data.status : "blocked",
         completionGate: completion,
+        promptBudget: { estimatedPromptTokens: estimatePromptTokens(prompt), promptCharacters: prompt.length, target: "environ 4 200 tokens maximum hors instructions runtime" },
         verification: codeRoles.has(role)
           ? "Compte rendu de développement dans le sandbox, à vérifier indépendamment par le Manager."
           : role === "qa_engineer"
