@@ -195,7 +195,8 @@ end;
 $function$;
 
 -- Keep the existing five-argument internal contract for private booking functions.
-create or replace function private.max_club_court_occupancy(
+drop function if exists private.max_club_court_occupancy(timestamp without time zone,timestamp without time zone,text,uuid,smallint);
+create function private.max_club_court_occupancy(
   p_start timestamp without time zone,
   p_end timestamp without time zone,
   p_exclude_source_kind text,
