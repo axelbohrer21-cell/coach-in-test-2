@@ -450,8 +450,19 @@ function groupCalendarPage() {
   const totalCompleted = overview.reduce((sum,row)=>sum+row.completed,0);
   const totalPlanned = overview.reduce((sum,row)=>sum+row.planned,0);
   const totalCancelled = overview.reduce((sum,row)=>sum+Number(row.cancelled||0),0);
-  const seriesRows = buildSeriesCounters(coachGroupSeries, coachGroupSessions, new Date().toISOString().slice(0,10), coachCancellations);
-  const seriesCards = seriesRows.map(row => `<article class="group-series-card"><div class="group-series-head"><div><p class="eyebrow">${row.audience==='adultes'?'ADULTES':'ENFANTS'} · ${['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][row.weekday]}</p><h3>${escapeHtml(row.title)}</h3><small class="muted">${row.start_time.slice(0,5)}–${row.end_time.slice(0,5)} · Court ${row.court_number}</small></div><span class="tag ${row.reached?'tag-green':row.paceGap?'tag-orange':'tag-blue'}">${row.reached?'Objectif atteint':row.paceGap?'En retard':'En cours'}</span></div><div class="group-series-count"><strong>${row.completed}</strong><span>réalisées</span><i>/</i><strong>${row.target}</strong><span>objectif</span></div><div class="group-series-progress"><i style="width:${Math.min(100,Math.round(row.completed/row.target*100))}%"></i></div><div class="group-series-meta"><span>${row.planned} planifiées</span><span>${row.completed}/${row.expectedByNow} attendues réalisées</span><span>${row.paceGap} de retard</span><span>${row.pastUnrecorded} à régulariser</span><span>${row.remaining} restantes</span><span>${row.toSchedule} à programmer</span><span>${row.cancelled} annulées</span></div><button class="btn subtle" data-edit-series="${row.id}">Modifier la série et les cours futurs</button><button class="btn subtle" data-generate-series="${row.id}">Générer les dates de la saison</button></article>`).join('');
+  const storedSeriesRows = buildSeriesCounters(coachGroupSeries, coachGroupSessions, new Date().toISOString().slice(0,10), coachCancellations);
+  // Coach B n'a pas encore de group_course_series en base : afficher ses créneaux réellement observés,
+  // sans inventer de court ni créer de faux identifiants modifiables.
+  const seriesRows = storedSeriesRows.length ? storedSeriesRows : overview.map(row => ({
+    ...row,
+    id: row.key,
+    title: row.label,
+    court_number: null,
+    toSchedule: row.catchUp,
+    reached: row.completed >= row.target,
+    isDerived: true
+  }));
+  const seriesCards = seriesRows.map(row => `<article class="group-series-card"><div class="group-series-head"><div><p class="eyebrow">${row.audience==='adultes'?'ADULTES':'ENFANTS'} · ${['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][row.weekday]}</p><h3>${escapeHtml(row.title)}</h3><small class="muted">${row.start_time.slice(0,5)}–${row.end_time.slice(0,5)} · ${row.court_number ? 'Court '+row.court_number : 'Créneau coach'}</small></div><span class="tag ${row.reached?'tag-green':row.paceGap?'tag-orange':'tag-blue'}">${row.reached?'Objectif atteint':row.paceGap?'En retard':'En cours'}</span></div><div class="group-series-count"><strong>${row.completed}</strong><span>réalisées</span><i>/</i><strong>${row.target}</strong><span>objectif</span></div><div class="group-series-progress"><i style="width:${Math.min(100,Math.round(row.completed/row.target*100))}%"></i></div><div class="group-series-meta"><span>${row.planned} planifiées</span><span>${row.completed}/${row.expectedByNow} attendues réalisées</span><span>${row.paceGap} de retard</span><span>${row.pastUnrecorded} à régulariser</span><span>${row.remaining} restantes</span><span>${row.toSchedule} à programmer</span><span>${row.cancelled} annulées</span></div>${row.isDerived?'':'<button class="btn subtle" data-edit-series="'+row.id+'">Modifier la série et les cours futurs</button><button class="btn subtle" data-generate-series="'+row.id+'">Générer les dates de la saison</button>'}</article>`).join('');
   const formatShort = value => new Date(`${value}T12:00:00`).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
   const rainyKeys = new Set(coachCancellations.map(item => `${item.audience}:${item.session_date}`));
   const counters = overview.map(row => `<article class="group-series-card">
