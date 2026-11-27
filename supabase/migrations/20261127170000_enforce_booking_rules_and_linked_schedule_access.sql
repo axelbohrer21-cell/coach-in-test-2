@@ -282,15 +282,19 @@ using (
 );
 
 drop policy if exists shared_court_occupancy_player_read on public.shared_court_occupancy;
-create policy shared_court_occupancy_player_read
+drop policy if exists shared_court_occupancy_linked_read on public.shared_court_occupancy;
+create policy shared_court_occupancy_linked_read
 on public.shared_court_occupancy
 for select
 to authenticated
 using (
-  private.is_player()
-  and exists (
-    select 1 from public.coach_players cp
-    where cp.coach_id = shared_court_occupancy.coach_id
-      and cp.player_id = (select auth.uid())
+  (coach_id = (select auth.uid()) and private.is_coach())
+  or (
+    private.is_player()
+    and exists (
+      select 1 from public.coach_players cp
+      where cp.coach_id = shared_court_occupancy.coach_id
+        and cp.player_id = (select auth.uid())
+    )
   )
 );
