@@ -54,16 +54,16 @@ export default defineWorkflowTool({
         "Tu n'as aucun accès direct au dépôt, à Supabase ou à une Preview dans cette revue, sauf si leur contenu est explicitement transmis dans le contexte.",
         "",
         "MISSION :",
-        compactPromptText(task, 3600, "mission"),
+        compactPromptText(task, 2800, "mission"),
         "",
         "CONTEXTE INITIAL :",
-        compactPromptText(context, 3000, "contexte de revue") || "Aucun contexte supplémentaire fourni.",
+        compactPromptText(context, 2200, "contexte de revue") || "Aucun contexte supplémentaire fourni.",
         "",
         "TRANSMISSION DE L'AUDITEUR DU PLAN :",
-        compactPromptText(additionalContext, 1400, "audit du plan") || "Aucun résultat d’audit disponible ; indique les limites liées à cette absence.",
+        compactPromptText(additionalContext, 1000, "audit du plan") || "Aucun résultat d’audit disponible ; indique les limites liées à cette absence.",
         "",
         "Fournis un verdict, des constats fondés, des recommandations concrètes, des critères d'acceptation et les tests nécessaires.",
-      ].join("\n"), 10500);
+      ].join("\n"), 8500);
 
       try {
         const response = await ctx.agent(reviewer).send(prompt, {
