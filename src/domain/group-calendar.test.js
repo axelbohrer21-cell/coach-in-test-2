@@ -24,7 +24,7 @@ test('cours adultes : lundi à vendredi selon le planning confirmé', () => {
   assert.equal(isTeachingDate('2027-05-06','adultes'),false); // Ascension
   assert.equal(isTeachingDate('2026-11-02','adultes'),true); // date affichée, pluie cochable manuellement
   assert.equal(isTeachingDate('2027-01-04','adultes'),true); // reprise après Noël
-  assert.deepEqual(GROUP_SEASON.weeklySchedule.find(row=>row.key==='adultes-mercredi'), { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'19:30', courtCount:3 });
+  assert.deepEqual(GROUP_SEASON.weeklySchedule.find(row=>row.key==='adultes-mercredi'), { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courtCount:3 });
   assert.equal(GROUP_SEASON.weeklySchedule.find(row=>row.key==='enfants-mercredi').courtCount,3);
   assert.equal(GROUP_SEASON.weeklySchedule.find(row=>row.key==='enfants-samedi').courtCount,3);
 });
