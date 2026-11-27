@@ -241,7 +241,7 @@ begin
         and (g.session_date+g.end_time)>v_start
         and not (
           g.start_time=new.start_time and g.end_time=new.end_time
-          and g.audience=new.audience and g.title=new.title
+          and g.audience=new.audience
         )
     ) then
       raise exception 'Ce coach a déjà un autre cours collectif sur ce créneau.';
