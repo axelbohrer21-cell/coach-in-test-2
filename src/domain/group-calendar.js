@@ -183,8 +183,16 @@ export function buildDaySeriesOverview({ groupSessions = [], manualCancellations
       (!def.end_time || String(session.end_time || '23:59').slice(0,5) === def.end_time)
     );
     const eligibleDates = generateTeachingDates({ audience:def.audience, weekday:def.weekday });
+    const statusesByDate = new Map();
+    for (const session of matchingSessions) {
+      if (!statusesByDate.has(session.session_date)) statusesByDate.set(session.session_date, []);
+      statusesByDate.get(session.session_date).push(String(session.status || '').toLowerCase());
+    }
+    const fullyCancelledDates = [...statusesByDate.entries()]
+      .filter(([, statuses]) => statuses.length > 0 && statuses.every(status => status === 'cancelled'))
+      .map(([date]) => date);
     const cancelledDates = new Set([
-      ...matchingSessions.filter(session => session.status === 'cancelled').map(session => session.session_date),
+      ...fullyCancelledDates,
       ...manualCancellations.filter(row => row.audience === def.audience && Number(row.weekday) === def.weekday).map(row => row.session_date)
     ]);
     // Les dates passées comptent par défaut ; une date n'est comptée qu'une fois,
