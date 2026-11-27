@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CANCELLED_GROUP_DATES, generateTeachingDates, isTeachingDate, buildDaySeriesOverview, buildHolidayStageOccurrences, GROUP_SEASON, COACH_B_GROUP_BLOCKS, getWeekProgram } from './group-calendar.js';
+import { CANCELLED_GROUP_DATES, generateTeachingDates, isTeachingDate, buildDaySeriesOverview, buildHolidayStageOccurrences, GROUP_SEASON, COACH_B_GROUP_BLOCKS, getWeekProgram, getCoachGroupSchedule, isWithinCoachSchedule } from './group-calendar.js';
 
 test('cours enfants : mercredi et samedi, hors vacances Zone B', () => {
   const wednesdays = generateTeachingDates({ audience:'enfants', weekday:3 });
@@ -189,4 +189,17 @@ test('Coach B : les blocs collectifs ont une capacité distincte par créneau',(
   assert.deepEqual(wednesday.map(row=>[row.audience,row.start,row.end,row.courtCount]),[
     ['enfants','09:30','18:00',null],['adultes','18:00','19:30',null]
   ]);
+});
+
+
+test('planning collectif Coach B : ses créneaux sont validés indépendamment de Coach A',()=>{
+  const schedule=getCoachGroupSchedule({email:'coachb@gmail.com'});
+  assert.equal(isWithinCoachSchedule('adultes',2,'12:15','13:45',schedule),true);
+  assert.equal(isWithinCoachSchedule('adultes',2,'17:30','19:00',schedule),true);
+  assert.equal(isWithinCoachSchedule('adultes',2,'19:00','20:30',schedule),true);
+  assert.equal(isWithinCoachSchedule('adultes',4,'18:00','19:30',schedule),true);
+  assert.equal(isWithinCoachSchedule('adultes',5,'18:00','19:30',schedule),false);
+  assert.equal(isWithinCoachSchedule('enfants',6,'09:30','13:30',schedule),true);
+  assert.equal(isWithinCoachSchedule('enfants',6,'09:30','14:30',schedule),false);
+  assert.equal(isWithinCoachSchedule('adultes',2,'12:15','13:45',getCoachGroupSchedule({email:'coacha@gmail.com'})),false);
 });
