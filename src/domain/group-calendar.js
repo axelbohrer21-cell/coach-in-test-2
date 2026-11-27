@@ -1,10 +1,12 @@
 export const COACH_B_GROUP_BLOCKS = Object.freeze([
-  { key:'lundi-soir', audience:'adultes', weekday:1, start:'18:00', end:'21:00' },
-  { key:'mardi-midi', audience:'adultes', weekday:2, start:'12:15', end:'13:45' },
-  { key:'mardi-soir', audience:'adultes', weekday:2, start:'17:30', end:'20:30' },
-  { key:'mercredi', audience:'enfants', weekday:3, start:'09:30', end:'19:30' },
-  { key:'jeudi-soir', audience:'adultes', weekday:4, start:'18:00', end:'19:30' },
-  { key:'samedi-matin', audience:'enfants', weekday:6, start:'09:30', end:'13:30' }
+  { key:'lundi-soir', audience:'adultes', weekday:1, start:'18:00', end:'21:00', courtCount:3 },
+  { key:'mardi-midi', audience:'adultes', weekday:2, start:'12:15', end:'13:45', courtCount:2 },
+  { key:'mardi-soir-1', audience:'adultes', weekday:2, start:'17:30', end:'19:00', courtCount:2 },
+  { key:'mardi-soir-2', audience:'adultes', weekday:2, start:'19:00', end:'20:30', courtCount:3 },
+  { key:'mercredi-enfants', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courtCount:3 },
+  { key:'mercredi-adultes', audience:'adultes', weekday:3, start:'18:00', end:'19:30', courtCount:3 },
+  { key:'jeudi-soir', audience:'adultes', weekday:4, start:'18:00', end:'19:30', courtCount:1 },
+  { key:'samedi-matin', audience:'enfants', weekday:6, start:'09:30', end:'13:30', courtCount:3 }
 ]);
 
 export const GROUP_SEASON = Object.freeze({
@@ -16,15 +18,15 @@ export const GROUP_SEASON = Object.freeze({
   weekdays: Object.freeze({ adultes: [1, 2, 3, 4, 5], enfants: [3, 6] }),
   // Planning collectif hebdomadaire confirmé par le coach.
   weeklySchedule: Object.freeze([
-    { key:'adultes-lundi', audience:'adultes', weekday:1, start:'17:00', end:'21:00', courts:[1,2] },
-    { key:'adultes-mardi', audience:'adultes', weekday:2, start:'17:30', end:'20:30', courts:[1,2,3] },
-    { key:'enfants-mercredi', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courts:[1,2,3] },
-    { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courts:[1,2,3] },
-    { key:'adultes-jeudi', audience:'adultes', weekday:4, start:'17:30', end:'19:00', courts:[1,2] },
-    { key:'adultes-vendredi', audience:'adultes', weekday:5, start:'17:30', end:'20:00', courts:[1,2] },
-    { key:'enfants-samedi', audience:'enfants', weekday:6, start:'09:30', end:'14:30', courts:[1,2,3] }
+    { key:'adultes-lundi', audience:'adultes', weekday:1, start:'17:00', end:'21:00', courtCount:2 },
+    { key:'adultes-mardi', audience:'adultes', weekday:2, start:'17:30', end:'20:30', courtCount:3 },
+    { key:'enfants-mercredi', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courtCount:3 },
+    { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'19:30', courtCount:3 },
+    { key:'adultes-jeudi', audience:'adultes', weekday:4, start:'17:30', end:'19:00', courtCount:2 },
+    { key:'adultes-vendredi', audience:'adultes', weekday:5, start:'17:30', end:'20:00', courtCount:2 },
+    { key:'enfants-samedi', audience:'enfants', weekday:6, start:'09:30', end:'14:30', courtCount:3 }
   ]),
-  holidayStage: Object.freeze({ start:'09:30', end:'16:30', courts:[1,2,3], weekdays:[1,2,3,4,5] }),
+  holidayStage: Object.freeze({ start:'09:30', end:'16:30', courtCount:3, weekdays:[1,2,3,4,5] }),
   // Fenêtres historiques utilisées par le contrôle des demandes de cours particuliers.
   availabilityWindows: Object.freeze({3:[['09:30','18:00']],6:[['09:30','14:30']]})
 });
@@ -130,7 +132,7 @@ export function buildHolidayStageOccurrences({ holidays = ZONE_B_HOLIDAYS_2026_2
         title: `Stage enfants · ${period.label}`,
         start_time: stage.start,
         end_time: stage.end,
-        courts: [...stage.courts],
+        court_count: stage.courtCount,
         status: 'scheduled'
       });
     }
