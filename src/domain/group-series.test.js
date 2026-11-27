@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSeriesCounters, buildSeriesOccurrences } from './group-series.js';
 
-const series = { id:'s1', coach_id:'c1', title:'Adultes lundi', audience:'adultes', weekday:1, start_time:'18:00', end_time:'19:30', court_number:2, target_sessions:28 };
+const series = { id:'s1', coach_id:'c1', title:'Adultes lundi', audience:'adultes', weekday:1, start_time:'18:00', end_time:'19:30', court_number:null, court_count:2, target_sessions:28 };
 test('un compteur est indépendant par créneau et exclut les annulations', () => {
  const rows=[{series_id:'s1',status:'scheduled',session_date:'2027-01-10'},{series_id:'s1',status:'cancelled',session_date:'2026-09-21'},{series_id:'other',status:'completed',session_date:'2026-09-14'}];
  const row=buildSeriesCounters([series],rows,'2026-09-22')[0];
@@ -10,15 +10,16 @@ test('un compteur est indépendant par créneau et exclut les annulations', () =
 });
 test('génération annuelle respecte les vacances et la cible',()=>{
  const rows=buildSeriesOccurrences(series);
- assert.equal(rows.length,30); assert.ok(rows.every(x=>x.series_id==='s1'&&x.start_time==='18:00'&&x.court_number===2));
+ assert.equal(rows.length,30); assert.ok(rows.every(x=>x.series_id==='s1'&&x.start_time==='18:00'&&x.court_number===null&&x.court_count===2));
 });
 test('un créneau sans horaires exacts ne génère rien et est refusé',()=>{
  assert.throws(()=>buildSeriesOccurrences({...series,start_time:''}),/Horaires/);
 });
 
-test('le quatrième court est accepté',()=>{
- const rows=buildSeriesOccurrences({...series,court_number:4});
- assert.ok(rows.length>0); assert.equal(rows[0].court_number,4);
+test('une série peut mobiliser jusqu’à trois terrains sans attribution de numéro',()=>{
+ const rows=buildSeriesOccurrences({...series,court_count:3});
+ assert.ok(rows.length>0); assert.equal(rows[0].court_number,null); assert.equal(rows[0].court_count,3);
+ assert.throws(()=>buildSeriesOccurrences({...series,court_count:4}),/terrains mobilisés/);
 });
 
 test('le mercredi adulte est accepté et un jour incompatible enfant est refusé',()=>{
