@@ -192,21 +192,21 @@ begin
       select (o.session_date + o.start_time)::timestamp
       from public.shared_court_occupancy o
       where o.status in ('scheduled','pending','accepted','confirmed','completed')
-        and (p_exclude_source_kind is null or not (o.source_kind=p_exclude_source_kind and o.source_id=p_exclude_source_id))
+        and (p_exclude_source_kind is null or p_exclude_source_id is null or not (o.source_kind=p_exclude_source_kind and o.source_id=p_exclude_source_id))
         and (o.session_date + o.start_time) < p_end
         and (o.session_date + o.end_time) > p_start
       union
       select (o.session_date + o.end_time)::timestamp
       from public.shared_court_occupancy o
       where o.status in ('scheduled','pending','accepted','confirmed','completed')
-        and (p_exclude_source_kind is null or not (o.source_kind=p_exclude_source_kind and o.source_id=p_exclude_source_id))
+        and (p_exclude_source_kind is null or p_exclude_source_id is null or not (o.source_kind=p_exclude_source_kind and o.source_id=p_exclude_source_id))
         and (o.session_date + o.start_time) < p_end
         and (o.session_date + o.end_time) > p_start
         and (o.session_date + o.end_time) < p_end
     ) points
     left join public.shared_court_occupancy o
       on o.status in ('scheduled','pending','accepted','confirmed','completed')
-     and (p_exclude_source_kind is null or not (o.source_kind=p_exclude_source_kind and o.source_id=p_exclude_source_id))
+     and (p_exclude_source_kind is null or p_exclude_source_id is null or not (o.source_kind=p_exclude_source_kind and o.source_id=p_exclude_source_id))
      and (o.session_date + o.start_time) <= points.at_time
      and (o.session_date + o.end_time) > points.at_time
     group by points.at_time
