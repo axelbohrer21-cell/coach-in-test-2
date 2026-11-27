@@ -105,10 +105,10 @@ export default defineWorkflowTool({
       ? JSON.stringify(planAudit.review)
       : `L'audit du plan n'a pas abouti : ${planAudit.error}. Les spécialistes doivent signaler les limites de leur revue.`;
 
-    const specialistResults = await Promise.all(
-      selected.filter((name) => name !== "plan_auditor")
-        .map((reviewer) => runReviewer(reviewer, auditContext)),
-    );
+    const specialistResults = [];
+    for (const reviewer of selected.filter((name) => name !== "plan_auditor")) {
+      specialistResults.push(await runReviewer(reviewer, auditContext));
+    }
     const results = [planAudit, ...specialistResults];
     const aggregate = aggregateReviewOutcomes(results, selected.length);
 
