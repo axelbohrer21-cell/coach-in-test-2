@@ -1,11 +1,11 @@
 export const COACH_B_GROUP_BLOCKS = Object.freeze([
-  { key:'lundi-soir', audience:'adultes', weekday:1, start:'18:00', end:'21:00', courtCount:null },
-  { key:'mardi-midi', audience:'adultes', weekday:2, start:'12:15', end:'13:45', courtCount:null },
-  { key:'mardi-soir-1', audience:'adultes', weekday:2, start:'17:30', end:'19:00', courtCount:null },
+  { key:'lundi-soir', audience:'adultes', weekday:1, start:'18:00', end:'21:00', courtCount:3 },
+  { key:'mardi-midi', audience:'adultes', weekday:2, start:'12:15', end:'13:45', courtCount:2 },
+  { key:'mardi-soir-1', audience:'adultes', weekday:2, start:'17:30', end:'19:00', courtCount:2 },
   { key:'mardi-soir-2', audience:'adultes', weekday:2, start:'19:00', end:'20:30', courtCount:3 },
-  { key:'mercredi-enfants', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courtCount:null },
-  { key:'mercredi-adultes', audience:'adultes', weekday:3, start:'18:00', end:'19:30', courtCount:null },
-  { key:'jeudi-soir', audience:'adultes', weekday:4, start:'18:00', end:'19:30', courtCount:null },
+  { key:'mercredi-enfants', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courtCount:3 },
+  { key:'mercredi-adultes', audience:'adultes', weekday:3, start:'18:00', end:'19:30', courtCount:3 },
+  { key:'jeudi-soir', audience:'adultes', weekday:4, start:'18:00', end:'19:30', courtCount:3 },
   { key:'samedi-matin', audience:'enfants', weekday:6, start:'09:30', end:'13:30', courtCount:null }
 ]);
 
@@ -19,9 +19,9 @@ export const GROUP_SEASON = Object.freeze({
   // Planning collectif hebdomadaire confirmé par le coach.
   weeklySchedule: Object.freeze([
     { key:'adultes-lundi', audience:'adultes', weekday:1, start:'17:00', end:'21:00', courtCount:2 },
-    { key:'adultes-mardi', audience:'adultes', weekday:2, start:'17:30', end:'20:30', courtCount:null },
-    { key:'enfants-mercredi', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courtCount:null },
-    { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courtCount:null },
+    { key:'adultes-mardi', audience:'adultes', weekday:2, start:'17:30', end:'20:30', courtCount:3 },
+    { key:'enfants-mercredi', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courtCount:3 },
+    { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courtCount:3 },
     { key:'adultes-jeudi', audience:'adultes', weekday:4, start:'17:30', end:'19:00', courtCount:2 },
     { key:'adultes-vendredi', audience:'adultes', weekday:5, start:'17:30', end:'20:00', courtCount:2 },
     { key:'enfants-samedi', audience:'enfants', weekday:6, start:'09:30', end:'14:30', courtCount:3 }
