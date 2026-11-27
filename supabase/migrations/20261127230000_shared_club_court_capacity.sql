@@ -167,7 +167,9 @@ where source_kind in ('booking','private_session');
 create or replace function private.max_club_court_occupancy(
   p_start timestamp without time zone,
   p_end timestamp without time zone,
-  p_exclude_booking_id uuid default null
+  p_exclude_source_kind text default null,
+  p_exclude_source_id uuid default null,
+  p_add_group_count smallint default 0
 )
 returns integer
 language plpgsql
@@ -178,31 +180,33 @@ as $function$
 declare
   v_max integer;
 begin
-  select coalesce(max(x.occupied),0)::integer
+  select coalesce(max(least(3,x.group_occupied + p_add_group_count) + x.private_occupied),0)::integer
   into v_max
   from (
-    select points.at_time, coalesce(sum(o.court_count),0)::integer as occupied
+    select points.at_time,
+      coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)::integer as group_occupied,
+      coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0)::integer as private_occupied
     from (
       select p_start as at_time
       union
       select (o.session_date + o.start_time)::timestamp
       from public.shared_court_occupancy o
       where o.status in ('scheduled','pending','accepted','confirmed','completed')
-        and (p_exclude_booking_id is null or not (o.source_kind='booking' and o.source_id=p_exclude_booking_id))
+        and (p_exclude_source_kind is null or not (o.source_kind=p_exclude_source_kind and o.source_id=p_exclude_source_id))
         and (o.session_date + o.start_time) < p_end
         and (o.session_date + o.end_time) > p_start
       union
       select (o.session_date + o.end_time)::timestamp
       from public.shared_court_occupancy o
       where o.status in ('scheduled','pending','accepted','confirmed','completed')
-        and (p_exclude_booking_id is null or not (o.source_kind='booking' and o.source_id=p_exclude_booking_id))
+        and (p_exclude_source_kind is null or not (o.source_kind=p_exclude_source_kind and o.source_id=p_exclude_source_id))
         and (o.session_date + o.start_time) < p_end
         and (o.session_date + o.end_time) > p_start
         and (o.session_date + o.end_time) < p_end
     ) points
     left join public.shared_court_occupancy o
       on o.status in ('scheduled','pending','accepted','confirmed','completed')
-     and (p_exclude_booking_id is null or not (o.source_kind='booking' and o.source_id=p_exclude_booking_id))
+     and (p_exclude_source_kind is null or not (o.source_kind=p_exclude_source_kind and o.source_id=p_exclude_source_id))
      and (o.session_date + o.start_time) <= points.at_time
      and (o.session_date + o.end_time) > points.at_time
     group by points.at_time
@@ -211,8 +215,83 @@ begin
 end;
 $function$;
 
+create or replace function private.guard_group_shared_court_capacity()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_start timestamp;
+  v_end timestamp;
+  v_max integer;
+begin
+  if new.status in ('scheduled','completed') then
+    v_start:=new.session_date+new.start_time;
+    v_end:=new.session_date+new.end_time;
+    perform pg_advisory_xact_lock(hashtextextended('club-courts:'||new.session_date::text,0));
+
+    if exists (
+      select 1 from public.group_sessions g
+      where g.coach_id=new.coach_id and g.session_date=new.session_date
+        and g.id is distinct from new.id
+        and g.status in ('scheduled','completed')
+        and (g.session_date+g.start_time)<v_end
+        and (g.session_date+g.end_time)>v_start
+        and not (
+          g.start_time=new.start_time and g.end_time=new.end_time
+          and g.audience=new.audience and g.title=new.title
+        )
+    ) then
+      raise exception 'Ce coach a déjà un autre cours collectif sur ce créneau.';
+    end if;
+
+    v_max:=private.max_club_court_occupancy(v_start,v_end,'group_session',new.id,new.court_count);
+    if v_max>3 then
+      raise exception 'Les terrains disponibles ne permettent pas ce cours collectif en plus des cours particuliers déjà réservés.';
+    end if;
+  end if;
+  return new;
+end;
+$function$;
+
+drop trigger if exists guard_group_shared_court_capacity on public.group_sessions;
+create trigger guard_group_shared_court_capacity
+before insert or update on public.group_sessions
+for each row execute function private.guard_group_shared_court_capacity();
+
+create or replace function private.guard_training_shared_court_capacity()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_start timestamp;
+  v_end timestamp;
+  v_max integer;
+begin
+  if new.session_time is not null
+     and lower(coalesce(new.status,'')) not in ('annulée','annulee','annule','annulé','cancelled','canceled') then
+    v_start:=new.session_date+new.session_time;
+    v_end:=v_start+make_interval(mins=>new.duration_minutes);
+    perform pg_advisory_xact_lock(hashtextextended('club-courts:'||new.session_date::text,0));
+    v_max:=private.max_club_court_occupancy(v_start,v_end,'private_session',new.id,0);
+    if v_max+1>3 then
+      raise exception 'Les trois terrains sont déjà occupés sur une partie de ce créneau.';
+    end if;
+  end if;
+  return new;
+end;
+$function$;
+
+drop trigger if exists guard_training_shared_court_capacity on public.training_sessions;
+create trigger guard_training_shared_court_capacity
+before insert or update on public.training_sessions
+for each row execute function private.guard_training_shared_court_capacity();
+
 create or replace function public.get_club_court_capacity(p_start_date date,p_end_date date)
-returns table(session_date date,slot_start time without time zone,occupied_courts integer,available_courts integer)
+returns table(session_date date,slot_start time without time zone,occupied_courts integer,available_courts integer,shared_plateau boolean)
 language plpgsql
 stable
 security definer
@@ -235,8 +314,12 @@ begin
   return query
   select d.day::date,
          slots.slot_start::time,
-         coalesce(sum(o.court_count),0)::integer,
-         greatest(0,3-coalesce(sum(o.court_count),0))::integer
+         (least(3,coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0))
+           + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0))::integer,
+         greatest(0,3-(least(3,coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0))
+           + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0)))::integer,
+         (coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)>=3
+           and count(distinct o.coach_id) filter (where o.source_kind='group_session')>1)
   from generate_series(p_start_date::timestamp,p_end_date::timestamp,interval '1 day') as d(day)
   cross join lateral generate_series(d.day + time '08:00',d.day + time '21:30',interval '30 minutes') as slots(slot_start)
   left join public.shared_court_occupancy o
@@ -336,7 +419,7 @@ begin
     raise exception 'Le coach est indisponible : un cours collectif est prévu sur ce créneau.';
   end if;
 
-  v_max_occupied := private.max_club_court_occupancy(v_start,v_end,null);
+  v_max_occupied := private.max_club_court_occupancy(v_start,v_end,null,null,0);
   if v_max_occupied >= 3 then
     raise exception 'Les trois terrains sont déjà occupés sur une partie de ce créneau.';
   end if;
@@ -435,7 +518,7 @@ begin
       raise exception 'Conflit : un cours collectif occupe ce créneau.';
     end if;
 
-    v_max_occupied:=private.max_club_court_occupancy(v_start,v_end,v_booking.id);
+    v_max_occupied:=private.max_club_court_occupancy(v_start,v_end,'booking',v_booking.id,0);
     if v_max_occupied >= 3 then
       raise exception 'Conflit : les trois terrains sont maintenant occupés sur une partie de ce créneau.';
     end if;
