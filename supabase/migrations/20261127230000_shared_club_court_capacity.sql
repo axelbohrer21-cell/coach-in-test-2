@@ -371,8 +371,9 @@ revoke all on function private.guard_group_shared_court_capacity() from public,a
 revoke all on function private.guard_training_shared_court_capacity() from public,anon,authenticated;
 
 drop function if exists public.get_club_court_capacity(date,date);
+drop function if exists private.get_club_court_capacity(date,date);
 
-create function public.get_club_court_capacity(p_start_date date,p_end_date date)
+create function private.get_club_court_capacity(p_start_date date,p_end_date date)
 returns table(session_date date,slot_start time without time zone,occupied_courts integer,available_courts integer,capacity_known boolean,shared_plateau boolean)
 language plpgsql
 stable
@@ -416,6 +417,19 @@ begin
   group by d.day,slots.slot_start
   order by d.day,slots.slot_start;
 end;
+$function$;
+
+revoke all on function private.get_club_court_capacity(date,date) from public,anon;
+grant execute on function private.get_club_court_capacity(date,date) to authenticated;
+
+create function public.get_club_court_capacity(p_start_date date,p_end_date date)
+returns table(session_date date,slot_start time without time zone,occupied_courts integer,available_courts integer,capacity_known boolean,shared_plateau boolean)
+language sql
+stable
+security invoker
+set search_path to ''
+as $function$
+  select * from private.get_club_court_capacity(p_start_date,p_end_date);
 $function$;
 
 revoke all on function public.get_club_court_capacity(date,date) from public,anon;
