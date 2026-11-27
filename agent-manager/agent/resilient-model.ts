@@ -4,7 +4,7 @@ import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
 import type { LanguageModelV4, LanguageModelV4Middleware } from "@ai-sdk/provider";
 
-const MAX_OUTPUT_TOKENS = 1024;
+const MAX_OUTPUT_TOKENS = 512;
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
 const PROVIDER_FAILURE_COOLDOWN_MS = 20_000;
 const unavailableUntil = new Map<string, number>();
