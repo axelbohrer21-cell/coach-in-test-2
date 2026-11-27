@@ -92,7 +92,7 @@ export const dataService = {
       unwrap(supabase.from('coach_weekly_availability').select('*').eq('coach_id',userId).order('weekday').order('start_time')),
       unwrap(supabase.from('coach_player_messages').select('*').eq('coach_id',userId).order('created_at')),
       unwrap(supabase.from('coach_video_analyses').select('*').eq('coach_id',userId).order('created_at',{ascending:false})),
-      activeCoachIds.length ? loadClubCourtCapacity() : Promise.resolve([])
+      loadClubCourtCapacity()
     ]);
     const pendingBookingPlayerIds=[...new Set(bookingRequests.filter(row=>row.status==='pending').map(row=>row.player_id).filter(id=>id&&!playerIds.includes(id)))];
     const pendingBookingPlayers=pendingBookingPlayerIds.length
@@ -175,7 +175,7 @@ export const dataService = {
     const activeCoachIds = playerCoaches.map(row => row.id);
     const [sharedCourtOccupancy, clubCourtCapacity] = await Promise.all([
       activeCoachIds.length ? unwrap(supabase.from('shared_court_occupancy').select('id,coach_id,session_date,start_time,end_time,court_number,court_count,audience,source_kind,source_id,status').in('coach_id',activeCoachIds).order('session_date').order('start_time')) : Promise.resolve([]),
-      loadClubCourtCapacity()
+      activeCoachIds.length ? loadClubCourtCapacity() : Promise.resolve([])
     ]);
     const weeklyAvailability = activeCoachIds.length ? await unwrap(supabase.from('coach_weekly_availability').select('*').in('coach_id',activeCoachIds).eq('active',true).order('weekday').order('start_time')) : [];
     const { data: playerUnavailability = [], error: unavailabilityError } = activeCoachIds.length
