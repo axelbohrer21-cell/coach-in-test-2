@@ -21,18 +21,18 @@ const reviewSchema = z.object({
 
 export default defineWorkflowTool({
   description:
-    "Run an independent review for a non-trivial Coach In task. Calls plan_auditor first, then QA and the automatically selected domain/security/UX/Supabase reviewers in parallel. Passes the plan audit to downstream reviewers and reports partial or blocked reviews honestly.",
+    "Run an independent review for a non-trivial Coach In task. Calls plan_auditor first, then one QA or domain/security/UX/Supabase reviewer sequentially to keep token use bounded. Passes the plan audit to the reviewer and reports partial or blocked reviews honestly.",
   inputSchema: z.object({
     task: z.string().min(8).max(6000),
     context: z.string().max(8000).optional(),
-    reviewers: z.array(z.enum(reviewerIds)).max(5).optional(),
+    reviewers: z.array(z.enum(reviewerIds)).max(1).optional(),
   }),
   async execute({ task, context, reviewers }, ctx) {
     "use workflow";
 
     const automatic = reviewers === undefined ? selectReviewers(task, context) : null;
     const specialistIds = reviewers ?? automatic!.reviewers;
-    const selected = [...new Set(["plan_auditor", "qa_reviewer", ...specialistIds])];
+    const selected = [...new Set(["plan_auditor", ...specialistIds])];
     const available = new Set(Object.keys(ctx.agents));
     const missing = selected.filter((name) => !available.has(name));
 
@@ -116,7 +116,7 @@ export default defineWorkflowTool({
       task,
       status: aggregate.status,
       reviewers: selected,
-      sequence: ["plan_auditor", "QA et spécialistes en parallèle"],
+      sequence: ["plan_auditor", "un reviewer spécialisé en séquentiel"],
       selectionMode: reviewers === undefined ? "automatic" : "explicit",
       selectionReasons: automatic?.reasons ?? ["La liste des spécialistes a été explicitement fournie par le Manager."],
       evidenceMode: "context_only",
