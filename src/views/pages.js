@@ -337,7 +337,7 @@ function playerCoachPlanningPage() {
       const rule=rules.find(row=>slotStart>=toMinutes(row.start_time)&&slotEnd<=toMinutes(row.end_time));
       const leadTimeOk=slotDateStart.getTime()>=Date.now()+30*60*1000;
       const privateOccupied=events.some(event=>event.source_kind!=='group_session'&&toMinutes(event.start_time)<slotEnd&&toMinutes(event.start_time)+event.duration>slotStart&&!['cancelled','canceled','annulé','annulee'].includes(String(event.status||'').toLowerCase()));
-      const available=Boolean(rule&&!disabled&&!blockedByGroup&&!privateOccupied&&!blocked&&leadTimeOk&&isPrivateLessonDateAllowed(iso));
+      const available=Boolean(rule&&slotStart+60<=toMinutes(rule.end_time)&&!disabled&&!blockedByGroup&&!privateOccupied&&!blocked&&leadTimeOk&&isPrivateLessonDateAllowed(iso));
       const addButton=available?'<button type="button" class="calendar-hour-slot" data-book-slot data-coach="'+escapeHtml(selected.id)+'" data-date="'+iso+'" data-time="'+time+'" data-court="'+escapeHtml(String(rule.court_number||1))+'" aria-label="Demander un cours à '+clock(time)+'" title="Demander un cours particulier"></button>':'';
       const groupFrame=blockedByGroup?'<div class="calendar-group-frame '+occupiedClass+'">'+groupLabel+'</div>':cards+(blocked?'<span class="player-calendar-unavailable player-calendar-blocked">Indisponible</span>':'')+addButton;
       return '<div class="calendar-hour-row '+(blockedByGroup?'calendar-hour-row-group-occupied':'')+'"><span class="calendar-hour-label">'+clock(time)+'</span><div class="calendar-hour-content">'+groupFrame+'</div></div>';
