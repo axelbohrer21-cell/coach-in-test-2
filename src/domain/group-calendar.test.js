@@ -145,7 +145,7 @@ test('compteur individuel : annulations et cours planifiés sont dédoublonnés 
   assert.equal(row.completed,1);
 });
 
-test('stages vacances : du lundi au vendredi, 9 h 30–16 h 30 sur les terrains 1, 2 et 3', () => {
+test('stages vacances : du lundi au vendredi, 9 h 30–16 h 30 avec 3 terrains mobilisés', () => {
   const stages = buildHolidayStageOccurrences({ startDate:'2026-10-19', endDate:'2026-10-24' });
   assert.equal(stages.length,5);
   assert.deepEqual(stages.map(row=>row.session_date),[
@@ -183,10 +183,10 @@ test('programme pédagogique : les semaines de vacances sont sautées après les
 test('Coach B : les blocs collectifs ont une capacité distincte par créneau',()=>{
   const tuesday=COACH_B_GROUP_BLOCKS.filter(row=>row.weekday===2);
   assert.deepEqual(tuesday.map(row=>[row.start,row.end,row.courtCount]),[
-    ['12:15','13:45',null],['17:30','19:00',null],['19:00','20:30',3]
+    ['12:15','13:45',2],['17:30','19:00',2],['19:00','20:30',3]
   ]);
   const wednesday=COACH_B_GROUP_BLOCKS.filter(row=>row.weekday===3);
   assert.deepEqual(wednesday.map(row=>[row.audience,row.start,row.end,row.courtCount]),[
-    ['enfants','09:30','18:00',null],['adultes','18:00','19:30',null]
+    ['enfants','09:30','18:00',3],['adultes','18:00','19:30',3]
   ]);
 });
