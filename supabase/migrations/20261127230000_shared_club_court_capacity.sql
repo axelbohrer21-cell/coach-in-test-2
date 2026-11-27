@@ -393,10 +393,10 @@ begin
   select d.day::date,
          slots.slot_start::time,
          case when coalesce(bool_or(o.id is not null and o.court_count is null),false) then 3
-              else (least(3,coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0))
+              else (coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)
                     + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0))::integer end,
          case when coalesce(bool_or(o.id is not null and o.court_count is null),false) then 0
-              else greatest(0,3-(least(3,coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0))
+              else greatest(0,3-(coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)
                     + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0)))::integer end,
          not coalesce(bool_or(o.id is not null and o.court_count is null),false),
          not coalesce(bool_or(o.id is not null and o.court_count is null),false)
