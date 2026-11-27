@@ -1428,10 +1428,19 @@ function groupSessionDialog(sessionId=''){
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">COURS COLLECTIF</p><h2>${editing?'Modifier ce cours':'Ajouter un cours collectif'}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="group-session-form" class="form-grid"><input type="hidden" name="id" value="${sessionId}"><label class="span-2">Intitulé<input name="title" required value="${escapeHtml(session.title||'')}" placeholder="Ex. Entraînement adultes"></label><label>Date<input name="session_date" type="date" required value="${session.session_date||toLocalISO(new Date())}"></label><label>Public<select name="audience"><option value="adultes" ${session.audience==='adultes'?'selected':''}>Adultes</option><option value="enfants" ${session.audience==='enfants'?'selected':''}>Enfants</option></select></label><label>Début<input name="start_time" type="time" required value="${session.start_time||'18:00'}"></label><label>Fin<input name="end_time" type="time" required value="${session.end_time||'19:30'}"></label><label>Court<select name="court_number"><option value="1" ${Number(session.court_number)===1?'selected':''}>Court 1</option><option value="2" ${Number(session.court_number)===2?'selected':''}>Court 2</option><option value="3" ${Number(session.court_number)===3?'selected':''}>Court 3</option><option value="4" ${Number(session.court_number)===4?'selected':''}>Court 4</option></select></label><label>Thème<input name="theme" value="${escapeHtml(session.theme||'')}"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">${editing?'Enregistrer les modifications':'Enregistrer'}</button></div></form>`);
 }
 function bookingDialog(prefill={}){
-  const selectedDuration=Number(prefill.duration||60);
-  const durationChoices=[60,90,120].map(minutes=>`<label class="booking-duration-option ${selectedDuration===minutes?'active':''}"><input type="radio" name="duration" value="${minutes}" ${selectedDuration===minutes?'checked':''} required><span><strong>${minutes===60?'1 heure':minutes===90?'1 h 30':'2 heures'}</strong></span></label>`).join('');
+  const durationValues=[60,90,120];
+  const selectedWeekday=prefill.date?((new Date(prefill.date+'T12:00:00').getDay()+6)%7)+1:null;
+  const selectedStart=prefill.time?(()=>{const [h,m]=prefill.time.slice(0,5).split(':').map(Number);return h*60+m;})():null;
+  const matchingRules=(state.weeklyAvailability||[]).filter(rule=>rule.coach_id===prefill.coachId&&rule.active&&Number(rule.weekday)===selectedWeekday&&selectedStart!==null&&selectedStart>=(()=>{const [h,m]=String(rule.start_time).slice(0,5).split(':').map(Number);return h*60+m;})()&&(rule.court_number==null||Number(rule.court_number)===Number(prefill.court||1)));
+  const allowedDurations=prefill.date&&prefill.time?durationValues.filter(minutes=>matchingRules.some(rule=>{const [h,m]=String(rule.end_time).slice(0,5).split(':').map(Number);return selectedStart+minutes<=h*60+m;})):durationValues;
+  const selectedDuration=allowedDurations.includes(Number(prefill.duration))?Number(prefill.duration):(allowedDurations[0]||60);
+  const durationChoices=durationValues.map(minutes=>{const allowed=allowedDurations.includes(minutes);return `<label class="booking-duration-option ${selectedDuration===minutes?'active':''} ${allowed?'':'disabled'}"><input type="radio" name="duration" value="${minutes}" ${selectedDuration===minutes?'checked':''} ${allowed?'':'disabled'} required><span><strong>${minutes===60?'1 heure':minutes===90?'1 h 30':'2 heures'}</strong></span></label>`;}).join('');
   const selectedDate=prefill.date?new Date(prefill.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}):'À choisir';
-  showDialog(`<div class="dialog-head"><div><p class="eyebrow">COURS PARTICULIER</p><h2>Demander ce créneau</h2></div><button class="btn icon-btn" data-close>✕</button></div><div class="booking-selected-slot"><span>CRÉNEAU SÉLECTIONNÉ</span><strong>${selectedDate} · ${prefill.time?prefill.time.replace(':','h'):'horaire à choisir'}</strong><small>Ta demande sera envoyée au coach pour validation.</small></div><form id="booking-form" class="form-grid"><label class="span-2">Coach<select name="coach_id" required data-prefill-coach="${prefill.coachId||""}">${(state.playerCoaches||[]).map(c=>`<option value="${c.id}" ${prefill.coachId===c.id?"selected":""}>${escapeHtml(c.first_name)} ${escapeHtml(c.last_name)}</option>`).join('')}</select></label><label>Date<input name="date" type="date" required min="${toLocalISO(new Date())}" value="${prefill.date||""}"></label><label>Heure<input name="time" type="time" required value="${prefill.time||""}"></label><fieldset class="booking-duration-field span-2"><legend>Choisis la durée de ton cours</legend><div class="booking-duration-options">${durationChoices}</div></fieldset><input type="hidden" name="court" value="${escapeHtml(String(prefill.court||1))}"><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">Envoyer la demande</button></div></form>`);
+  const coaches=state.playerCoaches||[];
+  const coachOptions=coaches.length
+    ? `<option value="">Choisis ton coach</option>`+coaches.map((c,index)=>{const name=[c.first_name,c.last_name].filter(Boolean).join(' ').trim();return `<option value="${escapeHtml(c.id)}" ${prefill.coachId===c.id?'selected':''}>${escapeHtml(name||`Coach ${index+1} — profil à compléter`)}</option>`;}).join('')
+    : '<option value="">Aucun coach associé à ton compte</option>';
+  showDialog(`<div class="dialog-head"><div><p class="eyebrow">COURS PARTICULIER</p><h2>Demander ce créneau</h2></div><button class="btn icon-btn" data-close>✕</button></div><div class="booking-selected-slot"><span>CRÉNEAU SÉLECTIONNÉ</span><strong>${selectedDate} · ${prefill.time?prefill.time.replace(':','h'):'horaire à choisir'}</strong><small>Ta demande sera envoyée au coach pour validation.</small></div><form id="booking-form" class="form-grid" novalidate><label class="span-2">Coach<select name="coach_id" data-prefill-coach="${prefill.coachId||''}">${coachOptions}</select></label><label>Date<input name="date" type="date" required min="${toLocalISO(new Date())}" value="${prefill.date||''}"></label><label>Heure<input name="time" type="time" required value="${prefill.time||''}"></label><fieldset class="booking-duration-field span-2"><legend>Choisis la durée de ton cours</legend><div class="booking-duration-options">${durationChoices}</div></fieldset><input type="hidden" name="court" value="${escapeHtml(String(prefill.court||1))}"><p class="booking-form-feedback span-2" data-booking-feedback role="alert" aria-live="polite" hidden></p><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button type="submit" class="btn primary" ${coaches.length?'':'disabled'}>Envoyer la demande</button></div></form>`);
 }
 function sharePlayerDialog(playerId){
   const player=state.players.find(item=>item.id===playerId); if(!player)return;
@@ -1476,7 +1485,18 @@ $('#dialog-content').addEventListener('submit',async event=>{
   submitButtons.forEach(button=>{button.dataset.originalText=button.textContent;button.disabled=true;button.textContent='Enregistrement…';});
   const values=Object.fromEntries(new FormData(form));
   try{
-    if(form.id==='session-review-form'){
+    if(form.id==='booking-form'){
+      const feedback=form.querySelector('[data-booking-feedback]');
+      const fail=message=>{if(feedback){feedback.textContent=message;feedback.hidden=false;}throw new Error(message);};
+      const coachId=String(values.coach_id||'').trim();
+      if(!coachId)fail('Choisis un coach avant d’envoyer ta demande.');
+      if(!(state.playerCoaches||[]).some(coach=>coach.id===coachId))fail('Ce coach n’est pas associé à ton compte. Actualise la page ou contacte ton entraîneur.');
+      if(!values.date||!values.time)fail('Choisis une date et une heure valides.');
+      if(![60,90,120].includes(Number(values.duration)))fail('Choisis une durée : 1 h, 1 h 30 ou 2 h.');
+      if(feedback){feedback.hidden=true;feedback.textContent='';}
+      await bookingService.request({coachId,date:values.date,time:values.time,duration:values.duration,court:values.court});
+      toast('Demande envoyée. Elle est en attente de validation.');
+    } else if(form.id==='session-review-form'){
       const session=state.sessions.find(row=>row.id===values.session_id);
       if(!session)throw new Error('Séance introuvable. Actualise la page.');
       const attempts=Number(values.attempts),successes=Number(values.successes),rating=Number(values.coach_rating);
@@ -1499,8 +1519,6 @@ $('#dialog-content').addEventListener('submit',async event=>{
       if(values.end_time<=values.start_time) throw new Error('L’heure de fin doit être après l’heure de début.');
       await dataService.createAvailability({coach_id:state.user.id,weekday:Number(values.weekday),start_time:values.start_time,end_time:values.end_time,court_number:values.court_number?Number(values.court_number):null,active:true});
       toast('Disponibilité ajoutée. Les joueurs associés pourront demander ces créneaux.');
-    } else if(form.id==='booking-form'){
-      await bookingService.request({coachId:values.coach_id,date:values.date,time:values.time,duration:values.duration,court:values.court});toast('Demande envoyée. Elle est en attente de validation.');
     } else if(form.id==='share-player-form'){
       await dataService.inviteCoachToPlayer(values.player_id,values.coach_email.trim().toLowerCase());toast('Invitation envoyée au coach. Le partage sera actif après son acceptation.');
     } else if(form.id==='group-series-form'){
@@ -1588,6 +1606,11 @@ toast('Joueur ajouté à ton effectif.');
   }catch(error){
     form.dataset.submitting='false';
     submitButtons.forEach(button=>{button.disabled=false;button.textContent=button.dataset.originalText||'Enregistrer';});
+    if(form.id==='booking-form'){
+      const feedback=form.querySelector('[data-booking-feedback]');
+      if(feedback){feedback.textContent=error.message||'Impossible d’envoyer la demande. Vérifie les informations et réessaie.';feedback.hidden=false;}
+      console.error('Coach In · demande de réservation',error);
+    }
     toast(error.message||'Une erreur est survenue.','error');
   }
 });
