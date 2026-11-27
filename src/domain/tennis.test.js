@@ -28,12 +28,12 @@ test('défi : critère à améliorer le plus fréquent', () => {
   const rows = ['a', 'b', 'c', 'd'].map(evaluation_id => ({ evaluation_id, criterion: 'Déplacement', criterion_type: 'improvement' }));
   assert.equal(nextChallenge(rows, []).criterion, 'Déplacement');
 });
-test('réservation : contrôle durée et court', () => {
-  assert.throws(() => validateBooking({ date: '2027-01-01', time: '10:00', duration: 45, court: 1 }), /Durée autorisée/);
+test('réservation : contrôle la durée sans numéro de terrain', () => {
+  assert.throws(() => validateBooking({ date: '2027-01-01', time: '10:00', duration: 45 }), /Durée autorisée/);
 });
 
-test('réservation : le quatrième court est accepté', () => {
-  assert.equal(validateBooking({ date: '2027-01-01', time: '10:00', duration: 60, court: 4 }), true);
+test('réservation : aucun numéro de terrain fixe n’est requis', () => {
+  assert.equal(validateBooking({ date: '2027-01-01', time: '10:00', duration: 60 }), true);
 });
 
 test('défi : un critère répété dans un même bilan ne compte qu’une fois', () => {
@@ -48,7 +48,7 @@ test('défi : un critère répété dans un même bilan ne compte qu’une fois'
 
 test('réservation : exige au moins 30 minutes de délai', () => {
   const now = new Date('2026-11-25T08:12:00');
-  const base = { date: '2026-11-25', duration: 60, court: 1, now };
+  const base = { date: '2026-11-25', duration: 60, now };
   assert.throws(() => validateBooking({ ...base, time: '08:30' }), /30 minutes/);
   assert.throws(() => validateBooking({ ...base, time: '08:41' }), /30 minutes/);
   assert.equal(validateBooking({ ...base, time: '08:42' }), true);
@@ -95,5 +95,5 @@ test('radar : quatre axes, valeur maximale normalisée', () => {
 });
 
 test('réservation : refuse une date calendaire impossible', () => {
-  assert.throws(() => validateBooking({ date: '2027-02-31', time: '10:00', duration: 60, court: 1 }), /date valide/);
+  assert.throws(() => validateBooking({ date: '2027-02-31', time: '10:00', duration: 60 }), /date valide/);
 });
