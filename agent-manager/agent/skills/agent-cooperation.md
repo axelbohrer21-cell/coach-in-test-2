@@ -78,7 +78,7 @@ Une réponse structurée de l'agent n'est pas automatiquement une tâche termin�
 
 ## 9. Ordre de revue
 
-Pour une revue non triviale, `review_task` exécute d'abord `plan_auditor`. Son résultat structuré est transmis ensuite à QA et aux spécialistes sélectionnés, qui peuvent travailler en parallèle. Si l'audit échoue, les spécialistes en sont informés et la revue finale reste partielle ou bloquée selon les résultats ; le Manager ne masque pas cet échec.
+Pour une revue non triviale, `review_task` exécute d'abord `plan_auditor`. Son résultat structuré est transmis à un seul reviewer sélectionné selon le risque ; les autres revues sont reportées à une mission distincte si une preuve complémentaire est nécessaire. Si l'audit échoue, les spécialistes en sont informés et la revue finale reste partielle ou bloquée selon les résultats ; le Manager ne masque pas cet échec.
 
 ## 10. Mémoire de mission
 
