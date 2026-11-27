@@ -414,7 +414,6 @@ function planningPage() {
       const activeInSlot=inSlot.filter(event=>(event.kind!=='group'&&event.kind!=='stage')||event.status!=='cancelled');
       const privateOccupied=events.some(event=>(event.kind==='session'||event.kind==='booking')&&timeToMinutes(event.time)<slotEnd&&timeToMinutes(event.time)+Math.max(30,Number(event.duration||60))>slotStart);
       const insideCoachAvailability=dayAvailability.some(row=>slotStart>=timeToMinutes(row.start_time)&&slotEnd<=timeToMinutes(row.end_time));
-      const capacity=(state.clubCourtCapacity||[]).find(row=>row.session_date===iso&&String(row.slot_start).slice(0,5)===time);
        const addButton=insideCoachAvailability&&!disabled&&!blockedByGroup&&!privateOccupied&&!activeInSlot.length&&isPrivateLessonDateAllowed(iso)&&Number(capacity?.available_courts??0)>0?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'" aria-label="Créer un cours particulier à '+clock(time)+'" title="Créer un cours particulier"></button>':'';
       const availabilityClass=insideCoachAvailability?'calendar-hour-row-available':'calendar-hour-row-unavailable';
       return '<div class="calendar-hour-row '+availabilityClass+' '+(blockedByGroup?'calendar-hour-row-group-occupied':'')+'"><span class="calendar-hour-label">'+clock(time)+'</span><div class="calendar-hour-content">'+groupFrame+addButton+'</div></div>';
