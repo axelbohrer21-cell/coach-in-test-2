@@ -43,14 +43,13 @@ export function calculateAgeCategory(birthDate, seasonYear = new Date().getFullY
   return 'Senior';
 }
 
-export function validateBooking({ date, time, duration, court, now = new Date() }) {
+export function validateBooking({ date, time, duration, now = new Date() }) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('Choisis une date valide.');
   const [year, month, day] = date.split('-').map(Number);
   const parsedDate = new Date(year, month - 1, day);
   if (parsedDate.getFullYear() !== year || parsedDate.getMonth() !== month - 1 || parsedDate.getDate() !== day) throw new Error('Choisis une date valide.');
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time || '')) throw new Error('Choisis un horaire valide.');
   if (![60, 90, 120].includes(Number(duration))) throw new Error('Durée autorisée : 1 h, 1 h 30 ou 2 h.');
-  if (![1, 2, 3, 4].includes(Number(court))) throw new Error('Choisis un court disponible.');
   const start = new Date(`${date}T${time}:00`);
   if (Number.isNaN(start.getTime()) || start.getTime() - now.getTime() < 30 * 60 * 1000) {
     throw new Error('La réservation doit être effectuée au moins 30 minutes avant le début du cours.');
