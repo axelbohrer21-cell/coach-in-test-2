@@ -53,22 +53,17 @@ where lower(p.email)='coachb@gmail.com'
       and existing.audience=g.audience and existing.title=g.title and existing.status=g.status
   );
 
--- Fill every confirmed Coach B capacity and clear legacy court-number assignments.
+-- Coach B: only the Tuesday 19:00–20:30 three-court block is confirmed.
+-- All other Coach B collective capacities remain unknown until the coach specifies them.
 update public.group_sessions g
 set end_time=case
-      when extract(isodow from g.session_date)::int=2 and g.start_time=time '17:30' and g.end_time=time '20:30' then time '19:00'
+      when extract(isodow from g.session_date)::int=2
+       and g.start_time=time '17:30' and g.end_time=time '20:30' then time '19:00'
       else g.end_time
     end,
     court_count=case
-      when extract(isodow from g.session_date)::int=1 and g.start_time=time '18:00' and g.end_time=time '21:00' then 3
-      when extract(isodow from g.session_date)::int=2 and g.start_time=time '12:15' and g.end_time=time '13:45' then 2
-      when extract(isodow from g.session_date)::int=2 and g.start_time=time '17:30' and g.end_time=time '20:30' then 2
-      when extract(isodow from g.session_date)::int=2 and g.start_time=time '17:30' and g.end_time=time '19:00' then 2
-      when extract(isodow from g.session_date)::int=2 and g.start_time=time '19:00' and g.end_time=time '20:30' then 3
-      when extract(isodow from g.session_date)::int=3 and g.start_time=time '09:30' and g.end_time=time '18:00' and g.audience='enfants' then 3
-      when extract(isodow from g.session_date)::int=3 and g.start_time=time '18:00' and g.end_time=time '19:30' and g.audience='adultes' then 3
-      when extract(isodow from g.session_date)::int=4 and g.start_time=time '18:00' and g.end_time=time '19:30' then 1
-      when extract(isodow from g.session_date)::int=6 and g.start_time=time '09:30' and g.end_time=time '13:30' then 3
+      when extract(isodow from g.session_date)::int=2
+       and g.start_time=time '19:00' and g.end_time=time '20:30' then 3
       else null
     end,
     court_number=null
