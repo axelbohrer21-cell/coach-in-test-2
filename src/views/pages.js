@@ -30,6 +30,7 @@ function playerAccent(playerId) {
 export const pageMeta = {
   dashboard: ['Vue d’ensemble', 'Tableau de bord', 'Le résumé de ton activité tennis.'],
   intelligence: ['Coach In Intelligence', 'Intelligence', 'Des observations fondées sur tes bilans, tes séances et les données de ton effectif.'],
+  'assistant-planning': ['Agent Planning', 'Agent Planning · Phase 1', 'Recherche les créneaux réellement disponibles en croisant les plannings et les règles de Coach In.'],
   players: ['Effectif', 'Mes joueurs', 'Retrouve les profils et les informations de ton effectif.'],
   planning: ['Organisation', 'Planning des coachs', 'Consulte séparément les créneaux de chacun de tes coachs.'],
   'group-calendar': ['Saison 2026–2027', 'Cours collectifs', 'Calendrier annuel, objectifs de séances et programme pédagogique.'],
@@ -52,6 +53,7 @@ export function renderPage(page) {
   const isAdmin = state.profile.is_admin === true || state.profile.role === 'admin';
   if (isAdmin && page === 'coaches') return adminCoachesPage();
   if (page === 'dashboard') return dashboard(isCoach);
+  if (page === 'assistant-planning') return planningAssistantPage();
   if (page === 'matches' && !isCoach) return playerMatchesPage();
   if (page === 'club') return clubLifePage(isCoach);
   if (page === 'intelligence' && isCoach) return intelligencePage();
@@ -863,4 +865,66 @@ function renderPhysicalPlan(plan){
  const blocks=plan.blocks||[];
  const parts=[{time:'00–'+String(plan.warmup.minutes).padStart(2,'0'),title:'Échauffement dynamique',duration:plan.warmup.minutes,content:plan.warmup.content},...blocks.map((b,i)=>({time:'Atelier '+(i+1),title:b.title,duration:b.minutes,content:b.how,dose:b.dose,cue:b.cue,setup:b.setup,adaptation:b.adaptation,objective:b.objective,tennisTransfer:b.tennisTransfer,progression:b.progression,regression:b.regression,quality:b.quality})),{time:'Transfert',title:plan.game.title,duration:plan.game.minutes,content:plan.game.content},{time:'Fin',title:'Retour au calme',duration:plan.cooldown.minutes,content:plan.cooldown.content}];
  return '<section class="panel physical-plan"><div class="physical-plan-heading"><div><p class="eyebrow">TA SÉANCE · '+plan.duration+' MINUTES</p><h2>'+escapeHtml(plan.title)+'</h2><p>Déroulé pédagogique prêt à utiliser sur le court.</p></div><span class="physical-plan-total">'+plan.duration+'<small>MIN</small></span></div><div class="physical-plan-progress"><span style="width:100%"></span></div><p class="physical-plan-goal">'+escapeHtml(plan.goal||'')+'</p><div class="physical-plan-meta"><span><b>Public</b>'+escapeHtml(plan.ageLabel||plan.ageGroup)+'</span><span><b>Niveau</b>'+escapeHtml(plan.level)+'</span><span><b>Critères</b>'+escapeHtml((plan.criteriaLabels||[]).join(' · '))+'</span></div><div class="physical-plan-organisation"><strong>Organisation du groupe</strong><p>'+escapeHtml(plan.organization||'')+'</p><p>'+escapeHtml(plan.doseAdjust||'')+'</p></div><div class="physical-timeline">'+parts.map((part,i)=>'<article class="physical-phase '+(i===0?'warmup':i===parts.length-1?'cooldown':'')+'"><div class="physical-phase-time"><span>'+(i===0?'01':i===parts.length-1?String(parts.length).padStart(2,'0'):String(i+1).padStart(2,'0'))+'</span><small>'+escapeHtml(part.time)+' · '+part.duration+' min</small></div><div class="physical-phase-body"><div class="physical-phase-label">'+(i===0?'MISE EN ROUTE':i===parts.length-1?'RÉCUPÉRATION':i===parts.length-2?'TRANSFERT TENNIS':'ATELIER PHYSIQUE')+'</div><h3>'+escapeHtml(part.title)+'</h3>'+(part.objective?'<p><b>Objectif physique</b> · '+escapeHtml(part.objective)+'</p>':'')+(part.setup?'<p><b>Installation</b> · '+escapeHtml(part.setup)+'</p>':'')+'<p>'+escapeHtml(part.content)+'</p>'+(part.dose?'<div class="physical-phase-detail"><b>Volume / récupération</b><p>'+escapeHtml(part.dose)+'</p></div>':'')+(part.cue?'<div class="physical-phase-detail"><b>Consigne coach</b><p>'+escapeHtml(part.cue)+'</p></div>':'')+(part.adaptation?'<div class="physical-phase-detail"><b>Adaptation</b><p>'+escapeHtml(part.adaptation)+'</p></div>':'')+(part.tennisTransfer?'<div class="physical-phase-detail"><b>Transfert tennis</b><p>'+escapeHtml(part.tennisTransfer)+'</p></div>':'')+(part.progression?'<div class="physical-phase-detail"><b>Progression</b><p>'+escapeHtml(part.progression)+'</p></div>':'')+(part.regression?'<div class="physical-phase-detail"><b>Alléger / simplifier</b><p>'+escapeHtml(part.regression)+'</p></div>':'')+(part.quality?'<div class="physical-phase-detail"><b>Critère de réussite</b><p>'+escapeHtml(part.quality)+'</p></div>':'')+'</div></article>').join('')+'</div><div class="physical-safety-note"><strong>Repères d’encadrement</strong><p>Adapter les distances, la vitesse et le nombre de répétitions à l’âge, au niveau et à la fatigue. La qualité d’exécution prime sur la quantité. Arrêter ou modifier en cas de douleur ou de malaise.</p></div><div class="physical-plan-actions"><button type="button" class="btn primary" data-physical-save>Enregistrer dans ma bibliothèque</button><button type="button" class="btn subtle" data-physical-reset>Nouvelle séance</button></div></section>';
+}
+
+
+function planningAssistantPage() {
+  const isCoach = state.profile?.role === 'coach';
+  const coaches = isCoach ? [state.profile] : (state.playerCoaches || []);
+  if (!coaches.length) {
+    return `<section class="panel">${emptyState('Aucun coach associé', 'Associe-toi à un coach pour rechercher ses disponibilités.')}</section>`;
+  }
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const today = toLocalISO(new Date());
+  const selectedDate = state.planningAgentQuery?.date || toLocalISO(tomorrow);
+  const selectedDuration = Number(state.planningAgentQuery?.durationMinutes || 60);
+  const selectedCoachId = state.planningAgentQuery?.coachId || coaches[0].id;
+  const coachOptions = coaches.map(coach => {
+    const label = [coach.first_name, coach.last_name].filter(Boolean).join(' ') || 'Mon coach';
+    return `<option value="${escapeHtml(coach.id)}" ${coach.id === selectedCoachId ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+  }).join('');
+  const resultRows = (state.planningAgentResults || []).map(slot => {
+    const coach = coaches.find(item => item.id === slot.coach_id) || coaches[0];
+    const coachName = [coach.first_name, coach.last_name].filter(Boolean).join(' ') || 'Mon coach';
+    const start = String(slot.start_time || '').slice(0, 5);
+    const end = String(slot.end_time || '').slice(0, 5);
+    const requestButton = !isCoach
+      ? `<button class="btn primary" data-agent-booking-slot data-coach="${escapeHtml(slot.coach_id)}" data-date="${escapeHtml(slot.session_date)}" data-time="${escapeHtml(start)}" data-court="${Number(slot.court_number)}" data-duration="${Number(slot.duration_minutes)}">Demander ce créneau</button>`
+      : '';
+    return `<article class="list-card">
+      <div class="list-date"><strong>${escapeHtml(start)}</strong><small>${escapeHtml(end)}</small></div>
+      <div class="list-main"><strong>${escapeHtml(coachName)}</strong><span>${formatDate(slot.session_date, { weekday: 'long', day: 'numeric', month: 'long' })} · Court ${Number(slot.court_number)} · ${Number(slot.duration_minutes)} min</span></div>
+      <span class="tag tag-green">Disponible</span>${requestButton}
+    </article>`;
+  }).join('');
+
+  const hasSearch = Boolean(state.planningAgentQuery);
+  const resultContent = hasSearch
+    ? (resultRows || emptyState('Aucun créneau trouvé', 'Aucun créneau ne respecte les disponibilités, les cours, les réservations et les indisponibilités pour cette date.'))
+    : '<p class="tiny muted">Choisis une date et une durée pour lancer une recherche en lecture seule.</p>';
+
+  return `<section class="panel">
+    <div class="section-heading">
+      <div><p class="eyebrow">AGENT PLANNING · PHASE 1</p><h2>Agent Planning · Recherche de créneaux</h2>
+      <p class="tiny muted">Première brique de l’agent 1 : il croise les disponibilités, les cours collectifs, les réservations et les indisponibilités. La recherche reste en lecture seule.</p></div>
+      <span class="tag tag-green">Lecture seule</span>
+    </div>
+    <form id="planning-agent-form" class="form-grid">
+      ${isCoach
+        ? `<input type="hidden" name="coach_id" value="${escapeHtml(state.user?.id || '')}">`
+        : `<label class="span-2">Entraîneur<select class="select-input" name="coach_id" required>${coachOptions}</select></label>`}
+      <label>Date souhaitée<input class="search-input" type="date" name="date" min="${today}" value="${escapeHtml(selectedDate)}" required></label>
+      <label>Durée du cours<select class="select-input" name="duration_minutes">
+        <option value="60" ${selectedDuration === 60 ? 'selected' : ''}>1 heure</option>
+        <option value="90" ${selectedDuration === 90 ? 'selected' : ''}>1 h 30</option>
+        <option value="120" ${selectedDuration === 120 ? 'selected' : ''}>2 heures</option>
+      </select></label>
+      <div class="span-2"><button type="button" class="btn primary" data-action="planning-agent-search">Rechercher les créneaux disponibles</button></div>
+    </form>
+    <div class="section-heading"><div><p class="eyebrow">RÉSULTATS</p><h2>${hasSearch ? `${(state.planningAgentResults || []).length} créneau(x) proposé(s)` : 'Tes disponibilités'}</h2></div></div>
+    <div class="stack">${resultContent}</div>
+    <p class="tiny muted">Les demandes des joueurs passent toujours par le formulaire habituel et restent soumises à la validation du coach. Les règles de sécurité et de réservation sont revérifiées côté serveur.</p>
+  </section>`;
 }
