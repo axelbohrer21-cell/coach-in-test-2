@@ -276,7 +276,7 @@ begin
     v_start:=new.session_date+new.session_time;
     v_end:=v_start+make_interval(mins=>new.duration_minutes);
     perform pg_advisory_xact_lock(hashtextextended('club-courts:'||new.session_date::text,0));
-    v_max:=private.max_club_court_occupancy(v_start,v_end,'private_session',new.id,0);
+    v_max:=private.max_club_court_occupancy(v_start,v_end,'private_session',new.id,0::smallint);
     if v_max+1>3 then
       raise exception 'Les trois terrains sont déjà occupés sur une partie de ce créneau.';
     end if;
@@ -419,7 +419,7 @@ begin
     raise exception 'Le coach est indisponible : un cours collectif est prévu sur ce créneau.';
   end if;
 
-  v_max_occupied := private.max_club_court_occupancy(v_start,v_end,null,null,0);
+  v_max_occupied := private.max_club_court_occupancy(v_start,v_end,null,null,0::smallint);
   if v_max_occupied >= 3 then
     raise exception 'Les trois terrains sont déjà occupés sur une partie de ce créneau.';
   end if;
@@ -518,7 +518,7 @@ begin
       raise exception 'Conflit : un cours collectif occupe ce créneau.';
     end if;
 
-    v_max_occupied:=private.max_club_court_occupancy(v_start,v_end,'booking',v_booking.id,0);
+    v_max_occupied:=private.max_club_court_occupancy(v_start,v_end,'booking',v_booking.id,0::smallint);
     if v_max_occupied >= 3 then
       raise exception 'Conflit : les trois terrains sont maintenant occupés sur une partie de ce créneau.';
     end if;
