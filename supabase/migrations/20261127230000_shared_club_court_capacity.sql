@@ -291,7 +291,9 @@ create trigger guard_training_shared_court_capacity
 before insert or update on public.training_sessions
 for each row execute function private.guard_training_shared_court_capacity();
 
-create or replace function public.get_club_court_capacity(p_start_date date,p_end_date date)
+drop function if exists public.get_club_court_capacity(date,date);
+
+create function public.get_club_court_capacity(p_start_date date,p_end_date date)
 returns table(session_date date,slot_start time without time zone,occupied_courts integer,available_courts integer,capacity_known boolean)
 language plpgsql
 stable
@@ -315,7 +317,7 @@ begin
   return query
   select d.day::date,
          slots.slot_start::time,
-         case when coalesce(bool_or(o.court_count is null),false) then 3
+         case when coalesce(bool_or(o.id is not null and o.court_count is null),false) then 3
               else least(3,coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)
                            + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0))::integer end,
          case when coalesce(bool_or(o.court_count is null),false) then 0
@@ -574,3 +576,12 @@ returns void language sql security invoker set search_path to ''
 as $function$
   select private.review_private_booking(p_request_id,p_decision,p_coach_note);
 $function$;
+
+
+-- Trigger and internal helpers are not callable as public RPC endpoints.
+revoke all on function public.sync_group_shared_court_occupancy() from public, anon, authenticated;
+revoke all on function public.sync_booking_shared_court_occupancy() from public, anon, authenticated;
+revoke all on function public.sync_training_shared_court_occupancy() from public, anon, authenticated;
+revoke all on function private.max_club_court_occupancy(timestamp without time zone,timestamp without time zone,text,uuid,smallint) from public, anon, authenticated;
+revoke all on function private.guard_group_shared_court_capacity() from public, anon, authenticated;
+revoke all on function private.guard_training_shared_court_capacity() from public, anon, authenticated;
