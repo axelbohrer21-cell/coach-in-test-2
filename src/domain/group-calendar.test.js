@@ -117,6 +117,18 @@ test('annulation multi-terrains : un cours reste compté si un terrain est maint
   assert.equal(row.completed,1);
 });
 
+test('les stages de vacances ne créent pas de séries collectives hebdomadaires', () => {
+  const rows = [
+    { coach_id:'coach-a', audience:'enfants', session_date:'2026-10-19', start_time:'09:30', end_time:'16:30', title:'Stage enfants · Vacances de Toussaint', status:'scheduled' },
+    { coach_id:'coach-a', audience:'enfants', session_date:'2026-10-21', start_time:'09:30', end_time:'18:00', title:'Cours enfants', status:'scheduled' },
+    { coach_id:'coach-a', audience:'adultes', session_date:'2026-10-19', start_time:'17:00', end_time:'21:00', title:'Cours adultes', status:'scheduled' }
+  ];
+  const overview = buildDaySeriesOverview({ groupSessions:rows, coachId:'coach-a', now:'2026-10-22' });
+  assert.equal(overview.length,2);
+  assert.equal(overview.some(row=>row.start_time==='09:30'&&row.end_time==='16:30'),false);
+  assert.equal(overview.some(row=>row.audience==='enfants'&&row.weekday===3&&row.start_time==='09:30'&&row.end_time==='18:00'),true);
+});
+
 test('compteur individuel : annulations et cours planifiés sont dédoublonnés par date', () => {
   const rows = [
     { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-14', start_time:'18:00', end_time:'21:00', court_number:1, status:'cancelled' },
