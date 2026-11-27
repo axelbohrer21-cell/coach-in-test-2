@@ -5,8 +5,8 @@ export const COACH_B_GROUP_BLOCKS = Object.freeze([
   { key:'mardi-soir-2', audience:'adultes', weekday:2, start:'19:00', end:'20:30', courtCount:3 },
   { key:'mercredi-enfants', audience:'enfants', weekday:3, start:'09:30', end:'18:00', courtCount:3 },
   { key:'mercredi-adultes', audience:'adultes', weekday:3, start:'18:00', end:'19:30', courtCount:3 },
-  { key:'jeudi-soir', audience:'adultes', weekday:4, start:'18:00', end:'19:30', courtCount:3 },
-  { key:'samedi-matin', audience:'enfants', weekday:6, start:'09:30', end:'13:30', courtCount:null }
+  { key:'jeudi-soir', audience:'adultes', weekday:4, start:'18:00', end:'19:30', courtCount:1 },
+  { key:'samedi-matin', audience:'enfants', weekday:6, start:'09:30', end:'13:30', courtCount:3 }
 ]);
 
 export const GROUP_SEASON = Object.freeze({
