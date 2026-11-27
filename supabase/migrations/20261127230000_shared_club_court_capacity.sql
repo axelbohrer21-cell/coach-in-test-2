@@ -26,7 +26,10 @@ alter table public.booking_requests add constraint booking_requests_court_count_
 alter table public.training_sessions drop constraint if exists training_sessions_court_count_check;
 alter table public.training_sessions add constraint training_sessions_court_count_check check (court_count = 1);
 
--- Coach B: one collective block per actual lesson, with the confirmed court capacity.
+-- Temporarily remove the capacity guard while normalizing legacy blocks; it is recreated below.
+drop trigger if exists guard_group_shared_court_capacity on public.group_sessions;
+
+-- Coach B: one collective block per actual lesson, with only confirmed capacity.
 update public.group_sessions g
 set court_count = null
 from public.profiles p where p.id=g.coach_id and lower(p.email)='coachb@gmail.com';
