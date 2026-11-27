@@ -153,6 +153,8 @@ export function buildDaySeriesOverview({ groupSessions = [], manualCancellations
   ];
   const discovered = new Map();
   for (const session of sourceSessions) {
+    // Les stages de vacances occupent le planning mais ne constituent pas une série hebdomadaire.
+    if (String(session.title || '').toLowerCase().includes('stage')) continue;
     if (!['adultes','enfants'].includes(session.audience) || !session.session_date) continue;
     const weekday = parseISO(session.session_date).getUTCDay();
     if (!GROUP_SEASON.weekdays[session.audience]?.includes(weekday)) continue;
@@ -177,6 +179,7 @@ export function buildDaySeriesOverview({ groupSessions = [], manualCancellations
     : legacyDefinitions;
   return definitions.map(def => {
     const matchingSessions = sourceSessions.filter(session =>
+      !String(session.title || '').toLowerCase().includes('stage') &&
       session.audience === def.audience &&
       parseISO(session.session_date).getUTCDay() === def.weekday &&
       (!def.start_time || String(session.start_time || '00:00').slice(0,5) === def.start_time) &&
