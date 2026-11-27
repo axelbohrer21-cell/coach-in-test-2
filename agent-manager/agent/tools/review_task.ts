@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { reviewerIds, selectReviewers } from "../utils/reviewer-routing.js";
 import { aggregateReviewOutcomes } from "../utils/coordination.js";
+import { capPrompt, compactPromptText } from "../utils/context-budget.js";
 
 const reviewSchema = z.object({
   verdict: z.enum(["ready", "changes_requested", "blocked", "insufficient_evidence"]),
@@ -22,8 +23,8 @@ export default defineWorkflowTool({
   description:
     "Run an independent review for a non-trivial Coach In task. Calls plan_auditor first, then QA and the automatically selected domain/security/UX/Supabase reviewers in parallel. Passes the plan audit to downstream reviewers and reports partial or blocked reviews honestly.",
   inputSchema: z.object({
-    task: z.string().min(8).max(12000),
-    context: z.string().max(12000).optional(),
+    task: z.string().min(8).max(6000),
+    context: z.string().max(8000).optional(),
     reviewers: z.array(z.enum(reviewerIds)).max(5).optional(),
   }),
   async execute({ task, context, reviewers }, ctx) {
@@ -38,14 +39,14 @@ export default defineWorkflowTool({
     if (missing.length > 0) {
       return {
         status: "blocked",
-        task,
+        compactPromptText(task, 3600, "mission"),
         missingReviewers: missing,
         message: "Un ou plusieurs agents spécialisés ne sont pas disponibles dans cette version.",
       };
     }
 
     const runReviewer = async (reviewer: string, additionalContext?: string) => {
-      const prompt = [
+      const prompt = capPrompt([
         "Mission de revue indépendante pour Coach In.",
         "Tu es un agent de conseil : ne modifie aucun code, aucune donnée et aucun environnement.",
         "N'invente aucune inspection, source ou exécution de test. Signale explicitement les informations manquantes.",
@@ -56,13 +57,13 @@ export default defineWorkflowTool({
         task,
         "",
         "CONTEXTE INITIAL :",
-        context?.trim() || "Aucun contexte supplémentaire fourni.",
+        compactPromptText(context, 3000, "contexte de revue") || "Aucun contexte supplémentaire fourni.",
         "",
         "TRANSMISSION DE L'AUDITEUR DU PLAN :",
         additionalContext ?? "Aucun résultat d'audit disponible ; indique les limites liées à cette absence.",
         "",
         "Fournis un verdict, des constats fondés, des recommandations concrètes, des critères d'acceptation et les tests nécessaires.",
-      ].join("\n");
+      ].join("\n"), 10500);
 
       try {
         const response = await ctx.agent(reviewer).send(prompt, {
