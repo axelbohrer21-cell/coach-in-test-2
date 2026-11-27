@@ -346,6 +346,10 @@ create trigger guard_training_shared_court_capacity
 before insert or update on public.training_sessions
 for each row execute function private.guard_training_shared_court_capacity();
 
+revoke all on function private.max_club_court_occupancy(timestamp without time zone,timestamp without time zone,text,uuid,smallint) from public,anon,authenticated;
+revoke all on function private.guard_group_shared_court_capacity() from public,anon,authenticated;
+revoke all on function private.guard_training_shared_court_capacity() from public,anon,authenticated;
+
 drop function if exists public.get_club_court_capacity(date,date);
 
 create function public.get_club_court_capacity(p_start_date date,p_end_date date)
