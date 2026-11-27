@@ -340,7 +340,7 @@ function playerCoachPlanningPage() {
       const privateOccupied=events.some(event=>event.source_kind!=='group_session'&&toMinutes(event.start_time)<slotEnd&&toMinutes(event.start_time)+event.duration>slotStart&&!['cancelled','canceled','annulé','annulee'].includes(String(event.status||'').toLowerCase()));
       const capacity= (state.clubCourtCapacity||[]).find(row=>row.session_date===iso&&String(row.slot_start).slice(0,5)===time);
       const available=Boolean(rule&&!disabled&&!blockedByGroup&&!privateOccupied&&!blocked&&leadTimeOk&&isPrivateLessonDateAllowed(iso)&&Number(capacity?.available_courts??0)>0);
-      const addButton=available?'<button type="button" class="calendar-hour-slot" data-book-slot data-coach="'+escapeHtml(selected.id)+'" data-date="'+iso+'" data-time="'+time+'" data-court="'+escapeHtml(String(rule.court_number||1))+'" aria-label="Demander un cours à '+clock(time)+'" title="Demander un cours particulier"></button>':'';
+      const addButton=available?'<button type="button" class="calendar-hour-slot" data-book-slot data-coach="'+escapeHtml(selected.id)+'" data-date="'+iso+'" data-time="'+time+'"  aria-label="Demander un cours à '+clock(time)+'" title="Demander un cours particulier"></button>':'';
       const groupFrame=blockedByGroup?'<div class="calendar-group-frame '+occupiedClass+'">'+groupLabel+'</div>':cards+(blocked?'<span class="player-calendar-unavailable player-calendar-blocked">Indisponible</span>':'')+addButton;
       return '<div class="calendar-hour-row '+(blockedByGroup?'calendar-hour-row-group-occupied':'')+'"><span class="calendar-hour-label">'+clock(time)+'</span><div class="calendar-hour-content">'+groupFrame+'</div></div>';
     }).join('');
@@ -395,8 +395,8 @@ function planningPage() {
       const groupEvents=events.filter(event=>(event.kind==='group'||event.kind==='stage'||event.kind==='recurring-group')&&event.status!=='cancelled').map(event=>({ ...event, start:timeToMinutes(event.time), end:timeToMinutes(event.time)+event.duration })).sort((a,b)=>a.start-b.start);
       const groupBlocks=groupEvents.reduce((blocks,event)=>{
         const last=blocks[blocks.length-1];
-        if(last&&event.start<=last.end){last.end=Math.max(last.end,event.end);last.kinds.add(event.kind);}
-        else blocks.push({ ...event, end:event.end, kinds:new Set([event.kind]) });
+        if(last&&event.start<last.end){last.end=Math.max(last.end,event.end);last.kinds.add(event.kind);last.courtCount+=Number(event.courtCount||1);if(event.audience)last.audiences.add(event.audience);}
+        else blocks.push({ ...event, end:event.end, kinds:new Set([event.kind]), courtCount:Number(event.courtCount||1), audiences:new Set(event.audience?[event.audience]:[]) });
         return blocks;
       },[]);
       const blockedByGroup=groupBlocks.find(event=>event.start<slotEnd&&event.end>slotStart);
@@ -406,12 +406,13 @@ function planningPage() {
       const occupiedEnd=Boolean(blockedByGroup&&blockedEnd>slotStart&&blockedEnd<=slotEnd);
       const occupiedClass=blockedByGroup?(occupiedStart?'is-group-start':occupiedEnd?'is-group-end':'is-group-middle'):'';
       const groupFrameHeight=Math.max(30,Math.ceil((blockedEnd-blockedStart)/30)*30);
-      const groupLabel=blockedByGroup&&occupiedStart?'<div class="calendar-group-frame-label" style="--group-frame-height:'+groupFrameHeight+'px"><span class="calendar-lock" aria-hidden="true">🔒</span><span>'+ (blockedByGroup.kinds.has('stage')?'STAGE ENFANTS':'COURS COLLECTIF')+'</span><small>'+clock(String(Math.floor(blockedStart/60)).padStart(2,'0')+':'+String(blockedStart%60).padStart(2,'0'))+'–'+clock(String(Math.floor(blockedEnd/60)).padStart(2,'0')+':'+String(blockedEnd%60))+'</small></div>':'';
+      const groupLabel=blockedByGroup&&occupiedStart?'<div class="calendar-group-frame-label" style="--group-frame-height:'+groupFrameHeight+'px"><span class="calendar-lock" aria-hidden="true">🔒</span><span>'+ (blockedByGroup.kinds.has('stage')?'STAGE ENFANTS':(blockedByGroup.audiences?.size===1?(blockedByGroup.audiences.has('enfants')?'COURS ENFANTS':'COURS ADULTES'):'COURS COLLECTIF'))+'</span><small>'+clock(String(Math.floor(blockedStart/60)).padStart(2,'0')+':'+String(blockedStart%60).padStart(2,'0'))+'–'+clock(String(Math.floor(blockedEnd/60)).padStart(2,'0')+':'+String(blockedEnd%60))+'</small></div>':'';
       const groupFrame=blockedByGroup?'<div class="calendar-group-frame '+occupiedClass+'">'+groupLabel+'</div>':cards;
       const activeInSlot=inSlot.filter(event=>(event.kind!=='group'&&event.kind!=='stage')||event.status!=='cancelled');
       const privateOccupied=events.some(event=>(event.kind==='session'||event.kind==='booking')&&timeToMinutes(event.time)<slotEnd&&timeToMinutes(event.time)+Math.max(30,Number(event.duration||60))>slotStart);
       const insideCoachAvailability=dayAvailability.some(row=>slotStart>=timeToMinutes(row.start_time)&&slotEnd<=timeToMinutes(row.end_time));
-      const addButton=insideCoachAvailability&&!disabled&&!blockedByGroup&&!privateOccupied&&!activeInSlot.length&&isPrivateLessonDateAllowed(iso)?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'" aria-label="Créer un cours particulier à '+clock(time)+'" title="Créer un cours particulier"></button>':'';
+      const capacity=(state.clubCourtCapacity||[]).find(row=>row.session_date===iso&&String(row.slot_start).slice(0,5)===time);
+       const addButton=insideCoachAvailability&&!disabled&&!blockedByGroup&&!privateOccupied&&!activeInSlot.length&&isPrivateLessonDateAllowed(iso)&&Number(capacity?.available_courts??0)>0?'<button class="calendar-hour-slot" data-plan-slot data-slot-date="'+iso+'" data-slot-time="'+time+'" aria-label="Créer un cours particulier à '+clock(time)+'" title="Créer un cours particulier"></button>':'';
       const availabilityClass=insideCoachAvailability?'calendar-hour-row-available':'calendar-hour-row-unavailable';
       return '<div class="calendar-hour-row '+availabilityClass+' '+(blockedByGroup?'calendar-hour-row-group-occupied':'')+'"><span class="calendar-hour-label">'+clock(time)+'</span><div class="calendar-hour-content">'+groupFrame+addButton+'</div></div>';
     }).join('');
