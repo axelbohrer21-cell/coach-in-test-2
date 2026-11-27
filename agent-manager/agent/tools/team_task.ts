@@ -156,7 +156,7 @@ export default defineWorkflowTool({
         "Les outils de lecture/écriture refusent tout chemin hors de WORKTREE_PATH. Le shell est limité à git status/diff/log/lecture et aux scripts de test/build du projet.",
         "À la fin, fournis les chemins exacts, git diff --stat, git diff --check et les commandes/tests exécutés avec leurs codes de sortie.",
         "Ne commit jamais, ne push jamais, n'ouvre jamais de PR. Le Manager relira le diff.",
-      ].join("\n"), 14500);
+      ].join("\n");
     } else if (role === "qa_engineer") {
       sandboxInstructions = [
         "REPOSITORY_PATH=/workspace/coach-in",
@@ -205,7 +205,7 @@ export default defineWorkflowTool({
       "- Si un prérequis manque, renvoie status=blocked ou needs_input et explique précisément lequel.",
       "- Pour chaque critère d’acceptation, retourne exactement une entrée dans criteriaResults avec le texte exact, le statut met/not_met/not_verified et une preuve observée. Ne déclare pas completed si un critère n’est pas démontré.",
       "- Retourne le résultat structuré demandé par le schéma, avec des tableaux vides si rien ne s'applique.",
-    ].join("\n");
+    ].join("\n"), 14500);
 
     try {
       const response = await ctx.agent(role).send(prompt, {
