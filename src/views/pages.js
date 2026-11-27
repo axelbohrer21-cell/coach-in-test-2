@@ -302,8 +302,8 @@ function playerCoachPlanningPage() {
     const groupEvents=events.filter(event=>event.source_kind==='group_session'&&!['cancelled','canceled','annulé','annulee'].includes(String(event.status||'').toLowerCase())).map(event=>({...event,start:toMinutes(event.start_time),end:toMinutes(event.start_time)+event.duration})).sort((a,b)=>a.start-b.start);
     const groupBlocks=groupEvents.reduce((blocks,event)=>{
       const last=blocks[blocks.length-1];
-      if(last&&event.start<last.end){last.end=Math.max(last.end,event.end);last.titles.add(event.title||'Cours collectif');if(event.audience)last.audiences.add(event.audience);last.courtCount+=Number(event.court_count||1);}
-      else blocks.push({...event,end:event.end,titles:new Set([event.title||'Cours collectif']),audiences:new Set(event.audience?[event.audience]:[]),courtCount:Number(event.court_count||1)});
+      if(last&&event.start<last.end){last.end=Math.max(last.end,event.end);last.titles.add(event.title||'Cours collectif');if(event.audience)last.audiences.add(event.audience);last.courtCount=last.courtCount===null||event.court_count==null?null:last.courtCount+Number(event.court_count);}
+      else blocks.push({...event,end:event.end,titles:new Set([event.title||'Cours collectif']),audiences:new Set(event.audience?[event.audience]:[]),courtCount:event.court_count==null?null:Number(event.court_count)});
       return blocks;
     },[]);
     const slots=Array.from({length:28},(_,slotIndex)=>{
@@ -373,7 +373,7 @@ function planningPage() {
     const events=[
       ...state.sessions.filter(s=>s.created_by===coachId&&s.session_date===iso&&!['annulée','annulee','cancelled'].includes(String(s.status||'').toLowerCase())).map(s=>({time:s.session_time||'08:00',kind:'session',id:s.id,playerId:s.player_id,title:playerName(s.player_id),detail:s.theme||'Cours particulier',duration:Number(s.duration_minutes||60),court:s.court_number})),
       ...(state.bookingRequests||[]).filter(b=>b.coach_id===coachId&&b.session_date===iso&&['pending','accepted','confirmed'].includes(String(b.status||'').toLowerCase())).map(b=>({time:b.start_time||'08:00',kind:'booking',id:b.id,playerId:b.player_id,title:playerName(b.player_id),detail:b.status==='pending'?'Demande à valider':'Cours particulier réservé',duration:Number(b.duration_minutes||60),court:b.court_number,status:b.status})),
-      ...state.groupSessions.filter(s=>s.coach_id===coachId&&s.session_date===iso).map(s=>({time:s.start_time||'08:00',date:s.session_date,kind:'group',id:s.id,title:s.title,detail:s.status==='cancelled'?'ANNULÉ':s.status==='completed'?'Cours collectif · effectué':'Cours collectif',duration:Math.max(0,timeToMinutes(s.end_time)-timeToMinutes(s.start_time)),courtCount:Number(s.court_count||1),audience:s.audience,status:s.status})),
+      ...state.groupSessions.filter(s=>s.coach_id===coachId&&s.session_date===iso).map(s=>({time:s.start_time||'08:00',date:s.session_date,kind:'group',id:s.id,title:s.title,detail:s.status==='cancelled'?'ANNULÉ':s.status==='completed'?'Cours collectif · effectué':'Cours collectif',duration:Math.max(0,timeToMinutes(s.end_time)-timeToMinutes(s.start_time)),courtCount:s.court_count==null?null:Number(s.court_count),audience:s.audience,status:s.status})),
       ...buildHolidayStageOccurrences({startDate:iso,endDate:iso}).map(stage=>({time:stage.start_time,date:iso,kind:'stage',id:stage.id,title:stage.title,detail:'Stage enfants · vacances scolaires',duration:420,courtCount:Number(stage.court_count||3),audience:'enfants',status:'scheduled'}))
     ];
     const dayAvailability=(state.weeklyAvailability||[]).filter(row=>row.coach_id===coachId&&row.active&&Number(row.weekday)===(d.getDay()||7));
