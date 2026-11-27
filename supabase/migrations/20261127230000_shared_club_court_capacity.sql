@@ -17,7 +17,7 @@ alter table public.group_sessions add constraint group_sessions_court_count_chec
 alter table public.group_course_series drop constraint if exists group_course_series_court_count_check;
 alter table public.group_course_series add constraint group_course_series_court_count_check check (court_count between 1 and 3);
 alter table public.shared_court_occupancy drop constraint if exists shared_court_occupancy_court_count_check;
-alter table public.shared_court_occupancy add constraint shared_court_occupancy_court_count_check check (court_count between 1 and 3);
+alter table public.shared_court_occupancy add constraint shared_court_occupancy_court_count_check check (court_count between 1 and 3 or court_count is null);
 alter table public.booking_requests drop constraint if exists booking_requests_court_count_check;
 alter table public.booking_requests add constraint booking_requests_court_count_check check (court_count = 1);
 alter table public.training_sessions drop constraint if exists training_sessions_court_count_check;
