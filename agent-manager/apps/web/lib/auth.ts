@@ -1,6 +1,8 @@
 import { betterAuth } from "better-auth";
+export { isManagerAllowedEmail } from "./access-control";
 
 const SESSION_MAX_AGE_SECONDS = 8 * 60 * 60;
+
 const DEVELOPMENT_ALLOWED_HOSTS = ["localhost:*", "127.0.0.1:*"];
 
 function getAllowedHosts(): string[] {

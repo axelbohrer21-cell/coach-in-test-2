@@ -4,7 +4,7 @@ import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
 import type { LanguageModelV4, LanguageModelV4Middleware } from "@ai-sdk/provider";
 
-const MAX_OUTPUT_TOKENS = 1024;
+const MAX_OUTPUT_TOKENS = 768;
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
 const PROVIDER_FAILURE_COOLDOWN_MS = 20_000;
 const unavailableUntil = new Map<string, number>();
@@ -96,13 +96,13 @@ const quotaProtection: LanguageModelV4Middleware = {
   }),
   wrapGenerate: async ({ doGenerate, params }) =>
     runWithFallback((model, isPrimary) =>
-      isPrimary ? doGenerate() : model.doGenerate(params),
+      isPrimary ? Promise.resolve(doGenerate()) : Promise.resolve(model.doGenerate(params)),
     ),
   // Provider errors raised before the stream opens can be failed over safely.
   // Errors after the stream starts are not replayed to avoid duplicate output/actions.
   wrapStream: async ({ doStream, params }) =>
     runWithFallback((model, isPrimary) =>
-      isPrimary ? doStream() : model.doStream(params),
+      isPrimary ? Promise.resolve(doStream()) : Promise.resolve(model.doStream(params)),
     ),
 };
 

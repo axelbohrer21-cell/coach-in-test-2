@@ -1,10 +1,10 @@
 import { eveChannel } from "eve/channels/eve";
 import { localDev, type AuthFn, vercelOidc } from "eve/channels/auth";
-import { auth } from "../../apps/web/lib/auth.js";
+import { auth, isManagerAllowedEmail } from "../../apps/web/lib/auth.js";
 
 const betterAuthSession: AuthFn<Request> = async (request) => {
   const session = await auth.api.getSession({ headers: request.headers });
-  if (!session) return null;
+  if (!session || !isManagerAllowedEmail(session.user.email)) return null;
 
   const attributes: Record<string, string> = {
     email: session.user.email,
@@ -22,6 +22,9 @@ const betterAuthSession: AuthFn<Request> = async (request) => {
   };
 };
 
+// Vercel injects VERCEL_PROJECT_ID in hosted deployments. Local/CI discovery has no trusted deployment identity.
+const vercelAuth = process.env.VERCEL_PROJECT_ID ? [vercelOidc()] : [];
+
 export default eveChannel({
-  auth: [betterAuthSession, vercelOidc(), localDev()],
+  auth: [betterAuthSession, ...vercelAuth, localDev()],
 });

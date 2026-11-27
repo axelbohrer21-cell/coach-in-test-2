@@ -14,6 +14,19 @@ import { authClient } from "@/lib/auth-client";
 
 const AGENT_NAME = "agent-manager";
 
+export function AccessDenied() {
+  return (
+    <main className="flex min-h-dvh items-center justify-center bg-background px-6 text-foreground">
+      <section className="w-full max-w-md space-y-3 rounded-xl border bg-card p-6">
+        <h1 className="text-lg font-semibold">Accès non autorisé</h1>
+        <p className="text-sm leading-6 text-muted-foreground">
+          Ce compte n'est pas autorisé à accéder à Coach In Manager. Contacte le responsable du projet si tu penses qu'il s'agit d'une erreur.
+        </p>
+      </section>
+    </main>
+  );
+}
+
 export function SignIn() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();

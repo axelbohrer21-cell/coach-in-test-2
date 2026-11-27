@@ -23,9 +23,12 @@
 - Coach In Manager : coordination et suivi des missions.
 - Agent Produit / Cahier des charges.
 - Agent Architecte.
-- Agent UX/UI.
+- Agent UI Designer.
+- Agent UX/UI Reviewer.
+- Agent Expert Supabase & Base de données.
 - Agent Frontend.
 - Agent Backend / Données.
+- Agent Expert Supabase & Base de données.
 - Agent Sécurité.
 - Agent QA / Testeur.
 - Agent Release / Déploiement.

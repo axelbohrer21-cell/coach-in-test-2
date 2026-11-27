@@ -1,12 +1,9 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
 
-const reviewerIds = [
-  "qa_reviewer",
-  "tennis_expert",
-  "ux_reviewer",
-  "data_security_reviewer",
-] as const;
+import { reviewerIds, selectReviewers } from "../utils/reviewer-routing.js";
+import { aggregateReviewOutcomes } from "../utils/coordination.js";
+import { capPrompt, compactPromptText } from "../utils/context-budget.js";
 
 const reviewSchema = z.object({
   verdict: z.enum(["ready", "changes_requested", "blocked", "insufficient_evidence"]),
@@ -22,46 +19,13 @@ const reviewSchema = z.object({
   assumptions: z.array(z.string()),
 });
 
-function selectReviewers(task: string, context?: string) {
-  const text = `${task}\n${context ?? ""}`.toLowerCase();
-  const selected = new Set<string>(["qa_reviewer"]);
-  const reasons: string[] = ["QA est inclus par défaut pour vérifier les critères et les cas limites."];
-
-  const rules: Array<{ id: typeof reviewerIds[number]; pattern: RegExp; reason: string }> = [
-    {
-      id: "tennis_expert",
-      pattern: /tennis|joueur|coach|classement|séance|exercice|tournoi|cours collectif|cours particulier|réservation|planning|calendrier|zone b|bilan pédagogique|défi/,
-      reason: "Le périmètre touche aux règles métier ou aux parcours tennis.",
-    },
-    {
-      id: "ux_reviewer",
-      pattern: /interface|frontend|front-end|écran|visuel|design|ergonomie|mobile|iphone|navigation|accessibilité|responsive|formulaire|affichage/,
-      reason: "Le périmètre touche à l'interface, à l'accessibilité ou à l'expérience mobile.",
-    },
-    {
-      id: "data_security_reviewer",
-      pattern: /sécurité|auth|authentification|autorisation|rls|supabase|base de données|données|confidentialité|secret|permission|multi-coach|isolation|migration|stockage/,
-      reason: "Le périmètre touche aux données, aux permissions ou à la confidentialité.",
-    },
-  ];
-
-  for (const rule of rules) {
-    if (rule.pattern.test(text)) {
-      selected.add(rule.id);
-      reasons.push(rule.reason);
-    }
-  }
-
-  return { reviewers: [...selected], reasons };
-}
-
 export default defineWorkflowTool({
   description:
-    "Run an independent review for a non-trivial Coach In task. Always invokes plan_auditor and QA; automatically adds tennis, UX, and data-security specialists based on task/context unless the caller explicitly selects reviewers. Waits for structured results and reports partial or blocked reviews honestly.",
+    "Run an independent review for a non-trivial Coach In task. Calls plan_auditor first, then one QA or domain/security/UX/Supabase reviewer sequentially to keep token use bounded. Passes the plan audit to the reviewer and reports partial or blocked reviews honestly.",
   inputSchema: z.object({
-    task: z.string().min(8).max(12000),
-    context: z.string().max(12000).optional(),
-    reviewers: z.array(z.enum(reviewerIds)).max(4).optional(),
+    task: z.string().min(8).max(6000),
+    context: z.string().max(8000).optional(),
+    reviewers: z.array(z.enum(reviewerIds)).max(1).optional(),
   }),
   async execute({ task, context, reviewers }, ctx) {
     "use workflow";
@@ -81,8 +45,8 @@ export default defineWorkflowTool({
       };
     }
 
-    const results = await Promise.all(selected.map(async (reviewer) => {
-      const prompt = [
+    const runReviewer = async (reviewer: string, additionalContext?: string) => {
+      const prompt = capPrompt([
         "Mission de revue indépendante pour Coach In.",
         "Tu es un agent de conseil : ne modifie aucun code, aucune donnée et aucun environnement.",
         "N'invente aucune inspection, source ou exécution de test. Signale explicitement les informations manquantes.",
@@ -90,13 +54,16 @@ export default defineWorkflowTool({
         "Tu n'as aucun accès direct au dépôt, à Supabase ou à une Preview dans cette revue, sauf si leur contenu est explicitement transmis dans le contexte.",
         "",
         "MISSION :",
-        task,
+        compactPromptText(task, 2800, "mission"),
         "",
-        "CONTEXTE :",
-        context?.trim() || "Aucun contexte supplémentaire fourni.",
+        "CONTEXTE INITIAL :",
+        compactPromptText(context, 2200, "contexte de revue") || "Aucun contexte supplémentaire fourni.",
+        "",
+        "TRANSMISSION DE L'AUDITEUR DU PLAN :",
+        compactPromptText(additionalContext, 1000, "audit du plan") || "Aucun résultat d’audit disponible ; indique les limites liées à cette absence.",
         "",
         "Fournis un verdict, des constats fondés, des recommandations concrètes, des critères d'acceptation et les tests nécessaires.",
-      ].join("\n");
+      ].join("\n"), 8500);
 
       try {
         const response = await ctx.agent(reviewer).send(prompt, {
@@ -129,38 +96,36 @@ export default defineWorkflowTool({
           error: error instanceof Error ? error.message : "Erreur inconnue pendant la revue.",
         };
       }
-    }));
+    };
 
-    const failedCount = results.filter((item) => item.status === "failed").length;
-    const completed = results.filter((item) => item.status === "completed");
-    const hasBlocker = completed.some((item) =>
-      item.review.verdict === "blocked" ||
-      item.review.findings.some((finding) => finding.severity === "critical" || finding.severity === "high")
-    );
-    const requestsChanges = completed.some((item) => item.review.verdict === "changes_requested");
-    const insufficientEvidence = completed.some((item) => item.review.verdict === "insufficient_evidence");
+    // The plan auditor establishes scope, dependencies and safety gates before
+    // downstream reviewers receive the task. Specialist reviews then run in parallel.
+    const planAudit = await runReviewer("plan_auditor");
+    const auditContext = planAudit.status === "completed"
+      ? JSON.stringify(planAudit.review)
+      : `L'audit du plan n'a pas abouti : ${planAudit.error}. Les spécialistes doivent signaler les limites de leur revue.`;
 
-    const status = failedCount > 0 || insufficientEvidence || completed.length !== selected.length
-      ? "partial"
-      : hasBlocker
-        ? "blocked"
-        : requestsChanges
-          ? "changes_requested"
-          : "reviewed";
+    const specialistResults = [];
+    for (const reviewer of selected.filter((name) => name !== "plan_auditor")) {
+      specialistResults.push(await runReviewer(reviewer, auditContext));
+    }
+    const results = [planAudit, ...specialistResults];
+    const aggregate = aggregateReviewOutcomes(results, selected.length);
 
     return {
       task,
-      status,
+      status: aggregate.status,
       reviewers: selected,
+      sequence: ["plan_auditor", "un reviewer spécialisé en séquentiel"],
       selectionMode: reviewers === undefined ? "automatic" : "explicit",
       selectionReasons: automatic?.reasons ?? ["La liste des spécialistes a été explicitement fournie par le Manager."],
       evidenceMode: "context_only",
-      completedCount: completed.length,
-      failedCount,
+      completedCount: aggregate.completedCount,
+      failedCount: aggregate.failedCount,
       results,
-      nextAction: status === "reviewed"
+      nextAction: aggregate.status === "reviewed"
         ? "Le Manager peut consolider les retours et préparer la suite."
-        : status === "partial"
+        : aggregate.status === "partial"
           ? "Compléter les éléments de preuve ou relancer les agents en échec avant de présenter le plan comme prêt."
           : "Le Manager doit traiter les blocages ou les demandes de correction avant de présenter le plan comme prêt.",
     };

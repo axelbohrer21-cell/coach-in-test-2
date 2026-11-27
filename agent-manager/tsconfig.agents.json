@@ -1,11 +1,21 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "noEmit": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true
   },
-  "include": ["agent/**/*.ts"],
-  "exclude": ["apps/**", ".next/**", "node_modules/**"]
+  "include": [
+    "agent/**/*.ts"
+  ],
+  "exclude": [
+    "apps/**",
+    ".next/**",
+    "node_modules/**",
+    "agent/**/*.test.ts"
+  ]
 }

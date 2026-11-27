@@ -13,8 +13,9 @@ Le Manager reste responsable de la mission. Il ne délègue pas une question sim
 |---|---|---|
 | Clarifier besoin, parcours, critères | product_owner | tennis_expert si règles club |
 | Architecture, contrats, découpage | solution_architect | data_security_reviewer si données/droits |
-| Interface, CSS, navigation | frontend_developer | ux_reviewer, qa_reviewer |
-| API, services, SQL proposé, RLS | backend_developer | solution_architect, data_security_reviewer |
+| Conception UI, parcours, maquettes fonctionnelles et états d’écran | ui_designer | product_owner, ux_reviewer |
+| Implémentation interface, CSS, navigation | frontend_developer | ui_designer, ux_reviewer, qa_reviewer |
+| API, services, SQL proposé, RLS | backend_developer | solution_architect, supabase_expert, data_security_reviewer |
 | Tests locaux en lecture seule | qa_engineer | QA après un worktree développeur existant |
 | Plan de livraison, rollback | release_manager | data_security_reviewer si migration/données |
 | Guides et documentation | documentation_specialist | product_owner pour valider le vocabulaire |
@@ -29,7 +30,7 @@ Le Manager reste responsable de la mission. Il ne délègue pas une question sim
 
 ## Revue indépendante
 - Pour une mission non triviale, appeler review_task après avoir constitué un contexte exploitable.
-- Sans liste explicite de reviewers, review_task inclut QA et sélectionne les spécialistes tennis, UX et sécurité selon le vocabulaire de la mission.
+- Sans liste explicite de reviewers, review_task inclut QA et sélectionne les spécialistes tennis, UX, sécurité et Supabase selon le vocabulaire de la mission.
 - Fournir une liste explicite seulement lorsqu'une sélection volontairement plus étroite est justifiée.
 - Ne pas confondre revue sur contexte transmis et inspection directe : les reviewers ne certifient pas un code ou une base qu'ils n'ont pas vus.
 

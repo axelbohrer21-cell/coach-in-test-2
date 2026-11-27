@@ -45,12 +45,22 @@ Responsabilités :
 
 Il ne déploie pas et n'applique pas de migration.
 
-### 3. Agent UX/UI
+### 3. Agent UX/UI Reviewer
 Responsabilités :
 - préserver l'identité visuelle et les parcours existants ;
 - proposer les écrans et états mobile/desktop ;
 - vérifier lisibilité, accessibilité, retours d'action et états vides ;
 - éviter les changements de navigation non demandés.
+
+### 3 bis. Agent UI Designer
+Responsabilités :
+- concevoir les parcours, la hiérarchie des écrans et les composants avant le développement ;
+- décrire les états chargement, vide, succès, erreur, désactivé et les interactions ;
+- produire des spécifications visuelles et fonctionnelles précises, adaptées au mobile et au desktop ;
+- préserver les parcours coach, joueur et administrateur ainsi que les décisions visuelles déjà validées ;
+- transmettre au Frontend Developer les comportements, états, règles responsive et critères de recette.
+
+Il produit des spécifications et ne modifie pas directement le code.
 
 ### 4. Agent Frontend
 Responsabilités :
@@ -74,6 +84,16 @@ Responsabilités :
 - vérifier l'isolation des joueurs liés et non liés ;
 - rechercher secrets, données privées et informations excessives dans les réponses API ;
 - rendre un avis indépendant avant livraison.
+
+### 6 bis. Agent Expert Supabase & Base de données
+Responsabilités :
+- analyser les schémas PostgreSQL, contraintes, relations et index ;
+- examiner les migrations SQL, leur ordre, leur idempotence et leur compatibilité ;
+- concevoir et relire les RPC, fonctions Edge, accès Auth et règles Storage ;
+- repérer les risques de performance, de concurrence et d'intégrité ;
+- fournir au Backend Developer des contrats et recommandations vérifiables.
+
+Il intervient en expertise indépendante, sans accès direct aux bases réelles et sans exécuter de migration. L'Agent Sécurité conserve la revue indépendante des menaces, permissions et scénarios d'accès non autorisé.
 
 ### 7. Agent QA / Testeur
 Responsabilités :
@@ -104,7 +124,7 @@ Responsabilités :
 1. Axel formule une demande.
 2. Le Chef de projet produit le cadrage et les critères d'acceptation.
 3. L'Architecte identifie les modules et les risques.
-4. UX/UI, Frontend et Backend travaillent sur des tâches séparées.
+4. UI Designer définit les parcours et états ; Frontend et Backend implémentent sur des périmètres séparés, avec l'expert Supabase en appui des changements de données.
 5. Sécurité réalise une revue indépendante.
 6. QA exécute les tests et demande les corrections si nécessaire.
 7. Release prépare une Preview liée au commit testé.
@@ -122,7 +142,7 @@ Responsabilités :
 | OpenAI / moteur d'agents | raisonnement, délégation et appels d'outils | côté serveur uniquement ; aucune clé dans le frontend |
 | Tests Node / GitHub Actions | qualité et non-régression | obligatoires avant recette |
 
-Le dépôt actuel ne contient pas encore de runtime d'orchestration pour une équipe d'agents développeurs. `AGENTS.md` et ce dossier constituent le référentiel de gouvernance, pas le lancement d'agents autonomes en arrière-plan. La mise en place du moteur d'orchestration devra être une étape séparée, avec des secrets côté serveur, des droits minimaux et un journal de chaque action.
+Le dépôt contient désormais un runtime d'orchestration dans `agent-manager/` : contrôle runtime du registre via `agent_roster`, délégation bornée via `team_task`, planification via `mission_plan`, revues via `review_task` et mémoire de mission via `mission_memory`. Les outils Frontend/Backend limitent lecture et écriture aux chemins sous `/workspace/coach-in-worktrees/`, avec un shell en liste blanche pour les commandes Git de lecture et les scripts locaux autorisés. QA ne dispose que de `read_file` et d'un shell en liste blanche limité aux tests/typecheck et contrôles Git en lecture seule. Cette présence dans le code ne vaut pas encore validation opérationnelle de bout en bout : les appels réels des agents, leurs outils et le cycle complet de consolidation/QA doivent être vérifiés sur une Preview correspondant au SHA testé. Aucun agent ne travaille en arrière-plan hors d'une session active.
 
 ## Priorités de mise en place
 

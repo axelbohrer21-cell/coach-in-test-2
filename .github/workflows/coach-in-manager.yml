@@ -4,8 +4,13 @@ on:
   push:
     branches:
       - feat/coach-in-manager-eve-2026-11-25
+      - feat/manager-persistent-memory-coordination-2026-11-26
     paths:
       - "agent-manager/**"
+      - "src/**"
+      - "supabase/**"
+      - "package.json"
+      - "AGENTS.md"
       - ".github/workflows/coach-in-manager.yml"
   pull_request:
     paths:
@@ -32,7 +37,34 @@ jobs:
           node-version: 24
       - name: Install dependencies
         run: npm install
+      - name: Test Coach In application domain
+        working-directory: .
+        run: npm test
+      - name: Check Coach In JavaScript syntax
+        working-directory: .
+        run: find src -type f -name '*.js' -print0 | xargs -0 -n1 node --check
       # Eve's Vercel sandbox templates require Vercel OIDC. GitHub Actions does
       # not receive that token; the protected Vercel Preview performs eve build.
+      - name: Test automatic reviewer routing
+        run: npm run test:routing
+      - name: Test bounded prompt context
+        run: npm run test:context-budget
+      - name: Test dependency handoffs and review aggregation
+        run: npm run test:coordination
+      - name: Test mission dependency planner
+        run: npm run test:planning
+      - name: Test production agent registry and tool boundaries
+        run: npm run test:agents
+      - name: Verify Eve agent and tool discovery
+        run: npm run check:discovery
+        env:
+          NODE_ENV: development
+          VERCEL_PROJECT_ID: ""
+      - name: Test mission memory privacy guard
+        run: npm run test:memory-privacy
+      - name: Test Manager access control
+        run: npm run test:security
       - name: Typecheck authored agents and workflows
         run: npm run typecheck
+      - name: Typecheck Manager web interface
+        run: npm run typecheck:web

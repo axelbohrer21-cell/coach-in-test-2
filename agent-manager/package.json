@@ -14,7 +14,16 @@
     "build:web": "next build apps/web",
     "dev:eve": "eve dev",
     "dev:all": "vercel dev --local",
-    "typecheck": "tsc --noEmit --project tsconfig.agents.json"
+    "typecheck": "tsc --noEmit --project tsconfig.agents.json",
+    "typecheck:web": "tsc --noEmit --project apps/web/tsconfig.json",
+    "test:routing": "node --experimental-strip-types --test agent/utils/reviewer-routing.test.ts",
+    "test:coordination": "node --experimental-strip-types --test agent/utils/coordination.test.ts",
+    "test:planning": "node --experimental-strip-types --test agent/utils/mission-planner.test.ts",
+    "test:agents": "node --experimental-strip-types --test agent/utils/agent-registry.test.ts",
+    "check:discovery": "eve info",
+    "test:memory-privacy": "node --experimental-strip-types --test agent/utils/mission-memory-privacy.test.ts",
+    "test:security": "node --experimental-strip-types --test apps/web/lib/access-control.test.ts",
+    "test:context-budget": "node --experimental-strip-types --test agent/utils/context-budget.test.ts"
   },
   "dependencies": {
     "@shadcn/react": "^0.3.1",
@@ -46,12 +55,19 @@
     "@ai-sdk/groq": "^4.0.87",
     "@ai-sdk/provider": "^4.0.39",
     "@ai-sdk/google": "^4.0.128",
-    "@ai-sdk/openai-compatible": "^3.0.96"
+    "@ai-sdk/openai-compatible": "^3.0.96",
+    "@vercel/blob": "^2.3.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.10",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "zod": "$zod",
+    "@vercel/oidc": "4.0.7",
+    "@vercel/cli-config": "0.3.7",
+    "katex": "0.18.2"
   }
 }
