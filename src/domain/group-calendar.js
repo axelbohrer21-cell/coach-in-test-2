@@ -138,8 +138,11 @@ export function buildHolidayStageOccurrences({ holidays = ZONE_B_HOLIDAYS_2026_2
   return occurrences;
 }
 
-export function buildDaySeriesOverview({ groupSessions = [], manualCancellations = [], now = '2026-09-14' } = {}) {
-  const definitions = [
+export function buildDaySeriesOverview({ groupSessions = [], manualCancellations = [], now = '2026-09-14', coachId = null } = {}) {
+  const sourceSessions = coachId
+    ? groupSessions.filter(row => row.coach_id === coachId)
+    : groupSessions;
+  const legacyDefinitions = [
     { key:'adultes-lundi', audience:'adultes', weekday:1, target:GROUP_SEASON.adultTarget },
     { key:'adultes-mardi', audience:'adultes', weekday:2, target:GROUP_SEASON.adultTarget },
     { key:'adultes-mercredi', audience:'adultes', weekday:3, target:GROUP_SEASON.adultTarget },
@@ -148,30 +151,76 @@ export function buildDaySeriesOverview({ groupSessions = [], manualCancellations
     { key:'enfants-mercredi', audience:'enfants', weekday:3, target:GROUP_SEASON.childTarget },
     { key:'enfants-samedi', audience:'enfants', weekday:6, target:GROUP_SEASON.childTarget }
   ];
+  const discovered = new Map();
+  for (const session of sourceSessions) {
+    // Les stages de vacances occupent le planning mais ne constituent pas une série hebdomadaire.
+    if (String(session.title || '').toLowerCase().includes('stage')) continue;
+    if (!['adultes','enfants'].includes(session.audience) || !session.session_date) continue;
+    const weekday = parseISO(session.session_date).getUTCDay();
+    if (!GROUP_SEASON.weekdays[session.audience]?.includes(weekday)) continue;
+    const start = String(session.start_time || '00:00').slice(0,5);
+    const end = String(session.end_time || '23:59').slice(0,5);
+    if (end <= start) continue;
+    const key = [session.audience, weekday, start, end].join('-');
+    if (!discovered.has(key)) {
+      discovered.set(key, {
+        key,
+        audience: session.audience,
+        weekday,
+        start_time: start,
+        end_time: end,
+        target: session.audience === 'adultes' ? GROUP_SEASON.adultTarget : GROUP_SEASON.childTarget
+      });
+    }
+  }
+  // Sans occurrences en base, conserver la vue générale historique (utile à l'initialisation).
+  const definitions = discovered.size
+    ? [...discovered.values()].sort((a,b) => a.weekday-b.weekday || a.start_time.localeCompare(b.start_time) || a.audience.localeCompare(b.audience))
+    : legacyDefinitions;
   return definitions.map(def => {
+    const matchingSessions = sourceSessions.filter(session =>
+      !String(session.title || '').toLowerCase().includes('stage') &&
+      session.audience === def.audience &&
+      parseISO(session.session_date).getUTCDay() === def.weekday &&
+      (!def.start_time || String(session.start_time || '00:00').slice(0,5) === def.start_time) &&
+      (!def.end_time || String(session.end_time || '23:59').slice(0,5) === def.end_time)
+    );
     const eligibleDates = generateTeachingDates({ audience:def.audience, weekday:def.weekday });
-    const matchingSessions = groupSessions.filter(s => s.audience === def.audience && parseISO(s.session_date).getUTCDay() === def.weekday);
+    const statusesByDate = new Map();
+    for (const session of matchingSessions) {
+      if (!statusesByDate.has(session.session_date)) statusesByDate.set(session.session_date, []);
+      statusesByDate.get(session.session_date).push(String(session.status || '').toLowerCase());
+    }
+    const fullyCancelledDates = [...statusesByDate.entries()]
+      .filter(([, statuses]) => statuses.length > 0 && statuses.every(status => status === 'cancelled'))
+      .map(([date]) => date);
     const cancelledDates = new Set([
-      ...matchingSessions.filter(s => s.status === 'cancelled').map(s => s.session_date),
+      ...fullyCancelledDates,
       ...manualCancellations.filter(row => row.audience === def.audience && Number(row.weekday) === def.weekday).map(row => row.session_date)
     ]);
-    // Les dates passées comptent par défaut ; seules les pluies/annulations cochées sont retirées.
+    // Les dates passées comptent par défaut ; une date n'est comptée qu'une fois,
+    // même lorsque plusieurs terrains sont enregistrés pour le même créneau.
     const pastDates = eligibleDates.filter(date => date < now);
     const completed = pastDates.filter(date => !cancelledDates.has(date)).length;
-    const planned = matchingSessions.filter(s => s.status === 'scheduled' && s.session_date >= now).length;
+    const plannedDates = new Set(matchingSessions
+      .filter(session => session.status === 'scheduled' && session.session_date >= now)
+      .map(session => session.session_date));
+    const planned = plannedDates.size;
     const pastUnrecorded = 0;
     const remaining = Math.max(0, def.target - completed);
     const catchUp = Math.max(0, def.target - completed - planned);
     const expectedByNow = Math.min(def.target, completed);
     const paceGap = Math.max(0, expectedByNow - completed);
+    const timeLabel = def.start_time ? ` · ${def.start_time}–${def.end_time}` : '';
     return {
       ...def,
-      label: `${def.audience === 'adultes' ? 'Adultes' : 'Enfants'} · ${DAY_LABELS[def.weekday]}`,
+      label: `${def.audience === 'adultes' ? 'Adultes' : 'Enfants'} · ${DAY_LABELS[def.weekday]}${timeLabel}`,
       eligibleDates,
       availableDateCount: eligibleDates.length,
       availabilityGap: Math.max(0, def.target - eligibleDates.length),
       completed,
       planned,
+      cancelled: cancelledDates.size,
       pastUnrecorded,
       expectedByNow,
       paceGap,
@@ -181,7 +230,6 @@ export function buildDaySeriesOverview({ groupSessions = [], manualCancellations
     };
   });
 }
-
 export function getWeekProgram(program, seasonStart = GROUP_SEASON.start, seasonEnd = GROUP_SEASON.end) {
   const teachingWeeks = [];
   const start = parseISO(seasonStart);

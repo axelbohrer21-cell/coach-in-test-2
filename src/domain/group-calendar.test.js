@@ -74,6 +74,75 @@ test('les compteurs retirent uniquement les jours cochés manuellement comme plu
   assert.equal(thursday.expectedByNow, thursday.completed);
 });
 
+
+test('compteurs multi-coachs : chaque créneau est distinct, les doubles créneaux du mardi ne fusionnent pas', () => {
+  const rows = [
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-14', start_time:'18:00', end_time:'21:00', status:'completed' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-15', start_time:'12:15', end_time:'13:45', status:'completed' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-15', start_time:'17:30', end_time:'20:30', status:'completed' },
+    { coach_id:'coach-b', audience:'enfants', session_date:'2026-09-16', start_time:'09:30', end_time:'18:00', status:'completed' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-16', start_time:'18:00', end_time:'19:30', status:'completed' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-17', start_time:'18:00', end_time:'19:30', status:'completed' },
+    { coach_id:'coach-b', audience:'enfants', session_date:'2026-09-19', start_time:'09:30', end_time:'13:30', status:'completed' },
+    { coach_id:'coach-a', audience:'adultes', session_date:'2026-09-14', start_time:'17:00', end_time:'21:00', status:'completed' }
+  ];
+  const overview = buildDaySeriesOverview({ groupSessions:rows, coachId:'coach-b', now:'2026-09-22' });
+  assert.equal(overview.length,7);
+  assert.equal(overview.filter(row=>row.weekday===2&&row.audience==='adultes').length,2);
+  assert.equal(overview.some(row=>row.start_time==='12:15'&&row.end_time==='13:45'),true);
+  assert.equal(overview.some(row=>row.start_time==='17:30'&&row.end_time==='20:30'),true);
+  assert.equal(overview.some(row=>row.weekday===5),false);
+  assert.ok(overview.every(row=>!row.key.includes('coach-a')));
+});
+
+test('compteurs multi-terrains : une série avec trois terrains compte une seule séance par date', () => {
+  const rows = [1,2,3].map(court_number => ({
+    coach_id:'coach-a', audience:'adultes', session_date:'2026-09-14',
+    start_time:'17:00', end_time:'21:00', court_number, status:'completed'
+  }));
+  const overview = buildDaySeriesOverview({ groupSessions:rows, coachId:'coach-a', now:'2026-09-15' });
+  assert.equal(overview.length,1);
+  assert.equal(overview[0].completed,1);
+});
+
+test('annulation multi-terrains : un cours reste compté si un terrain est maintenu', () => {
+  const rows = [
+    { coach_id:'coach-a', audience:'adultes', session_date:'2026-09-14', start_time:'17:00', end_time:'21:00', court_number:1, status:'cancelled' },
+    { coach_id:'coach-a', audience:'adultes', session_date:'2026-09-14', start_time:'17:00', end_time:'21:00', court_number:2, status:'completed' },
+    { coach_id:'coach-a', audience:'adultes', session_date:'2026-09-21', start_time:'17:00', end_time:'21:00', court_number:1, status:'cancelled' },
+    { coach_id:'coach-a', audience:'adultes', session_date:'2026-09-21', start_time:'17:00', end_time:'21:00', court_number:2, status:'cancelled' }
+  ];
+  const row = buildDaySeriesOverview({ groupSessions:rows, coachId:'coach-a', now:'2026-09-22' })[0];
+  assert.equal(row.cancelled,1);
+  assert.equal(row.completed,1);
+});
+
+test('les stages de vacances ne créent pas de séries collectives hebdomadaires', () => {
+  const rows = [
+    { coach_id:'coach-a', audience:'enfants', session_date:'2026-10-19', start_time:'09:30', end_time:'16:30', title:'Stage enfants · Vacances de Toussaint', status:'scheduled' },
+    { coach_id:'coach-a', audience:'enfants', session_date:'2026-10-21', start_time:'09:30', end_time:'18:00', title:'Cours enfants', status:'scheduled' },
+    { coach_id:'coach-a', audience:'adultes', session_date:'2026-10-19', start_time:'17:00', end_time:'21:00', title:'Cours adultes', status:'scheduled' }
+  ];
+  const overview = buildDaySeriesOverview({ groupSessions:rows, coachId:'coach-a', now:'2026-10-22' });
+  assert.equal(overview.length,2);
+  assert.equal(overview.some(row=>row.start_time==='09:30'&&row.end_time==='16:30'),false);
+  assert.equal(overview.some(row=>row.audience==='enfants'&&row.weekday===3&&row.start_time==='09:30'&&row.end_time==='18:00'),true);
+});
+
+test('compteur individuel : annulations et cours planifiés sont dédoublonnés par date', () => {
+  const rows = [
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-14', start_time:'18:00', end_time:'21:00', court_number:1, status:'cancelled' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-14', start_time:'18:00', end_time:'21:00', court_number:2, status:'cancelled' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-28', start_time:'18:00', end_time:'21:00', court_number:1, status:'scheduled' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-28', start_time:'18:00', end_time:'21:00', court_number:2, status:'scheduled' },
+    { coach_id:'coach-a', audience:'adultes', session_date:'2026-09-14', start_time:'17:00', end_time:'21:00', status:'completed' }
+  ];
+  const row = buildDaySeriesOverview({ groupSessions:rows, coachId:'coach-b', now:'2026-09-22' })[0];
+  assert.equal(row.cancelled,1);
+  assert.equal(row.planned,1);
+  assert.equal(row.completed,1);
+});
+
 test('stages vacances : du lundi au vendredi, 9 h 30–16 h 30 sur les terrains 1, 2 et 3', () => {
   const stages = buildHolidayStageOccurrences({ startDate:'2026-10-19', endDate:'2026-10-24' });
   assert.equal(stages.length,5);
