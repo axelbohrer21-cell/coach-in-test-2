@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CANCELLED_GROUP_DATES, generateTeachingDates, isTeachingDate, buildDaySeriesOverview, buildHolidayStageOccurrences, GROUP_SEASON, getWeekProgram } from './group-calendar.js';
+import { CANCELLED_GROUP_DATES, generateTeachingDates, isTeachingDate, buildDaySeriesOverview, buildHolidayStageOccurrences, GROUP_SEASON, COACH_B_GROUP_BLOCKS, getWeekProgram, getCoachGroupSchedule, isWithinCoachSchedule } from './group-calendar.js';
 
 test('cours enfants : mercredi et samedi, hors vacances Zone B', () => {
   const wednesdays = generateTeachingDates({ audience:'enfants', weekday:3 });
@@ -24,9 +24,9 @@ test('cours adultes : lundi à vendredi selon le planning confirmé', () => {
   assert.equal(isTeachingDate('2027-05-06','adultes'),false); // Ascension
   assert.equal(isTeachingDate('2026-11-02','adultes'),true); // date affichée, pluie cochable manuellement
   assert.equal(isTeachingDate('2027-01-04','adultes'),true); // reprise après Noël
-  assert.deepEqual(GROUP_SEASON.weeklySchedule.find(row=>row.key==='adultes-mercredi'), { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courts:[1,2,3] });
-  assert.deepEqual(GROUP_SEASON.weeklySchedule.find(row=>row.key==='enfants-mercredi').courts,[1,2,3]);
-  assert.deepEqual(GROUP_SEASON.weeklySchedule.find(row=>row.key==='enfants-samedi').courts,[1,2,3]);
+  assert.deepEqual(GROUP_SEASON.weeklySchedule.find(row=>row.key==='adultes-mercredi'), { key:'adultes-mercredi', audience:'adultes', weekday:3, start:'18:00', end:'21:00', courtCount:3 });
+  assert.equal(GROUP_SEASON.weeklySchedule.find(row=>row.key==='enfants-mercredi').courtCount,3);
+  assert.equal(GROUP_SEASON.weeklySchedule.find(row=>row.key==='enfants-samedi').courtCount,3);
 });
 
 test('compteurs : les dates passées sont réalisées par défaut et les annulations sont exclues', () => {
@@ -79,7 +79,8 @@ test('compteurs multi-coachs : chaque créneau est distinct, les doubles crénea
   const rows = [
     { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-14', start_time:'18:00', end_time:'21:00', status:'completed' },
     { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-15', start_time:'12:15', end_time:'13:45', status:'completed' },
-    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-15', start_time:'17:30', end_time:'20:30', status:'completed' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-15', start_time:'17:30', end_time:'19:00', status:'completed' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-15', start_time:'19:00', end_time:'20:30', status:'completed' },
     { coach_id:'coach-b', audience:'enfants', session_date:'2026-09-16', start_time:'09:30', end_time:'18:00', status:'completed' },
     { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-16', start_time:'18:00', end_time:'19:30', status:'completed' },
     { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-17', start_time:'18:00', end_time:'19:30', status:'completed' },
@@ -87,10 +88,11 @@ test('compteurs multi-coachs : chaque créneau est distinct, les doubles crénea
     { coach_id:'coach-a', audience:'adultes', session_date:'2026-09-14', start_time:'17:00', end_time:'21:00', status:'completed' }
   ];
   const overview = buildDaySeriesOverview({ groupSessions:rows, coachId:'coach-b', now:'2026-09-22' });
-  assert.equal(overview.length,7);
-  assert.equal(overview.filter(row=>row.weekday===2&&row.audience==='adultes').length,2);
+  assert.equal(overview.length,8);
+  assert.equal(overview.filter(row=>row.weekday===2&&row.audience==='adultes').length,3);
   assert.equal(overview.some(row=>row.start_time==='12:15'&&row.end_time==='13:45'),true);
-  assert.equal(overview.some(row=>row.start_time==='17:30'&&row.end_time==='20:30'),true);
+  assert.equal(overview.some(row=>row.start_time==='17:30'&&row.end_time==='19:00'),true);
+  assert.equal(overview.some(row=>row.start_time==='19:00'&&row.end_time==='20:30'),true);
   assert.equal(overview.some(row=>row.weekday===5),false);
   assert.ok(overview.every(row=>!row.key.includes('coach-a')));
 });
@@ -143,7 +145,7 @@ test('compteur individuel : annulations et cours planifiés sont dédoublonnés 
   assert.equal(row.completed,1);
 });
 
-test('stages vacances : du lundi au vendredi, 9 h 30–16 h 30 sur les terrains 1, 2 et 3', () => {
+test('stages vacances : du lundi au vendredi, 9 h 30–16 h 30 avec 3 terrains mobilisés', () => {
   const stages = buildHolidayStageOccurrences({ startDate:'2026-10-19', endDate:'2026-10-24' });
   assert.equal(stages.length,5);
   assert.deepEqual(stages.map(row=>row.session_date),[
@@ -152,7 +154,7 @@ test('stages vacances : du lundi au vendredi, 9 h 30–16 h 30 sur les terrains 
   for (const row of stages) {
     assert.equal(row.start_time,'09:30');
     assert.equal(row.end_time,'16:30');
-    assert.deepEqual(row.courts,[1,2,3]);
+    assert.equal(row.court_count,3);
     assert.equal(row.audience,'enfants');
   }
 });
@@ -175,4 +177,29 @@ test('programme pédagogique : les semaines de vacances sont sautées après les
   assert.equal(weeks[24].startDate,'2027-04-12');
   assert.equal(weeks[25].startDate,'2027-05-03');
   assert.equal(weeks[29].startDate,'2027-05-31');
+});
+
+
+test('Coach B : les blocs collectifs ont une capacité distincte par créneau',()=>{
+  const tuesday=COACH_B_GROUP_BLOCKS.filter(row=>row.weekday===2);
+  assert.deepEqual(tuesday.map(row=>[row.start,row.end,row.courtCount]),[
+    ['12:15','13:45',null],['17:30','19:00',null],['19:00','20:30',3]
+  ]);
+  const wednesday=COACH_B_GROUP_BLOCKS.filter(row=>row.weekday===3);
+  assert.deepEqual(wednesday.map(row=>[row.audience,row.start,row.end,row.courtCount]),[
+    ['enfants','09:30','18:00',null],['adultes','18:00','19:30',null]
+  ]);
+});
+
+
+test('planning collectif Coach B : ses créneaux sont validés indépendamment de Coach A',()=>{
+  const schedule=getCoachGroupSchedule({email:'coachb@gmail.com'});
+  assert.equal(isWithinCoachSchedule('adultes',2,'12:15','13:45',schedule),true);
+  assert.equal(isWithinCoachSchedule('adultes',2,'17:30','19:00',schedule),true);
+  assert.equal(isWithinCoachSchedule('adultes',2,'19:00','20:30',schedule),true);
+  assert.equal(isWithinCoachSchedule('adultes',4,'18:00','19:30',schedule),true);
+  assert.equal(isWithinCoachSchedule('adultes',5,'18:00','19:30',schedule),false);
+  assert.equal(isWithinCoachSchedule('enfants',6,'09:30','13:30',schedule),true);
+  assert.equal(isWithinCoachSchedule('enfants',6,'09:30','14:30',schedule),false);
+  assert.equal(isWithinCoachSchedule('adultes',2,'12:15','13:45',getCoachGroupSchedule({email:'coacha@gmail.com'})),false);
 });

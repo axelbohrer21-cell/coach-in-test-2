@@ -4981,3 +4981,8 @@ body.camera-fullscreen-open{overflow:hidden}
  .fut-stat>strong{font-size:20px!important}
  .fut-card-foot{gap:6px!important;flex-wrap:wrap}
 }
+
+
+/* Shared activity identifier field */
+.inline-field{display:flex;align-items:center;gap:8px;width:100%;min-width:0}.inline-field input{flex:1;min-width:0}.inline-field .btn{flex:0 0 auto;white-space:nowrap}
+@media(max-width:460px){.inline-field{align-items:stretch}.inline-field .btn{padding-inline:10px}}
