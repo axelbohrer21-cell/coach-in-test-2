@@ -302,8 +302,8 @@ function playerCoachPlanningPage() {
     const groupEvents=events.filter(event=>event.source_kind==='group_session'&&!['cancelled','canceled','annulé','annulee'].includes(String(event.status||'').toLowerCase())).map(event=>({...event,start:toMinutes(event.start_time),end:toMinutes(event.start_time)+event.duration})).sort((a,b)=>a.start-b.start);
     const groupBlocks=groupEvents.reduce((blocks,event)=>{
       const last=blocks[blocks.length-1];
-      if(last&&event.start<=last.end){last.end=Math.max(last.end,event.end);last.titles.add(event.title||'Cours collectif');}
-      else blocks.push({...event,end:event.end,titles:new Set([event.title||'Cours collectif'])});
+      if(last&&event.start<last.end){last.end=Math.max(last.end,event.end);last.titles.add(event.title||'Cours collectif');if(event.audience)last.audiences.add(event.audience);last.courtCount+=Number(event.court_count||1);}
+      else blocks.push({...event,end:event.end,titles:new Set([event.title||'Cours collectif']),audiences:new Set(event.audience?[event.audience]:[]),courtCount:Number(event.court_count||1)});
       return blocks;
     },[]);
     const slots=Array.from({length:28},(_,slotIndex)=>{
@@ -318,7 +318,8 @@ function playerCoachPlanningPage() {
       const occupiedEnd=Boolean(blockedByGroup&&blockedEnd>slotStart&&blockedEnd<=slotEnd);
       const occupiedClass=blockedByGroup?(occupiedStart?'is-group-start':occupiedEnd?'is-group-end':'is-group-middle'):'';
       const groupFrameHeight=Math.max(30,Math.ceil((blockedEnd-blockedStart)/30)*30);
-      const groupLabel=blockedByGroup&&occupiedStart?'<div class="calendar-group-frame-label" style="--group-frame-height:'+groupFrameHeight+'px"><span class="calendar-lock" aria-hidden="true">🔒</span><span>COURS COLLECTIF</span><small>'+clock(String(Math.floor(blockedStart/60)).padStart(2,'0')+':'+String(blockedStart%60))+'–'+clock(String(Math.floor(blockedEnd/60)).padStart(2,'0')+':'+String(blockedEnd%60))+'</small></div>':'';
+      const groupAudience=blockedByGroup?.audiences?.size===1?(blockedByGroup.audiences.has('enfants')?'COURS ENFANTS':'COURS ADULTES'):'COURS COLLECTIF';
+      const groupLabel=blockedByGroup&&occupiedStart?'<div class="calendar-group-frame-label" style="--group-frame-height:'+groupFrameHeight+'px"><span class="calendar-lock" aria-hidden="true">🔒</span><span>'+groupAudience+'</span><small>'+clock(String(Math.floor(blockedStart/60)).padStart(2,'0')+':'+String(blockedStart%60))+'–'+clock(String(Math.floor(blockedEnd/60)).padStart(2,'0')+':'+String(blockedEnd%60))+' · '+blockedByGroup.courtCount+' terrain(s) mobilisé(s)</small></div>':'';
       const privateEvents=events.filter(event=>event.source_kind!=='group_session'&&toMinutes(event.start_time)<slotEnd&&toMinutes(event.start_time)+event.duration>slotStart);
       const cards=privateEvents.filter(event=>toMinutes(event.start_time)>=slotStart).map(event=>{
         const status=String(event.status||'').toLowerCase();
@@ -337,7 +338,8 @@ function playerCoachPlanningPage() {
       const rule=rules.find(row=>slotStart>=toMinutes(row.start_time)&&slotEnd<=toMinutes(row.end_time));
       const leadTimeOk=slotDateStart.getTime()>=Date.now()+30*60*1000;
       const privateOccupied=events.some(event=>event.source_kind!=='group_session'&&toMinutes(event.start_time)<slotEnd&&toMinutes(event.start_time)+event.duration>slotStart&&!['cancelled','canceled','annulé','annulee'].includes(String(event.status||'').toLowerCase()));
-      const available=Boolean(rule&&!disabled&&!blockedByGroup&&!privateOccupied&&!blocked&&leadTimeOk&&isPrivateLessonDateAllowed(iso));
+      const capacity= (state.clubCourtCapacity||[]).find(row=>row.session_date===iso&&String(row.slot_start).slice(0,5)===time);
+      const available=Boolean(rule&&!disabled&&!blockedByGroup&&!privateOccupied&&!blocked&&leadTimeOk&&isPrivateLessonDateAllowed(iso)&&Number(capacity?.available_courts??0)>0);
       const addButton=available?'<button type="button" class="calendar-hour-slot" data-book-slot data-coach="'+escapeHtml(selected.id)+'" data-date="'+iso+'" data-time="'+time+'" data-court="'+escapeHtml(String(rule.court_number||1))+'" aria-label="Demander un cours à '+clock(time)+'" title="Demander un cours particulier"></button>':'';
       const groupFrame=blockedByGroup?'<div class="calendar-group-frame '+occupiedClass+'">'+groupLabel+'</div>':cards+(blocked?'<span class="player-calendar-unavailable player-calendar-blocked">Indisponible</span>':'')+addButton;
       return '<div class="calendar-hour-row '+(blockedByGroup?'calendar-hour-row-group-occupied':'')+'"><span class="calendar-hour-label">'+clock(time)+'</span><div class="calendar-hour-content">'+groupFrame+'</div></div>';
@@ -370,8 +372,8 @@ function planningPage() {
     const events=[
       ...state.sessions.filter(s=>s.created_by===coachId&&s.session_date===iso&&!['annulée','annulee','cancelled'].includes(String(s.status||'').toLowerCase())).map(s=>({time:s.session_time||'08:00',kind:'session',id:s.id,playerId:s.player_id,title:playerName(s.player_id),detail:s.theme||'Cours particulier',duration:Number(s.duration_minutes||60),court:s.court_number})),
       ...(state.bookingRequests||[]).filter(b=>b.coach_id===coachId&&b.session_date===iso&&['pending','accepted','confirmed'].includes(String(b.status||'').toLowerCase())).map(b=>({time:b.start_time||'08:00',kind:'booking',id:b.id,playerId:b.player_id,title:playerName(b.player_id),detail:b.status==='pending'?'Demande à valider':'Cours particulier réservé',duration:Number(b.duration_minutes||60),court:b.court_number,status:b.status})),
-      ...state.groupSessions.filter(s=>s.coach_id===coachId&&s.session_date===iso).map(s=>({time:s.start_time||'08:00',date:s.session_date,kind:'group',id:s.id,title:s.title,detail:s.status==='cancelled'?'ANNULÉ':s.status==='completed'?'Cours collectif · effectué':'Cours collectif',duration:Math.max(0,timeToMinutes(s.end_time)-timeToMinutes(s.start_time)),court:s.court_number,status:s.status})),
-      ...buildHolidayStageOccurrences({startDate:iso,endDate:iso}).flatMap(stage=>stage.courts.map(court=>({time:stage.start_time,date:iso,kind:'stage',id:stage.id+'-court-'+court,title:stage.title,detail:'Stage enfants · vacances scolaires',duration:420,court,status:'scheduled'})))
+      ...state.groupSessions.filter(s=>s.coach_id===coachId&&s.session_date===iso).map(s=>({time:s.start_time||'08:00',date:s.session_date,kind:'group',id:s.id,title:s.title,detail:s.status==='cancelled'?'ANNULÉ':s.status==='completed'?'Cours collectif · effectué':'Cours collectif',duration:Math.max(0,timeToMinutes(s.end_time)-timeToMinutes(s.start_time)),courtCount:Number(s.court_count||1),audience:s.audience,status:s.status})),
+      ...buildHolidayStageOccurrences({startDate:iso,endDate:iso}).flatMap(stage=>stage.courts.map(court=>({time:stage.start_time,date:iso,kind:'stage',id:stage.id+'-court-'+court,title:stage.title,detail:'Stage enfants · vacances scolaires',duration:420,courtCount:Number(stage.court_count||3),audience:'enfants',status:'scheduled'})))
     ];
     const dayAvailability=(state.weeklyAvailability||[]).filter(row=>row.coach_id===coachId&&row.active&&Number(row.weekday)===(d.getDay()||7));
     // Tous les plannings coach affichent toujours la journée complète, de 08:00 à 22:00.
