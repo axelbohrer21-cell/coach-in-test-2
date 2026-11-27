@@ -93,7 +93,7 @@ npm run build
 ## Budget de contexte et quotas IA
 
 - Les instructions du Manager sont volontairement courtes : les documents détaillés sont chargés uniquement lorsqu'ils sont utiles à la mission.
-- Le Manager compacte l'historique à partir d'un contexte de 6 500 tokens, avec un seuil de 65 %, et les réponses sont limitées à 512 tokens par appel.
+- Le Manager compacte l'historique à partir d'un contexte de 6 000 tokens, avec un seuil de 65 %, et les réponses sont limitées à 768 tokens par appel.
 - Les briefs délégués sont bornés avant envoi ; les résultats de dépendances sont résumés et limités aux preuves les plus utiles.
 - Les revues sélectionnent QA et au plus un expert de domaine. Les appels de revue sont séquentiels afin d'éviter les pointes de consommation TPM.
 - Le budget caractères/tokens est une estimation heuristique, pas un tokenizer exact ni une garantie de quota. Le runtime du fournisseur reste l'autorité.
