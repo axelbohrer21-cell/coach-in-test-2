@@ -36,8 +36,12 @@ test("ajoute l'expert Supabase pour une migration SQL", () => {
   assert.ok(!result.reviewers.includes("data_security_reviewer"));
 });
 
-test("ajoute Supabase et sécurité pour une modification RLS", () => {
+test("limite la revue à un expert de domaine et donne priorité à la sécurité", () => {
   const result = selectReviewers("Modifier les policies RLS sur Supabase pour isoler les notes privées");
-  assert.ok(result.reviewers.includes("supabase_expert"));
-  assert.ok(result.reviewers.includes("data_security_reviewer"));
+  assert.deepEqual(result.reviewers, ["qa_reviewer", "data_security_reviewer"]);
+});
+
+test("ne lance qu’un seul expert même si une tâche touche plusieurs domaines", () => {
+  const result = selectReviewers("Refondre l’interface mobile du planning tennis");
+  assert.deepEqual(result.reviewers, ["qa_reviewer", "tennis_expert"]);
 });
