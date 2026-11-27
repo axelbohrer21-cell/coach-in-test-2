@@ -1,11 +1,11 @@
 -- Shared club capacity: count occupied courts, never assign a fixed court number.
 alter table public.group_sessions
-  add column if not exists court_count smallint not null default 1;
+  add column if not exists court_count smallint default 1;
 alter table public.group_course_series
   add column if not exists court_count smallint not null default 1,
   alter column court_number drop not null;
 alter table public.shared_court_occupancy
-  add column if not exists court_count smallint not null default 1,
+  add column if not exists court_count smallint,
   add column if not exists audience text;
 alter table public.booking_requests
   add column if not exists court_count smallint not null default 1;
@@ -13,7 +13,7 @@ alter table public.training_sessions
   add column if not exists court_count smallint not null default 1;
 
 alter table public.group_sessions drop constraint if exists group_sessions_court_count_check;
-alter table public.group_sessions add constraint group_sessions_court_count_check check (court_count between 1 and 3);
+alter table public.group_sessions add constraint group_sessions_court_count_check check (court_count between 1 and 3 or court_count is null);
 alter table public.group_course_series drop constraint if exists group_course_series_court_count_check;
 alter table public.group_course_series add constraint group_course_series_court_count_check check (court_count between 1 and 3);
 alter table public.shared_court_occupancy drop constraint if exists shared_court_occupancy_court_count_check;
@@ -25,17 +25,8 @@ alter table public.training_sessions add constraint training_sessions_court_coun
 
 -- Coach B: one collective block per actual lesson, with the confirmed court capacity.
 update public.group_sessions g
-set court_count = case
-  when extract(isodow from g.session_date)::int = 1 and g.start_time = time '18:00' and g.end_time = time '21:00' then 3
-  when extract(isodow from g.session_date)::int = 2 and g.start_time = time '12:15' and g.end_time = time '13:45' then 2
-  when extract(isodow from g.session_date)::int = 3 and g.start_time = time '09:30' and g.end_time = time '18:00' and g.audience = 'enfants' then 3
-  when extract(isodow from g.session_date)::int = 3 and g.start_time = time '18:00' and g.end_time = time '19:30' and g.audience = 'adultes' then 3
-  when extract(isodow from g.session_date)::int = 4 and g.start_time = time '18:00' and g.end_time = time '19:30' then 1
-  when extract(isodow from g.session_date)::int = 6 and g.start_time = time '09:30' and g.end_time = time '13:30' then 3
-  else g.court_count
-end
-from public.profiles p
-where p.id = g.coach_id and lower(p.email) = 'coachb@gmail.com';
+set court_count = null
+where g.coach_id = 'e9aae5ee-3731-4a28-a023-85567724b674';
 
 -- Split Coach B Tuesday evening into the two real lessons.
 insert into public.group_sessions
@@ -43,16 +34,14 @@ insert into public.group_sessions
 select g.coach_id,g.title,g.theme,g.session_date,time '19:00',time '20:30',g.audience,g.status,
        g.source_week,g.series_id,null,3
 from public.group_sessions g
-join public.profiles p on p.id = g.coach_id
-where lower(p.email) = 'coachb@gmail.com'
+where g.coach_id = 'e9aae5ee-3731-4a28-a023-85567724b674'
   and extract(isodow from g.session_date)::int = 2
   and g.start_time = time '17:30'
   and g.end_time = time '20:30';
 
 update public.group_sessions g
-set end_time = time '19:00', court_count = 2, court_number = null
-from public.profiles p
-where p.id = g.coach_id and lower(p.email) = 'coachb@gmail.com'
+set end_time = time '19:00', court_count = null, court_number = null
+where g.coach_id = 'e9aae5ee-3731-4a28-a023-85567724b674'
   and extract(isodow from g.session_date)::int = 2
   and g.start_time = time '17:30'
   and g.end_time = time '20:30';
@@ -153,12 +142,23 @@ $function$;
 -- Backfill the shared ledger after the new court-count metadata is present.
 update public.shared_court_occupancy o
 set court_count = case
-      when o.source_kind='group_session' then coalesce(g.court_count,1)
+      when o.source_kind='group_session' then g.court_count
       else 1
     end,
     audience = case when o.source_kind='group_session' then g.audience else null end
 from public.group_sessions g
 where o.source_kind='group_session' and o.source_id=g.id;
+
+insert into public.shared_court_occupancy
+  (coach_id,session_date,start_time,end_time,court_number,court_count,audience,source_kind,source_id,status)
+select g.coach_id,g.session_date,g.start_time,g.end_time,g.court_number,g.court_count,g.audience,
+       'group_session',g.id,case when g.status='completed' then 'completed' else 'scheduled' end
+from public.group_sessions g
+where g.status in ('scheduled','completed')
+on conflict (source_kind,source_id) do update set
+  coach_id=excluded.coach_id,session_date=excluded.session_date,start_time=excluded.start_time,
+  end_time=excluded.end_time,court_number=excluded.court_number,court_count=excluded.court_count,
+  audience=excluded.audience,status=excluded.status;
 
 update public.shared_court_occupancy
 set court_count=1,audience=null
@@ -180,12 +180,12 @@ as $function$
 declare
   v_max integer;
 begin
-  select coalesce(max(least(3,x.group_occupied + p_add_group_count) + x.private_occupied),0)::integer
+  select coalesce(max(x.group_occupied + coalesce(p_add_group_count,3) + x.private_occupied),0)::integer
   into v_max
   from (
     select points.at_time,
-      coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)::integer as group_occupied,
-      coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0)::integer as private_occupied
+      coalesce(sum(case when o.court_count is null then 3 else o.court_count end) filter (where o.source_kind='group_session'),0)::integer as group_occupied,
+      coalesce(sum(case when o.court_count is null then 3 else o.court_count end) filter (where o.source_kind<>'group_session'),0)::integer as private_occupied
     from (
       select p_start as at_time
       union
@@ -227,6 +227,7 @@ declare
   v_max integer;
 begin
   if new.status in ('scheduled','completed') then
+    if new.court_count is null then raise exception 'Indique le nombre de terrains mobilisés pour ce cours collectif.'; end if;
     v_start:=new.session_date+new.start_time;
     v_end:=new.session_date+new.end_time;
     perform pg_advisory_xact_lock(hashtextextended('club-courts:'||new.session_date::text,0));
@@ -291,7 +292,7 @@ before insert or update on public.training_sessions
 for each row execute function private.guard_training_shared_court_capacity();
 
 create or replace function public.get_club_court_capacity(p_start_date date,p_end_date date)
-returns table(session_date date,slot_start time without time zone,occupied_courts integer,available_courts integer,shared_plateau boolean)
+returns table(session_date date,slot_start time without time zone,occupied_courts integer,available_courts integer,capacity_known boolean)
 language plpgsql
 stable
 security definer
@@ -314,12 +315,13 @@ begin
   return query
   select d.day::date,
          slots.slot_start::time,
-         (least(3,coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0))
-           + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0))::integer,
-         greatest(0,3-(least(3,coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0))
-           + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0)))::integer,
-         (coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)>=3
-           and count(distinct o.coach_id) filter (where o.source_kind='group_session')>1)
+         case when coalesce(bool_or(o.court_count is null),false) then 3
+              else least(3,coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)
+                           + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0))::integer end,
+         case when coalesce(bool_or(o.court_count is null),false) then 0
+              else greatest(0,3-(coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)
+                           + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0)))::integer end,
+         not coalesce(bool_or(o.court_count is null),false)
   from generate_series(p_start_date::timestamp,p_end_date::timestamp,interval '1 day') as d(day)
   cross join lateral generate_series(d.day + time '08:00',d.day + time '21:30',interval '30 minutes') as slots(slot_start)
   left join public.shared_court_occupancy o
