@@ -10,7 +10,7 @@ async function unwrap(query) {
 }
 
 async function loadClubCourtCapacity() {
-  const start = new Date().toISOString().slice(0,10);
+  const start = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   const seasonEnd = '2027-06-20';
   const end = seasonEnd >= start ? seasonEnd : start;
   const { data, error } = await supabase.rpc('get_club_court_capacity', {
