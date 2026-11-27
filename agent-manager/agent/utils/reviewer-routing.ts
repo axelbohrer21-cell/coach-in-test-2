@@ -14,5 +14,5 @@ export function selectReviewers(task: string, context?: string) {
   ];
   const selected = rules.find((rule) => rule.pattern.test(text));
   if (selected) reasons.push(selected.reason);
-  return { reviewers: selected ? ["qa_reviewer", selected.id] : ["qa_reviewer"], reasons };
+  return { reviewers: selected ? [selected.id] : ["qa_reviewer"], reasons };
 }
