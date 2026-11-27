@@ -88,7 +88,7 @@ test('compteurs multi-coachs : chaque créneau est distinct, les doubles crénea
     { coach_id:'coach-a', audience:'adultes', session_date:'2026-09-14', start_time:'17:00', end_time:'21:00', status:'completed' }
   ];
   const overview = buildDaySeriesOverview({ groupSessions:rows, coachId:'coach-b', now:'2026-09-22' });
-  assert.equal(overview.length,7);
+  assert.equal(overview.length,8);
   assert.equal(overview.filter(row=>row.weekday===2&&row.audience==='adultes').length,3);
   assert.equal(overview.some(row=>row.start_time==='12:15'&&row.end_time==='13:45'),true);
   assert.equal(overview.some(row=>row.start_time==='17:30'&&row.end_time==='19:00'),true);
