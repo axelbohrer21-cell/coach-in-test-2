@@ -260,7 +260,6 @@ begin
     ) or exists (
       select 1 from public.training_sessions s
       where s.created_by=new.coach_id and s.session_date=new.session_date
-        and s.id is distinct from new.id
         and (s.session_date+coalesce(s.session_time,time '00:00'))<v_end
         and (s.session_date+coalesce(s.session_time,time '00:00')+make_interval(mins=>coalesce(s.duration_minutes,60)))>v_start
         and lower(coalesce(s.status,'')) not in ('annulée','annulee','annule','annulé','cancelled','canceled')
