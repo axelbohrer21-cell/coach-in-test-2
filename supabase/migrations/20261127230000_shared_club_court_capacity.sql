@@ -31,7 +31,10 @@ drop trigger if exists guard_group_shared_court_capacity on public.group_session
 
 -- Coach B: one collective block per actual lesson, with only confirmed capacity.
 update public.group_sessions g
-set court_count = null
+set court_count = case
+  when extract(isodow from g.session_date)::int=2 and g.start_time=time '19:00' and g.end_time=time '20:30' then 3
+  else null
+end
 from public.profiles p where p.id=g.coach_id and lower(p.email)='coachb@gmail.com';
 
 -- Split Coach B Tuesday evening into the two real lessons.
@@ -44,7 +47,13 @@ join public.profiles p on p.id=g.coach_id
 where lower(p.email)='coachb@gmail.com'
   and extract(isodow from g.session_date)::int = 2
   and g.start_time = time '17:30'
-  and g.end_time = time '20:30';
+  and g.end_time = time '20:30'
+  and not exists (
+    select 1 from public.group_sessions existing
+    where existing.coach_id=g.coach_id and existing.session_date=g.session_date
+      and existing.start_time=time '19:00' and existing.end_time=time '20:30'
+      and existing.audience=g.audience and existing.title=g.title and existing.status=g.status
+  );
 
 update public.group_sessions g
 set end_time = time '19:00', court_count = null, court_number = null
