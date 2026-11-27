@@ -4,20 +4,18 @@ import { selectReviewers } from "./reviewer-routing.ts";
 
 test("ajoute l'expert tennis pour une règle de réservation", () => {
   const result = selectReviewers("Modifier le planning et les réservations joueurs");
-  assert.ok(result.reviewers.includes("qa_reviewer"));
-  assert.ok(result.reviewers.includes("tennis_expert"));
+  assert.deepEqual(result.reviewers, ["tennis_expert"]);
   assert.ok(!result.reviewers.includes("data_security_reviewer"));
 });
 
 test("ajoute UX pour une tâche d'interface mobile", () => {
   const result = selectReviewers("Corriger l'affichage responsive sur iPhone");
-  assert.ok(result.reviewers.includes("ux_reviewer"));
-  assert.ok(result.reviewers.includes("qa_reviewer"));
+  assert.deepEqual(result.reviewers, ["ux_reviewer"]);
 });
 
 test("ajoute sécurité pour les permissions et l'isolation", () => {
   const result = selectReviewers("Sécuriser l'authentification et l'isolation multi-coach");
-  assert.ok(result.reviewers.includes("data_security_reviewer"));
+  assert.deepEqual(result.reviewers, ["data_security_reviewer"]);
 });
 
 test("garde QA seul pour une tâche générique", () => {
@@ -32,16 +30,15 @@ test("analyse aussi le contexte fourni", () => {
 
 test("ajoute l'expert Supabase pour une migration SQL", () => {
   const result = selectReviewers("Créer une migration SQL pour une RPC Supabase");
-  assert.ok(result.reviewers.includes("supabase_expert"));
-  assert.ok(!result.reviewers.includes("data_security_reviewer"));
+  assert.deepEqual(result.reviewers, ["supabase_expert"]);
 });
 
 test("limite la revue à un expert de domaine et donne priorité à la sécurité", () => {
   const result = selectReviewers("Modifier les policies RLS sur Supabase pour isoler les notes privées");
-  assert.deepEqual(result.reviewers, ["qa_reviewer", "data_security_reviewer"]);
+  assert.deepEqual(result.reviewers, ["data_security_reviewer"]);
 });
 
 test("ne lance qu’un seul expert même si une tâche touche plusieurs domaines", () => {
   const result = selectReviewers("Refondre l’interface mobile du planning tennis");
-  assert.deepEqual(result.reviewers, ["qa_reviewer", "tennis_expert"]);
+  assert.deepEqual(result.reviewers, ["tennis_expert"]);
 });
