@@ -1,11 +1,14 @@
 -- Shared club capacity: count occupied courts, never assign a fixed court number.
 alter table public.group_sessions
   add column if not exists court_count smallint default 1;
+alter table public.group_sessions alter column court_count drop not null, alter column court_count drop default;
 alter table public.group_course_series
   add column if not exists court_count smallint not null default 1,
   alter column court_number drop not null;
 alter table public.shared_court_occupancy
   add column if not exists court_count smallint,
+  alter column court_count drop not null,
+  alter column court_count drop default,
   add column if not exists audience text;
 alter table public.booking_requests
   add column if not exists court_count smallint not null default 1;
@@ -26,7 +29,7 @@ alter table public.training_sessions add constraint training_sessions_court_coun
 -- Coach B: one collective block per actual lesson, with the confirmed court capacity.
 update public.group_sessions g
 set court_count = null
-where g.coach_id = 'e9aae5ee-3731-4a28-a023-85567724b674';
+from public.profiles p where p.id=g.coach_id and lower(p.email)='coachb@gmail.com';
 
 -- Split Coach B Tuesday evening into the two real lessons.
 insert into public.group_sessions
@@ -34,14 +37,15 @@ insert into public.group_sessions
 select g.coach_id,g.title,g.theme,g.session_date,time '19:00',time '20:30',g.audience,g.status,
        g.source_week,g.series_id,null,3
 from public.group_sessions g
-where g.coach_id = 'e9aae5ee-3731-4a28-a023-85567724b674'
+join public.profiles p on p.id=g.coach_id
+where lower(p.email)='coachb@gmail.com'
   and extract(isodow from g.session_date)::int = 2
   and g.start_time = time '17:30'
   and g.end_time = time '20:30';
 
 update public.group_sessions g
 set end_time = time '19:00', court_count = null, court_number = null
-where g.coach_id = 'e9aae5ee-3731-4a28-a023-85567724b674'
+from public.profiles p where p.id=g.coach_id and lower(p.email)='coachb@gmail.com'
   and extract(isodow from g.session_date)::int = 2
   and g.start_time = time '17:30'
   and g.end_time = time '20:30';
