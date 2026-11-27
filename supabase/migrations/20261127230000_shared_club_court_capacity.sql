@@ -176,7 +176,8 @@ $function$;
 
 -- Backfill the shared ledger after the new court-count metadata is present.
 update public.shared_court_occupancy o
-set court_count = case
+set court_number=g.court_number,
+    court_count = case
       when o.source_kind='group_session' then g.court_count
       else 1
     end,
@@ -196,7 +197,7 @@ on conflict (source_kind,source_id) do update set
   audience=excluded.audience,status=excluded.status;
 
 update public.shared_court_occupancy
-set court_count=1,audience=null
+set court_number=null,court_count=1,audience=null
 where source_kind in ('booking','private_session');
 
 create or replace function private.max_club_court_occupancy(
@@ -215,7 +216,7 @@ as $function$
 declare
   v_max integer;
 begin
-  select coalesce(max(x.group_occupied + coalesce(p_add_group_count,3) + x.private_occupied),0)::integer
+  select coalesce(max(least(3,x.group_occupied + coalesce(p_add_group_count,3)) + x.private_occupied),0)::integer
   into v_max
   from (
     select points.at_time,
@@ -372,7 +373,7 @@ revoke all on function private.guard_training_shared_court_capacity() from publi
 drop function if exists public.get_club_court_capacity(date,date);
 
 create function public.get_club_court_capacity(p_start_date date,p_end_date date)
-returns table(session_date date,slot_start time without time zone,occupied_courts integer,available_courts integer,capacity_known boolean)
+returns table(session_date date,slot_start time without time zone,occupied_courts integer,available_courts integer,capacity_known boolean,shared_plateau boolean)
 language plpgsql
 stable
 security definer
@@ -396,12 +397,15 @@ begin
   select d.day::date,
          slots.slot_start::time,
          case when coalesce(bool_or(o.id is not null and o.court_count is null),false) then 3
-              else (coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)
-                           + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0))::integer end,
+              else (least(3,coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0))
+                    + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0))::integer end,
          case when coalesce(bool_or(o.id is not null and o.court_count is null),false) then 0
-              else greatest(0,3-(coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)
-                           + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0)))::integer end,
+              else greatest(0,3-(least(3,coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0))
+                    + coalesce(sum(o.court_count) filter (where o.source_kind<>'group_session'),0)))::integer end,
+         not coalesce(bool_or(o.id is not null and o.court_count is null),false),
          not coalesce(bool_or(o.id is not null and o.court_count is null),false)
+           and coalesce(sum(o.court_count) filter (where o.source_kind='group_session'),0)>=3
+           and count(distinct o.coach_id) filter (where o.source_kind='group_session')>1
   from generate_series(p_start_date::timestamp,p_end_date::timestamp,interval '1 day') as d(day)
   cross join lateral generate_series(d.day + time '08:00',d.day + time '21:30',interval '30 minutes') as slots(slot_start)
   left join public.shared_court_occupancy o
