@@ -60,7 +60,7 @@ export default defineWorkflowTool({
         compactPromptText(context, 3000, "contexte de revue") || "Aucun contexte supplémentaire fourni.",
         "",
         "TRANSMISSION DE L'AUDITEUR DU PLAN :",
-        additionalContext ?? "Aucun résultat d'audit disponible ; indique les limites liées à cette absence.",
+        compactPromptText(additionalContext, 1400, "audit du plan") || "Aucun résultat d’audit disponible ; indique les limites liées à cette absence.",
         "",
         "Fournis un verdict, des constats fondés, des recommandations concrètes, des critères d'acceptation et les tests nécessaires.",
       ].join("\n"), 10500);
