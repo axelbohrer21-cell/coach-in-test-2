@@ -38,7 +38,7 @@ begin
   v_start := p_session_date + p_start_time;
   v_end := v_start + make_interval(mins => p_duration_minutes);
 
-  if v_start < (now() at time zone 'Europe/Paris') + interval '30 minutes' then
+  if v_start <= (now() at time zone 'Europe/Paris') + interval '30 minutes' then
     raise exception 'La réservation doit être effectuée au moins 30 minutes avant le début du cours.';
   end if;
 
@@ -171,7 +171,7 @@ begin
     v_start := v_booking.session_date + v_booking.start_time;
     v_end := v_start + make_interval(mins => v_booking.duration_minutes);
 
-    if v_start < (now() at time zone 'Europe/Paris') + interval '30 minutes' then
+    if v_start <= (now() at time zone 'Europe/Paris') + interval '30 minutes' then
       raise exception 'Impossible de confirmer un cours à moins de 30 minutes de son début.';
     end if;
 
