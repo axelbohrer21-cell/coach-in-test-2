@@ -98,7 +98,7 @@ export default defineWorkflowTool({
     }
 
     const role = sourceTask.role;
-    const task = compactPromptText(sourceTask.objective, 4200, "mission");
+    const task = compactPromptText(sourceTask.objective, 3600, "mission");
     const acceptanceCriteria = sourceTask.acceptanceCriteria;
     const { baseRef, workBranch, worktreePath } = sourceTask;
     const requiredDependencies = plannedTask.executionDependsOn;
@@ -189,7 +189,7 @@ export default defineWorkflowTool({
       task,
       "",
       "CONTEXTE TRANSMIS :",
-      compactPromptText(context, 3600, "contexte projet") || "Aucun contexte complémentaire.",
+      compactPromptText(context, 2800, "contexte projet") || "Aucun contexte complémentaire.",
       "",
       "CONSIGNES D'ENVIRONNEMENT :",
       sandboxInstructions,
@@ -205,7 +205,7 @@ export default defineWorkflowTool({
       "- Si un prérequis manque, renvoie status=blocked ou needs_input et explique précisément lequel.",
       "- Pour chaque critère d’acceptation, retourne exactement une entrée dans criteriaResults avec le texte exact, le statut met/not_met/not_verified et une preuve observée. Ne déclare pas completed si un critère n’est pas démontré.",
       "- Retourne le résultat structuré demandé par le schéma, avec des tableaux vides si rien ne s'applique.",
-    ].join("\n"), 14500);
+    ].join("\n"), 12000);
 
     try {
       const response = await ctx.agent(role).send(prompt, {
@@ -241,7 +241,7 @@ export default defineWorkflowTool({
         ...result.data,
         status: completion.valid ? result.data.status : "blocked",
         completionGate: completion,
-        promptBudget: { estimatedPromptTokens: estimatePromptTokens(prompt), promptCharacters: prompt.length, target: "environ 4 200 tokens maximum hors instructions runtime" },
+        promptBudget: { estimatedPromptTokens: estimatePromptTokens(prompt), promptCharacters: prompt.length, target: "environ 3 500 tokens maximum hors instructions runtime" },
         verification: codeRoles.has(role)
           ? "Compte rendu de développement dans le sandbox, à vérifier indépendamment par le Manager."
           : role === "qa_engineer"
