@@ -251,6 +251,23 @@ begin
       raise exception 'Ce coach a déjà un autre cours collectif sur ce créneau.';
     end if;
 
+    if exists (
+      select 1 from public.booking_requests b
+      where b.coach_id=new.coach_id and b.session_date=new.session_date
+        and b.status in ('pending','accepted')
+        and (b.session_date+b.start_time)<v_end
+        and (b.session_date+b.start_time+make_interval(mins=>b.duration_minutes))>v_start
+    ) or exists (
+      select 1 from public.training_sessions s
+      where s.created_by=new.coach_id and s.session_date=new.session_date
+        and s.id is distinct from new.id
+        and (s.session_date+coalesce(s.session_time,time '00:00'))<v_end
+        and (s.session_date+coalesce(s.session_time,time '00:00')+make_interval(mins=>coalesce(s.duration_minutes,60)))>v_start
+        and lower(coalesce(s.status,'')) not in ('annulée','annulee','annule','annulé','cancelled','canceled')
+    ) then
+      raise exception 'Ce coach a déjà un cours particulier sur ce créneau.';
+    end if;
+
     v_max:=private.max_club_court_occupancy(v_start,v_end,'group_session',new.id,new.court_count);
     if v_max>3 then
       raise exception 'Les terrains disponibles ne permettent pas ce cours collectif en plus des cours particuliers déjà réservés.';
@@ -281,6 +298,29 @@ begin
     v_start:=new.session_date+new.session_time;
     v_end:=v_start+make_interval(mins=>new.duration_minutes);
     perform pg_advisory_xact_lock(hashtextextended('club-courts:'||new.session_date::text,0));
+    if exists (
+      select 1 from public.group_sessions g
+      where g.coach_id=new.created_by and g.session_date=new.session_date
+        and g.status in ('scheduled','completed')
+        and (g.session_date+g.start_time)<v_end
+        and (g.session_date+g.end_time)>v_start
+    ) or exists (
+      select 1 from public.booking_requests b
+      where b.coach_id=new.created_by and b.session_date=new.session_date
+        and b.status in ('pending','accepted')
+        and (b.session_date+b.start_time)<v_end
+        and (b.session_date+b.start_time+make_interval(mins=>b.duration_minutes))>v_start
+    ) or exists (
+      select 1 from public.training_sessions s
+      where s.created_by=new.created_by and s.id is distinct from new.id
+        and s.session_date=new.session_date
+        and (s.session_date+coalesce(s.session_time,time '00:00'))<v_end
+        and (s.session_date+coalesce(s.session_time,time '00:00')+make_interval(mins=>coalesce(s.duration_minutes,60)))>v_start
+        and lower(coalesce(s.status,'')) not in ('annulée','annulee','annule','annulé','cancelled','canceled')
+    ) then
+      raise exception 'Le coach a déjà une autre séance sur ce créneau.';
+    end if;
+
     v_max:=private.max_club_court_occupancy(v_start,v_end,'private_session',new.id,0::smallint);
     if v_max+1>3 then
       raise exception 'Les trois terrains sont déjà occupés sur une partie de ce créneau.';
