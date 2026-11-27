@@ -14,6 +14,9 @@ alter table public.group_course_series
 alter table public.shared_court_occupancy
   add column if not exists shared_activity_id uuid;
 
+-- Existing Coach B occurrences have unknown court_count; pause the old guard while only series links are backfilled.
+drop trigger if exists guard_group_shared_court_capacity on public.group_sessions;
+
 alter table public.group_course_series
   drop constraint if exists group_course_series_court_count_check;
 alter table public.group_course_series
