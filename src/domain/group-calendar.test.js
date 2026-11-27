@@ -105,6 +105,20 @@ test('compteurs multi-terrains : une série avec trois terrains compte une seule
   assert.equal(overview[0].completed,1);
 });
 
+test('compteur individuel : annulations et cours planifiés sont dédoublonnés par date', () => {
+  const rows = [
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-14', start_time:'18:00', end_time:'21:00', court_number:1, status:'cancelled' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-14', start_time:'18:00', end_time:'21:00', court_number:2, status:'cancelled' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-28', start_time:'18:00', end_time:'21:00', court_number:1, status:'scheduled' },
+    { coach_id:'coach-b', audience:'adultes', session_date:'2026-09-28', start_time:'18:00', end_time:'21:00', court_number:2, status:'scheduled' },
+    { coach_id:'coach-a', audience:'adultes', session_date:'2026-09-14', start_time:'17:00', end_time:'21:00', status:'completed' }
+  ];
+  const row = buildDaySeriesOverview({ groupSessions:rows, coachId:'coach-b', now:'2026-09-22' })[0];
+  assert.equal(row.cancelled,1);
+  assert.equal(row.planned,1);
+  assert.equal(row.completed,1);
+});
+
 test('stages vacances : du lundi au vendredi, 9 h 30–16 h 30 sur les terrains 1, 2 et 3', () => {
   const stages = buildHolidayStageOccurrences({ startDate:'2026-10-19', endDate:'2026-10-24' });
   assert.equal(stages.length,5);
