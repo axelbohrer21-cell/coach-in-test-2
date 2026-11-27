@@ -20,18 +20,19 @@ export function buildSeriesCounters(series, sessions, today = new Date().toISOSt
   });
 }
 
-export function buildSeriesOccurrences(series, { start = GROUP_SEASON.start, end = GROUP_SEASON.end } = {}) {
+export function buildSeriesOccurrences(series, { start = GROUP_SEASON.start, end = GROUP_SEASON.end, weeklySchedule = GROUP_SEASON.weeklySchedule } = {}) {
   if (!series?.id || !series?.audience || !Number.isInteger(Number(series.weekday))) throw new TypeError('Créneau annuel incomplet.');
   if (!['adultes', 'enfants'].includes(series.audience)) throw new TypeError('Public du créneau invalide.');
   if (!GROUP_SEASON.weekdays[series.audience].includes(Number(series.weekday))) throw new TypeError('Jour incompatible avec le public du créneau.');
   if (!series.start_time || !series.end_time || series.end_time <= series.start_time) throw new TypeError('Horaires du créneau invalides.');
-  if (!Number.isInteger(Number(series.court_count)) || Number(series.court_count) < 1 || Number(series.court_count) > 3) throw new TypeError('Indique entre 1 et 3 terrains mobilisés.');
+  if (series.court_count == null || !Number.isInteger(Number(series.court_count)) || Number(series.court_count) < 1 || Number(series.court_count) > 3) throw new TypeError('Précise le nombre de terrains mobilisés avant de générer les dates.');
   const dates = generateTeachingDates({ start: series.season_start || start, end: series.season_end || end, audience: series.audience, weekday: Number(series.weekday) });
-  if (dates.some(date => !isWithinTeachingWindow(date, series.start_time, series.end_time, series.audience))) throw new RangeError(series.audience === 'adultes' ? 'Les cours adultes doivent respecter les horaires du planning collectif confirmé.' : 'Les cours enfants doivent respecter les horaires du mercredi (9 h 30–18 h) ou du samedi (9 h 30–14 h 30).');
+  if (dates.some(date => !isWithinTeachingWindow(date, series.start_time, series.end_time, series.audience, weeklySchedule))) throw new RangeError(series.audience === 'adultes' ? 'Les cours adultes doivent respecter les horaires du planning collectif confirmé.' : 'Les cours enfants doivent respecter les horaires du mercredi (9 h 30–18 h) ou du samedi (9 h 30–14 h 30).');
   return dates.map(session_date => ({
     coach_id: series.coach_id, series_id: series.id, title: series.title,
     theme: series.theme || '', session_date, start_time: series.start_time,
     end_time: series.end_time, court_number: null, court_count: Number(series.court_count),
+    shared_activity_id: series.shared_activity_id || null,
     audience: series.audience, status: 'scheduled'
   }));
 }
