@@ -22,7 +22,8 @@
     "test:agents": "node --experimental-strip-types --test agent/utils/agent-registry.test.ts",
     "check:discovery": "eve info",
     "test:memory-privacy": "node --experimental-strip-types --test agent/utils/mission-memory-privacy.test.ts",
-    "test:security": "node --experimental-strip-types --test apps/web/lib/access-control.test.ts"
+    "test:security": "node --experimental-strip-types --test apps/web/lib/access-control.test.ts",
+    "test:context-budget": "node --experimental-strip-types --test agent/utils/context-budget.test.ts"
   },
   "dependencies": {
     "@shadcn/react": "^0.3.1",
