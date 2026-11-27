@@ -341,7 +341,7 @@ function playerCoachPlanningPage() {
       const capacity= (state.clubCourtCapacity||[]).find(row=>row.session_date===iso&&String(row.slot_start).slice(0,5)===time);
       const available=Boolean(rule&&!disabled&&!blockedByGroup&&!privateOccupied&&!blocked&&leadTimeOk&&isPrivateLessonDateAllowed(iso)&&Number(capacity?.available_courts??0)>0);
       const addButton=available?'<button type="button" class="calendar-hour-slot" data-book-slot data-coach="'+escapeHtml(selected.id)+'" data-date="'+iso+'" data-time="'+time+'"  aria-label="Demander un cours à '+clock(time)+'" title="Demander un cours particulier"></button>':'';
-      const capacityMessage=capacity&&Number(capacity.available_courts)===0?'<span class="player-calendar-unavailable player-calendar-blocked">'+(capacity.capacity_known===false?'Occupation des terrains à confirmer':'Terrains déjà occupés')+'</span>':'';
+      const capacityMessage=capacity&&Number(capacity.available_courts)===0?'<span class="player-calendar-unavailable player-calendar-blocked">'+(capacity.shared_plateau?'Plateau commun · 3 terrains mobilisés':'Terrains déjà occupés')+'</span>':'';
       const groupFrame=blockedByGroup?'<div class="calendar-group-frame '+occupiedClass+'">'+groupLabel+'</div>':cards+(blocked?'<span class="player-calendar-unavailable player-calendar-blocked">Indisponible</span>':'')+capacityMessage+addButton;
       return '<div class="calendar-hour-row '+(blockedByGroup?'calendar-hour-row-group-occupied':'')+'"><span class="calendar-hour-label">'+clock(time)+'</span><div class="calendar-hour-content">'+groupFrame+'</div></div>';
     }).join('');
