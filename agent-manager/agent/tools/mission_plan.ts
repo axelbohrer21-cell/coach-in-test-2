@@ -10,7 +10,7 @@ export default defineWorkflowTool({
     title: z.string().min(3).max(240),
     tasks: z.array(z.object({
       taskId: z.string().min(3).max(80),
-      objective: z.string().min(8).max(12000),
+      objective: z.string().min(8).max(6000),
       role: z.enum(taskRoles),
       dependsOn: z.array(z.string().min(3).max(80)).max(12).default([]),
       writeScope: z.array(z.string().min(1).max(240)).max(40).default([]),
