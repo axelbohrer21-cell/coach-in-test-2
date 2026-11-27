@@ -39,7 +39,7 @@ export default defineWorkflowTool({
     if (missing.length > 0) {
       return {
         status: "blocked",
-        compactPromptText(task, 3600, "mission"),
+        task,
         missingReviewers: missing,
         message: "Un ou plusieurs agents spécialisés ne sont pas disponibles dans cette version.",
       };
@@ -54,7 +54,7 @@ export default defineWorkflowTool({
         "Tu n'as aucun accès direct au dépôt, à Supabase ou à une Preview dans cette revue, sauf si leur contenu est explicitement transmis dans le contexte.",
         "",
         "MISSION :",
-        task,
+        compactPromptText(task, 3600, "mission"),
         "",
         "CONTEXTE INITIAL :",
         compactPromptText(context, 3000, "contexte de revue") || "Aucun contexte supplémentaire fourni.",
