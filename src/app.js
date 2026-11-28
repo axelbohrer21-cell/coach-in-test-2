@@ -809,7 +809,7 @@ async function submitVideoAnalysis(form,{fromCamera=false}={}){
   if(file.size>262144000){toast('La vidéo dépasse la limite de 250 Mo.','error');return;}
   if(!form.elements.consent.checked){toast('Confirme que tu disposes de l’autorisation du joueur avant l’analyse.','error');return;}
   button.disabled=true;button.textContent='Préparation de la vidéo…';
-  let analysisId=null,videoPath=null,uploaded=false;
+  let analysisId=null,videoPath=null,uploaded=false,recordCreated=false;
   try{
     const duration=await getVideoDuration(file);
     analysisId=crypto.randomUUID();
@@ -825,6 +825,7 @@ async function submitVideoAnalysis(form,{fromCamera=false}={}){
       analysis_result:{local_request:{theme,objective}}
     });
     if(insertError)throw insertError;
+    recordCreated=true;
     button.textContent='Détection locale sur le téléphone…';
     const poseAnalysis=await analyzeVideoPose(file);
     button.textContent='Enregistrement du bilan…';
@@ -833,7 +834,7 @@ async function submitVideoAnalysis(form,{fromCamera=false}={}){
     await dataService.loadCoachWorkspace(state.user.id);render('videos');
   }catch(error){
     const message=error.message||'Impossible de traiter cette vidéo.';
-    if(analysisId&&uploaded){
+    if(analysisId&&uploaded&&recordCreated){
       await supabase.from('coach_video_analyses').update({status:'failed',analysis_error:message.slice(0,500),updated_at:new Date().toISOString()}).eq('id',analysisId).eq('coach_id',state.user.id);
       toast('Vidéo conservée dans Coach In. Tu peux relancer l’analyse : '+message,'error');
       try{await dataService.loadCoachWorkspace(state.user.id);render('videos');}catch(_){}
