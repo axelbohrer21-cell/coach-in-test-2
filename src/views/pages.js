@@ -284,7 +284,7 @@ function playerCoachPlanningPage() {
     const hasHolidayStage=Boolean(schoolBreak&&GROUP_SEASON.holidayStage.weekdays.includes(date.getDay()));
     const disabled=date.getDay()===0||(Boolean(schoolBreak)&&!hasHolidayStage)||publicHolidayBlocks;
     const reason=date.getDay()===0?'Dimanche':schoolBreak?('Vacances de '+schoolBreak.label):publicHoliday?(childCollectiveDay?'Jour férié · cours enfants maintenus':'Jour férié'):'';
-    const rules=availability.filter(row=>Number(row.weekday)===weekday);
+    const rules=availability.filter(row=>Number(row.weekday)===weekday+1);
     const activeStatuses=['pending','accepted','confirmed'];
     const actualEvents=occupancy.filter(row=>row.session_date===iso&&row.source_kind!=='booking'&&!['rejected','cancelled','canceled','annulé','annulee'].includes(String(row.status||'').toLowerCase()));
     // Les réservations des autres joueurs sont visibles comme créneaux occupés, sans identité ni donnée privée.
@@ -722,7 +722,7 @@ function bookingsPage(isCoach) {
     const days=Array.from({length:7},(_,index)=>{
       const date=new Date(weekStart);date.setDate(weekStart.getDate()+index);
       const iso=toLocalISO(date),weekday=(date.getDay()+6)%7;
-      const rules=availability.filter(row=>Number(row.weekday)===weekday);
+      const rules=availability.filter(row=>Number(row.weekday)===weekday+1);
       const slots=Array.from({length:28},(_,slotIndex)=>{
         const minute=480+slotIndex*30,endMinute=minute+30;
         const time=String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0');
