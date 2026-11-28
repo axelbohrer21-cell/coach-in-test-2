@@ -293,6 +293,7 @@ $('#page-content').addEventListener('click', async event=>{
   const action=event.target.closest('[data-action]')?.dataset.action;
   if(action==='generate-session') return sessionBuilderDialog();
   const reviewSession=event.target.closest('[data-review-session]'); if(reviewSession) return sessionReviewDialog(reviewSession.dataset.reviewSession);
+  const retryVideo=event.target.closest('[data-retry-video-analysis]'); if(retryVideo)return retryVideoAnalysis(retryVideo.dataset.retryVideoAnalysis);
   const deleteVideo=event.target.closest('[data-delete-video]'); if(deleteVideo)return showDialog('<div class="dialog-head"><div><p class="eyebrow">CONFIDENTIALITÉ</p><h2>Supprimer cette vidéo ?</h2><p class="tiny muted">La vidéo originale et son analyse seront définitivement supprimées.</p></div><button class="btn icon-btn" data-close>✕</button></div><div class="dialog-actions"><button class="btn subtle" data-close>Annuler</button><button class="btn danger" data-confirm-delete-video="'+deleteVideo.dataset.deleteVideo+'">Supprimer définitivement</button></div>');
   const shareVideo=event.target.closest('[data-share-video]'); if(shareVideo) return toggleVideoShare(shareVideo.dataset.shareVideo,shareVideo.dataset.shared==='true');
   if(action==='new-session') return sessionDialog();
@@ -498,6 +499,21 @@ $('#dialog-content').addEventListener('change',event=>{
   
 });
 $('#page-content').addEventListener('change',async event=>{
+  if(event.target.matches('#video-analysis-form [name="video"]')){
+    const input=event.target,form=input.form,file=input.files?.[0];
+    const hint=input.closest('.video-file-label')?.querySelector('small');
+    if(!file)return;
+    const mime=file.type.split(';')[0].trim();
+    if(!['video/mp4','video/quicktime','video/webm'].includes(mime)){
+      toast('Format accepté : MP4, MOV ou WEBM.','error');input.value='';if(hint)hint.textContent='250 Mo maximum · 10 minutes maximum';return;
+    }
+    if(file.size>262144000){
+      toast('La vidéo dépasse la limite de 250 Mo.','error');input.value='';if(hint)hint.textContent='250 Mo maximum · 10 minutes maximum';return;
+    }
+    if(hint)hint.textContent=file.name+' · '+(file.size/1048576).toFixed(1)+' Mo · fichier sélectionné';
+    if(form){const submit=form.querySelector('button[type="submit"]');if(submit)submit.disabled=false;}
+    return;
+  }
   if(event.target.matches('#video-analysis-form [name="video_theme"]')){
     const form=event.target.form, theme=event.target.value;
     const normalize=value=>String(value||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
@@ -777,6 +793,13 @@ async function getVideoDuration(file){
     return duration;
   }finally{URL.revokeObjectURL(objectUrl);video.removeAttribute('src');video.load();}
 }
+async function runStoredVideoPoseAnalysis({analysisId,theme,objective,poseAnalysis}){
+  const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,theme,objective,pose_analysis:poseAnalysis}});
+  if(error||data?.error){
+    const {data:latest}=await supabase.from('coach_video_analyses').select('status').eq('id',analysisId).maybeSingle();
+    if(latest?.status!=='completed')throw new Error(data?.error||error?.message||'Le service d’analyse locale n’a pas répondu.');
+  }
+}
 async function submitVideoAnalysis(form,{fromCamera=false}={}){
   const button=form.querySelector('button[type=submit]'),file=form.elements.video.files?.[0];
   const playerId=form.elements.player_id.value,title=String(form.elements.title.value||'').trim(),stroke=form.elements.stroke_type.value,theme=String(form.elements.video_theme?.value||'').trim(),criterionId=String(form.elements.video_criterion?.value||'').trim(),selectedCriterion=(state.criteria||[]).find(row=>String(row.id)===criterionId),objective=[ 'Thématique analysée : '+theme, selectedCriterion?'Geste observé : '+selectedCriterion.criterion+'. Sous-thème : '+(selectedCriterion.subtheme||theme) : '' ].filter(Boolean).join(' ');
@@ -786,30 +809,62 @@ async function submitVideoAnalysis(form,{fromCamera=false}={}){
   if(file.size>262144000){toast('La vidéo dépasse la limite de 250 Mo.','error');return;}
   if(!form.elements.consent.checked){toast('Confirme que tu disposes de l’autorisation du joueur avant l’analyse.','error');return;}
   button.disabled=true;button.textContent='Préparation de la vidéo…';
-  let analysisId=null,videoPath=null;
+  let analysisId=null,videoPath=null,uploaded=false;
   try{
     const duration=await getVideoDuration(file);
-    button.textContent='Détection des articulations sur le téléphone…';
-    const poseAnalysis=await analyzeVideoPose(file);
     analysisId=crypto.randomUUID();
     const extension=file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4';
     videoPath=state.user.id+'/'+playerId+'/'+analysisId+'/original.'+extension;
-    const {error:uploadError}=await supabase.storage.from('coach-in-videos').upload(videoPath,file,{contentType:file.type,upsert:false});
+    const {error:uploadError}=await supabase.storage.from('coach-in-videos').upload(videoPath,file,{contentType:videoMime,upsert:false});
     if(uploadError)throw uploadError;
-    const {error:insertError}=await supabase.from('coach_video_analyses').insert({id:analysisId,coach_id:state.user.id,player_id:playerId,title,stroke_type:stroke,video_path:videoPath,video_mime:file.type,video_size_bytes:file.size,duration_seconds:Number(duration.toFixed(2)),status:'uploaded'});
-    if(insertError){await supabase.storage.from('coach-in-videos').remove([videoPath]);throw insertError;}
-    button.textContent='Analyse locale en cours…';
-    const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,theme,objective,pose_analysis:poseAnalysis}});
-    if(error||data?.error){
-      const {data:latest}=await supabase.from('coach_video_analyses').select('status').eq('id',analysisId).maybeSingle();
-      if(latest?.status!=='completed')throw new Error(data?.error||error?.message||'Le service d’analyse locale n’a pas répondu. Vérifie le statut avant de relancer.');
-    }
+    uploaded=true;
+    const {error:insertError}=await supabase.from('coach_video_analyses').insert({
+      id:analysisId,coach_id:state.user.id,player_id:playerId,title,stroke_type:stroke,
+      video_path:videoPath,video_mime:videoMime,video_size_bytes:file.size,
+      duration_seconds:Number(duration.toFixed(2)),status:'uploaded',
+      analysis_result:{local_request:{theme,objective}}
+    });
+    if(insertError)throw insertError;
+    button.textContent='Détection locale sur le téléphone…';
+    const poseAnalysis=await analyzeVideoPose(file);
+    button.textContent='Enregistrement du bilan…';
+    await runStoredVideoPoseAnalysis({analysisId,theme,objective,poseAnalysis});
     toast('Analyse terminée. Vérifie les observations avant de les transmettre au joueur.');
     await dataService.loadCoachWorkspace(state.user.id);render('videos');
   }catch(error){
-    toast(error.message||'Impossible de traiter cette vidéo.','error');
-    try{await dataService.loadCoachWorkspace(state.user.id);render('videos');}catch(_){}
+    const message=error.message||'Impossible de traiter cette vidéo.';
+    if(analysisId&&uploaded){
+      await supabase.from('coach_video_analyses').update({status:'failed',analysis_error:message.slice(0,500),updated_at:new Date().toISOString()}).eq('id',analysisId).eq('coach_id',state.user.id);
+      toast('Vidéo conservée dans Coach In. Tu peux relancer l’analyse : '+message,'error');
+      try{await dataService.loadCoachWorkspace(state.user.id);render('videos');}catch(_){}
+    }else{
+      if(videoPath&&uploaded)await supabase.storage.from('coach-in-videos').remove([videoPath]);
+      toast(message,'error');
+    }
   }finally{if(button.isConnected){button.disabled=false;button.textContent='Lancer l’analyse locale';}}
+}
+async function retryVideoAnalysis(analysisId){
+  const row=(state.videoAnalyses||[]).find(item=>item.id===analysisId);
+  if(!row||!row.video_path||!['uploaded','failed','processing'].includes(row.status)){toast('Cette vidéo ne peut pas être relancée.','error');return;}
+  const request=row.analysis_result?.local_request||{};
+  const theme=String(request.theme||'').trim(),objective=String(request.objective||'').trim();
+  if(!theme||!objective){toast('Les paramètres pédagogiques de cette ancienne analyse sont absents.','error');return;}
+  try{
+    const {data:blob,error:downloadError}=await supabase.storage.from('coach-in-videos').download(row.video_path);
+    if(downloadError||!blob)throw downloadError||new Error('Vidéo stockée introuvable.');
+    const file=new File([blob],row.video_path.split('/').pop()||'sequence.mp4',{type:row.video_mime||blob.type||'video/mp4'});
+    await supabase.from('coach_video_analyses').update({status:'processing',analysis_error:null,updated_at:new Date().toISOString()}).eq('id',analysisId).eq('coach_id',state.user.id);
+    render('videos');
+    toast('Reprise de l’analyse locale sur cet appareil…');
+    const poseAnalysis=await analyzeVideoPose(file);
+    await runStoredVideoPoseAnalysis({analysisId,theme,objective,poseAnalysis});
+    await dataService.loadCoachWorkspace(state.user.id);render('videos');
+    toast('Analyse terminée. Vérifie les observations avant de les transmettre au joueur.');
+  }catch(error){
+    await supabase.from('coach_video_analyses').update({status:'failed',analysis_error:(error.message||'Erreur de reprise').slice(0,500),updated_at:new Date().toISOString()}).eq('id',analysisId).eq('coach_id',state.user.id);
+    await dataService.loadCoachWorkspace(state.user.id);render('videos');
+    toast(error.message||'Impossible de reprendre cette analyse.','error');
+  }
 }
 async function toggleVideoShare(id,current){
   try{const {error}=await supabase.from('coach_video_analyses').update({shared_with_player:!current,updated_at:new Date().toISOString()}).eq('id',id).eq('coach_id',state.user.id);if(error)throw error;await dataService.loadCoachWorkspace(state.user.id);render('videos');toast(!current?'Analyse partagée avec le joueur.':'Partage retiré.');}
