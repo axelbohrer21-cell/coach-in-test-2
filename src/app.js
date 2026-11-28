@@ -802,7 +802,7 @@ async function submitVideoAnalysis(form,{fromCamera=false}={}){
     const {data,error}=await supabase.functions.invoke('analyze-tennis-video',{body:{analysis_id:analysisId,theme,objective,pose_analysis:poseAnalysis}});
     if(error||data?.error){
       const {data:latest}=await supabase.from('coach_video_analyses').select('status').eq('id',analysisId).maybeSingle();
-      if(latest?.status!=='completed')throw new Error(data?.error||error?.message||'Le service IA n’a pas répondu. Vérifie le statut avant de relancer.');
+      if(latest?.status!=='completed')throw new Error(data?.error||error?.message||'Le service d’analyse locale n’a pas répondu. Vérifie le statut avant de relancer.');
     }
     toast('Analyse terminée. Vérifie les observations avant de les transmettre au joueur.');
     await dataService.loadCoachWorkspace(state.user.id);render('videos');
