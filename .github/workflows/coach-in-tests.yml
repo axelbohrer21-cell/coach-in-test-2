@@ -1,0 +1,25 @@
+name: Coach In tests
+
+on:
+  push:
+    branches:
+      - fix/video-analysis-reliability-2026-11-28
+  pull_request:
+    branches:
+      - main
+      - qa/audit-integration-preview-2026-11-28
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run domain tests
+        run: npm test
+      - name: Check JavaScript syntax
+        run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
