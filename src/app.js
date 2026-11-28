@@ -1810,7 +1810,11 @@ function scheduleWorkspaceRefresh(userId){
         const role=state.profile.role;
         if(role==='coach')await dataService.loadCoachWorkspace(userId);
         else if(role==='player')await dataService.loadPlayerWorkspace();
-        if(state.user?.id===userId&&state.profile?.role===role)render(page);
+        // Keep the video import DOM intact on iOS Safari: returning from
+        // Photos can fire focus/visibility refreshes while the selected File
+        // is still attached to the input. Refresh data, but never replace this
+        // page automatically; the coach can navigate away and back when ready.
+        if(page!=='videos'&&state.user?.id===userId&&state.profile?.role===role)render(page);
       }catch(error){
         console.error('Coach In · synchronisation des espaces',error);
         toast('Une mise à jour n’a pas pu être récupérée. Vérifie ta connexion puis actualise la page.','error');
