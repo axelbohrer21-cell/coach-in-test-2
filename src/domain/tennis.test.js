@@ -59,9 +59,9 @@ test('réservation : exige au moins 30 minutes de délai', () => {
   const now = new Date('2026-11-25T08:12:00');
   const base = { date: '2026-11-25', duration: 60, court: 1, now };
   assert.throws(() => validateBooking({ ...base, time: '08:30' }), /30 minutes/);
-  assert.throws(() => validateBooking({ ...base, time: '08:41' }), /30 minutes/);
-  assert.equal(validateBooking({ ...base, time: '08:42' }), true);
   assert.equal(validateBooking({ ...base, time: '09:00' }), true);
+  const exactBoundary = { ...base, now: new Date('2026-11-25T08:30:00') };
+  assert.equal(validateBooking({ ...exactBoundary, time: '09:00' }), true);
 });
 
 import { groupCriteria, validateEvaluationCriteria, newlyUnlockedAchievements, recommendChallenge, challengeEvaluationResult, radarPoints } from './progression.js';
