@@ -1430,7 +1430,7 @@ function groupSessionDialog(sessionId=''){
 function bookingDialog(prefill={}){
   const selectedDuration=Number(prefill.duration||60);
   const durationChoices=[60,90,120].map(minutes=>`<label class="booking-duration-option ${selectedDuration===minutes?'active':''}"><input type="radio" name="duration" value="${minutes}" ${selectedDuration===minutes?'checked':''} required><span><strong>${minutes===60?'1 heure':minutes===90?'1 h 30':'2 heures'}</strong></span></label>`).join('');
-  const courtOptions=(Array.isArray(prefill.courts)&&prefill.courts.length?prefill.courts:[Number(prefill.court||1)]).map(Number).filter(court=>[1,2,3,4].includes(court));
+  const courtOptions=(Array.isArray(prefill.courts)&&prefill.courts.length?prefill.courts:(prefill.court?[Number(prefill.court)]:[1,2,3,4])).map(Number).filter(court=>[1,2,3,4].includes(court));
   const selectedCourt=courtOptions.includes(Number(prefill.court))?Number(prefill.court):(courtOptions[0]||1);
   const courtChoices=courtOptions.map(court=>`<option value="${court}" ${selectedCourt===court?'selected':''}>Terrain ${court}</option>`).join('');
   const selectedDate=prefill.date?new Date(prefill.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}):'À choisir';
