@@ -722,7 +722,7 @@ function bookingsPage(isCoach) {
     const days=Array.from({length:7},(_,index)=>{
       const date=new Date(weekStart);date.setDate(weekStart.getDate()+index);
       const iso=toLocalISO(date),weekday=(date.getDay()+6)%7;
-      const rules=availability.filter(row=>Number(row.weekday)===weekday);
+      const rules=availability.filter(row=>Number(row.weekday)===weekday+1);
       const slots=Array.from({length:28},(_,slotIndex)=>{
         const minute=480+slotIndex*30,endMinute=minute+30;
         const time=String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0');
