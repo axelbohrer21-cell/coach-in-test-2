@@ -241,7 +241,7 @@ $('#page-content').addEventListener('keydown', event=>{
 
 $('#page-content').addEventListener('click', async event=>{
   const bookSlot=event.target.closest('[data-book-slot]');
-  if(bookSlot){bookingDialog({coachId:bookSlot.dataset.coach,date:bookSlot.dataset.date,time:bookSlot.dataset.time,court:bookSlot.dataset.court,courts:String(bookSlot.dataset.courts||bookSlot.dataset.court||'1').split(',').map(Number)});return;}
+  if(bookSlot){bookingDialog({coachId:bookSlot.dataset.coach,date:bookSlot.dataset.date,time:bookSlot.dataset.time,court:bookSlot.dataset.court,courts:String(bookSlot.dataset.courts||bookSlot.dataset.court||'1').split(',').map(Number),maxDuration:Number(bookSlot.dataset.maxDuration||120)});return;}
   const rosterCard=event.target.closest('[data-player-card-edit]');
   if(rosterCard&&!event.target.closest('button,a,label,input,select,textarea,[data-player-sheet],[data-edit-player],[data-share-player]')){editPlayerDialog(rosterCard.dataset.playerCardEdit);return;}
   const calibrationCanvas=event.target.closest('[data-court-calibration]');
@@ -1428,8 +1428,10 @@ function groupSessionDialog(sessionId=''){
   showDialog(`<div class="dialog-head"><div><p class="eyebrow">COURS COLLECTIF</p><h2>${editing?'Modifier ce cours':'Ajouter un cours collectif'}</h2></div><button class="btn icon-btn" data-close>✕</button></div><form id="group-session-form" class="form-grid"><input type="hidden" name="id" value="${sessionId}"><label class="span-2">Intitulé<input name="title" required value="${escapeHtml(session.title||'')}" placeholder="Ex. Entraînement adultes"></label><label>Date<input name="session_date" type="date" required value="${session.session_date||toLocalISO(new Date())}"></label><label>Public<select name="audience"><option value="adultes" ${session.audience==='adultes'?'selected':''}>Adultes</option><option value="enfants" ${session.audience==='enfants'?'selected':''}>Enfants</option></select></label><label>Début<input name="start_time" type="time" required value="${session.start_time||'18:00'}"></label><label>Fin<input name="end_time" type="time" required value="${session.end_time||'19:30'}"></label><label>Court<select name="court_number"><option value="1" ${Number(session.court_number)===1?'selected':''}>Court 1</option><option value="2" ${Number(session.court_number)===2?'selected':''}>Court 2</option><option value="3" ${Number(session.court_number)===3?'selected':''}>Court 3</option><option value="4" ${Number(session.court_number)===4?'selected':''}>Court 4</option></select></label><label>Thème<input name="theme" value="${escapeHtml(session.theme||'')}"></label><div class="dialog-actions span-2"><button type="button" class="btn subtle" data-close>Annuler</button><button class="btn primary">${editing?'Enregistrer les modifications':'Enregistrer'}</button></div></form>`);
 }
 function bookingDialog(prefill={}){
-  const selectedDuration=Number(prefill.duration||60);
-  const durationChoices=[60,90,120].map(minutes=>`<label class="booking-duration-option ${selectedDuration===minutes?'active':''}"><input type="radio" name="duration" value="${minutes}" ${selectedDuration===minutes?'checked':''} required><span><strong>${minutes===60?'1 heure':minutes===90?'1 h 30':'2 heures'}</strong></span></label>`).join('');
+  const maxDuration=Number(prefill.maxDuration||120);
+  const availableDurations=[60,90,120].filter(minutes=>minutes<=maxDuration);
+  const selectedDuration=availableDurations.includes(Number(prefill.duration))?Number(prefill.duration):(availableDurations[0]||60);
+  const durationChoices=availableDurations.map(minutes=>`<label class="booking-duration-option ${selectedDuration===minutes?'active':''}"><input type="radio" name="duration" value="${minutes}" ${selectedDuration===minutes?'checked':''} required><span><strong>${minutes===60?'1 heure':minutes===90?'1 h 30':'2 heures'}</strong></span></label>`).join('');
   const courtOptions=(Array.isArray(prefill.courts)&&prefill.courts.length?prefill.courts:(prefill.court?[Number(prefill.court)]:[1,2,3,4])).map(Number).filter(court=>[1,2,3,4].includes(court));
   const selectedCourt=courtOptions.includes(Number(prefill.court))?Number(prefill.court):(courtOptions[0]||1);
   const courtChoices=courtOptions.map(court=>`<option value="${court}" ${selectedCourt===court?'selected':''}>Terrain ${court}</option>`).join('');
