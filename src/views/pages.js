@@ -284,7 +284,7 @@ function playerCoachPlanningPage() {
     const hasHolidayStage=Boolean(schoolBreak&&GROUP_SEASON.holidayStage.weekdays.includes(date.getDay()));
     const disabled=date.getDay()===0||(Boolean(schoolBreak)&&!hasHolidayStage)||publicHolidayBlocks;
     const reason=date.getDay()===0?'Dimanche':schoolBreak?('Vacances de '+schoolBreak.label):publicHoliday?(childCollectiveDay?'Jour férié · cours enfants maintenus':'Jour férié'):'';
-    const rules=availability.filter(row=>Number(row.weekday)===weekday);
+    const rules=availability.filter(row=>Number(row.weekday)===weekday+1);
     const activeStatuses=['pending','accepted','confirmed'];
     const actualEvents=occupancy.filter(row=>row.session_date===iso&&row.source_kind!=='booking'&&!['rejected','cancelled','canceled','annulé','annulee'].includes(String(row.status||'').toLowerCase()));
     // Les réservations des autres joueurs sont visibles comme créneaux occupés, sans identité ni donnée privée.
