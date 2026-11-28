@@ -12,11 +12,14 @@ test('génération annuelle respecte les vacances et la cible',()=>{
  const rows=buildSeriesOccurrences(series);
  assert.equal(rows.length,30); assert.ok(rows.every(x=>x.series_id==='s1'&&x.start_time==='18:00'&&x.court_number===null&&x.court_count===2));
 });
+test('un nombre de terrains hors limites est refusé',()=>{
+ assert.throws(()=>buildSeriesOccurrences({...series,court_count:5}),/nombre de terrains/);
+});
 test('un créneau sans horaires exacts ne génère rien et est refusé',()=>{
  assert.throws(()=>buildSeriesOccurrences({...series,start_time:''}),/Horaires/);
 });
 
-test('le quatrième court est accepté',()=>{
+test('quatre terrains utilisés sont acceptés sans attribution de court',()=>{
  const rows=buildSeriesOccurrences({...series,court_count:4});
  assert.ok(rows.length>0); assert.equal(rows[0].court_number,null); assert.equal(rows[0].court_count,4);
 });
