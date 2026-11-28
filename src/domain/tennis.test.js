@@ -36,6 +36,15 @@ test('réservation : le quatrième court est accepté', () => {
   assert.equal(validateBooking({ date: '2027-01-01', time: '10:00', duration: 60, court: 4 }), true);
 });
 
+test('réservation : seuls les départs à :00 et :30 sont acceptés', () => {
+  const base = { date: '2027-01-01', duration: 60, court: 1, now: new Date('2026-11-25T08:00:00') };
+  assert.equal(validateBooking({ ...base, time: '09:00' }), true);
+  assert.equal(validateBooking({ ...base, time: '09:30' }), true);
+  for (const time of ['09:05', '09:15', '09:42', '11:13']) {
+    assert.throws(() => validateBooking({ ...base, time }), /heure pile ou à la demi-heure/);
+  }
+});
+
 test('défi : un critère répété dans un même bilan ne compte qu’une fois', () => {
   const rows = [
     { evaluation_id: 'a', criterion: 'Déplacement', criterion_type: 'improvement' },
@@ -50,9 +59,9 @@ test('réservation : exige au moins 30 minutes de délai', () => {
   const now = new Date('2026-11-25T08:12:00');
   const base = { date: '2026-11-25', duration: 60, court: 1, now };
   assert.throws(() => validateBooking({ ...base, time: '08:30' }), /30 minutes/);
-  assert.throws(() => validateBooking({ ...base, time: '08:41' }), /30 minutes/);
-  assert.equal(validateBooking({ ...base, time: '08:42' }), true);
   assert.equal(validateBooking({ ...base, time: '09:00' }), true);
+  const exactBoundary = { ...base, now: new Date('2026-11-25T08:30:00') };
+  assert.equal(validateBooking({ ...exactBoundary, time: '09:00' }), true);
 });
 
 import { groupCriteria, validateEvaluationCriteria, newlyUnlockedAchievements, recommendChallenge, challengeEvaluationResult, radarPoints } from './progression.js';

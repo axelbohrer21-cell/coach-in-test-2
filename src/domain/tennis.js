@@ -48,7 +48,7 @@ export function validateBooking({ date, time, duration, court, now = new Date() 
   const [year, month, day] = date.split('-').map(Number);
   const parsedDate = new Date(year, month - 1, day);
   if (parsedDate.getFullYear() !== year || parsedDate.getMonth() !== month - 1 || parsedDate.getDate() !== day) throw new Error('Choisis une date valide.');
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time || '')) throw new Error('Choisis un horaire valide.');
+  if (!/^([01]\d|2[0-3]):(00|30)$/.test(time || '')) throw new Error('Choisis un créneau à l’heure pile ou à la demi-heure.');
   if (![60, 90, 120].includes(Number(duration))) throw new Error('Durée autorisée : 1 h, 1 h 30 ou 2 h.');
   if (![1, 2, 3, 4].includes(Number(court))) throw new Error('Choisis un court disponible.');
   const start = new Date(`${date}T${time}:00`);
