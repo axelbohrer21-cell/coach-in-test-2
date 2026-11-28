@@ -72,7 +72,7 @@ function buildLocalReport(pose: any, theme: string, objective: string) {
   const frames = pose.frames || [];
   const visible = frames.filter((frame: any) => frame.visibility >= 0.45);
   const meanVisibility = pose.summary?.mean_visibility ?? 0;
-  const confidence = frames.length >= 6 && meanVisibility >= 0.7 ? "moyenne" : frames.length >= 4 && meanVisibility >= 0.5 ? "faible" : "faible";
+  const confidence = frames.length >= 7 && meanVisibility >= 0.8 ? "élevée" : frames.length >= 5 && meanVisibility >= 0.65 ? "moyenne" : "faible";
   const keys = ["left_knee","right_knee","left_elbow","right_elbow","left_arm_torso","right_arm_torso","leg_spread"];
   const stats: Record<string, any> = {};
   for (const key of keys) stats[key] = angleStats(visible, key);
