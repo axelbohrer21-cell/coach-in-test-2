@@ -1795,6 +1795,13 @@ function scheduleWorkspaceRefresh(userId){
   workspaceRefreshTimer=window.setTimeout(async()=>{
     workspaceRefreshTimer=null;
     if(state.user?.id!==userId||!state.profile)return;
+    // iOS Safari can return from the Photos picker with a selected File while
+    // the visibility/focus refresh is pending. Re-rendering here replaces the
+    // form and silently discards that File before the coach can submit it.
+    const pendingVideoFile = state.currentPage === 'videos'
+      ? $('#video-analysis-form [name="video"]')?.files?.length > 0
+      : false;
+    if(pendingVideoFile)return;
     if(workspaceRefreshPromise){workspaceRefreshQueued=true;return;}
     lastWorkspaceRefreshAt=Date.now();
     workspaceRefreshPromise=(async()=>{
