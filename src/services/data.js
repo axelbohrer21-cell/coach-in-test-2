@@ -294,7 +294,7 @@ export const dataService = {
   async deleteAvailability(id,coachId) { const {error}=await supabase.from('coach_weekly_availability').delete().eq('id',id).eq('coach_id',coachId); if(error)throw error; },
   async updateGroupSeries(id,changes,coachId) {
     const {error}=await supabase.from('group_course_series').update(changes).eq('id',id).eq('coach_id',coachId);if(error)throw error;
-    const {error:futureError}=await supabase.from('group_sessions').update({title:changes.title,theme:changes.theme,start_time:changes.start_time,end_time:changes.end_time,court_number:changes.court_number}).eq('series_id',id).eq('coach_id',coachId).eq('status','scheduled').gte('session_date',new Date().toISOString().slice(0,10)).not('session_date','in','(2026-10-17,2026-12-19,2027-02-20,2027-04-17)');if(futureError)throw futureError;
+    const {error:futureError}=await supabase.from('group_sessions').update({title:changes.title,theme:changes.theme,start_time:changes.start_time,end_time:changes.end_time,court_number:null,court_count:changes.court_count}).eq('series_id',id).eq('coach_id',coachId).eq('status','scheduled').gte('session_date',new Date().toISOString().slice(0,10)).not('session_date','in','(2026-10-17,2026-12-19,2027-02-20,2027-04-17)');if(futureError)throw futureError;
   },
   async updateGroupSession(id,changes,coachId) { const {error}=await supabase.from('group_sessions').update(changes).eq('id',id).eq('coach_id',coachId);if(error)throw error; },
   async createGroupSession(payload) {
