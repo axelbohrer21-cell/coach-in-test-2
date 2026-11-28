@@ -334,12 +334,12 @@ function playerCoachPlanningPage() {
       const slotDateStart=new Date(date);slotDateStart.setHours(hour,minute,0,0);
       const slotDateEnd=new Date(date);slotDateEnd.setHours(Math.floor(slotEnd/60),slotEnd%60,0,0);
       const blocked=(state.playerUnavailability||[]).some(row=>row.coach_id===selected.id&&new Date(row.starts_at)<slotDateEnd&&new Date(row.ends_at)>slotDateStart);
-      const rule=rules.find(row=>slotStart>=toMinutes(row.start_time)&&slotEnd<=toMinutes(row.end_time));
+      const rule=rules.find(row=>slotStart>=toMinutes(row.start_time)&&slotStart+60<=toMinutes(row.end_time));
       const leadTimeOk=slotDateStart.getTime()>=Date.now()+30*60*1000;
       const privateOccupied=events.some(event=>event.source_kind!=='group_session'&&toMinutes(event.start_time)<slotEnd&&toMinutes(event.start_time)+event.duration>slotStart&&!['cancelled','canceled','annulé','annulee'].includes(String(event.status||'').toLowerCase()));
       const available=Boolean(rule&&!disabled&&!blockedByGroup&&!privateOccupied&&!blocked&&leadTimeOk&&isPrivateLessonDateAllowed(iso));
       const allowedCourts=rule.court_number?[Number(rule.court_number)]:[1,2,3,4];
-      const addButton=available?'<button type="button" class="calendar-hour-slot" data-book-slot data-coach="'+escapeHtml(selected.id)+'" data-date="'+iso+'" data-time="'+time+'" data-court="'+escapeHtml(String(allowedCourts[0]))+'" data-courts="'+escapeHtml(allowedCourts.join(','))+'" aria-label="Demander un cours à '+clock(time)+'" title="Demander un cours particulier"></button>':'';
+      const addButton=available?'<button type="button" class="calendar-hour-slot" data-book-slot data-coach="'+escapeHtml(selected.id)+'" data-date="'+iso+'" data-time="'+time+'" data-court="'+escapeHtml(String(allowedCourts[0]))+'" data-courts="'+escapeHtml(allowedCourts.join(','))+'" data-max-duration="'+Math.max(0,toMinutes(rule.end_time)-slotStart)+'" aria-label="Demander un cours à '+clock(time)+'" title="Demander un cours particulier"></button>':'';
       const groupFrame=blockedByGroup?'<div class="calendar-group-frame '+occupiedClass+'">'+groupLabel+'</div>':cards+(blocked?'<span class="player-calendar-unavailable player-calendar-blocked">Indisponible</span>':'')+addButton;
       return '<div class="calendar-hour-row '+(blockedByGroup?'calendar-hour-row-group-occupied':'')+'"><span class="calendar-hour-label">'+clock(time)+'</span><div class="calendar-hour-content">'+groupFrame+'</div></div>';
     }).join('');
@@ -723,7 +723,7 @@ function bookingsPage(isCoach) {
     const days=Array.from({length:7},(_,index)=>{
       const date=new Date(weekStart);date.setDate(weekStart.getDate()+index);
       const iso=toLocalISO(date),weekday=(date.getDay()+6)%7;
-      const rules=availability.filter(row=>Number(row.weekday)===weekday);
+      const rules=availability.filter(row=>Number(row.weekday)===weekday+1);
       const slots=Array.from({length:28},(_,slotIndex)=>{
         const minute=480+slotIndex*30,endMinute=minute+30;
         const time=String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0');
@@ -739,7 +739,9 @@ function bookingsPage(isCoach) {
         const slotStart=new Date(`${iso}T${time}:00`);
         const past=iso<today||slotStart.getTime()-now.getTime()<30*60*1000;
         const available=Boolean(bookingRule)&&!blockedByEvent&&!past;
-        const content=event?'<div class="calendar-event '+(event.kind==='group'?'group-event':'player-event')+'"><div class="calendar-event-main"><b>'+time.replace(':','h')+'</b><strong>'+escapeHtml(event.title)+'</strong></div></div>':available?'<button class="calendar-hour-slot" data-book-slot data-coach="'+coach.id+'" data-date="'+iso+'" data-time="'+time+'" data-court="'+(bookingRule?.court_number||1)+'" aria-label="Réserver '+time+'"></button>':'';
+        const allowedCourts=bookingRule?.court_number?[Number(bookingRule.court_number)]:[1,2,3,4];
+        const maxDuration=bookingRule?toMin(bookingRule.end_time)-minute:0;
+        const content=event?'<div class="calendar-event '+(event.kind==='group'?'group-event':'player-event')+'"><div class="calendar-event-main"><b>'+time.replace(':','h')+'</b><strong>'+escapeHtml(event.title)+'</strong></div></div>':available?'<button class="calendar-hour-slot" data-book-slot data-coach="'+coach.id+'" data-date="'+iso+'" data-time="'+time+'" data-court="'+allowedCourts[0]+'" data-courts="'+allowedCourts.join(',')+'" data-max-duration="'+maxDuration+'" aria-label="Réserver '+time+'"></button>':'';
         return '<div class="calendar-hour-row"><span class="calendar-hour-label">'+time.replace(':','h')+'</span><div class="calendar-hour-content">'+content+'</div></div>';
       }).join('');
       return '<div class="calendar-day '+(iso===today?'calendar-day-today':'')+'"><div class="calendar-day-head"><strong>'+dayNames[index]+'</strong><span>'+date.getDate()+'</span><small>'+date.toLocaleDateString('fr-FR',{month:'short'})+'</small></div><div class="calendar-hours">'+slots+'</div></div>';
